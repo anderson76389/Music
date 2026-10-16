@@ -1,13 +1,14 @@
-MAKOFF MUSIC — PROJET ANDROID EN COURS DE VALIDATION
+MAKOFF MUSIC — APK ANDROID DE TEST DISPONIBLE
 
 Base Metrolist conservée intégralement : lecture, recherche, playlists, téléchargements,
 paroles, bibliothèque, widgets, Android Auto et traductions existantes.
 Nom provisoire : MAKOFF Music. Identifiant : fr.makoff.music (debug : .debug).
 Android minimum : 8.0 (API 26). APK universel ARM et x86.
 
-ATTENTION : aucun APK n’a été compilé ni testé lors de cette préparation.
-Le téléchargement de Gradle a échoué : réseau inaccessible dans l’environnement.
-La lecture YouTube, la connexion et la traduction complète ne sont pas certifiées.
+Compilation FOSS et tests unitaires réussis sur GitHub Actions le 16 octobre 2026.
+Exécution validée : https://github.com/anderson76389/Music/actions/runs/38952448806
+APK de test : https://github.com/anderson76389/Music/actions/runs/38952448806/artifacts/12068729869
+La lecture réelle, la connexion et la traduction complète restent à tester sur téléphone.
 
 Modifications : identité propre, nouveaux vecteurs de lancement, bibliothèque
 InnerTubeX v0.8.4 embarquée avec sa licence, mises à jour Metrolist et migration KMP
@@ -19,7 +20,7 @@ Les liens de partage des salons sont makoffmusic://listen?code=... ; les partici
 doivent configurer le même serveur. Ne pas utiliser comme preuve de lecture validée.
 
 CONSTRUCTION WINDOWS
-Installer Android Studio avec JDK 21, SDK Android 37 et build-tools 36.0.0.
+Installer Android Studio avec JDK 21, SDK Android 37.0 et build-tools 36.0.0.
 Ouvrir ce dossier, laisser Android Studio créer local.properties.
 Dans PowerShell : .\gradlew.bat :app:assembleFossDebug :app:testFossDebugUnitTest
 APK : app\build\outputs\apk\foss\debug\app-foss-debug.apk
