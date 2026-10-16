@@ -190,7 +190,7 @@
     <string name="wrapped_total_artists_subtitle">unikalių kūrėjų</string>
     <string name="wrapped_total_songs_title">Jūs klausėtės</string>
     <string name="wrapped_total_songs_subtitle">unikalių dainų</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">laikas pamatyti, ką jūs klausėtės</string>
     <string name="wrapped_intro_button">pirmyn!</string>
     <string name="wrapped_logo_content_description">„MAKOFF Music” logotipas</string>
@@ -198,7 +198,7 @@
     <string name="wrapped_ready_title">JŪSŲ WRAPPED YRA PARUOŠTAS!</string>
     <string name="wrapped_ready_subtitle">Metas pamatyti, kas jums patiko šiais metais.</string>
     <string name="wrapped_thank_you">Ačiū, kad klausotės</string>
-    <string name="wrapped_special_thanks">Ypatingas ačiū MO Agamy, kad sukūrė „MAKOFF Music”</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Uždaryti Wrapped</string>
     <string name="wrapped_playlist_title">Jūsų %s Wrapped</string>
     <string name="wrapped_create_playlist">Sukurti grojaraštį</string>
@@ -304,7 +304,7 @@
     <string name="release_notes">Leidimo pastabos</string>
     <string name="changelog">Pakeitimų sąrašas</string>
     <string name="changelog_empty">Nėra galimų pakeitimų sąrašų</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Peržiūrėti GitHub</string>
     <string name="current_version">Dabartinė versija</string>

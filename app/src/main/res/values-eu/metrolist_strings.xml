@@ -258,7 +258,7 @@
     <string name="export_option_save">Dokumentuetan gorde</string>
     <string name="changelog">Aldaketa-erregistroa</string>
     <string name="changelog_empty">Ez dago aldaketa-erregistrorik erabilgarri</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">GitHub-en ikusi</string>
     <string name="current_version">Oraingo bertsioa</string>
@@ -403,7 +403,7 @@
     <string name="wrapped_top_song_listening_time">%d minutuz entzun duzu!</string>
     <string name="wrapped_total_artists_subtitle">egile ezberdin entzun dituzu!</string>
     <string name="wrapped_total_songs_subtitle">abesti ezberdin entzun dituzu!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">aurten entzuten egon zarena ikusteko unea iritsi da…</string>
     <string name="wrapped_intro_button">goazen!</string>
     <string name="wrapped_logo_content_description">MAKOFF Music Logoa</string>
@@ -411,7 +411,7 @@
     <string name="wrapped_ready_title">ZURE WRAPPED-A PREST DAGO!</string>
     <string name="wrapped_ready_subtitle">Aurten maite izan duzuna ikusteko unea da…</string>
     <string name="wrapped_thank_you">Eskerrik asko entzuteagatik!</string>
-    <string name="wrapped_special_thanks">Esker bereziak MO Agamy-ri MAKOFF Music sortzeagatik</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Wrapped-a itxi</string>
     <string name="wrapped_playlist_title">Zure %s Wrapped</string>
     <string name="wrapped_create_playlist">Erreprodukzio-zerrenda sortu</string>

@@ -225,7 +225,7 @@
     <string name="wrapped_total_artists_subtitle">artistes únics</string>
     <string name="wrapped_total_songs_title">Has escoltat</string>
     <string name="wrapped_total_songs_subtitle">cançons diferents</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">És hora de veure què has estat escoltant</string>
     <string name="wrapped_intro_button">anem!</string>
     <string name="wrapped_logo_content_description">Logo de MAKOFF Music</string>
@@ -233,7 +233,7 @@
     <string name="wrapped_ready_title">EL TEU RECOPILATORI ESTÀ PREPARAT!</string>
     <string name="wrapped_ready_subtitle">És hora de veure què t\'ha encantat enguany.</string>
     <string name="wrapped_thank_you">Gràcies per escoltar</string>
-    <string name="wrapped_special_thanks">Un especial agraïment a MO Agamy per crear MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Tancar Recopilatori</string>
     <string name="wrapped_playlist_title">El teu Recopilatori %s</string>
     <string name="wrapped_create_playlist">Crear llista de reproducció</string>
@@ -520,7 +520,7 @@
     <string name="lyrics_provider_priority_desc">Arrastra per ordenar els proveïdors per preferència. Posició elevada -&gt; proritat elevada.</string>
     <string name="changelog">Registre de canvis</string>
     <string name="changelog_empty">Registre de canvis no disponible</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Mostra a GitHub</string>
     <string name="current_version">Versió actual</string>
@@ -588,7 +588,7 @@
     <string name="credits_view_repo">Veure Repositori</string>
     <string name="buy_mo_a_coffee">Compra\'m un cafè</string>
     <string name="community_and_info">Comunitat &amp; informació</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Vols escoltar la teua cançó preferida?</string>
     <string name="yeah">Sí</string>
     <string name="stands_with_palestine">Aquest projecte dona suport a Palestina 🇵🇸</string>

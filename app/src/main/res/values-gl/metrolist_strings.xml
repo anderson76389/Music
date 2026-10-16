@@ -149,7 +149,7 @@
     <string name="release_notes">Notas da versión</string>
     <string name="changelog">Rexistro de cambios</string>
     <string name="changelog_empty">Rexistro de cambios non dispoñible</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Ver no GitHub</string>
     <string name="current_version">Versión actual</string>
@@ -245,7 +245,7 @@
     <string name="wrapped_total_artists_subtitle">artistas únicos!</string>
     <string name="wrapped_total_songs_title">Escoitaches a</string>
     <string name="wrapped_total_songs_subtitle">cancións únicas!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">é hora de ver que escoitaches durante este ano…</string>
     <string name="wrapped_intro_button">imos!</string>
     <string name="wrapped_logo_content_description">Logotipo de MAKOFF Music</string>
@@ -253,7 +253,7 @@
     <string name="wrapped_ready_title">O TEU RESUMO ESTÁ LISTO!</string>
     <string name="wrapped_ready_subtitle">Hora de ver o que che gustou todo este ano…</string>
     <string name="wrapped_thank_you">Grazas por escoitar!</string>
-    <string name="wrapped_special_thanks">Un agradecemento especial a MO Agamy por crear MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Pechar resumo</string>
     <string name="wrapped_playlist_title">O teu %s resumo</string>
     <string name="wrapped_create_playlist">Crear lista de reprodución</string>
@@ -383,7 +383,7 @@
     <string name="recognition_notification_processing">Identificando…</string>
     <string name="recognition_notification_no_match">Non se atoparon coincidencias</string>
     <string name="recognition_notification_failed">Fallou o recoñecemento</string>
-    <string name="listen_on_metrolist">Escoitar en MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="map_csv_columns">Asociar columnas do CSV</string>
     <string name="first_row_is_header">A primeira fila é o encabezado</string>
     <string name="artist_name_column">Columna do nome do artista</string>
@@ -481,7 +481,7 @@
     <string name="credits_view_repo">Ver repositorio</string>
     <string name="buy_mo_a_coffee">Convídame a un café!</string>
     <string name="community_and_info">Comunidade e información</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Queres reproducir a súa canción favorita?</string>
     <string name="yeah">Si!</string>
     <string name="stands_with_palestine">Este proxecto apoia a Palestina 🇵🇸</string>

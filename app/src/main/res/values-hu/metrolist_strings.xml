@@ -245,7 +245,7 @@
     <string name="export_option_save">Mentés a Dokumentumokba</string>
     <string name="changelog">Változásnapló</string>
     <string name="changelog_empty">Változtatásnapló nem elérhető</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Megtekintés GitHub-on</string>
     <string name="current_version">Jelenlegi verzió</string>
@@ -323,7 +323,7 @@
     <string name="wrapped_total_artists_subtitle">egyedi előadók!</string>
     <string name="wrapped_total_songs_title">Ezeket hallgatta</string>
     <string name="wrapped_total_songs_subtitle">egyedi dalok!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">itt az ideje áttekinteni, mit hallgatott az év során…</string>
     <string name="wrapped_intro_button">gyerünk!</string>
     <string name="wrapped_logo_content_description">MAKOFF Music Logó</string>
@@ -331,7 +331,7 @@
     <string name="wrapped_ready_title">AZ ÖSSZEFOGLALÓD KÉSZ!</string>
     <string name="wrapped_ready_subtitle">Ideje megnézni, melyik számot imádta a legjobban…</string>
     <string name="wrapped_thank_you">Köszönjük, hogy meghallgatta!</string>
-    <string name="wrapped_special_thanks">Külön köszönet MO Agamy-nak a MAKOFF Music létrehozásáért</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Összefoglaló bezárása</string>
     <string name="wrapped_playlist_title">Az Ön %s Összefoglalója</string>
     <string name="wrapped_create_playlist">Lejátszási lista létrehozása</string>
@@ -469,7 +469,7 @@
     <string name="credits_view_repo">Repository megnyitása</string>
     <string name="buy_mo_a_coffee">Hívjon meg egy kávéra!</string>
     <string name="community_and_info">Közösség &amp; információ</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Játszuk a kedvenc dalukat?</string>
     <string name="yeah">Naná!</string>
     <string name="stands_with_palestine">Ez a projekt Palesztina mellett áll 🇵🇸</string>
@@ -704,7 +704,7 @@
     <string name="recognition_notification_processing">Azonosítás…</string>
     <string name="recognition_notification_no_match">Nincs találat</string>
     <string name="recognition_notification_failed">Felismerés sikertelen</string>
-    <string name="listen_on_metrolist">Meghallgatás MAKOFF Music-en</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Látható részek</string>
     <string name="android_auto_reorder_hint">Koppintson egy szakaszra az engedélyezéséhez vagy letiltásához.\nNyomja meg hosszan a fogót az átrendezéshez. Alapértelmezés szerint az első szakasz jelenik meg</string>

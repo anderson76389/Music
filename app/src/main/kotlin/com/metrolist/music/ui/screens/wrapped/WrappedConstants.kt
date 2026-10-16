@@ -8,5 +8,5 @@ package fr.makoff.music.ui.screens.wrapped
 object WrappedConstants {
     // This is intentionally hardcoded to 2025 and should not be changed.
     const val YEAR = 2025
-    const val PLAYLIST_NAME = "Metrolist 2025"
+    const val PLAYLIST_NAME = "MAKOFF Music 2025"
 }

@@ -231,13 +231,13 @@
     <string name="wrapped_top_artist_title">Ο κορυφαίος καλλιτέχνης σας της χρονιάς είναι</string>
     <string name="wrapped_top_song_title">Το τραγούδι που παίζει πιο συχνά είναι</string>
     <string name="wrapped_top_song_listening_time">Έχετε ακούσει %d λεπτά</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">ήρθε η ώρα να δείτε τι έχετε ακούσει</string>
     <string name="wrapped_intro_button">Πάμε!</string>
     <string name="wrapped_logo_content_description">Λογότυπο MAKOFF Music</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_subtitle">Ήρθε η ώρα να δείτε τι λατρέψατε φέτος.</string>
-    <string name="wrapped_special_thanks">Ιδιαίτερες ευχαριστίες στον MO Agamy για τη δημιουργία του MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_create_playlist">Δημιουργία λίστας αναπαραγωγής</string>
     <string name="wrapped_playlist_saved">Η λίστα αναπαραγωγής αποθηκεύτηκε</string>
     <string name="equalizer_header">Ισοσταθμιστής</string>

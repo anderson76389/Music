@@ -1,0 +1,41 @@
+MAKOFF MUSIC — INDÉPENDANCE VIS-À-VIS DU PROJET D’ORIGINE
+
+Lecture, recherche, comptes YouTube, playlists, bibliothèque, téléchargements,
+cache, paroles, égaliseur, reconnaissance, widgets et Android Auto : code conservé.
+Qualité Élevée par défaut. Deux variantes prévues : FOSS et Google Cast (GMS).
+Discord reste supprimé sur demande.
+
+Les sources du moteur de lecture InnerTubeX v0.8.4 sont embarquées dans vendor.
+Gradle remplace son artefact distant par le projet local ; aucun téléchargement
+de ce moteur depuis Metrolist/JitPack n’est nécessaire. Les configurations de
+lecture distantes de Metrolist/Faraday restent désactivées : résolution EJS locale.
+
+Mises à jour : uniquement https://github.com/anderson76389/Music/releases.
+Le workflow Publish signed Music APKs exige votre propre clé privée via quatre
+secrets : MUSIC_KEYSTORE_BASE64, MUSIC_STORE_PASSWORD, MUSIC_KEY_ALIAS,
+MUSIC_KEY_PASSWORD. Sans ces secrets, aucune publication signée durable n’a lieu.
+Les APK debug sont des versions de test ; leur mise à jour automatique est désactivée
+pour éviter d’installer une version signée par une autre clé ou d’un autre paquet.
+La clé de publication doit être sauvegardée durablement par le propriétaire.
+
+Écoute partagée : serveur et protocole complets dans services/listen-together.
+Aucun sous-module distant. Docker Compose + Caddy sont fournis pour votre serveur.
+Le serveur n’est PAS déployé automatiquement et GitHub Pages ne peut pas l’héberger.
+Lire services/listen-together/INSTALLATION-MUSIC.txt. Il faut un hébergement actif
+et renseigner son URL wss:// dans les paramètres pour cette fonction seulement.
+
+Last.fm : nécessite vos propres LASTFM_API_KEY et LASTFM_SECRET si vous l’utilisez.
+Traduction IA : clé et fournisseur choisis par l’utilisateur, inchangés.
+YouTube, les fournisseurs de paroles, Shazam, AutoEQ, les dépôts Android/Maven,
+GitHub et les composants libres externes restent des dépendances tierces.
+L’indépendance du projet d’origine ne signifie pas l’indépendance de YouTube,
+ni la garantie que ses API ne changeront jamais.
+
+Les mentions visibles, liens promotionnels, noms d’exports et rapports de plantage
+ont été remplacés par MAKOFF Music. Les copyright, licences, provenances, noms
+internes de bibliothèques et un identifiant technique de recherche sont conservés
+pour le droit d’auteur et la compatibilité ; ils ne contactent aucun serveur.
+
+Vérification : scripts/audit_independence.py, construction Android, tests unitaires,
+construction et tests Go du serveur. La lecture réelle sur téléphone et un salon
+entre deux appareils nécessitent encore des essais sur les appareils et un serveur.

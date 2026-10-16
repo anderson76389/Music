@@ -15,7 +15,8 @@ InnerTubeX v0.8.4 embarquée avec sa licence, mises à jour Metrolist et migrati
 neutralisées, moteur local EJS à la place des configurations de lecture distantes,
 écoute partagée sans serveur imposé, suppression complète de Discord.
 L’écoute partagée nécessite votre propre serveur. Les mises à jour
-automatiques restent désactivées jusqu’à configuration d’un dépôt et d’une signature.
+automatiques des versions de publication utilisent uniquement le dépôt Music ;
+les versions debug gardent les mises à jour désactivées pour protéger leur signature.
 Les liens de partage des salons sont makoffmusic://listen?code=... ; les participants
 doivent configurer le même serveur. Ne pas utiliser comme preuve de lecture validée.
 
@@ -54,3 +55,8 @@ Mode Élevée par défaut pour lecture et téléchargements. Les modes Auto et B
 restent sélectionnables. Pas de transcodage ajoutant une prétendue qualité. Le moteur
 choisit les flux disponibles et garde la prise en charge des flux Premium fournis
 à un compte autorisé. La sortie dépend aussi du casque et du codec Bluetooth.
+
+AUDIT D’INDÉPENDANCE
+Lire INDEPENDANCE-MUSIC.txt : inventaire des fonctions conservées, de vos secrets
+de publication et du serveur d’écoute partagée inclus mais non encore hébergé.
+Les anciennes APK de test ci-dessus précèdent ce dernier audit.

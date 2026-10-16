@@ -182,7 +182,7 @@
     <string name="wrapped_total_artists_subtitle">artistas únicos</string>
     <string name="wrapped_total_songs_title">Tu ouviste a</string>
     <string name="wrapped_total_songs_subtitle">músicas únicas!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">está na hora de ver o que andaste a ouvir</string>
     <string name="wrapped_intro_button">vamos lá!</string>
     <string name="wrapped_logo_content_description">Logo do MAKOFF Music</string>
@@ -190,7 +190,7 @@
     <string name="wrapped_ready_title">O TEU WRAPPED ESTÁ PRONTO!</string>
     <string name="wrapped_ready_subtitle">Está na hora de ver o que amaste este ano.</string>
     <string name="wrapped_thank_you">Obrigado por ouvires!</string>
-    <string name="wrapped_special_thanks">Um agradecimento a MO Agamy por criar o MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Fechar wrapped</string>
     <string name="wrapped_playlist_title">O teu %s Wrapped</string>
     <string name="wrapped_create_playlist">Criar lista de reprodução</string>
@@ -415,7 +415,7 @@
     <string name="enable_paxsenix">Ativar o serviço Paxsenix</string>
     <string name="enable_paxsenix_desc">Letras síncronas de alta qualidade fornecidas pela API da Paxsenix</string>
     <string name="lyrics_provider_priority_desc">Arraste para re-ordenar os provedores por preferência. Quanto maior for a posição, maior será a prioridade.</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="alarm_battery_optimization_desc">Desabilite optimizações de bateria para um melhor comportamento do alarme em segundo plano</string>
     <string name="resume_on_bluetooth_connect">Resumir musica quando um dispositivo bluetooth for conectado.</string>
     <string name="crossfade_gapless">Desabilitar para álbuns sem espaço de intervalo entre musicas</string>
@@ -685,7 +685,7 @@
     <string name="recognition_notification_processing">A identificar…</string>
     <string name="recognition_notification_no_match">A música não foi encontrada...</string>
     <string name="recognition_notification_failed">Reconhecimento falhou</string>
-    <string name="listen_on_metrolist">Ouvir no MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="map_csv_columns">Mapear colunas de CSV</string>
     <string name="first_row_is_header">Primeiro linha como cabeçalho</string>
     <string name="artist_name_column">Coluna do nome de artista</string>

@@ -334,7 +334,7 @@
     <string name="equalizer_desc">Mở bộ chỉnh âm trong ứng dụng</string>
     <string name="enable">Cho phép</string>
     <string name="save_episode_for_later">Lưu để nghe sau</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="credits_license_name">Giấy phép Công cộng GNU phiên bản 3.0 (GPLv3)</string>
     <string name="daily_discover_based_on">Dựa trên %1$s</string>
     <string name="logout_keep">Giữ lại</string>
@@ -366,7 +366,7 @@
     <string name="lyrics_provider_priority_desc">Kéo để xắp xếp lại nhà cung cấp theo ý muốn. Vị trí càng cao -&gt; Ưu tiên càng cao</string>
     <string name="changelog">Lịch sử cập nhật</string>
     <string name="changelog_empty">Không có lịch sử cập nhật có sẵn</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Xem trong GitHub</string>
     <string name="current_version">Phiên bản hiện tại</string>
@@ -481,13 +481,13 @@
     <string name="wrapped_total_artists_subtitle">nghệ sĩ độc bản!</string>
     <string name="wrapped_total_songs_title">Bạn đã được nghe</string>
     <string name="wrapped_total_songs_subtitle">các bài hát độc đáo!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">đã đến lúc xem bạn đã nghe những gì trong suốt năm qua…</string>
     <string name="wrapped_intro_button">đi nào!</string>
     <string name="wrapped_ready_title">WRAPPED CỦA BẠN ĐÃ SẴN SÀNG!</string>
     <string name="wrapped_ready_subtitle">Đã đến lúc xem bạn đã yêu thích những gì trong suốt năm qua…</string>
     <string name="wrapped_thank_you">Cảm ơn vì đã nghe!</string>
-    <string name="wrapped_special_thanks">Trân trọng cảm ơn MO Agamy vì đã tạo ra MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Đóng Wrapped</string>
     <string name="wrapped_create_playlist">Tạo danh sách phát</string>
     <string name="wrapped_playlist_saved">Danh sách phát đã được lưu</string>
@@ -674,7 +674,7 @@
     <string name="recognition_notification_processing">Đang xác định…</string>
     <string name="recognition_notification_no_match">Không tìm thấy kết quả phù hợp</string>
     <string name="recognition_notification_failed">Không nhận dạng được</string>
-    <string name="listen_on_metrolist">Nghe trên MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="map_csv_columns">Ánh xạ các cột CSV</string>
     <string name="first_row_is_header">Dòng đầu tiên là tiêu đề</string>
     <string name="artist_name_column">Cột Tên nghệ sĩ</string>

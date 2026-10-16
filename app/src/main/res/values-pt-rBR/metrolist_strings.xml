@@ -228,7 +228,7 @@
     <string name="wrapped_total_artists_subtitle">Artistas únicos!</string>
     <string name="wrapped_total_songs_title">Você escutou a</string>
     <string name="wrapped_total_songs_subtitle">Músicas únicas!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">É hora de checar o que você tem ouvido por todo esse ano…</string>
     <string name="wrapped_intro_button">vamos lá!</string>
     <string name="wrapped_logo_content_description">MAKOFF Music Logo</string>
@@ -236,7 +236,7 @@
     <string name="wrapped_ready_title">SUA RETROSPECTIVA ESTÁ PRONTA!</string>
     <string name="wrapped_ready_subtitle">Hora de checar o que você adorou em todo esse ano…</string>
     <string name="wrapped_thank_you">Obrigado por ouvir!</string>
-    <string name="wrapped_special_thanks">Agradecimentos especiais ao MO Agamy por criar o MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Fechar Retrospectiva</string>
     <string name="wrapped_playlist_title">Sua Retrospectiva %s</string>
     <string name="wrapped_create_playlist">Criar playlist</string>
@@ -503,7 +503,7 @@
     <string name="lyrics_provider_priority_desc">Arraste para reordenar provedores por sua preferência. Mais ao topo significa maior prioridade</string>
     <string name="changelog">Novidades</string>
     <string name="changelog_empty">Sem novidades no momento</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Ver no GitHub</string>
     <string name="current_version">Versão atual</string>
@@ -554,7 +554,7 @@
     <string name="credits_view_repo">Ver repositório</string>
     <string name="buy_mo_a_coffee">Me compre um café!</string>
     <string name="community_and_info">Comunidade e Informações</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Quer tocar sua música favorita?</string>
     <string name="yeah">Sim!</string>
     <string name="stands_with_palestine">Esse projeto apoia a Palestina 🇵🇸</string>
@@ -700,7 +700,7 @@
     <string name="recognition_notification_processing">Identificando…</string>
     <string name="recognition_notification_no_match">Nenhuma correspondência encontrada</string>
     <string name="recognition_notification_failed">Reconhecimento falhou</string>
-    <string name="listen_on_metrolist">Ouvir no metrolist</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Seções visíveis</string>
     <string name="android_auto_reorder_hint">Toque em uma seção para ativar ou desativá-la.\nPressione e segure o botão de arrastar para reordenar. A primeira seção será mostrada como padrão</string>

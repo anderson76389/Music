@@ -183,7 +183,7 @@
     <string name="release_notes">הערות שחרור</string>
     <string name="changelog">יומן שינויים</string>
     <string name="changelog_empty">אין יומני שינויים זמינים</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">הצג ב-GitHub</string>
     <string name="current_version">גרסה נוכחית</string>
@@ -351,7 +351,7 @@
     <string name="wrapped_total_artists_subtitle">אמנים ייחודיים</string>
     <string name="wrapped_total_songs_title">הקשבת ל</string>
     <string name="wrapped_total_songs_subtitle">שירים ייחודיים</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">הגיע הזמן לראות למה האזנתם</string>
     <string name="wrapped_intro_button">בואו נתחיל!</string>
     <string name="wrapped_logo_content_description">MAKOFF Music לוגו</string>
@@ -359,7 +359,7 @@
     <string name="wrapped_ready_title">העטיפה שלך מוכנה!</string>
     <string name="wrapped_ready_subtitle">הגיע הזמן לראות מה אהבתם השנה.</string>
     <string name="wrapped_thank_you">תודה שהקשבת</string>
-    <string name="wrapped_special_thanks">תודה מיוחדת ל-MO Agamy על יצירת MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_create_playlist">צור רשימת השמעה</string>
     <string name="wrapped_playlist_saved">רשימת ההשמעה נשמרה</string>
     <string name="no_profiles">אין פרופילי אקולייזר</string>
@@ -607,7 +607,7 @@
     <string name="recognition_notification_processing">מזהה...</string>
     <string name="recognition_notification_no_match">לא נמצאה התאמה</string>
     <string name="recognition_notification_failed">הזיהוי נכשל</string>
-    <string name="listen_on_metrolist">האזן ב-MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="map_csv_columns">מפה עמודות CSV</string>
     <string name="first_row_is_header">השורה הראשונה היא כותרת עליונה</string>
     <string name="artist_name_column">עמודת שם האמן</string>

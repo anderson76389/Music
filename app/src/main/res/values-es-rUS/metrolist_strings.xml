@@ -246,7 +246,7 @@
     <string name="wrapped_total_artists_subtitle">¡Artistas únicos!</string>
     <string name="wrapped_total_songs_title">Has escuchado a</string>
     <string name="wrapped_total_songs_subtitle">¡Canciones únicas!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">Es hora de ver qué has estado escuchando durante todo este año…</string>
     <string name="wrapped_intro_button">¡vamos!</string>
     <string name="wrapped_logo_content_description">Logo de MAKOFF Music</string>
@@ -254,7 +254,7 @@
     <string name="wrapped_ready_title">¡TU RECAP ESTÁ LISTO!</string>
     <string name="wrapped_ready_subtitle">Es hora de ver lo que más te gustó durante todo el año…</string>
     <string name="wrapped_thank_you">¡Gracias por escuchar!</string>
-    <string name="wrapped_special_thanks">Agradecimiento especial a MO Agamy por crear MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Cerrar Wrapped</string>
     <string name="wrapped_playlist_title">Tu Recap %s</string>
     <string name="wrapped_create_playlist">Crear lista de reproducción</string>
@@ -552,7 +552,7 @@
     <string name="respect_agent_positioning">Respetar la posición de los agentes</string>
     <string name="changelog">Registro de cambios</string>
     <string name="changelog_empty">No hay registros de cambios disponibles</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Ver en GitHub</string>
     <string name="current_version">Versión actual</string>
@@ -674,7 +674,7 @@
     <string name="recognition_notification_processing">Identificando…</string>
     <string name="recognition_notification_no_match">Sin coincidencias</string>
     <string name="recognition_notification_failed">Reconocimiento fallido</string>
-    <string name="listen_on_metrolist">Escuchar en MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="importing_playlist">Importando listas de reproducción…</string>
     <string name="pin_to_speed_dial">Anclar para acción rapida</string>
     <string name="unpin_from_speed_dial">Desanclar de acción rapida</string>
@@ -691,7 +691,7 @@
     <string name="credits_view_repo">Ver repositorio</string>
     <string name="buy_mo_a_coffee">¡Cómprame un café!</string>
     <string name="community_and_info">Comunidad e información</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">¿Quieres reproducir su canción favorita?</string>
     <string name="yeah">¡Si!</string>
     <string name="stands_with_palestine">Este proyecto apoya a palestina 🇵🇸</string>

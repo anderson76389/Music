@@ -39,8 +39,7 @@ object Updater {
     private var cachedAllReleases: List<ReleaseInfo> = emptyList()
     
     private const val CHECK_INTERVAL_MILLIS = 2 * 60 * 60 * 1000L // 2 hours
-    private const val GITHUB_API_BASE = ""
-    private const val KMP_APK_NAME = "Metrolist.apk"
+    internal const val GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"
 
     /**
      * Compares two version strings.
@@ -82,7 +81,7 @@ object Updater {
     /**
      * Parse release assets from GitHub API response
      */
-    private fun parseAssets(assetsArray: JSONArray): List<ReleaseAsset> {
+    internal fun parseAssets(assetsArray: JSONArray): List<ReleaseAsset> {
         val assets = mutableListOf<ReleaseAsset>()
         
         for (i in 0 until assetsArray.length()) {
@@ -94,11 +93,12 @@ object Updater {
             
             val downloadUrl = asset.getString("browser_download_url")
             val size = asset.getLong("size")
+            if (!downloadUrl.startsWith("https://github.com/anderson76389/Music/releases/download/")) continue
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
-                name == "Metrolist.apk" -> "universal" to "foss"
-                name == "Metrolist-with-Google-Cast.apk" -> "universal" to "gms"
+                name == "MAKOFF-Music.apk" -> "universal" to "foss"
+                name == "MAKOFF-Music-Google-Cast.apk" -> "universal" to "gms"
                 name.startsWith("app-") && name.endsWith("-release.apk") -> {
                     val arch = name.removePrefix("app-").removeSuffix("-release.apk")
                     arch to "foss"
@@ -136,8 +136,8 @@ object Updater {
                 
                 val releaseInfo = ReleaseInfo(
                     tagName = json.getString("tag_name"),
-                    versionName = json.getString("name"),
-                    description = json.getString("body"),
+                    versionName = json.getString("tag_name").removePrefix("v"),
+                    description = json.optString("body").takeUnless { json.isNull("body") }.orEmpty(),
                     releaseDate = json.getString("published_at"),
                     assets = parseAssets(json.getJSONArray("assets"))
                 )
@@ -164,7 +164,7 @@ object Updater {
                 
                 while (hasMore && page <= 10) { // Limit to 10 pages
                     check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour MAKOFF Music" }
-                val response = client.get("$GITHUB_API_BASE/releases?page=$page&per_page=30")
+                    val response = client.get("$GITHUB_API_BASE/releases?page=$page&per_page=30")
                         .bodyAsText()
                     val json = JSONArray(response)
                     
@@ -177,8 +177,8 @@ object Updater {
                         val releaseObj = json.getJSONObject(i)
                         releases.add(ReleaseInfo(
                             tagName = releaseObj.getString("tag_name"),
-                            versionName = releaseObj.getString("name"),
-                            description = releaseObj.getString("body"),
+                            versionName = releaseObj.getString("tag_name").removePrefix("v"),
+                            description = releaseObj.optString("body").takeUnless { releaseObj.isNull("body") }.orEmpty(),
                             releaseDate = releaseObj.getString("published_at"),
                             assets = parseAssets(releaseObj.getJSONArray("assets"))
                         ))
@@ -189,30 +189,6 @@ object Updater {
                 
                 cachedAllReleases = releases
                 releases
-            }
-        }
-
-    internal fun parseKmpRelease(response: String): ReleaseInfo? {
-        val release = JSONObject(response)
-        val assets = parseAssets(release.getJSONArray("assets")).filter { it.name == KMP_APK_NAME }
-        val tagName = release.getString("tag_name")
-
-        return ReleaseInfo(
-            tagName = tagName,
-            versionName = tagName.removePrefix("v"),
-            description = release.optString("body").takeUnless { release.isNull("body") }.orEmpty(),
-            releaseDate = release.getString("published_at"),
-            assets = assets,
-        ).takeIf { assets.isNotEmpty() }
-    }
-
-    /**
-     * Returns the latest stable KMP release when it includes an Android APK.
-     */
-    suspend fun getLatestKmpRelease(): Result<ReleaseInfo?> =
-        withContext(Dispatchers.IO) {
-            runCatching {
-                null
             }
         }
 

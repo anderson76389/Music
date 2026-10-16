@@ -227,7 +227,7 @@
     <string name="wrapped_total_artists_subtitle">artistes uniques !</string>
     <string name="wrapped_total_songs_title">Vous avez écouté</string>
     <string name="wrapped_total_songs_subtitle">titres uniques !</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">Il est temps de découvrir ce que vous avez écouté tout au long de cette année…</string>
     <string name="wrapped_intro_button">allons-y !</string>
     <string name="wrapped_logo_content_description">Logo MAKOFF Music</string>
@@ -235,7 +235,7 @@
     <string name="wrapped_ready_title">VOTRE CADEAU EST PRÊT À ÊTRE DÉVOILÉ !</string>
     <string name="wrapped_ready_subtitle">C\'est le moment de découvrir ce que vous avez aimé tout au long de cette année…</string>
     <string name="wrapped_thank_you">Merci de votre écoute !</string>
-    <string name="wrapped_special_thanks">Remerciements particuliers à MO Agamy pour la création de MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Merci de faire vivre MAKOFF Music</string>
     <string name="wrapped_close">Fermer le résumé</string>
     <string name="wrapped_playlist_title">Votre %s en résumé</string>
     <string name="wrapped_create_playlist">Créer une playlist</string>
@@ -496,7 +496,7 @@
     <string name="credits_license_desc">Logiciel libre et open source. Vous pouvez l\'utiliser, l\'étudier, le partager et l\'améliorer</string>
     <string name="credits_telegram">Chaîne Telegram</string>
     <string name="credits_view_repo">Consulter le dépôt</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="no_account_found">Aucun compte trouvé</string>
     <string name="checking_previous_account">Vérification du compte précédent…</string>
     <string name="restore">Restaurer</string>
@@ -523,7 +523,7 @@
     <string name="lyrics_provider_priority_desc">Faites glisser pour réorganiser les fournisseurs selon vos préférences. Plus la position est élevée, plus la priorité est grande</string>
     <string name="changelog">Journal des modifications</string>
     <string name="changelog_empty">Aucun journal des modifications disponible</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Voir sur GitHub</string>
     <string name="current_version">Version actuelle</string>
@@ -707,7 +707,7 @@
     <string name="recognition_notification_processing">Identification en cours…</string>
     <string name="recognition_notification_no_match">Aucun résultat trouvé</string>
     <string name="recognition_notification_failed">Échec de la reconnaissance</string>
-    <string name="listen_on_metrolist">Écoutez sur MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Sections visibles</string>
     <string name="android_auto_reorder_hint">Appuyez sur une section pour l\'activer ou la désactiver.\nAppuyez longuement sur la poignée de déplacement pour modifier l\'ordre. La première section s\'affichera par défaut</string>

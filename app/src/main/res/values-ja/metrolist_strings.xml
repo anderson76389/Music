@@ -218,7 +218,7 @@
     <string name="equalizer_desc">オーディオイコライザーを調整します</string>
     <string name="listen_together">Listen Together</string>
     <string name="play_pause">再生/停止</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="none">なし</string>
     <string name="cache_size_warning_confirm">続行</string>
     <string name="wrapped_top_song_album_art_content_description">アルバムアート</string>
@@ -352,7 +352,7 @@
     <string name="wrapped_ready_title">あなたのWrappedが完成しました！</string>
     <string name="wrapped_ready_subtitle">今年あなたが夢中になった音楽を見てみましょう…</string>
     <string name="wrapped_thank_you">聴いてくれてありがとう！</string>
-    <string name="wrapped_special_thanks">MAKOFF Musicを制作したMO Agamyに特別な感謝を</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Wrappedを閉じる</string>
     <string name="wrapped_playlist_title">あなたの%sWrapped</string>
     <plurals name="band_count">
@@ -512,7 +512,7 @@
     <string name="lyrics_provider_priority_desc">ドラッグして提供元を並び替えます。上にあるほど優先順位が高くなります</string>
     <string name="changelog">変更履歴</string>
     <string name="changelog_empty">変更履歴はありません</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">GitHubを開く</string>
     <string name="current_version">バージョン</string>
@@ -549,7 +549,7 @@
     <string name="credits_view_repo">リポジトリを表示</string>
     <string name="buy_mo_a_coffee">コーヒーをおごる</string>
     <string name="community_and_info">コミュニティと情報</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">お気に入りの曲を再生しますか？</string>
     <string name="yeah">はい</string>
     <string name="stands_with_palestine">このプロジェクトはパレスチナを支持しています 🇵🇸</string>
@@ -688,7 +688,7 @@
     <string name="recognition_notification_processing">認識中…</string>
     <string name="recognition_notification_no_match">一致する曲が見つかりませんでした</string>
     <string name="recognition_notification_failed">認識に失敗しました</string>
-    <string name="listen_on_metrolist">MAKOFF Musicで聴く</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">表示する項目</string>
     <string name="android_auto_reorder_hint">項目をタップするとオン/オフを切り替えられます。長押しで並び替えができます。先頭の項目がデフォルトで表示されます</string>

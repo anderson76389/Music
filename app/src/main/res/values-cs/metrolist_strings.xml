@@ -231,7 +231,7 @@
     <string name="wrapped_total_artists_subtitle">různých umělců!</string>
     <string name="wrapped_total_songs_title">Poslouchali jste</string>
     <string name="wrapped_total_songs_subtitle">různých skladeb!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">je čas podívat se, co jsi tento rok poslouchal/a…</string>
     <string name="wrapped_intro_button">jdeme na to!</string>
     <string name="wrapped_logo_content_description">Logo MAKOFF Music</string>
@@ -239,7 +239,7 @@
     <string name="wrapped_ready_title">TVŮJ WRAPPED JE READY!</string>
     <string name="wrapped_ready_subtitle">Je čas podívat se, co se ti tento rok líbilo…</string>
     <string name="wrapped_thank_you">Děkujeme za poslech!</string>
-    <string name="wrapped_special_thanks">Zvláštní poděkování patří MO Agamy za vytvoření MAKOFF Musicu</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Zavřít Wrapped</string>
     <string name="wrapped_playlist_title">Váš %s Wrapped</string>
     <string name="wrapped_create_playlist">Vytvořit playlist</string>
@@ -518,7 +518,7 @@
     <string name="listen_together_auto_approval_suggestions_desc">Automaticky schvalovat a zařazovat do fronty návrhy skladeb od hostů</string>
     <string name="changelog">Seznam změn</string>
     <string name="changelog_empty">Seznam změn není k dispozici</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Zobrazit na GitHubu</string>
     <string name="current_version">Aktuální verze</string>
@@ -546,7 +546,7 @@
     <string name="credits_view_repo">Zobrazit repozitář</string>
     <string name="buy_mo_a_coffee">Kupte mi kávu!</string>
     <string name="community_and_info">Komunita a informace</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Chcete přehrát autorovu oblíbenou skladbu?</string>
     <string name="yeah">Jasně!</string>
     <string name="stands_with_palestine">Tento projekt podporuje Palestinu 🇵🇸</string>
@@ -717,7 +717,7 @@
     <string name="recognition_notification_processing">Identifikuji…</string>
     <string name="recognition_notification_no_match">Nenalezena žádná shoda</string>
     <string name="recognition_notification_failed">Rozpoznávání selhalo</string>
-    <string name="listen_on_metrolist">Přehrát v MAKOFF Musicu</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Viditelné sekce</string>
     <string name="android_auto_reorder_hint">Klepněte na sekci pro její povolení nebo zakázání.\nPodržte posuvník pro změnu pořadí. První sekce bude ve výchozím nastavení zobrazena</string>

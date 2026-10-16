@@ -1,33 +1,25 @@
 package fr.makoff.music.utils
 
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.json.JSONArray
+import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class UpdaterTest {
-    @Test
-    fun parsesKmpReleaseArtifact() {
-        val response =
-            """
-            {
-              "tag_name": "v1.2.3",
-              "body": null,
-              "published_at": "2026-09-05T12:00:00Z",
-              "assets": [{
-                "name": "Metrolist.apk",
-                "browser_download_url": "https://example.com/Metrolist.apk",
-                "size": 42
-              }]
-            }
-            """.trimIndent()
-        val release = checkNotNull(Updater.parseKmpRelease(response))
-
-        assertEquals("1.2.3", release.versionName)
-        assertEquals("", release.description)
-        assertEquals("https://example.com/Metrolist.apk", release.assets.single().downloadUrl)
-        assertNull(Updater.parseKmpRelease(response.replace("Metrolist.apk", "Metrolist-with-Google-Cast.apk")))
+    @Test fun selectsOwnVariantAndRejectsForeignDownloads() {
+        val assets = Updater.parseAssets(JSONArray("""[
+          {"name":"MAKOFF-Music.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music.apk","size":42},
+          {"name":"MAKOFF-Music-Google-Cast.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-Google-Cast.apk","size":43},
+          {"name":"MAKOFF-Music.apk","browser_download_url":"https://example.com/foreign.apk","size":44}
+        ]"""))
+        assertEquals(2, assets.size)
+        assertEquals("foss", assets[0].variant)
+        assertEquals("gms", assets[1].variant)
+        assertEquals("universal", assets[0].architecture)
+        assertTrue(Updater.isUpdateAvailable("13.7.0", "13.7.1"))
+        assertFalse(Updater.isUpdateAvailable("13.7.0", "13.7.0"))
+        assertEquals("https://api.github.com/repos/anderson76389/Music", Updater.GITHUB_API_BASE)
     }
 }

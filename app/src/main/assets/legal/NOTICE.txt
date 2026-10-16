@@ -1,0 +1,5 @@
+MAKOFF Music, modified distribution of Metrolist.
+Original source: Metrolist commit 76fa5a78b5110674442884b6f21c0cef51cdb782.
+Original copyrights remain with Metrolist and its contributors; InnerTune, OuterTune and included libraries retain their notices.
+Modifications by MAKOFF, 2026. Source and build instructions: https://github.com/anderson76389/Music
+GPL-3.0; see GPL-3.0.txt and the source copyright headers.

@@ -231,7 +231,7 @@
     <string name="wrapped_total_artists_subtitle">уникальных исполнителей!</string>
     <string name="wrapped_total_songs_title">Вы послушали</string>
     <string name="wrapped_total_songs_subtitle">уникальных треков!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">пришло время узнать, что вы слушали весь этот год…</string>
     <string name="wrapped_intro_button">поехали!</string>
     <string name="wrapped_logo_content_description">Логотип MAKOFF Music</string>
@@ -239,7 +239,7 @@
     <string name="wrapped_ready_title">ВАШ WRAPPED ГОТОВ!</string>
     <string name="wrapped_ready_subtitle">Время узнать, что вам понравилось за весь этот год…</string>
     <string name="wrapped_thank_you">Спасибо за прослушивание!</string>
-    <string name="wrapped_special_thanks">Особая благодарность MO Agamy за создание MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Закрыть Wrapped</string>
     <string name="wrapped_playlist_title">Ваш Wrapped %s</string>
     <string name="wrapped_create_playlist">Создать плейлист</string>
@@ -510,7 +510,7 @@
     <string name="lyrics_provider_priority_desc">Перетащите для изменения порядка. Чем выше источник в списке, тем выше его приоритет</string>
     <string name="changelog">Список изменений</string>
     <string name="changelog_empty">Список изменений недоступен</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Открыть на GitHub</string>
     <string name="current_version">Текущая версия</string>
@@ -557,7 +557,7 @@
     <string name="credits_view_repo">Открыть репозиторий</string>
     <string name="buy_mo_a_coffee">Угостить меня кофе!</string>
     <string name="community_and_info">Сообщество и информация</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Включить его любимую песню?</string>
     <string name="yeah">Да!</string>
     <string name="stands_with_palestine">Этот проект поддерживает Палестину 🇵🇸</string>
@@ -713,7 +713,7 @@
     <string name="recognition_notification_processing">Определяем…</string>
     <string name="recognition_notification_no_match">Совпадений не найдено</string>
     <string name="recognition_notification_failed">Не удалось распознать</string>
-    <string name="listen_on_metrolist">Слушать в MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Видимые разделы</string>
     <string name="android_auto_reorder_hint">Нажмите на раздел, чтобы включить или отключить его.\nУдерживайте значок перетаскивания, чтобы изменить порядок. Первый раздел будет отображаться по умолчанию</string>

@@ -229,7 +229,7 @@
     <string name="wrapped_total_artists_subtitle">artiști unici!</string>
     <string name="wrapped_total_songs_title">Ai ascultat</string>
     <string name="wrapped_total_songs_subtitle">(de) melodii unice!</string>
-    <string name="wrapped_intro_title">METROLIST</string>
+    <string name="wrapped_intro_title">MAKOFF Music</string>
     <string name="wrapped_intro_subtitle">este timpul să vedem ce ai ascultat în tot acest an…</string>
     <string name="wrapped_intro_button">să mergem!</string>
     <string name="wrapped_logo_content_description">Logo-ul MAKOFF Music</string>
@@ -237,7 +237,7 @@
     <string name="wrapped_ready_title">WRAPPED-UL TĂU ESTE GATA!</string>
     <string name="wrapped_ready_subtitle">Este timpul să vedem ce ai apreciat în tot acest an…</string>
     <string name="wrapped_thank_you">Mulțumim pentru ascultare!</string>
-    <string name="wrapped_special_thanks">Mulțumire speciale lui MO Agamy pentru crearea MAKOFF Music</string>
+    <string name="wrapped_special_thanks">Thank you for listening with MAKOFF Music</string>
     <string name="wrapped_close">Închide Wrapped</string>
     <string name="wrapped_playlist_title">Wrapped-ul tău %s</string>
     <string name="wrapped_create_playlist">Creează playlist</string>
@@ -507,7 +507,7 @@
     <string name="lyrics_provider_priority_desc">Trage pentru a reordona furnizorii după preferințe. O poziție mai înaltă înseamnă prioritate mai mare</string>
     <string name="changelog">Jurnal de modificări</string>
     <string name="changelog_empty">Niciun jurnal de modificări disponibil</string>
-    <string name="github_releases_url">https://github.com</string>
+    <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="list_bullet">•</string>
     <string name="view_on_github">Vezi pe GitHub</string>
     <string name="current_version">Versiunea curentă</string>
@@ -564,7 +564,7 @@
     <string name="credits_view_repo">Vezi depozitul</string>
     <string name="buy_mo_a_coffee">Cumpără-mi o cafea!</string>
     <string name="community_and_info">Comunitate și informații</string>
-    <string name="metrolist">METROLIST</string>
+    <string name="metrolist">MAKOFF Music</string>
     <string name="wanna_play_favorite_song">Vrei să redai melodia lui/ei preferată?</string>
     <string name="yeah">Da!</string>
     <string name="stands_with_palestine">Acest proiect ține cu Palestina 🇵🇸</string>
@@ -707,7 +707,7 @@
     <string name="recognition_notification_processing">Se identifică…</string>
     <string name="recognition_notification_no_match">Nicio potrivire găsită</string>
     <string name="recognition_notification_failed">Recunoaștere eșuată</string>
-    <string name="listen_on_metrolist">Ascultă pe MAKOFF Music</string>
+    <string name="listen_on_metrolist">MAKOFF Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Secțiuni vizibile</string>
     <string name="android_auto_reorder_hint">Atinge o secțiune pentru a o activa sau dezactiva.\nȚine apăsat glisorul pentru a reordona. Prima secțiune va fi afișată în mod prestabilit</string>

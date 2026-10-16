@@ -1,0 +1,25 @@
+services:
+  listen-server:
+    build: .
+    restart: unless-stopped
+    environment:
+      PORT: "8080"
+      DATABASE_FILE: /app/data/music.db
+    volumes:
+      - rooms:/app/data
+  tls:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      MUSIC_DOMAIN: ${MUSIC_DOMAIN:?Set MUSIC_DOMAIN to your server domain}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - certificates:/data
+      - caddy-config:/config
+volumes:
+  rooms:
+  certificates:
+  caddy-config:
