@@ -5,10 +5,11 @@ paroles, bibliothèque, widgets, Android Auto et traductions existantes.
 Nom provisoire : MAKOFF Music. Identifiant : fr.makoff.music (debug : .debug).
 Android minimum : 8.0 (API 26). APK universel ARM et x86.
 
-Compilation FOSS et tests unitaires réussis sur GitHub Actions le 16 octobre 2026.
-Exécution validée : https://github.com/anderson76389/Music/actions/runs/38952448806
-APK de test : https://github.com/anderson76389/Music/actions/runs/38952448806/artifacts/12068729869
-La lecture réelle, la connexion et la traduction complète restent à tester sur téléphone.
+Compilation FOSS et Google Cast, tests Android et tests du serveur réussis sur GitHub Actions le 16 octobre 2026.
+Exécution validée : https://github.com/anderson76389/Music/actions/runs/38954538211
+APK de test : https://github.com/anderson76389/Music/actions/runs/38954538211/artifacts/12070462521
+APK Google Cast : https://github.com/anderson76389/Music/actions/runs/38954538211/artifacts/12069998385
+La lecture réelle, la connexion et les salons synchronisés restent à tester sur téléphone.
 
 Modifications : identité propre, nouveaux vecteurs de lancement, bibliothèque
 InnerTubeX v0.8.4 embarquée avec sa licence, mises à jour Metrolist et migration KMP
@@ -33,8 +34,8 @@ Le workflow MAKOFF Music Android compile une APK de test sur ubuntu-latest.
 Télécharger son artifact seulement si le job réussit. La signature debug CI n’est
 pas une signature durable : ne pas distribuer ces APK comme mises à jour finales.
 Pour une publication durable : créer et sauvegarder une clé privée de signature,
-configurer les secrets, ajouter un workflow de release signé et son dépôt de mises
-à jour. Aucune clé privée ni compte de développeur Metrolist n’est fourni.
+configurer les secrets puis exécuter le workflow Publish signed Music APKs.
+Le canal des mises à jour pointe exclusivement vers ce dépôt. Aucune clé privée ni compte de développeur Metrolist n’est fourni.
 
 VALIDATION RESTANTE SUR TÉLÉPHONE
 Installation à côté de Metrolist ; lecture sans compte et avec compte ; recherche ;
@@ -59,4 +60,4 @@ choisit les flux disponibles et garde la prise en charge des flux Premium fourni
 AUDIT D’INDÉPENDANCE
 Lire INDEPENDANCE-MUSIC.txt : inventaire des fonctions conservées, de vos secrets
 de publication et du serveur d’écoute partagée inclus mais non encore hébergé.
-Les anciennes APK de test ci-dessus précèdent ce dernier audit.
+Ces deux APK correspondent à cet audit. Chaque construction de test utilise une\nclé temporaire ; une publication durable nécessite votre clé privée conservée.\nSauvegarder les données avant de remplacer une ancienne installation de test.
