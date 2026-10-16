@@ -1,349 +1,85 @@
-<div align="center">
+<p align="center"><img src="assets/makoff-banner.svg" alt="MAKOFF Music — Votre musique. Votre application." width="100%"></p>
 
-<img src="fastlane/metadata/android/en-US/images/icon.png" alt="Metrolist app icon" width="200" />
+<p align="center">
+  <strong>Un client YouTube Music libre pour Android, avec votre bibliothèque, vos téléchargements et votre son.</strong>
+</p>
 
-# Metrolist
+<p align="center">
+  <a href="https://github.com/anderson76389/Music/releases">📦 Télécharger les APK</a> ·
+  <a href="https://github.com/anderson76389/Music/actions/workflows/makoff-android.yml">🧪 Vérifications</a> ·
+  <a href="https://github.com/anderson76389/Music/issues">💬 Signaler un problème</a>
+</p>
 
-### YouTube Music client for Android
+## Une application pour écouter à votre façon
 
-<br/>
+- **Votre musique** : recherche, albums, artistes, playlists et bibliothèque ; connexion au compte YouTube Music facultative.
+- **Lecture au quotidien** : arrière-plan, écran verrouillé, file d’attente, lecture aléatoire, répétition et minuterie.
+- **Écoute hors connexion** : téléchargements, cache et gestion des morceaux enregistrés.
+- **Son personnalisable** : qualité élevée par défaut, égaliseur et réglages de lecture.
+- **Paroles et découverte** : paroles synchronisées, traduction et reconnaissance musicale selon les fournisseurs disponibles.
+- **Sur vos appareils** : widgets, Android Auto et Google Cast avec la variante compatible.
+- **Écoute partagée** : service inclus dans le dépôt, à héberger puis à configurer dans l’application.
+- **Interface personnalisable** : thèmes, couleurs et préférences de présentation.
 
-<a href="https://www.blacksmith.sh">
-  <img src="assets/blacksmith-powered.png" alt="CI powered by Blacksmith" width="280" />
-</a>
+## Télécharger et installer
 
-<br/>
-<br/>
+**Android 8.0 minimum.** Les APK sont universels : ARM 32/64 bits et x86 32/64 bits.
 
-[![Latest release](https://img.shields.io/github/v/release/MetrolistGroup/Metrolist?style=for-the-badge&labelColor=0d1117)](https://github.com/MetrolistGroup/Metrolist/releases)
-[![License](https://img.shields.io/github/license/MetrolistGroup/metrolist?style=for-the-badge&labelColor=0d1117)](https://github.com/MetrolistGroup/Metrolist/blob/main/LICENSE)
-[![Downloads](https://img.shields.io/github/downloads/MetrolistGroup/Metrolist/total?style=for-the-badge&labelColor=0d1117)](https://github.com/MetrolistGroup/Metrolist/releases)
+| Variante | Fichier dans les versions stables | Pour qui ? |
+| --- | --- | --- |
+| Standard, sans Google Cast | `MAKOFF-Music.apk` | Écouter et télécharger sans intégrer Google Cast |
+| Avec Google Cast | `MAKOFF-Music-Google-Cast.apk` | Diffuser aussi vers un appareil Google Cast compatible |
 
-<br/>
+**[Ouvrir toutes les versions et leurs APK →](https://github.com/anderson76389/Music/releases)**
 
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?style=for-the-badge&logo=discord&logoColor=white&labelColor=0d1117)](https://dsc.gg/metrolist)
-[![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white&labelColor=0d1117)](https://t.me/metrolistapp)
+Dans chaque version, ouvrez **« Assets » (fichiers joints)** et téléchargez le fichier `.apk` voulu. Autorisez son installation depuis votre navigateur ou votre gestionnaire de fichiers si Android le demande. Les deux variantes utilisent le même identifiant : choisissez celle qui vous convient.
 
-<br/>
+### Versions de test
 
-[**Download**](#download-now) · [**Features**](#features) · [**Translate**](#translations) · [**FAQ**](#faq) · [**Support**](#support-the-project)
+Chaque envoi sur la branche principale déclenche la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La préversion est publiée seulement si ces contrôles réussissent.** Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
 
-</div>
+Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire propre à la construction. Ils peuvent cohabiter avec une version stable, mais ne garantissent pas une mise à jour directe entre deux tests. **Sauvegardez vos données avant de remplacer une installation de test.** Les mises à jour automatiques sont désactivées dans ces APK.
 
-> [!WARNING]
-> # MAINTENANCE MODE
-> Metrolist is currently in maintenance mode. This means we will only be fixing bugs and making minor improvements. Please do not submit PRs for new features or major changes, as they will not be accepted.  
-> The app is **NOT** dead, please stay tuned for updates on our discord (found above).
+### Versions stables et mises à jour
 
-> [!WARNING]
-> **Regional Restriction** - If YouTube Music is unavailable in your region, this app will not work without a **VPN or proxy** connecting to a supported region.
+Le circuit de publication stable produit les deux APK signés, les sources et leurs sommes de contrôle dans les Releases de ce dépôt. Il nécessite la configuration de la clé privée du projet. Les futures versions doivent conserver cette clé et augmenter leur numéro de version pour permettre la mise à jour Android.
 
----
+L’application stable recherche ses mises à jour exclusivement dans **ce dépôt**. Une préversion de test n’est pas présentée comme une version stable. Aucune publication stable n’est garantie tant que la signature n’est pas configurée.
 
-<div align="center">
+## La qualité sonore, sans promesse artificielle
 
-<h1><a id="screenshots"></a>Screenshots</h1>
+Le mode **Élevée** est sélectionné par défaut pour la lecture et les téléchargements. Les modes Automatique et Basse restent disponibles. L’application choisit parmi les flux réellement fournis par YouTube Music ; elle ne transforme pas un fichier compressé en audio sans perte. La disponibilité des flux dépend du morceau, du compte et des droits associés. Le casque, la sortie Android et le codec Bluetooth influencent aussi le résultat.
 
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Home screen" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Artist screen" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Recognize music screen" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_4.png" alt="Listen together screen" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Player screen" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Player lyrics screen" width="30%" />
+## Un projet géré dans ce dépôt
 
-</div>
+Le code du moteur de lecture et celui du serveur d’écoute partagée sont inclus dans les sources. L’identité Android, les liens de publication et le canal de mises à jour appartiennent à MAKOFF Music. Aucun serveur d’écoute partagée n’est imposé. L’intégration Discord a été retirée.
 
----
+L’application reste dépendante des services YouTube Music et des fournisseurs tiers activés. Un changement de ces services peut demander une correction du moteur. Les références techniques héritées et les notices légales sont détaillées dans le [rapport d’indépendance](docs/AUDIT-INDEPENDANCE.md).
 
-<div align="center">
+## Construire depuis les sources
 
-<h1><a id="features"></a>Features</h1>
+Prérequis : Android Studio, JDK 21, SDK Android 37.0 et outils de compilation 36.0.0. Configurez le SDK dans Android Studio et créez une clé de débogage locale si elle n’existe pas.
 
-<table>
-  <tr>
-    <td width="50%" valign="top">
-
-#### Playback
-- Stream any song or video from YouTube Music
-- Background playback
-- Download & cache for offline use
-- Skip silence
-- Sleep timer
-
-</td>
-    <td width="50%" valign="top">
-
-#### Audio
-- Audio normalization
-- Tempo & pitch control
-- Equalizer
-- Crossfade
-
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-
-#### Lyrics & Discovery
-- Live synced lyrics
-- AI-powered lyrics translation
-- Personalized quick picks
-- Search songs, albums, artists, videos, and playlists
-
-</td>
-    <td width="50%" valign="top">
-
-#### Library & Account
-- Full library management
-- Local playlists
-- Import playlists
-- Reorder songs in playlist or queue
-- YouTube Music account login
-- Sync songs, artists, albums, and playlists
-
-</td>
-  </tr>
-  <tr>
-    <td width="50%" valign="top">
-
-#### Social
-- Listen together with friends in real-time
-- Last.fm integration for scrobbling
-- Safe Discord Rich Presence
-
-</td>
-    <td width="50%" valign="top">
-
-#### Interface
-- Home screen widget
-- Light / Dark / Black / Dynamic theme modes
-- Dynamic color + 19 preset color palettes
-- Built with Material 3
-
-</td>
-  </tr>
-</table>
-
-</div>
-
----
-
-<div align="center">
-
-<h1><a id="download-now"></a>Download Now</h1>
-
-<h2>Stable Release</h2>
-
-<table>
-  <tr>
-    <th align="center">Obtainium</th>
-    <th align="center">IzzyOnDroid</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/MetrolistGroup/Metrolist/">
-        <img src="assets/badges/obtainium.svg" alt="Add Metrolist to Obtainium" height="100">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://apt.izzysoft.de/fdroid/index/apk/com.metrolist.music">
-        <img src="assets/badges/izzyondroid.svg" alt="Get Metrolist on IzzyOnDroid" height="100">
-      </a>
-    </td>
-  </tr>
-  <tr>
-    <th align="center">OpenAPK</th>
-    <th align="center">GitHub</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://www.openapk.net/metrolist/com.metrolist.music/">
-        <img src="assets/badges/openapk.svg" alt="Get Metrolist on OpenAPK" height="100">
-      </a>
-    </td>
-    <td align="center">
-      <a href="https://github.com/MetrolistGroup/Metrolist/releases/latest/download/Metrolist.apk">
-        <img src="assets/badges/github-stable.svg" alt="Get the stable Metrolist release on GitHub" height="100">
-      </a>
-    </td>
-  </tr>
-</table>
-
-<h2>Nightly Build</h2>
-
-<table>
-  <tr>
-    <th align="center">GitHub</th>
-  </tr>
-  <tr>
-    <td align="center">
-      <a href="https://github.com/MetrolistGroup/Metrolist/releases/download/nightly/Metrolist-with-Google-Cast.apk">
-        <img src="assets/badges/github-nightly.svg" alt="Get the Metrolist nightly build on GitHub" height="120">
-      </a>
-    </td>
-  </tr>
-</table>
-
-</div>
-
----
-
-<div align="center">
-
-<h1><a id="faq"></a>FAQ</h1>
-
-<h3>Got questions? Check out our <a href="https://metrolist.cc/#faq">FAQ page</a> for answers to the most common ones.</h3>
-
-</div>
-
----
-
-<div align="center">
-
-<h1><a id="translations"></a>Translations</h1>
-
-[![Translation status](https://img.shields.io/weblate/progress/metrolist?style=for-the-badge&labelColor=0d1117)](https://hosted.weblate.org/engage/metrolist/)
-
-<h3>We use Weblate to translate Metrolist. <a href="https://hosted.weblate.org/projects/Metrolist/">Help us bring Metrolist to more people!</a></h3>
-
-<a href="https://hosted.weblate.org/projects/Metrolist/">
-  <img src="https://hosted.weblate.org/widget/Metrolist/horizontal-auto.svg" alt="Translation status" />
-</a>
-
-<h3>Thank you! Every translation makes Metrolist a little more accessible to someone, somewhere in the world.</h3>
-
-</div>
-
----
-
-<div align="center">
-
-<h1><a id="support-the-project"></a>Support the Project</h1>
-
-<h3>Metrolist is free and open-source. If it brings you joy, consider supporting its development!</h3>
-
-#### Monero (XMR)
-
-<img src="assets/XMR.png" alt="Monero QR code" width="150" />
-
-```text
-44XjSELSWcgJTZiCKzjpCQWyXhokrH9RqH3rpp35FkSKi57T25hniHWHQNhLeXyFn3DDYqufmfRB1iEtENerZpJc7xJCcqt
+```bash
+./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest
+python3 scripts/audit_independence.py
 ```
 
-#### Buy Me a Coffee
+Sous Windows, utilisez `gradlew.bat`. Les APK sont générés dans `app/build/outputs/apk/foss/debug/` et `app/build/outputs/apk/gms/debug/`.
 
-<a href="https://www.buymeacoffee.com/mostafaalagamy">
-  <img src="assets/buymeacoffee.png" alt="Buy Me a Coffee" width="150" />
-</a>
+| Dossier ou guide | Contenu |
+| --- | --- |
+| `app/` | Application Android |
+| `vendor/innertubex/` | Moteur de lecture embarqué |
+| `services/listen-together/` | Serveur d’écoute partagée et instructions d’hébergement |
+| [Guide de démarrage](DEMARRER-ICI.txt) | Installation et premiers repères |
+| [Guide technique](LIRE-MOI-MAKOFF.txt) | Construction, signature et essais sur téléphone |
+| [Audit d’indépendance](docs/AUDIT-INDEPENDANCE.md) | Références restantes et limites vérifiées |
 
-</div>
+## Contribuer
 
----
+Pour signaler un problème, indiquez la version, la variante de l’APK, votre version Android et les étapes permettant de le reproduire. Retirez toute information privée des journaux partagés.
 
-<div align="center">
+## Licence
 
-<h1>Special Thanks</h1>
-
-<h3>Metrolist stands on the shoulders of incredible open-source work.</h3>
-
-<h3>Main Inspirations</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th align="center">Project</th>
-      <th align="center">Authors</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><strong>InnerTune</strong></td>
-      <td align="center"><a href="https://github.com/z-huang">Zion Huang</a> · <a href="https://github.com/Malopieds">Malopieds</a></td>
-    </tr>
-    <tr>
-      <td align="center"><strong>OuterTune</strong></td>
-      <td align="center"><a href="https://github.com/DD3Boh">Davide Garberi</a> · <a href="https://github.com/mikooomich">Michael Zh</a></td>
-    </tr>
-  </tbody>
-</table>
-
-<h3>Libraries & Integrations</h3>
-
-<table>
-  <thead>
-    <tr>
-      <th align="center">Project</th>
-      <th align="center">Contribution</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td align="center"><a href="https://better-lyrics.boidu.dev"><strong>Better Lyrics</strong></a></td>
-      <td>Time-synced lyrics with word-by-word highlighting & YouTube Music integration</td>
-    </tr>
-    <tr>
-      <td align="center"><a href="https://github.com/MetrolistGroup/metroserver"><strong>metroserver</strong></a></td>
-      <td>Listen-together real-time backend</td>
-    </tr>
-    <tr>
-      <td align="center"><a href="https://github.com/aleksey-saenko/MusicRecognizer"><strong>MusicRecognizer</strong></a></td>
-      <td>Music recognition feature & Shazam API integration</td>
-    </tr>
-    <tr>
-      <td align="center"><a href="https://github.com/ZemerTeam/zemer-cipher"><strong>zemer-cipher</strong></a></td>
-      <td>YouTube cipher deobfuscation and PoToken generation</td>
-    </tr>
-    <tr>
-      <td align="center"><a href="https://www.blacksmith.sh"><strong>Blacksmith</strong></a></td>
-      <td>High-performance GitHub Actions runners powering our CI</td>
-    </tr>
-  </tbody>
-</table>
-
-<br/>
-
-<a href="https://www.blacksmith.sh">
-  <img src="assets/blacksmith-powered.png" alt="CI powered by Blacksmith" width="280" />
-</a>
-
-<h3>We also thank the entire open-source community! For every library, tool, and API that powers this project.</h3>
-
-</div>
-
----
-
-<div align="center">
-
-<h1>Contributors</h1>
-
-<h3>This project wouldn't exist without these amazing people!</h3>
-
-<a href="https://github.com/MetrolistGroup/Metrolist/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=MetrolistGroup/Metrolist" alt="Contributors" />
-</a>
-
-</div>
-
----
-
-<div align="center">
-
-<h1>Disclaimer</h1>
-
-This project is **not affiliated with, funded, authorized, endorsed by, or in any way associated** with YouTube, Google LLC, Metrolist Group LLC, or any of their affiliates and subsidiaries.
-
-All trademarks, service marks, and intellectual property rights referenced in this project belong to their respective owners.
-
-</div>
-
----
-
-<div align="center">
-
-<br/>
-
-**Made with ❤️ by [Mo Agamy](https://github.com/mostafaalagamy)**
-
-**This project stands with Palestine 🇵🇸**
-
-</div>
+Projet libre sous **GPL-3.0**. La licence, les auteurs et les notices des composants d’origine sont conservés dans [LICENSE](LICENSE), [PROVENANCE.txt](PROVENANCE.txt) et les fichiers légaux embarqués. La présentation et les téléchargements de cette page concernent uniquement MAKOFF Music.

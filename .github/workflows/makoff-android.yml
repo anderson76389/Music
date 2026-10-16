@@ -67,3 +67,85 @@ jobs:
           bash scripts/generate_proto.sh
           go test ./...
           go build -o /tmp/makoff-listening-server ./cmd/metroserver
+
+  apk-smoke:
+    name: Installation et démarrage des deux APK
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MAKOFF-Music-test-APK
+          path: apk-foss
+      - uses: actions/download-artifact@v4
+        with:
+          name: MAKOFF-Music-Google-Cast-test-APK
+          path: apk-gms
+      - name: Activer KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Installer et ouvrir les APK sur Android 11
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash scripts/smoke_apk.sh
+      - name: Conserver les preuves et journaux de démarrage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAKOFF-tests-demarrage
+          path: smoke-results/
+          if-no-files-found: warn
+
+  publish-test:
+    name: Publier les APK vérifiés dans Releases
+    needs: [android, listening-server, apk-smoke]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: MAKOFF-Music-test-APK
+          path: apk-foss
+      - uses: actions/download-artifact@v4
+        with:
+          name: MAKOFF-Music-Google-Cast-test-APK
+          path: apk-gms
+      - name: Préparer les APK, les sources et les sommes de contrôle
+        run: |
+          mkdir -p dist
+          cp apk-foss/*.apk dist/MAKOFF-Music-test.apk
+          cp apk-gms/*.apk dist/MAKOFF-Music-Google-Cast-test.apk
+          git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
+          cd dist
+          sha256sum *.apk *.zip > SHA256SUMS.txt
+      - name: Publier une préversion après les contrôles
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="test-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
+          cat > notes.txt <<'NOTES'
+          ## APK de test MAKOFF Music
+
+          - **MAKOFF-Music-test.apk** : variante standard sans Google Cast.
+          - **MAKOFF-Music-Google-Cast-test.apk** : variante avec Google Cast.
+          - Sources et sommes de contrôle SHA-256 jointes.
+
+          Compilation des deux variantes, tests unitaires, tests du serveur et installation/démarrage des deux APK sur émulateur Android 11 réussis. La lecture YouTube réelle, la connexion, les téléchargements et la diffusion Cast restent à vérifier sur téléphone. Ces essais ne sont pas garantis par le contrôle de démarrage.
+
+          Android 8.0 minimum. Identifiant de test : fr.makoff.music.debug. Signature temporaire : la mise à jour directe entre deux préversions n'est pas garantie. Sauvegardez vos données avant de remplacer une installation. Mises à jour automatiques désactivées pour ces APK de test.
+          NOTES
+          printf '\nSources : `%s`\nVérifications : %s/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> notes.txt
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            gh release create "$tag" --target "$GITHUB_SHA" --title "MAKOFF Music — test ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7})" --prerelease --latest=false --notes-file notes.txt dist/*
+          fi

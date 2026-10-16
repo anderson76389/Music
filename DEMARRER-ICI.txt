@@ -13,5 +13,5 @@ Ne pas installer une APK provenant d’une exécution échouée.
 L’APK de test est signée avec une clé debug temporaire ; les mises à jour durables
 nécessitent une signature privée stable. Aucune release stable n’est annoncée ici.
 
-Le README.md est la documentation historique de la base Metrolist conservée intacte.
+README.md présente MAKOFF Music en français ; les téléchargements publiés sont dans Releases.
 Consulter LIRE-MOI-MAKOFF.txt pour les modifications, limites et procédure de test.

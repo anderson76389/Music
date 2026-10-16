@@ -45,7 +45,7 @@ Valider la résolution EJS locale sur plusieurs morceaux avant toute publication
 
 LICENCE ET ORIGINE
 GPL-3.0 : voir LICENSE et les notices d’origine, conservées.
-README.md reste la documentation historique de Metrolist, pas une promesse du fork.
+README.md présente MAKOFF Music ; docs/AUDIT-INDEPENDANCE.md détaille les références restantes.
 Les fichiers *.yml.disabled sont les anciens workflows archivés, non exécutés.
 Le code embarqué n’exige pas que le dépôt Metrolist reste en ligne, mais YouTube,
 les dépôts de dépendances Android et les fournisseurs tiers restent nécessaires.
@@ -60,4 +60,6 @@ choisit les flux disponibles et garde la prise en charge des flux Premium fourni
 AUDIT D’INDÉPENDANCE
 Lire INDEPENDANCE-MUSIC.txt : inventaire des fonctions conservées, de vos secrets
 de publication et du serveur d’écoute partagée inclus mais non encore hébergé.
-Ces deux APK correspondent à cet audit. Chaque construction de test utilise une\nclé temporaire ; une publication durable nécessite votre clé privée conservée.\nSauvegarder les données avant de remplacer une ancienne installation de test.
+Ces deux APK correspondent à cet audit. Chaque construction de test utilise une
+clé temporaire ; une publication durable nécessite votre clé privée conservée.
+Sauvegarder les données avant de remplacer une ancienne installation de test.
