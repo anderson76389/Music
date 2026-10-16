@@ -1,17 +1,18 @@
-name: Publish signed Music APKs
+name: Publier les APK stables signés
 on:
   push:
     tags: ["v*"]
   workflow_dispatch:
     inputs:
       tag:
-        description: "Release tag matching the source version, for example v13.7.0"
+        description: "Tag correspondant à la version du code, par exemple v13.7.0"
         required: true
 permissions:
   contents: write
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -61,13 +62,47 @@ jobs:
           cp app/build/outputs/apk/gms/release/app-gms-release.apk dist/MAKOFF-Music-Google-Cast.apk
           cd dist
           sha256sum *.apk > SHA256SUMS.txt
+      - name: Préparer les APK stables pour les essais
+        run: |
+          mkdir -p apk-foss apk-gms
+          cp dist/MAKOFF-Music.apk apk-foss/
+          cp dist/MAKOFF-Music-Google-Cast.apk apk-gms/
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Vérifier les deux APK stables sur Android 11
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          SMOKE_PACKAGE: fr.makoff.music
+        with:
+          api-level: 30
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: bash scripts/smoke_apk.sh
+      - name: Conserver les preuves des essais
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: MAKOFF-tests-stables
+          path: smoke-results/
+          if-no-files-found: warn
       - name: Publish own APKs and source archive
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
-          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "MAKOFF Music $RELEASE_TAG" --generate-notes dist/*
+          cat > notes.txt <<'NOTES'
+          ## MAKOFF Music pour Android
+
+          - **MAKOFF-Music.apk** : sans Google Cast.
+          - **MAKOFF-Music-Google-Cast.apk** : avec Google Cast.
+          - Sources et sommes de contrôle des APK jointes.
+
+          APK signés avec la clé privée du projet. Tests unitaires et contrôle d'installation/démarrage des deux APK sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
+          NOTES
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "MAKOFF Music $RELEASE_TAG" --notes-file notes.txt dist/*
       - name: Delete private key
         if: always()
         run: rm -f app/keystore/release.keystore

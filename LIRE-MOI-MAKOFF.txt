@@ -34,7 +34,7 @@ Le workflow MAKOFF Music Android compile une APK de test sur ubuntu-latest.
 Télécharger son artifact seulement si le job réussit. La signature debug CI n’est
 pas une signature durable : ne pas distribuer ces APK comme mises à jour finales.
 Pour une publication durable : créer et sauvegarder une clé privée de signature,
-configurer les secrets puis exécuter le workflow Publish signed Music APKs.
+configurer les secrets puis exécuter le workflow Publier les APK stables signés.
 Le canal des mises à jour pointe exclusivement vers ce dépôt. Aucune clé privée ni compte de développeur Metrolist n’est fourni.
 
 VALIDATION RESTANTE SUR TÉLÉPHONE

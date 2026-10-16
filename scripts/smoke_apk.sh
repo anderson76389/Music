@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-package=fr.makoff.music.debug
+package=${SMOKE_PACKAGE:-fr.makoff.music.debug}
 mkdir -p smoke-results
 for variant in foss gms; do
   apk=$(find "apk-$variant" -name '*.apk' -print -quit)
@@ -15,7 +15,7 @@ for variant in foss gms; do
   adb exec-out screencap -p > "smoke-results/$variant.png"
   adb shell pidof "$package"
   grep -E '(mResumedActivity|topResumedActivity).*fr.makoff.music.MainActivity' "smoke-results/$variant-activities.txt"
-  if grep -Eq 'Process: fr.makoff.music.debug([,: ]|$)' "smoke-results/$variant-logcat.txt"; then
+  if grep -Fq "Process: $package," "smoke-results/$variant-logcat.txt"; then
     echo "Échec : plantage du processus détecté ($variant)."
     exit 1
   fi
