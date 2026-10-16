@@ -39,3 +39,16 @@ Le contrôle reproductible des principaux points est disponible avec :
 ```bash
 python3 scripts/audit_independence.py
 ```
+
+## Résultats constatés le 17 octobre 2026 (heure française)
+
+Exécution [38977059046](https://github.com/anderson76389/Music/actions/runs/38977059046), sources `b69f7e39fb291d2ee2e0634b482ade992650e2fb` :
+
+- Compilation des APK FOSS et Google Cast et tests unitaires : **réussis**.
+- Tests et compilation du serveur : **réussis**.
+- Installation et ouverture des deux APK sur émulateur Android 11 : **réussies**, activité principale au premier plan, processus vivant, aucun plantage du processus détecté pendant l’observation.
+- Captures et journaux : conservés dans le fichier de construction `MAKOFF-tests-demarrage`.
+- Publication dans Releases : **échec**, GitHub renvoie `HTTP 403: Resource not accessible by integration` sur la création de la version, malgré la permission `contents: write` visible dans le job. Aucune Release n’a été créée. Il reste à résoudre les droits ou restrictions de publication du dépôt ; changer le YAML pour déclarer cette même permission ne suffit pas à établir la cause.
+- Les secrets de signature stable ne sont pas configurés dans le cadre de ces essais. Les APK validés sont des versions de test à signature temporaire.
+
+La vérification automatisée ne valide pas la lecture sonore réelle, le téléchargement hors connexion, la connexion au compte ou Cast. Le contrôle d’installation/démarrage des futures versions stables est configuré, mais n’a pas encore été exécuté sur des APK de publication signés.

@@ -15,3 +15,12 @@ nécessitent une signature privée stable. Aucune release stable n’est annonc�
 
 README.md présente MAKOFF Music en français ; les téléchargements publiés sont dans Releases.
 Consulter LIRE-MOI-MAKOFF.txt pour les modifications, limites et procédure de test.
+
+DERNIÈRE VÉRIFICATION — 17 OCTOBRE 2026 (FRANCE)
+Deux APK compilés et tests unitaires/serveur réussis.
+Installation et démarrage des deux variantes réussis sur émulateur Android 11.
+Exécution : https://github.com/anderson76389/Music/actions/runs/38977059046
+Standard : https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079128070
+Google Cast : https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079088123
+Publication Releases refusée par GitHub : HTTP 403, Resource not accessible by integration.
+La lecture réelle et les autres scénarios sur téléphone restent à vérifier.

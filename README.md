@@ -23,6 +23,15 @@
 
 ## Télécharger et installer
 
+> **État de la publication :** les deux APK ci-dessous ont été compilés, installés et ouverts sur émulateur Android 11. GitHub a refusé leur publication dans Releases avec une erreur `403 — Resource not accessible by integration`. Les téléchargements vérifiés restent disponibles dans les fichiers de construction ci-dessous, en attendant de résoudre les droits de publication.
+
+| APK de test vérifié | Téléchargement |
+| --- | --- |
+| Standard, sans Google Cast | [Télécharger l’archive contenant l’APK](https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079128070) |
+| Avec Google Cast | [Télécharger l’archive contenant l’APK](https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079088123) |
+
+Décompressez l’archive puis installez le fichier `.apk`. GitHub peut demander une connexion pour télécharger ces archives ; elles ont une durée de conservation limitée. [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/38977059046) · [Captures et journaux du démarrage](https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079866076).
+
 **Android 8.0 minimum.** Les APK sont universels : ARM 32/64 bits et x86 32/64 bits.
 
 | Variante | Fichier dans les versions stables | Pour qui ? |
@@ -36,7 +45,7 @@ Dans chaque version, ouvrez **« Assets » (fichiers joints)** et téléchargez 
 
 ### Versions de test
 
-Chaque envoi sur la branche principale déclenche la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La préversion est publiée seulement si ces contrôles réussissent.** Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
+Chaque envoi sur la branche principale déclenche la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La publication de la préversion exige la réussite de ces contrôles et les droits GitHub nécessaires.** Le circuit est configuré ; son premier essai de publication est actuellement bloqué par GitHub, comme indiqué ci-dessus. Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
 
 Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire propre à la construction. Ils peuvent cohabiter avec une version stable, mais ne garantissent pas une mise à jour directe entre deux tests. **Sauvegardez vos données avant de remplacer une installation de test.** Les mises à jour automatiques sont désactivées dans ces APK.
 
