@@ -1,0 +1,17 @@
+MAKOFF MUSIC — client YouTube Music open source pour Android
+Dépôt : https://github.com/anderson76389/Music
+Construction : https://github.com/anderson76389/Music/actions
+
+Discord entièrement supprimé (écrans, connexion OAuth, service, préférences et ressources).
+Qualité Élevée par défaut pour la lecture et les téléchargements. Les modes Automatique
+et Basse restent disponibles. Aucune conversion audio ajoutée : le flux fourni par
+YouTube est conservé. Les flux Premium restent soumis aux droits du compte connecté.
+
+Pour tester : Actions > MAKOFF Music Android > dernière exécution réussie >
+MAKOFF-Music-test-APK. Décompresser puis installer le fichier .apk sur Android 8+.
+Ne pas installer une APK provenant d’une exécution échouée.
+L’APK de test est signée avec une clé debug temporaire ; les mises à jour durables
+nécessitent une signature privée stable. Aucune release stable n’est annoncée ici.
+
+Le README.md est la documentation historique de la base Metrolist conservée intacte.
+Consulter LIRE-MOI-MAKOFF.txt pour les modifications, limites et procédure de test.

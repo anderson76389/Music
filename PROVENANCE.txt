@@ -1,3 +1,5 @@
-MAKOFF Music
-Based on Metrolist commit 76fa5a78b5110674442884b6f21c0cef51cdb782.
-Original licenses and notices are preserved in the complete source import.
+Metrolist source: https://github.com/MetrolistGroup/Metrolist
+Commit: 76fa5a78b5110674442884b6f21c0cef51cdb782
+InnerTubeX source: https://github.com/MetrolistGroup/innertubex
+Commit: fde890c355b1dbf9f67fccd497a42031a8c66fc8
+Modifications MAKOFF Music: 2026-10-16. See LIRE-MOI-MAKOFF.txt.
