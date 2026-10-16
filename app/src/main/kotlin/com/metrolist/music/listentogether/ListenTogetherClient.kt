@@ -625,9 +625,7 @@ class ListenTogetherClient
         private fun normalizeServerUrl(url: String): String {
             val trimmed = url.trim()
             if (trimmed.isEmpty()) return DEFAULT_SERVER_URL
-            return trimmed else {
-                trimmed
-            }
+            return trimmed
         }
 
         private fun getServerUrl(): String {
