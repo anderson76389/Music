@@ -5,10 +5,10 @@ paroles, bibliothèque, widgets, Android Auto et traductions existantes.
 Nom provisoire : MAKOFF Music. Identifiant : fr.makoff.music (debug : .debug).
 Android minimum : 8.0 (API 26). APK universel ARM et x86.
 
-Compilation FOSS et Google Cast, tests Android et tests du serveur réussis sur GitHub Actions le 16 octobre 2026.
-Exécution validée : https://github.com/anderson76389/Music/actions/runs/38954538211
-APK de test : https://github.com/anderson76389/Music/actions/runs/38954538211/artifacts/12070462521
-APK Google Cast : https://github.com/anderson76389/Music/actions/runs/38954538211/artifacts/12069998385
+Compilation FOSS et Google Cast, tests Android et tests du serveur réussis sur GitHub Actions le 17 octobre 2026.
+Exécution validée : https://github.com/anderson76389/Music/actions/runs/39065526320
+APK de test : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113461418
+APK Google Cast : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113576102
 La lecture réelle, la connexion et les salons synchronisés restent à tester sur téléphone.
 
 Modifications : identité propre, logo d’origine conservé localement, bibliothèque
@@ -63,3 +63,9 @@ de publication et du serveur d’écoute partagée inclus mais non encore héber
 Ces deux APK correspondent à cet audit. Chaque construction de test utilise une
 clé temporaire ; une publication durable nécessite votre clé privée conservée.
 Sauvegarder les données avant de remplacer une ancienne installation de test.
+
+LOGO ET PUBLICATION DU 17 OCTOBRE 2026
+Logo d’origine conservé localement et contrôlé par empreintes.
+Installation et ouverture des deux nouveaux APK réussies sur émulateur Android 11.
+Préversion publiée : https://github.com/anderson76389/Music/releases/tag/test-9-111f10e
+Sources et sommes SHA-256 jointes. Signature temporaire des versions de test.

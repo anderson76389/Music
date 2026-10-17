@@ -105,12 +105,23 @@ capture complète du trafic de toutes les fonctions et de tous les scénarios.
 
 PUBLICATION ET VALIDATION
 Le contrôle local scripts/audit_independence.py est réussi après modification.
-Une nouvelle compilation FOSS/GMS, les tests unitaires, le contrôle d’API du moteur
-et les essais d’installation/démarrage sur émulateur sont déclenchés sur GitHub.
-Le résultat exact de cette exécution doit être consulté avant de déclarer les
-nouveaux APK validés. L’audit ne valide pas à lui seul la lecture sonore réelle,
+Exécution 39065526320, sources 111f10e159e0d67f638485b12d50ac9ef96b91e2 :
+- Compilation FOSS et Google Cast : RÉUSSIE.
+- Tests unitaires Android : RÉUSSIS.
+- APIcheck / desktopApiCheck du moteur embarqué : RÉUSSIS.
+- Compilation et tests du serveur : RÉUSSIS.
+- Installation et ouverture des deux APK sur émulateur Android 11 : RÉUSSIES.
+- Journaux et captures conservés dans MAKOFF-tests-demarrage.
+https://github.com/anderson76389/Music/actions/runs/39065526320
+APK standard : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113461418
+APK Google Cast : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113576102
+Preuves de démarrage : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113555838 L’audit ne valide pas à lui seul la lecture sonore réelle,
 la connexion avec compte, Cast ou un salon entre plusieurs appareils.
 
-Le précédent essai de publication dans Releases a échoué avec HTTP 403 malgré
-contents:write. La clé privée de signature stable doit encore être configurée.
+Le précédent essai de publication avait échoué avec HTTP 403 malgré contents:write.
+Le nouvel essai 39065526320 a RÉUSSI et a publié les deux APK, les sources et les
+sommes SHA-256 : https://github.com/anderson76389/Music/releases/tag/test-9-111f10e
+La cause de la différence avec l’ancien refus n’a pas été établie ici.
+Il s’agit d’APK de test à signature temporaire, pas d’une publication stable.
+La signature privée stable reste une étape distincte à configurer/vérifier.
 L’écoute partagée nécessite toujours l’hébergement de votre serveur.

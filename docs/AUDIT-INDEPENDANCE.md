@@ -56,3 +56,9 @@ La vérification automatisée ne valide pas la lecture sonore réelle, le télé
 ## Nouvel audit et logo conservé
 
 Le [rapport du 17 octobre 2026](../AUDIT-METRO-2026-10-17.txt) détaille les corrections supplémentaires, le logo restauré, les adresses Faraday encore inactives, les noms internes et les dépendances tierces. Le contrôle local vérifie désormais aussi les 31 empreintes du logo et les coordonnées propres du moteur.
+
+## Résultats du nouvel audit avec logo restauré
+
+Exécution [39065526320](https://github.com/anderson76389/Music/actions/runs/39065526320), sources `111f10e159e0d67f638485b12d50ac9ef96b91e2` : compilation FOSS/GMS, tests unitaires Android, `apiCheck` du moteur, tests du serveur et installation/démarrage des deux APK sur Android 11 **réussis**. La [préversion test 9](https://github.com/anderson76389/Music/releases/tag/test-9-111f10e) a été publiée avec les deux APK, les sources et les sommes de contrôle. Le refus 403 de l’ancien essai ne s’est pas reproduit ; sa cause n’est pas établie ici. Les résultats de l’ancien essai ci-dessus restent un historique, pas l’état actuel de la publication.
+
+Ces APK gardent une signature de test temporaire. Les mises à jour stables signées, la lecture sonore réelle, Cast et les salons entre appareils ne sont pas validés par ces essais.

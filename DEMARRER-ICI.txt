@@ -22,5 +22,17 @@ Installation et démarrage des deux variantes réussis sur émulateur Android 11
 Exécution : https://github.com/anderson76389/Music/actions/runs/38977059046
 Standard : https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079128070
 Google Cast : https://github.com/anderson76389/Music/actions/runs/38977059046/artifacts/12079088123
-Publication Releases refusée par GitHub : HTTP 403, Resource not accessible by integration.
+Ancien essai Releases : refus HTTP 403 ; voir le nouveau résultat ci-dessous.
 La lecture réelle et les autres scénarios sur téléphone restent à vérifier.
+
+LOGO RESTAURÉ ET NOUVEAUX APK — 17 OCTOBRE 2026
+Logo d’origine conservé et protégé par les empreintes assets/logo-origine.sha256.
+Compilation des deux variantes, tests unitaires, APIcheck, tests du serveur
+et installation/démarrage sur émulateur Android 11 : réussis.
+Exécution : https://github.com/anderson76389/Music/actions/runs/39065526320
+Standard : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113461418
+Google Cast : https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113576102
+Audit complet des liens restants : AUDIT-METRO-2026-10-17.txt.
+Publication réussie : https://github.com/anderson76389/Music/releases/tag/test-9-111f10e
+APK directs dans cette préversion ; le précédent blocage 403 ne s’est pas reproduit.
+Ce sont des APK de test à signature temporaire, pas des versions stables.
