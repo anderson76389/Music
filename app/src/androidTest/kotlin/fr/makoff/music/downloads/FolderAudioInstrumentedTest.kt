@@ -21,7 +21,16 @@ class FolderAudioInstrumentedTest {
     private val tree get() = DocumentsContract.buildTreeDocumentUri(instrumentation.context.packageName + ".foldertest", "root")
 
     @Before fun grantTestTreeAccess() {
-        context.contentResolver.call(tree, "bootstrap", context.packageName, null)
+        val intent = android.content.Intent().setComponent(android.content.ComponentName(
+            instrumentation.context.packageName, GrantAudioTreeActivity::class.java.name,
+        )).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+        val deadline = android.os.SystemClock.elapsedRealtime() + 10000
+        while (context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(),
+                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            check(android.os.SystemClock.elapsedRealtime() < deadline) { "Test document tree grant missing" }
+            Thread.sleep(50)
+        }
     }
 
     @Test fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {

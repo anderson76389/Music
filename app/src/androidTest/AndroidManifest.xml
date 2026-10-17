@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <permission android:name="${applicationId}.DOCUMENTS" android:protectionLevel="signature" />
     <application>
+        <activity android:name="fr.makoff.music.downloads.GrantAudioTreeActivity"
+            android:exported="true" android:theme="@android:style/Theme.Translucent.NoTitleBar" />
         <!-- Test-only document provider: never packaged in production APKs. -->
         <provider android:name="fr.makoff.music.downloads.TestAudioDocuments"
             android:authorities="${applicationId}.foldertest"

@@ -37,11 +37,6 @@ class TestAudioDocuments : ContentProvider() {
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor = ParcelFileDescriptor.open(file(uri), ParcelFileDescriptor.parseMode(mode))
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle {
         val tree = DocumentsContract.buildTreeDocumentUri(requireNotNull(context).packageName + ".foldertest", "root")
-        if (method == "bootstrap") {
-            requireNotNull(context).grantUriPermission(requireNotNull(arg), tree,
-                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
-            return Bundle()
-        }
         val input = requireNotNull(extras)
         @Suppress("DEPRECATION") val uri = requireNotNull(input.getParcelable<Uri>("uri"))
         val parent = file(uri)
@@ -69,4 +64,17 @@ class TestAudioDocuments : ContentProvider() {
     override fun insert(uri: Uri, values: ContentValues?): Uri? = throw UnsupportedOperationException()
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<out String>?): Int = throw UnsupportedOperationException()
     override fun update(uri: Uri, values: ContentValues?, selection: String?, selectionArgs: Array<out String>?): Int = throw UnsupportedOperationException()
+}
+
+/** Grant from the provider owner's UID, as the system document picker would. */
+class GrantAudioTreeActivity : android.app.Activity() {
+    override fun onCreate(state: Bundle?) {
+        super.onCreate(state)
+        val tree = DocumentsContract.buildTreeDocumentUri(packageName + ".foldertest", "root")
+        grantUriPermission(packageName.removeSuffix(".test"), tree,
+            android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
+                android.content.Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
+        finish()
+    }
 }
