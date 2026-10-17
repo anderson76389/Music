@@ -36,3 +36,12 @@ Audit complet des liens restants : AUDIT-METRO-2026-10-17.txt.
 Publication réussie : https://github.com/anderson76389/Music/releases/tag/test-9-111f10e
 APK directs dans cette préversion ; le précédent blocage 403 ne s’est pas reproduit.
 Ce sont des APK de test à signature temporaire, pas des versions stables.
+
+NOUVEAU MODE DE FICHIERS — YT-DLP
+Préversion : https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104
+Menu d’un morceau > Enregistrer un fichier audio (yt-dlp) > choisir un dossier
+public, par exemple Téléchargements/MAKOFF Music. Suivi dans Paramètres > Stockage.
+Le téléchargement hors connexion existant garde son cache distinct.
+Lire TELECHARGEMENTS-FICHIERS.txt pour les essais réels et les limites constatées.
+L’export Android est testé ; l’essai YouTube anonyme sur GitHub a exigé une connexion.
+Le téléchargement avec compte reste à essayer sur votre appareil.

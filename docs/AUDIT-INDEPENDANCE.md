@@ -66,3 +66,9 @@ Ces APK gardent une signature de test temporaire. Les mises à jour stables sign
 ## Mode de téléchargement de fichiers ajouté
 
 Les anciennes adresses Faraday ont ensuite été supprimées du moteur et de ses tests. Le [guide de téléchargement](../TELECHARGEMENTS-FICHIERS.txt) décrit le nouveau mode utilisant réellement yt-dlp 2026.08.19 embarqué, le choix d’un dossier Android et les contrôles d’export. Le cache hors connexion existant reste distinct. Voir les résultats de l’exécution correspondante avant de considérer les nouveaux APK comme validés.
+
+## Vérification du mode de fichiers yt-dlp
+
+[Préversion test 19](https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104), [exécution 39070213593](https://github.com/anderson76389/Music/actions/runs/39070213593), sources `4bd5104db9a71b587f8941216bb9a6926666b767` : compilation des deux APK, tests unitaires, tests du moteur, contrôle d’API, tests du serveur et démarrage **réussis**. Deux tests Android ont vérifié le véritable moteur yt-dlp 2026.08.19 et l’export exact de fichiers par le protocole de documents, sans écrasement de doublon, avec nettoyage sur échec de finalisation.
+
+Le test YouTube anonyme a été **refusé avec une demande de connexion pour confirmer l’absence de robot** depuis le réseau de l’émulateur GitHub. Il ne valide donc pas le téléchargement YouTube authentifié. Le code reprend les cookies YouTube de l’application, limités au domaine YouTube et conservés seulement dans un fichier privé temporaire pour ce travail. Un essai avec compte sur appareil reste nécessaire. Voir le [rapport de téléchargement](../TELECHARGEMENTS-FICHIERS.txt) et les [preuves](https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407).

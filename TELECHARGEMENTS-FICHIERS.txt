@@ -55,3 +55,37 @@ Les constantes de repli imposées ont été retirées. Les éventuelles configur
 distantes restent désactivées dans l’application ; les règles de compatibilité
 ne ciblent plus que le dépôt Music. Aucun fichier de configuration distant factice
 n’est créé ou présenté comme disponible.
+
+RÉSULTATS CONSTATÉS — 17 OCTOBRE 2026, HEURE FRANÇAISE
+Sources : 4bd5104db9a71b587f8941216bb9a6926666b767
+Exécution : https://github.com/anderson76389/Music/actions/runs/39070213593
+Publication : https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104
+
+RÉUSSI : compilation FOSS/GMS, tests unitaires Android (noms de fichiers et
+cookies limités au domaine YouTube), tests JVM et contrôle d’API du moteur,
+construction et tests Go du serveur, installation/démarrage des deux APK.
+
+RÉUSSI SUR ÉMULATEUR ANDROID 11 : deux tests instrumentés vérifient l’exécution
+réelle de yt-dlp 2026.08.19, le téléchargement HTTP d’un WAV valide, la conservation
+exacte des octets après export via le protocole de documents Android, la création
+d’un nom distinct en cas de doublon et la suppression du document partiel quand
+le fournisseur refuse la finalisation. Le fournisseur utilisé est une fixture
+installée seulement avec l’APK de tests, pas dans les APK distribués aux utilisateurs.
+
+NON VALIDÉ : l’essai YouTube public anonyme depuis GitHub a été refusé avec
+« Sign in to confirm you’re not a bot ». Le clip public jNQXAC9IVRw était disponible
+lors de la vérification de métadonnées depuis l’autre réseau de travail. Le refus
+du réseau de l’émulateur ne démontre pas une réussite avec compte, ni un échec
+sur tous les téléphones. La session YouTube de l’application est prise en charge
+par le code, mais le téléchargement authentifié doit encore être essayé sur appareil.
+
+L’ancien clip BaW_jenozKc était indisponible ; le premier diagnostic FFmpeg était
+un avertissement secondaire, pas une nécessité de réencoder l’audio. Il a été
+corrigé. Le nouveau mode conserve les flux audio d’origine sans conversion MP3.
+
+Preuves : https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407
+Ces fichiers contiennent yt-dlp-saf-tests.txt et youtube-live-test.txt. Les refus
+de l’essai YouTube sont conservés ; ils ne sont pas présentés comme un test réussi.
+
+Les APK sont des préversions à signature temporaire. Sauvegardez vos données avant
+de remplacer une ancienne installation de test qui utilise une autre signature.

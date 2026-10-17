@@ -24,14 +24,14 @@
 
 ## Télécharger et installer
 
-> **Nouvelle préversion disponible :** [MAKOFF Music — test 9](https://github.com/anderson76389/Music/releases/tag/test-9-111f10e), avec le logo d’origine conservé. Les deux APK ont été compilés, installés et ouverts sur émulateur Android 11. Les tests unitaires, le contrôle d’API du moteur et les tests du serveur ont réussi.
+> **Nouvelle préversion disponible :** [MAKOFF Music — test 19](https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104), avec le logo d’origine conservé et le nouveau mode de fichiers yt-dlp. Compilation FOSS/GMS, tests unitaires, contrôle d’API et tests du serveur réussis ; exécution native de yt-dlp 2026.08.19, export Android, doublons et nettoyage après échec vérifiés. **L’essai YouTube anonyme depuis GitHub a demandé une connexion : le téléchargement avec compte reste à essayer sur votre téléphone.**
 
 | APK de test vérifié | Téléchargement direct |
 | --- | --- |
-| Standard, sans Google Cast | [Télécharger l’APK standard](https://github.com/anderson76389/Music/releases/download/test-9-111f10e/MAKOFF-Music-test.apk) |
-| Avec Google Cast | [Télécharger l’APK Google Cast](https://github.com/anderson76389/Music/releases/download/test-9-111f10e/MAKOFF-Music-Google-Cast-test.apk) |
+| Standard, sans Google Cast | [Télécharger l’APK standard](https://github.com/anderson76389/Music/releases/download/test-19-4bd5104/MAKOFF-Music-test.apk) |
+| Avec Google Cast | [Télécharger l’APK Google Cast](https://github.com/anderson76389/Music/releases/download/test-19-4bd5104/MAKOFF-Music-Google-Cast-test.apk) |
 
-Installez directement le fichier `.apk` ; aucune décompression n’est nécessaire pour les téléchargements ci-dessus. [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39065526320) · [Captures et journaux du démarrage](https://github.com/anderson76389/Music/actions/runs/39065526320/artifacts/12113555838).
+Installez directement le fichier `.apk` ; aucune décompression n’est nécessaire pour les téléchargements ci-dessus. [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39070213593) · [Captures et journaux du démarrage](https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407).
 
 **Android 8.0 minimum.** Les APK sont universels : ARM 32/64 bits et x86 32/64 bits.
 
@@ -46,7 +46,7 @@ Dans chaque version, ouvrez **« Assets » (fichiers joints)** et téléchargez 
 
 ### Versions de test
 
-Chaque envoi sur la branche principale déclenche la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La publication de la préversion exige la réussite de ces contrôles et les droits GitHub nécessaires.** Le circuit a publié la préversion test 9 après réussite des contrôles. Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
+Les constructions du code sur la branche principale exécutent la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La publication de la préversion exige la réussite de ces contrôles et les droits GitHub nécessaires.** Le circuit a publié la préversion test 19 après réussite des contrôles. Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
 
 Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire propre à la construction. Ils peuvent cohabiter avec une version stable, mais ne garantissent pas une mise à jour directe entre deux tests. **Sauvegardez vos données avant de remplacer une installation de test.** Les mises à jour automatiques sont désactivées dans ces APK.
 
@@ -59,6 +59,8 @@ L’application stable recherche ses mises à jour exclusivement dans **ce dép�
 ## Enregistrer de vrais fichiers audio
 
 Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente, choisissez **« Enregistrer un fichier audio (yt-dlp) »**. Android vous demande un dossier au premier usage : créez ou choisissez par exemple `Téléchargements/MAKOFF Music`, puis autorisez son utilisation.
+
+Si YouTube exige une connexion, connectez-vous à votre compte YouTube dans l’application puis relancez le téléchargement. Les restrictions du compte et du service restent applicables.
 
 Le dossier est mémorisé. **Paramètres → Stockage → Fichiers audio — yt-dlp** permet de le changer, de suivre les tâches, de les annuler et d’ouvrir les fichiers terminés. Le mode hors connexion existant continue à utiliser son cache privé séparé.
 

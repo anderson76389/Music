@@ -69,3 +69,12 @@ Logo d’origine conservé localement et contrôlé par empreintes.
 Installation et ouverture des deux nouveaux APK réussies sur émulateur Android 11.
 Préversion publiée : https://github.com/anderson76389/Music/releases/tag/test-9-111f10e
 Sources et sommes SHA-256 jointes. Signature temporaire des versions de test.
+
+TÉLÉCHARGEMENTS DE FICHIERS
+Nouvelle préversion : https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104
+Le moteur yt-dlp officiel 2026.08.19 est réellement embarqué, avec Python et QuickJS.
+Un nouveau menu enregistre le meilleur flux audio dans un dossier choisi avec Android.
+Les anciennes URL Faraday ont été retirées du code du moteur et de ses tests.
+Compilation, tests et export Android sont vérifiés. YouTube a demandé une connexion
+lors de l’essai anonyme GitHub ; la session authentifiée reste à essayer sur téléphone.
+Voir TELECHARGEMENTS-FICHIERS.txt pour la procédure, les preuves et les limites.
