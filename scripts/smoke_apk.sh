@@ -24,7 +24,7 @@ for variant in foss gms; do
     adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/yt-dlp-saf-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/yt-dlp-saf-tests.txt
-    adb shell am instrument -w -r -e class fr.makoff.music.downloads.YouTubeAudioLiveTest "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/youtube-live-test.txt
+    timeout 150s adb shell am instrument -w -r -e class fr.makoff.music.downloads.YouTubeAudioLiveTest "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/youtube-live-test.txt || echo "Essai YouTube interrompu ou délai dépassé" >> smoke-results/youtube-live-test.txt
     if ! grep -Eq 'OK \(1 test\)' smoke-results/youtube-live-test.txt; then
       echo "::warning::Le téléchargement YouTube réel n’a pas réussi depuis le réseau de l’émulateur ; voir youtube-live-test.txt."
     fi

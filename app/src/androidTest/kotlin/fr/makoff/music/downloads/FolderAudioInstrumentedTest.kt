@@ -34,7 +34,7 @@ class FolderAudioInstrumentedTest {
         }
     }
 
-    @Test fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
+    @Test(timeout = 90000) fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
         val bytes = ByteArray(4096) { (it % 127).toByte() }
         // Valid mono PCM WAV, not a renamed text file.
         val header = java.nio.ByteBuffer.allocate(44).order(java.nio.ByteOrder.LITTLE_ENDIAN)
@@ -81,7 +81,7 @@ class FolderAudioInstrumentedTest {
         }
     }
 
-    @Test fun providerFailureDoesNotLeaveAnIncompleteFile() = runBlocking {
+    @Test(timeout = 30000) fun providerFailureDoesNotLeaveAnIncompleteFile() = runBlocking {
         val source = File(context.cacheDir, "failed-export.wav").apply { writeBytes(byteArrayOf(1, 2, 3)) }
         val before = DocumentFile.fromTreeUri(context, tree)!!.listFiles().map { it.uri }.toSet()
         try {

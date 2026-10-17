@@ -11,7 +11,7 @@ import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class YouTubeAudioLiveTest {
-    @Test fun downloadPublicTestVideoAudio() = runBlocking {
+    @Test(timeout = 120000) fun downloadPublicTestVideoAudio() = runBlocking {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val directory = File(context.cacheDir, "live-audio-${UUID.randomUUID()}")
         try {
