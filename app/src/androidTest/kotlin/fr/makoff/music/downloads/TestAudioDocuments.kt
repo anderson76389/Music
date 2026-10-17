@@ -36,6 +36,12 @@ class TestAudioDocuments : ContentProvider() {
     }
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor = ParcelFileDescriptor.open(file(uri), ParcelFileDescriptor.parseMode(mode))
     override fun call(method: String, arg: String?, extras: Bundle?): Bundle {
+        val tree = DocumentsContract.buildTreeDocumentUri(requireNotNull(context).packageName + ".foldertest", "root")
+        if (method == "bootstrap") {
+            requireNotNull(context).grantUriPermission(requireNotNull(arg), tree,
+                android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION or android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION or android.content.Intent.FLAG_GRANT_PREFIX_URI_PERMISSION)
+            return Bundle()
+        }
         val input = requireNotNull(extras)
         @Suppress("DEPRECATION") val uri = requireNotNull(input.getParcelable<Uri>("uri"))
         val parent = file(uri)
@@ -45,7 +51,7 @@ class TestAudioDocuments : ContentProvider() {
                 val name = requireNotNull(input.getString("_display_name"))
                 require(name == File(name).name)
                 check(File(root, name).createNewFile())
-                result.putParcelable("uri", DocumentsContract.buildDocumentUri(uri.authority, name))
+                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, name))
             }
             "android:renameDocument" -> {
                 val name = requireNotNull(input.getString("_display_name"))
@@ -53,7 +59,7 @@ class TestAudioDocuments : ContentProvider() {
                 if (name.startsWith("reject")) throw UnsupportedOperationException("Rename refused by test provider")
                 check(!File(root, name).exists())
                 check(parent.renameTo(File(root, name)))
-                result.putParcelable("uri", DocumentsContract.buildDocumentUri(uri.authority, name))
+                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, name))
             }
             "android:deleteDocument" -> check(parent.delete())
             else -> throw UnsupportedOperationException(method)
