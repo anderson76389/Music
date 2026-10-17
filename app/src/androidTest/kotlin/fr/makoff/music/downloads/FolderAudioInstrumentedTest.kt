@@ -21,14 +21,15 @@ class FolderAudioInstrumentedTest {
     private val tree get() = DocumentsContract.buildTreeDocumentUri(instrumentation.context.packageName + ".foldertest", "root")
 
     @Before fun grantTestTreeAccess() {
-        val intent = android.content.Intent().setComponent(android.content.ComponentName(
-            instrumentation.context.packageName, GrantAudioTreeActivity::class.java.name,
-        )).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-        context.startActivity(intent)
+        val component = instrumentation.context.packageName + "/" + GrantAudioTreeActivity::class.java.name
+        val launch = android.os.ParcelFileDescriptor.AutoCloseInputStream(
+            instrumentation.uiAutomation.executeShellCommand("am start -W -n $component"),
+        ).bufferedReader().use { it.readText() }
+        check(!launch.contains("Error:")) { "Cannot launch test grant activity: $launch" }
         val deadline = android.os.SystemClock.elapsedRealtime() + 10000
         while (context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(),
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-            check(android.os.SystemClock.elapsedRealtime() < deadline) { "Test document tree grant missing" }
+            check(android.os.SystemClock.elapsedRealtime() < deadline) { "Test document tree grant missing: $launch" }
             Thread.sleep(50)
         }
     }
