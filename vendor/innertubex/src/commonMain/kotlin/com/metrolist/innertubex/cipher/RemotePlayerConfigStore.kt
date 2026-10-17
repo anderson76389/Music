@@ -50,8 +50,6 @@ class RemotePlayerConfigStore private constructor(
         private const val REQUEST_TIMEOUT_MS = 5_000L
         private const val MAX_LEGACY_TIMESTAMP_CACHE_ENTRIES = 16
         private const val MAX_CONFIG_RESPONSE_BYTES = 4 * 1024 * 1024
-        private const val LEGACY_FARADAY_CONFIG_URL =
-            "https://github.com/MetrolistGroup/faraday/releases/download/{playerTag}/{playerHash}.json"
         private const val OKHTTP_USER_AGENT = "okhttp/5.4.0"
     }
 
@@ -406,7 +404,6 @@ class RemotePlayerConfigStore private constructor(
         val configured = repository.sourceUrl.trim()
         if (
             configured.isBlank() ||
-            configured == LEGACY_FARADAY_CONFIG_URL ||
             configured.substringBefore('?').endsWith("/player_configs.json")
         ) {
             return null
@@ -423,7 +420,6 @@ class RemotePlayerConfigStore private constructor(
             .takeIf { it.isNotBlank() }
             ?.let { configured ->
                 when {
-                    configured == LEGACY_FARADAY_CONFIG_URL -> repository.defaultSourceUrl
                     configured.substringBefore('?').endsWith("/player_configs.json") -> configured
                     else -> null
                 }
@@ -435,9 +431,9 @@ class RemotePlayerConfigStore private constructor(
             ?.takeIf { url ->
                 url.protocol.name == "https" &&
                     when (url.host) {
-                        "raw.githubusercontent.com" -> url.encodedPath.startsWith("/MetrolistGroup/faraday/")
-                        "cdn.jsdelivr.net" -> url.encodedPath.startsWith("/gh/MetrolistGroup/faraday@")
-                        "github.com" -> url.encodedPath.startsWith("/MetrolistGroup/faraday/releases/download/")
+                        "raw.githubusercontent.com" -> url.encodedPath.startsWith("/anderson76389/Music/")
+                        "cdn.jsdelivr.net" -> url.encodedPath.startsWith("/gh/anderson76389/Music@")
+                        "github.com" -> url.encodedPath.startsWith("/anderson76389/Music/releases/download/")
                         else -> false
                     }
             }

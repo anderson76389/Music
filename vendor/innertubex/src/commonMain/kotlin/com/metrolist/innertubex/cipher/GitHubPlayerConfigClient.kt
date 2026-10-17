@@ -39,10 +39,6 @@ internal class GitHubPlayerConfigClient(
         private const val MAX_CONFIG_RESPONSE_BYTES = 4 * 1024 * 1024
         private const val PREPROCESSED_TYPE = "yt-dlp-ejs-preprocessed-player"
         private const val OKHTTP_USER_AGENT = "okhttp/5.4.0"
-        private const val LEGACY_DEFAULT_CONFIG_URL =
-            "https://cdn.jsdelivr.net/gh/MetrolistGroup/faraday@{playerTag}/registry/players/{playerHash}.json"
-        private const val LEGACY_RELEASE_CONFIG_URL =
-            "https://github.com/MetrolistGroup/faraday/releases/download/{playerTag}/{playerHash}.json"
         private val JSDELIVR_URL_REGEX = Regex("^https://cdn\\.jsdelivr\\.net/gh/([^/]+)/([^@/]+)@([^/]+)/(.+)$")
         private val PLAYER_HASH_REGEX = Regex("/s/player/([^/]+)/")
     }
@@ -96,12 +92,7 @@ internal class GitHubPlayerConfigClient(
 
         val playerHash = playerUrl.extractPlayerHash() ?: return SolveResult(emptyMap(), emptyMap())
         val configuredUrl = repository.sourceUrl.trim()
-        val configTemplate =
-            if (configuredUrl.isZemerTableUrl() || configuredUrl == LEGACY_RELEASE_CONFIG_URL) {
-                LEGACY_DEFAULT_CONFIG_URL
-            } else {
-                configuredUrl
-            }
+        val configTemplate = configuredUrl.takeUnless { it.substringBefore('?').endsWith("/player_configs.json") }.orEmpty()
         val configUrl = configTemplate.urlForPlayerHash(playerHash)
         if (configUrl.isNullOrBlank()) {
             logger.d(TAG, "GitHub preprocessed-player skipped; config URL template is blank")
@@ -279,7 +270,6 @@ internal class GitHubPlayerConfigClient(
 
     private fun String.extractPlayerHash(): String? = PLAYER_HASH_REGEX.find(this)?.groupValues?.getOrNull(1)
 
-    private fun String.isZemerTableUrl(): Boolean = substringBefore('?').endsWith("/player_configs.json")
 
     private fun Throwable.logType(): String = this::class.simpleName ?: "Exception"
 }

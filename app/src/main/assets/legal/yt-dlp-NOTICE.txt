@@ -1,0 +1,8 @@
+Téléchargements de fichiers : intégration youtubedl-android 0.18.1.
+Source : https://github.com/yausername/youtubedl-android
+Composant Maven : io.github.junkfood02.youtubedl-android:library:0.18.1
+Ce composant est distribué sous GPL-3.0, avec son environnement Python et QuickJS.
+Le moteur yt-dlp : https://github.com/yt-dlp/yt-dlp
+Python : https://www.python.org/ ; QuickJS : https://bellard.org/quickjs/
+Les composants conservent leurs auteurs et leurs licences respectives.
+Aucun code ni service de l’application YTDLnis n’est requis pour ce mode.

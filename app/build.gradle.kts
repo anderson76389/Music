@@ -188,7 +188,7 @@ android {
 
     packaging {
         jniLibs {
-            useLegacyPackaging = false
+            useLegacyPackaging = true
             keepDebugSymbols +=
                 listOf(
                     "**/libandroidx.graphics.path.so",
@@ -252,6 +252,12 @@ configurations.configureEach {
 }
 
 dependencies {
+    implementation(libs.ytdlp)
+    implementation(libs.work.runtime)
+    implementation(libs.documentfile)
+    androidTestImplementation("androidx.test:runner:1.6.2")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+
     implementation(libs.guava)
     implementation(libs.coroutines.guava)
 

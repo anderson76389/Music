@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderAudioItem
+
 import android.content.Intent
 import android.content.res.Configuration
 import android.widget.Toast
@@ -118,6 +120,7 @@ fun SongMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val songState = database.song(originalSong.id).collectAsStateWithLifecycle(initialValue = originalSong)
     val song = songState.value ?: originalSong
+    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata())
     val downloadUtil = LocalDownloadUtil.current
     val download by downloadUtil
         .getDownload(originalSong.id)
@@ -898,6 +901,7 @@ fun SongMenu(
             Material3MenuGroup(
                 items =
                     listOf(
+                        folderAudioItem,
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(

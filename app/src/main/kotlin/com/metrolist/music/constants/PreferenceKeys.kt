@@ -702,3 +702,5 @@ val CountryCodeToName =
         "YE" to "Yemen",
         "ZW" to "Zimbabwe",
     )
+
+val FolderAudioTreeKey = stringPreferencesKey("folder_audio_tree")

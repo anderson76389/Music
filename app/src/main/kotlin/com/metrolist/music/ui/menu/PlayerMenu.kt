@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderAudioItem
+
 import android.content.Context
 import android.content.Intent
 import android.media.audiofx.AudioEffect
@@ -136,6 +138,7 @@ fun PlayerMenu(
 
     val librarySong by database.song(mediaMetadata.id).collectAsStateWithLifecycle(initialValue = null)
     val coroutineScope = rememberCoroutineScope()
+    val folderAudioItem = rememberFolderAudioItem(mediaMetadata)
     val downloadUtil = LocalDownloadUtil.current
 
     val download by downloadUtil
@@ -522,6 +525,7 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     listOf(
+                        folderAudioItem,
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(

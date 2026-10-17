@@ -50,3 +50,7 @@ assert 'GROUP=fr.makoff.music' in (r/'vendor/innertubex/gradle.properties').read
 for path in ('settings.gradle.kts', 'gradle/libs.versions.toml', 'vendor/innertubex/gradle.properties', 'vendor/innertubex/build.gradle.kts'):
     assert 'com.github.MetrolistGroup' not in (r/path).read_text(), path
 print('PASS: original logo preserved locally; own library coordinates and local substitution')
+
+for path in (r/'vendor/innertubex/src').rglob('*.kt'):
+    assert 'MetrolistGroup/faraday' not in path.read_text(), path
+print('PASS: upstream Faraday URLs removed from engine source and tests')

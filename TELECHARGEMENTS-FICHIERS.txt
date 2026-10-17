@@ -1,0 +1,55 @@
+TÉLÉCHARGEMENTS DE FICHIERS AVEC YT-DLP
+
+Deux fonctions distinctes sont disponibles :
+- Télécharger : le mode hors connexion existant, dans le cache privé de Music.
+- Enregistrer un fichier audio (yt-dlp) : un fichier audio dans un dossier Android
+  choisi par l’utilisateur, lisible avec d’autres applications.
+
+Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente,
+choisir « Enregistrer un fichier audio (yt-dlp) ». Au premier lancement, Android
+ouvre son sélecteur de dossier. Créer ou choisir par exemple un sous-dossier
+Téléchargements/MAKOFF Music, puis autoriser son utilisation. Le dossier est
+mémorisé pour les prochains fichiers ; il peut être changé dans Paramètres > Stockage.
+Android peut interdire le choix de la racine Téléchargements : choisir un sous-dossier.
+
+Le travail s’exécute en arrière-plan avec notification, progression et annulation.
+Paramètres > Stockage > Fichiers audio — yt-dlp affiche les travaux récents, les
+échecs et un bouton pour ouvrir les fichiers terminés. Les travaux en cours peuvent
+être annulés depuis cet écran ou la notification.
+
+L’APK embarque réellement yt-dlp, Python et QuickJS par le composant libre
+io.github.junkfood02.youtubedl-android:library:0.18.1. YTDLnis n’est pas requis.
+Aucune redirection vers une application externe n’est utilisée pour télécharger.
+Le meilleur flux audio disponible est conservé dans son conteneur d’origine,
+généralement WebM/Opus ou M4A. Pas de conversion MP3 ni de promesse de qualité
+supérieure à celle fournie par YouTube. FFmpeg n’est pas ajouté pour ce mode.
+
+La session YouTube de Music, si elle existe, est fournie à yt-dlp par un fichier
+de cookies privé limité au domaine youtube.com, puis supprimé avec les fichiers
+temporaires. Elle n’est pas ajoutée comme en-tête à tous les serveurs. Les erreurs
+publiées dans l’interface et les tests ne montrent ni cookies ni URL média signées.
+Les identifiants non standard des titres importés ne sont pas pris en charge.
+Les restrictions du compte et les refus de YouTube restent applicables.
+
+Le fichier est d’abord téléchargé dans un répertoire temporaire privé, puis copié
+avec l’API de documents Android dans le dossier autorisé. Il n’est annoncé terminé
+qu’après copie complète et fermeture du flux. Un fichier en cours d’export porte
+un nom temporaire ; l’échec ou l’annulation déclenche sa suppression. Un fournisseur
+qui n’autorise pas la finalisation par renommage est refusé. Les fichiers existants
+ne sont pas volontairement écrasés : un nom distinct est choisi en cas de doublon.
+Les fichiers enregistrés ne sont pas retirés quand le cache privé est vidé.
+
+VÉRIFICATIONS
+Les tests instrumentés exécutent le vrai moteur yt-dlp contre un serveur HTTP local
+fournissant un fichier WAV valide, puis vérifient les octets du fichier exporté via
+le protocole de documents Android, les doublons et le nettoyage après échec.
+Un essai YouTube public est exécuté séparément. Son résultat dépend notamment de
+l’accessibilité du contenu et des restrictions du réseau GitHub ; il ne peut pas
+être remplacé par la réussite du test local. Voir les résultats de la construction.
+
+ANCIENNES URL
+Les adresses MetrolistGroup/faraday ont été supprimées du moteur et de ses tests.
+Les constantes de repli imposées ont été retirées. Les éventuelles configurations
+distantes restent désactivées dans l’application ; les règles de compatibilité
+ne ciblent plus que le dépôt Music. Aucun fichier de configuration distant factice
+n’est créé ou présenté comme disponible.

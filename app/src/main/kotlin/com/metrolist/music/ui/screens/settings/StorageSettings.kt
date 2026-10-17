@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.screens.settings
 
+import fr.makoff.music.downloads.FolderAudioSettings
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -296,6 +298,7 @@ fun StorageSettings(
                 ),
             ),
         )
+        FolderAudioSettings()
         Material3SettingsGroup(
             title = stringResource(R.string.storage),
             items =

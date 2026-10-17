@@ -29,6 +29,7 @@
     </queries>
     <application
         android:name=".App"
+        android:extractNativeLibs="true"
         android:allowBackup="true"
         android:appCategory="audio"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -353,6 +354,10 @@
             </intent-filter>
         </service>
 
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:foregroundServiceType="dataSync"
+            tools:node="merge" />
     </application>
 
 </manifest>

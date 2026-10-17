@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderAudioItem
+
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -103,6 +105,7 @@ fun YouTubeSongMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
+    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata())
     val downloadUtil = LocalDownloadUtil.current
     val librarySong by database.song(song.id).collectAsStateWithLifecycle(initialValue = null)
     val download by downloadUtil.getDownload(song.id).collectAsStateWithLifecycle(initialValue = null)
@@ -572,6 +575,7 @@ fun YouTubeSongMenu(
         item {
             Material3MenuGroup(
                 items = listOf(
+                        folderAudioItem,
                     when (download?.state) {
                         Download.STATE_COMPLETED -> {
                             Material3MenuItemData(

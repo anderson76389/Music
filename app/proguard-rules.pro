@@ -189,3 +189,8 @@
 -keepclasseswithmembers class com.metrolist.shazamkit.models.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
+
+# yt-dlp wrapper and Jackson models use reflection.
+-keep class com.yausername.youtubedl_android.** { *; }
+-keep class com.yausername.youtubedl_common.** { *; }
+-dontwarn com.fasterxml.jackson.**

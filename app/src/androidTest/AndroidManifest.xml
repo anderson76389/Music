@@ -1,0 +1,8 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <application>
+        <!-- Test-only document provider: never packaged in production APKs. -->
+        <provider android:name="fr.makoff.music.downloads.TestAudioDocuments"
+            android:authorities="${applicationId}.foldertest"
+            android:exported="true" android:grantUriPermissions="true" />
+    </application>
+</manifest>

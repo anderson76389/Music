@@ -170,7 +170,7 @@ class RemotePlayerConfigStoreTest {
     private fun repository() =
         object : PlayerConfigRepository {
             override val enabled = true
-            override val defaultSourceUrl = "https://raw.githubusercontent.com/MetrolistGroup/faraday/main/player_configs.json"
+            override val defaultSourceUrl = "https://raw.githubusercontent.com/anderson76389/Music/main/player_configs.json"
             override val sourceUrl = defaultSourceUrl
             override var cachedJson = ""
             override var cachedAtMs = 0L

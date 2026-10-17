@@ -20,7 +20,7 @@ class GitHubPlayerConfigClientTest {
                     override val enabled = true
                     override val defaultSourceUrl = ""
                     override val sourceUrl =
-                        "https://cdn.jsdelivr.net/gh/MetrolistGroup/faraday@{playerTag}/registry/players/{playerHash}.json"
+                        "https://cdn.jsdelivr.net/gh/anderson76389/Music@{playerTag}/registry/players/{playerHash}.json"
                     override var cachedJson = ""
                     override var cachedAtMs = 0L
                     override var cachedSourceUrl = ""

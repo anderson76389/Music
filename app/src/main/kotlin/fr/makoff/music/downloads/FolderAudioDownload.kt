@@ -1,0 +1,229 @@
+package fr.makoff.music.downloads
+
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.ServiceInfo
+import android.net.Uri
+import android.os.Build
+import androidx.core.app.NotificationCompat
+import androidx.documentfile.provider.DocumentFile
+import androidx.work.Constraints
+import androidx.work.CoroutineWorker
+import androidx.work.Data
+import androidx.work.ExistingWorkPolicy
+import androidx.work.ForegroundInfo
+import androidx.work.NetworkType
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.WorkerParameters
+import androidx.work.workDataOf
+import com.yausername.youtubedl_android.YoutubeDL
+import com.yausername.youtubedl_android.YoutubeDLRequest
+import fr.makoff.music.R
+import fr.makoff.music.models.MediaMetadata
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
+import java.io.File
+import java.io.IOException
+
+object FolderAudioDownloads {
+    const val TAG = "folder-audio"
+    const val TITLE_TAG = "audio-title:"
+    private val videoId = Regex("[A-Za-z0-9_-]{11}")
+
+    fun enqueue(context: Context, media: MediaMetadata, tree: Uri) {
+        require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
+        val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
+            .setInputData(workDataOf(
+                "videoId" to media.id,
+                "title" to media.title.take(200),
+                "artist" to media.artists.joinToString { it.name }.take(200),
+                "tree" to tree.toString(),
+            ))
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .addTag(TAG)
+            .addTag("audio-created:${System.currentTimeMillis()}")
+            .addTag(TITLE_TAG + media.title.take(100))
+            .build()
+        WorkManager.getInstance(context).enqueueUniqueWork("folder-audio-${media.id}", ExistingWorkPolicy.KEEP, request)
+    }
+}
+
+/** The executable, Python and QuickJS are packaged in the APK; no companion app is launched. */
+internal object YtDlpAudioEngine {
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", progress: (Float) -> Unit): File =
+        runInterruptible(Dispatchers.IO) {
+            YoutubeDL.getInstance().init(context.applicationContext)
+            check(directory.isDirectory || directory.mkdirs())
+            val request = YoutubeDLRequest(url)
+                .addOption("--ignore-config")
+                .addOption("--no-playlist")
+                .addOption("--no-mtime")
+                .addOption("--no-cache-dir")
+                .addOption("--socket-timeout", 30)
+                .addOption("--retries", 3)
+                .addOption("--fixup", "never")
+                .addOption("-f", "bestaudio")
+                .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
+            if (cookie.isNotBlank()) {
+                val jar = File(directory, "youtube-cookies.txt")
+                jar.writeText(youtubeCookieJar(cookie))
+                request.addOption("--cookies", jar.absolutePath)
+            }
+            YoutubeDL.getInstance().execute(request, processId) { percent, _, _ -> progress(percent) }
+            directory.listFiles().orEmpty().singleOrNull {
+                it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
+            } ?: throw IOException("No completed audio file")
+        }
+}
+
+internal fun youtubeCookieJar(cookie: String): String = buildString {
+    append("# Netscape HTTP Cookie File\n")
+    cookie.split(';').forEach { item ->
+        val parts = item.trim().split('=', limit = 2)
+        if (parts.size == 2 && parts[0].matches(Regex("[A-Za-z0-9_-]+")) && parts[1].none { it.isISOControl() }) {
+            append(".youtube.com\tTRUE\t/\tTRUE\t0\t${parts[0]}\t${parts[1]}\n")
+        }
+    }
+}
+
+internal fun audioFileName(title: String, artist: String, id: String, extension: String): String {
+    val safe = "$artist - $title".replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), "_").trim(' ', '.')
+    val ext = extension.lowercase().takeIf { it.matches(Regex("[a-z0-9]{1,8}")) } ?: "audio"
+    // Bound UTF-8 filename size even when every character needs four bytes.
+    val stem = safe.codePoints().limit(40).toArray().let { String(it, 0, it.size) }.ifBlank { "Audio" }
+    return "$stem [$id].$ext"
+}
+
+internal fun audioMime(extension: String): String = when (extension.lowercase()) {
+    "m4a", "mp4" -> "audio/mp4"
+    "webm" -> "audio/webm"
+    "opus", "ogg" -> "audio/ogg"
+    "mp3" -> "audio/mpeg"
+    "wav" -> "audio/wav"
+    "flac" -> "audio/flac"
+    else -> "application/octet-stream"
+}
+
+internal suspend fun saveAudioToTree(context: Context, tree: Uri, source: File, name: String): Uri = withContext(Dispatchers.IO) {
+    val parent = DocumentFile.fromTreeUri(context, tree) ?: throw IOException("Invalid document tree")
+    if (!parent.canWrite()) throw IOException("Document tree is not writable")
+    // Let the provider choose a unique name rather than overwrite an existing file.
+    val finalName = if (parent.findFile(name) == null) name else
+        name.substringBeforeLast('.') + " (" + java.util.UUID.randomUUID().toString().take(8) + ")." + source.extension
+    val document = parent.createFile(audioMime(source.extension), "$finalName.part") ?: throw IOException("Cannot create document")
+    try {
+        context.contentResolver.openOutputStream(document.uri, "w")?.use { output ->
+            source.inputStream().use { input ->
+                val buffer = ByteArray(64 * 1024)
+                var total = 0L
+                while (true) {
+                    currentCoroutineContext().ensureActive()
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    output.write(buffer, 0, count)
+                    total += count
+                }
+                if (total != source.length() || total == 0L) throw IOException("Incomplete document")
+            }
+        } ?: throw IOException("Cannot open document")
+        currentCoroutineContext().ensureActive()
+        if (!document.renameTo(finalName)) throw IOException("Document provider cannot finalize file")
+        document.uri
+    } catch (error: Throwable) {
+        runCatching { document.delete() }
+        throw error
+    }
+}
+
+class FolderAudioWorker(context: Context, parameters: WorkerParameters) : CoroutineWorker(context, parameters) {
+    override suspend fun doWork(): Result {
+        val tree = inputData.getString("tree")?.let(Uri::parse) ?: return Result.failure()
+        val videoId = inputData.getString("videoId") ?: return Result.failure()
+        if (!videoId.matches(Regex("[A-Za-z0-9_-]{11}"))) return Result.failure()
+        val title = inputData.getString("title").orEmpty()
+        val directory = File(applicationContext.cacheDir, "folder-audio/$id")
+        var exporting = false
+        try {
+            setForeground(notification(title, -1))
+            return slots.withPermit {
+                setForeground(notification(title, 0))
+                var lastUpdate = 0L
+                val source = YtDlpAudioEngine.download(
+                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), com.metrolist.innertube.YouTube.cookie.orEmpty(),
+                ) { progress ->
+                    val now = android.os.SystemClock.elapsedRealtime()
+                    if (now - lastUpdate > 800) {
+                        lastUpdate = now
+                        val percent = progress.toInt().coerceIn(0, 100)
+                        setProgressAsync(workDataOf("percent" to percent))
+                        setForegroundAsync(notification(title, percent))
+                    }
+                }
+                exporting = true
+                setProgress(workDataOf("copying" to true))
+                val name = audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
+                val uri = saveAudioToTree(applicationContext, tree, source, name)
+                val mime = audioMime(source.extension)
+                notifyCompleted(title, uri, mime)
+                Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name))
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Do not expose yt-dlp stderr: it may include signed media URLs or account data.
+            val error = if (exporting) R.string.folder_audio_write_error else R.string.folder_audio_failed
+            Result.failure(workDataOf("error" to error))
+        } finally {
+            withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { directory.deleteRecursively() }
+        }
+    }
+
+    private fun channel(): NotificationManager {
+        val manager = applicationContext.getSystemService(NotificationManager::class.java)
+        manager.createNotificationChannel(NotificationChannel(CHANNEL, applicationContext.getString(R.string.folder_audio_settings), NotificationManager.IMPORTANCE_LOW))
+        return manager
+    }
+
+    private fun notification(title: String, percent: Int): ForegroundInfo {
+        channel()
+        val cancel = WorkManager.getInstance(applicationContext).createCancelPendingIntent(id)
+        val builder = NotificationCompat.Builder(applicationContext, CHANNEL)
+            .setSmallIcon(R.drawable.download)
+            .setContentTitle(applicationContext.getString(if (percent < 0) R.string.folder_audio_waiting else R.string.folder_audio_running))
+            .setContentText(title)
+            .setProgress(100, percent.coerceAtLeast(0), percent <= 0)
+            .setOngoing(true)
+            .addAction(0, applicationContext.getString(R.string.folder_audio_cancel), cancel)
+        return if (Build.VERSION.SDK_INT >= 29) ForegroundInfo(id.hashCode(), builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC)
+        else ForegroundInfo(id.hashCode(), builder.build())
+    }
+
+    private fun notifyCompleted(title: String, uri: Uri, mime: String) {
+        val intent = Intent(Intent.ACTION_VIEW).setDataAndType(uri, mime).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val open = PendingIntent.getActivity(applicationContext, id.hashCode(), intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        val notification = NotificationCompat.Builder(applicationContext, CHANNEL)
+            .setSmallIcon(R.drawable.download)
+            .setContentTitle(applicationContext.getString(R.string.folder_audio_completed))
+            .setContentText(title)
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        // Notification permission can be denied without preventing the file from being saved.
+        runCatching { channel().notify(id.hashCode() xor 0x40000000, notification) }
+    }
+
+    private companion object {
+        const val CHANNEL = "folder-audio-downloads"
+        val slots = Semaphore(1)
+    }
+}

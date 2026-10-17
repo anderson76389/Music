@@ -955,4 +955,26 @@
     <string name="stream_source_web_creator_desc">Creator web client.</string>
     <string name="top_result">Top result</string>
     <string name="other">Other</string>
+
+    <string name="folder_audio_action">Enregistrer un fichier audio (yt-dlp)</string>
+    <string name="folder_audio_description">Meilleur flux audio disponible, dans un dossier accessible hors de l’application.</string>
+    <string name="folder_audio_settings">Fichiers audio — yt-dlp</string>
+    <string name="folder_audio_choose">Choisir le dossier de destination</string>
+    <string name="folder_audio_choose_hint">Créez ou choisissez un sous-dossier, par exemple Téléchargements/MAKOFF Music.</string>
+    <string name="folder_audio_ready">Dossier autorisé pour les prochains fichiers</string>
+    <string name="folder_audio_queued">Ajouté aux téléchargements de fichiers</string>
+    <string name="folder_audio_access_error">Accès au dossier impossible. Choisissez à nouveau un dossier autorisé.</string>
+    <string name="folder_audio_failed">Échec du téléchargement. YouTube peut refuser ce contenu ou nécessiter une connexion.</string>
+    <string name="folder_audio_write_error">Échec de l’enregistrement. Vérifiez l’espace libre et les droits du dossier.</string>
+    <string name="folder_audio_running">Téléchargement du fichier audio</string>
+    <string name="folder_audio_waiting">En attente</string>
+    <string name="folder_audio_copying">Enregistrement dans le dossier…</string>
+    <string name="folder_audio_completed">Fichier audio enregistré</string>
+    <string name="folder_audio_cancelled">Annulé</string>
+    <string name="folder_audio_recent">Téléchargements de fichiers récents</string>
+    <string name="folder_audio_open">Ouvrir le fichier</string>
+    <string name="folder_audio_open_error">Aucune application ne peut ouvrir ce fichier.</string>
+    <string name="folder_audio_native">Format audio d’origine (Opus/WebM ou M4A), sans réencodage. Ces fichiers restent distincts du cache hors connexion et sont conservés si vous videz le cache ou désinstallez Music.</string>
+    <string name="folder_audio_invalid">Ce morceau ne possède pas de lien YouTube téléchargeable.</string>
+    <string name="folder_audio_cancel">Annuler</string>
 </resources>

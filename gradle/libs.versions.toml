@@ -36,6 +36,10 @@ tinypinyin = "2.0.3"
 protobuf = "4.36.2"
 
 [libraries]
+ytdlp = { module = "io.github.junkfood02.youtubedl-android:library", version = "0.18.1" }
+work-runtime = { module = "androidx.work:work-runtime-ktx", version = "2.10.1" }
+documentfile = { module = "androidx.documentfile:documentfile", version = "1.0.1" }
+
 guava = { module = "com.google.guava:guava", version.ref = "guava" }
 coroutines-guava = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-guava", version.ref = "coroutinesGuava" }
 

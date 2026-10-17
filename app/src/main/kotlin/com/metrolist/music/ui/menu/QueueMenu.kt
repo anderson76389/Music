@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderAudioItem
+
 import android.content.Intent
 import android.content.res.Configuration
 import androidx.compose.animation.core.animateFloatAsState
@@ -94,6 +96,7 @@ fun QueueMenu(
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
 
+    val folderAudioItem = rememberFolderAudioItem(mediaMetadata)
     val downloadUtil = LocalDownloadUtil.current
     val librarySong by database.song(mediaMetadata.id).collectAsStateWithLifecycle(initialValue = null)
     val download by downloadUtil.getDownload(mediaMetadata.id)
@@ -382,6 +385,7 @@ fun QueueMenu(
         item {
             Material3MenuGroup(
                 items = listOf(
+                        folderAudioItem,
                     when (download?.state) {
                         Download.STATE_COMPLETED -> {
                             Material3MenuItemData(
