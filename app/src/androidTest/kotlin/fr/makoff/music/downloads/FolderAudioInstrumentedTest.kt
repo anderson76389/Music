@@ -23,7 +23,7 @@ class FolderAudioInstrumentedTest {
     @Before fun grantTestTreeAccess() {
         val component = instrumentation.context.packageName + "/" + GrantAudioTreeActivity::class.java.name
         val launch = android.os.ParcelFileDescriptor.AutoCloseInputStream(
-            instrumentation.uiAutomation.executeShellCommand("am start -W -n $component"),
+            instrumentation.uiAutomation.executeShellCommand("am start -n $component"),
         ).bufferedReader().use { it.readText() }
         check(!launch.contains("Error:")) { "Cannot launch test grant activity: $launch" }
         val deadline = android.os.SystemClock.elapsedRealtime() + 10000
@@ -35,6 +35,7 @@ class FolderAudioInstrumentedTest {
     }
 
     @Test(timeout = 90000) fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
+        println("Starting native yt-dlp fixture download")
         val bytes = ByteArray(4096) { (it % 127).toByte() }
         // Valid mono PCM WAV, not a renamed text file.
         val header = java.nio.ByteBuffer.allocate(44).order(java.nio.ByteOrder.LITTLE_ENDIAN)
@@ -62,6 +63,7 @@ class FolderAudioInstrumentedTest {
         val exported = mutableListOf<android.net.Uri>()
         try {
             val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.wav", directory, "test-${UUID.randomUUID()}") { }
+            println("Native download complete; verifying engine version and SAF export")
             val version = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(
                 com.yausername.youtubedl_android.YoutubeDLRequest(emptyList<String>()).addOption("--version")
             ).out.trim()
@@ -70,6 +72,7 @@ class FolderAudioInstrumentedTest {
             val name = "audio-${UUID.randomUUID()}.wav"
             repeat(2) { exported += saveAudioToTree(context, tree, source, name) }
             assertNotEquals(exported[0], exported[1])
+            println("SAF export and duplicate filename handling complete")
             exported.forEach { uri ->
                 assertArrayEquals(audio, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
             }
