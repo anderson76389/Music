@@ -47,6 +47,10 @@ class FolderAudioInstrumentedTest {
         val exported = mutableListOf<android.net.Uri>()
         try {
             val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.wav", directory, "test-${UUID.randomUUID()}") { }
+            val version = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(
+                com.yausername.youtubedl_android.YoutubeDLRequest(emptyList<String>()).addOption("--version")
+            ).out.trim()
+            assertEquals(YtDlpAudioEngine.VERSION, version)
             assertArrayEquals(audio, source.readBytes())
             val name = "audio-${UUID.randomUUID()}.wav"
             repeat(2) { exported += saveAudioToTree(context, tree, source, name) }

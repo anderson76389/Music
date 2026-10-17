@@ -60,9 +60,42 @@ object FolderAudioDownloads {
 
 /** The executable, Python and QuickJS are packaged in the APK; no companion app is launched. */
 internal object YtDlpAudioEngine {
+    const val VERSION = "2026.08.19"
+    private const val ENGINE_SHA256 = "1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6"
+    private var verified = false
+
+    @Synchronized
+    private fun initialize(context: Context) {
+        if (verified) return
+        val engine = YoutubeDL.getInstance()
+        engine.init(context.applicationContext)
+        val installed = File(File(File(context.noBackupFilesDir, YoutubeDL.baseName), YoutubeDL.ytdlpDirName), YoutubeDL.ytdlpBin)
+        fun digest(file: File): String {
+            val hash = java.security.MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    hash.update(buffer, 0, count)
+                }
+            }
+            return hash.digest().joinToString("") { "%02x".format(it) }
+        }
+        if (!installed.exists() || digest(installed) != ENGINE_SHA256) {
+            val replacement = File(installed.parentFile, "yt-dlp.new")
+            try {
+                context.resources.openRawResource(R.raw.ytdlp).use { input -> replacement.outputStream().use { input.copyTo(it) } }
+                check(digest(replacement) == ENGINE_SHA256) { "Bundled yt-dlp checksum mismatch" }
+                java.nio.file.Files.move(replacement.toPath(), installed.toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE)
+            } finally { replacement.delete() }
+        }
+        verified = true
+    }
+
     suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
-            YoutubeDL.getInstance().init(context.applicationContext)
+            initialize(context)
             check(directory.isDirectory || directory.mkdirs())
             val request = YoutubeDLRequest(url)
                 .addOption("--ignore-config")
@@ -154,8 +187,10 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
         val directory = File(applicationContext.cacheDir, "folder-audio/$id")
         var exporting = false
         try {
+            setProgress(workDataOf("waiting" to true))
             setForeground(notification(title, -1))
             return slots.withPermit {
+                setProgress(workDataOf("percent" to 0))
                 setForeground(notification(title, 0))
                 var lastUpdate = 0L
                 val source = YtDlpAudioEngine.download(
@@ -181,15 +216,15 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
             throw cancelled
         } catch (_: Exception) {
             // Do not expose yt-dlp stderr: it may include signed media URLs or account data.
-            val error = if (exporting) R.string.folder_audio_write_error else R.string.folder_audio_failed
-            Result.failure(workDataOf("error" to error))
+            val error = if (exporting) "storage" else "download"
+            return Result.failure(workDataOf("error" to error))
         } finally {
             withContext(kotlinx.coroutines.NonCancellable + Dispatchers.IO) { directory.deleteRecursively() }
         }
     }
 
     private fun channel(): NotificationManager {
-        val manager = applicationContext.getSystemService(NotificationManager::class.java)
+        val manager = requireNotNull(applicationContext.getSystemService(NotificationManager::class.java))
         manager.createNotificationChannel(NotificationChannel(CHANNEL, applicationContext.getString(R.string.folder_audio_settings), NotificationManager.IMPORTANCE_LOW))
         return manager
     }

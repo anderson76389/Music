@@ -54,3 +54,6 @@ print('PASS: original logo preserved locally; own library coordinates and local 
 for path in (r/'vendor/innertubex/src').rglob('*.kt'):
     assert 'MetrolistGroup/faraday' not in path.read_text(), path
 print('PASS: upstream Faraday URLs removed from engine source and tests')
+
+assert hashlib.sha256((r/'app/src/main/res/raw/ytdlp').read_bytes()).hexdigest() == '1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6'
+print('PASS: official yt-dlp 2026.08.19 bundled and checksum verified')

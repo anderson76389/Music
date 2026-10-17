@@ -122,9 +122,13 @@ fun FolderAudioSettings() {
             Text(work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.TITLE_TAG) }?.removePrefix(FolderAudioDownloads.TITLE_TAG).orEmpty())
             val status = when (work.state) {
                 WorkInfo.State.SUCCEEDED -> R.string.folder_audio_completed
-                WorkInfo.State.FAILED -> work.outputData.getInt("error", R.string.folder_audio_failed)
+                WorkInfo.State.FAILED -> if (work.outputData.getString("error") == "storage") R.string.folder_audio_write_error else R.string.folder_audio_failed
                 WorkInfo.State.CANCELLED -> R.string.folder_audio_cancelled
-                WorkInfo.State.RUNNING -> if (work.progress.getBoolean("copying", false)) R.string.folder_audio_copying else R.string.folder_audio_running
+                WorkInfo.State.RUNNING -> when {
+                    work.progress.getBoolean("waiting", false) -> R.string.folder_audio_waiting
+                    work.progress.getBoolean("copying", false) -> R.string.folder_audio_copying
+                    else -> R.string.folder_audio_running
+                }
                 else -> R.string.folder_audio_waiting
             }
             Text(stringResource(status))
@@ -136,7 +140,7 @@ fun FolderAudioSettings() {
                 TextButton(onClick = {
                     try {
                         val intent = Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(Uri.parse(work.outputData.getString("uri")), work.outputData.getString("mime"))
+                            .setDataAndType(Uri.parse(requireNotNull(work.outputData.getString("uri"))), work.outputData.getString("mime"))
                             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                         context.startActivity(intent)
                     } catch (_: Exception) {
