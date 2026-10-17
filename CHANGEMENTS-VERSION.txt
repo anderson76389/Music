@@ -1,0 +1,11 @@
+
+## Changements de cette préversion
+
+- Retrait du bouton Intégrations, des écrans Last.fm et À propos.
+- Suppression du client Last.fm, des envois d'écoutes et des favoris vers Last.fm. Discord reste absent.
+- Journal des modifications alimenté par les Releases de anderson76389/Music, disponible aussi dans les APK de test.
+- Inclusion des préversions, classement par date de publication et bouton Réessayer en cas d'erreur GitHub.
+- Téléchargement hors connexion habituel conservé. Export de fichiers audio avec yt-dlp dans un dossier choisi conservé.
+- Logo local conservé ; notices et code source libre conservés.
+
+Contrôles ajoutés : navigation dans sept catégories de réglages sur émulateur, écriture d'une préférence, ouverture du choix de qualité et chargement du journal depuis GitHub. Les fonctions nécessitant un compte YouTube, un serveur personnel, des clés IA ou du matériel Cast/Bluetooth nécessitent encore un essai dans ces conditions.

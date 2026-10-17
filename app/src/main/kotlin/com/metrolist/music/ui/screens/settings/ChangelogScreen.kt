@@ -31,7 +31,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import fr.makoff.music.R
-import fr.makoff.music.BuildConfig
 import fr.makoff.music.utils.ReleaseInfo
 import fr.makoff.music.utils.Updater
 
@@ -44,17 +43,19 @@ fun ChangelogScreen(
 ) {
     var releases by remember { mutableStateOf<List<ReleaseInfo>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
+    var loadFailed by remember { mutableStateOf(false) }
+    var refreshCount by remember { mutableIntStateOf(0) }
     val uriHandler = LocalUriHandler.current
 
-    LaunchedEffect(Unit) {
-        Updater.getAllReleases().onSuccess { allReleases ->
-            releases = allReleases.filter { release ->
-                Updater.compareVersions(BuildConfig.BASE_VERSION_NAME, release.tagName) >= 0
-            }
-            isLoading = false
+    LaunchedEffect(refreshCount) {
+        isLoading = true
+        loadFailed = false
+        Updater.getAllReleases(forceRefresh = refreshCount > 0).onSuccess {
+            releases = it
         }.onFailure {
-            isLoading = false
+            loadFailed = true
         }
+        isLoading = false
     }
 
     val sheetState = rememberBottomSheetState(initialValue = SheetValue.Hidden)
@@ -110,6 +111,18 @@ fun ChangelogScreen(
                     item {
                         Box(modifier = Modifier.fillMaxWidth().height(200.dp), contentAlignment = Alignment.Center) {
                             CircularProgressIndicator()
+                        }
+                    }
+                } else if (loadFailed) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(stringResource(R.string.makoff_changelog_error), textAlign = TextAlign.Center)
+                            TextButton(onClick = { refreshCount++ }) {
+                                Text(stringResource(R.string.makoff_retry))
+                            }
                         }
                     }
                 } else if (releases.isEmpty()) {

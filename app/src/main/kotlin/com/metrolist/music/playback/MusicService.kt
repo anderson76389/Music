@@ -98,7 +98,6 @@ import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
 import com.metrolist.innertubex.extraction.ContentHints
-import com.metrolist.lastfm.LastFM
 import fr.makoff.music.MainActivity
 import fr.makoff.music.R
 import fr.makoff.music.constants.AddToPlaylistPosition
@@ -116,12 +115,10 @@ import fr.makoff.music.constants.CrossfadeDurationKey
 import fr.makoff.music.constants.CrossfadeEnabledKey
 import fr.makoff.music.constants.CrossfadeGaplessKey
 import fr.makoff.music.constants.DisableLoadMoreWhenRepeatAllKey
-import fr.makoff.music.constants.EnableLastFMScrobblingKey
 import fr.makoff.music.constants.EnableSongCacheKey
 import fr.makoff.music.constants.HideExplicitKey
 import fr.makoff.music.constants.HideVideoSongsKey
 import fr.makoff.music.constants.HistoryDuration
-import fr.makoff.music.constants.LastFMUseNowPlaying
 import fr.makoff.music.constants.MediaSessionConstants
 import fr.makoff.music.constants.MediaSessionConstants.CommandAddToTargetPlaylist
 import fr.makoff.music.constants.MediaSessionConstants.CommandToggleLike
@@ -137,9 +134,6 @@ import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
 import fr.makoff.music.constants.RepeatModeKey
 import fr.makoff.music.constants.ResumeOnBluetoothConnectKey
-import fr.makoff.music.constants.ScrobbleDelayPercentKey
-import fr.makoff.music.constants.ScrobbleDelaySecondsKey
-import fr.makoff.music.constants.ScrobbleMinSongDurationKey
 import fr.makoff.music.constants.ShowLyricsKey
 import fr.makoff.music.constants.ShuffleModeKey
 import fr.makoff.music.constants.ShufflePlaylistFirstKey
@@ -189,7 +183,6 @@ import fr.makoff.music.constants.LoudnessLevel
 import fr.makoff.music.constants.LoudnessLevelKey
 import fr.makoff.music.utils.CoilBitmapLoader
 import fr.makoff.music.utils.NetworkConnectivityObserver
-import fr.makoff.music.utils.ScrobbleManager
 import fr.makoff.music.utils.SyncUtils
 import fr.makoff.music.utils.getArtistSeparator
 import fr.makoff.music.utils.joinToArtistString
@@ -424,7 +417,6 @@ class MusicService :
     @Volatile
     private var latestMediaNotification: Notification? = null
 
-    private var scrobbleManager: ScrobbleManager? = null
 
     val automixItems = MutableStateFlow<List<MediaItem>>(emptyList())
 
@@ -945,53 +937,6 @@ class MusicService :
                 _playerFlow.value = newPlayer
 
                 Timber.tag("MusicService").i("Player recreated with AudioTrackPlaybackParams: $useAudioTrackParams")
-            }
-
-        dataStore.data
-            .map { it[EnableLastFMScrobblingKey] ?: false }
-            .debounce(300)
-            .distinctUntilChanged()
-            .collect(scope) { enabled ->
-                if (enabled && scrobbleManager == null) {
-                    val delayPercent = dataStore.get(ScrobbleDelayPercentKey, LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT)
-                    val minSongDuration =
-                        dataStore.get(ScrobbleMinSongDurationKey, LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION)
-                    val delaySeconds = dataStore.get(ScrobbleDelaySecondsKey, LastFM.DEFAULT_SCROBBLE_DELAY_SECONDS)
-                    scrobbleManager =
-                        ScrobbleManager(
-                            scope,
-                            minSongDuration = minSongDuration,
-                            scrobbleDelayPercent = delayPercent,
-                            scrobbleDelaySeconds = delaySeconds,
-                        )
-                    scrobbleManager?.useNowPlaying = dataStore.get(LastFMUseNowPlaying, false)
-                } else if (!enabled && scrobbleManager != null) {
-                    scrobbleManager?.destroy()
-                    scrobbleManager = null
-                }
-            }
-
-        dataStore.data
-            .map { it[LastFMUseNowPlaying] ?: false }
-            .distinctUntilChanged()
-            .collectLatest(scope) {
-                scrobbleManager?.useNowPlaying = it
-            }
-
-        dataStore.data
-            .map { prefs ->
-                Triple(
-                    prefs[ScrobbleDelayPercentKey] ?: LastFM.DEFAULT_SCROBBLE_DELAY_PERCENT,
-                    prefs[ScrobbleMinSongDurationKey] ?: LastFM.DEFAULT_SCROBBLE_MIN_SONG_DURATION,
-                    prefs[ScrobbleDelaySecondsKey] ?: LastFM.DEFAULT_SCROBBLE_DELAY_SECONDS,
-                )
-            }.distinctUntilChanged()
-            .collect(scope) { (delayPercent, minSongDuration, delaySeconds) ->
-                scrobbleManager?.let {
-                    it.scrobbleDelayPercent = delayPercent
-                    it.minSongDuration = minSongDuration
-                    it.scrobbleDelaySeconds = delaySeconds
-                }
             }
 
         combine(
@@ -2406,10 +2351,6 @@ class MusicService :
 
         setupAudioNormalization()
 
-        scrobbleManager?.onSongStop()
-        if (player.playWhenReady && player.playbackState == Player.STATE_READY) {
-            scrobbleManager?.onSongStart(player.currentMetadata, duration = player.duration)
-        }
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
         if (castConnectionHandler?.isCasting?.value == true &&
@@ -2514,9 +2455,6 @@ class MusicService :
             scheduleCrossfade()
         }
 
-        if (playbackState == Player.STATE_IDLE || playbackState == Player.STATE_ENDED) {
-            scrobbleManager?.onSongStop()
-        }
     }
 
     override fun onPlayWhenReadyChanged(
@@ -2634,9 +2572,6 @@ class MusicService :
             }
         }
 
-        if (events.containsAny(Player.EVENT_IS_PLAYING_CHANGED)) {
-            scrobbleManager?.onPlayerStateChanged(player.isPlaying, player.currentMetadata, duration = player.duration)
-        }
     }
 
     override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {

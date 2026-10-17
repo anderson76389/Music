@@ -6,6 +6,8 @@
 package fr.makoff.music.utils
 
 import fr.makoff.music.BuildConfig
+import io.ktor.client.plugins.HttpTimeout
+import kotlinx.coroutines.CancellationException
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
@@ -31,7 +33,9 @@ data class ReleaseAsset(
 )
 
 object Updater {
-    private val client = HttpClient()
+    private val client = HttpClient {
+        install(HttpTimeout) { requestTimeoutMillis = 15_000 }
+    }
     var lastCheckTime = -1L
         private set
     
@@ -153,44 +157,42 @@ object Updater {
      */
     suspend fun getAllReleases(forceRefresh: Boolean = false): Result<List<ReleaseInfo>> =
         withContext(Dispatchers.IO) {
-            runCatching {
-                if (cachedAllReleases.isNotEmpty() && !forceRefresh) {
-                    return@runCatching cachedAllReleases
+            try {
+                val releases = if (cachedAllReleases.isNotEmpty() && !forceRefresh) {
+                    cachedAllReleases
+                } else {
+                    fetchReleaseHistory(client).also { cachedAllReleases = it }
                 }
-                
-                val releases = mutableListOf<ReleaseInfo>()
-                var page = 1
-                var hasMore = true
-                
-                while (hasMore && page <= 10) { // Limit to 10 pages
-                    check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour MAKOFF Music" }
-                    val response = client.get("$GITHUB_API_BASE/releases?page=$page&per_page=30")
-                        .bodyAsText()
-                    val json = JSONArray(response)
-                    
-                    if (json.length() == 0) {
-                        hasMore = false
-                        break
-                    }
-                    
-                    for (i in 0 until json.length()) {
-                        val releaseObj = json.getJSONObject(i)
-                        releases.add(ReleaseInfo(
-                            tagName = releaseObj.getString("tag_name"),
-                            versionName = releaseObj.getString("tag_name").removePrefix("v"),
-                            description = releaseObj.optString("body").takeUnless { releaseObj.isNull("body") }.orEmpty(),
-                            releaseDate = releaseObj.getString("published_at"),
-                            assets = parseAssets(releaseObj.getJSONArray("assets"))
-                        ))
-                    }
-                    
-                    page++
-                }
-                
-                cachedAllReleases = releases
-                releases
+                Result.success(releases)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Result.failure(e)
             }
         }
+
+    // Reading release notes is available even when APK auto-updates are disabled.
+    internal suspend fun fetchReleaseHistory(httpClient: HttpClient): List<ReleaseInfo> {
+        val releases = mutableListOf<ReleaseInfo>()
+        for (page in 1..10) {
+            val response = httpClient.get("$GITHUB_API_BASE/releases?page=$page&per_page=30")
+            check(response.status.value in 200..299) { "GitHub HTTP ${response.status.value}" }
+            val json = JSONArray(response.bodyAsText())
+            for (i in 0 until json.length()) {
+                val release = json.getJSONObject(i)
+                if (release.optBoolean("draft")) continue
+                releases.add(ReleaseInfo(
+                    tagName = release.getString("tag_name"),
+                    versionName = release.getString("tag_name").removePrefix("v"),
+                    description = release.optString("body").takeUnless { release.isNull("body") }.orEmpty(),
+                    releaseDate = release.getString("published_at"),
+                    assets = parseAssets(release.getJSONArray("assets"))
+                ))
+            }
+            if (json.length() < 30) break
+        }
+        return releases.sortedByDescending { it.releaseDate }
+    }
 
     /**
      * Get the download URL for the correct app variant

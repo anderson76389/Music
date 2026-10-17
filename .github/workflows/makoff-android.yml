@@ -25,7 +25,9 @@ jobs:
         run: |
           sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
       - name: Independence audit
-        run: python3 scripts/audit_independence.py
+        run: |
+          python3 scripts/audit_independence.py
+          python3 scripts/audit_settings.py
       - name: Create test signing key
         run: |
           mkdir -p "$HOME/.android"
@@ -155,6 +157,7 @@ jobs:
 
           Android 8.0 minimum. Identifiant de test : fr.makoff.music.debug. Signature temporaire : la mise à jour directe entre deux préversions n'est pas garantie. Sauvegardez vos données avant de remplacer une installation. Mises à jour automatiques désactivées pour ces APK de test.
           NOTES
+          cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\nVérifications : %s/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> notes.txt
           if ! gh release view "$tag" >/dev/null 2>&1; then
             gh release create "$tag" --target "$GITHUB_SHA" --title "MAKOFF Music — test ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7})" --prerelease --latest=false --notes-file notes.txt dist/*

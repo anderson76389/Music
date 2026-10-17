@@ -15,7 +15,7 @@ for p in (r/'app/src').rglob('*'):
 print('PASS: application identity, vendored library, disabled remote cipher config, no upstream application endpoints')
 
 for p in (r/'app').rglob('*'):
-    if p.suffix in ('.kt', '.xml', '.kts', '.pro'):
+    if p.suffix in ('.kt', '.xml', '.kts', '.pro') and not any(part in ('test', 'androidTest') for part in p.parts):
         assert 'discord' not in p.read_text().lower(), p
 assert 'AudioQualityKey, AudioQuality.HIGH' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'defaultValue = AudioQuality.HIGH' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()

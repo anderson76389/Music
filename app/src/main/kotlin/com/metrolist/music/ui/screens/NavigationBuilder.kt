@@ -42,7 +42,6 @@ import fr.makoff.music.ui.screens.recognition.RecognitionHistoryScreen
 import fr.makoff.music.ui.screens.recognition.RecognitionScreen
 import fr.makoff.music.ui.screens.search.OnlineSearchResult
 import fr.makoff.music.ui.screens.search.SearchScreen
-import fr.makoff.music.ui.screens.settings.AboutScreen
 import fr.makoff.music.ui.screens.settings.AiSettings
 import fr.makoff.music.ui.screens.settings.AndroidAutoSettings
 import fr.makoff.music.ui.screens.settings.AppearanceSettings
@@ -56,8 +55,6 @@ import fr.makoff.music.ui.screens.settings.SettingsScreen
 import fr.makoff.music.ui.screens.settings.StorageSettings
 import fr.makoff.music.ui.screens.settings.ThemeScreen
 import fr.makoff.music.ui.screens.settings.UpdaterScreen
-import fr.makoff.music.ui.screens.settings.integrations.IntegrationScreen
-import fr.makoff.music.ui.screens.settings.integrations.LastFMSettings
 import fr.makoff.music.ui.screens.settings.integrations.ListenTogetherSettings
 
 import fr.makoff.music.ui.screens.wrapped.WrappedScreen
@@ -383,14 +380,8 @@ fun NavGraphBuilder.navigationBuilder(
         BackupAndRestore(navController)
     }
 
-    composable("settings/integrations") {
-        IntegrationScreen(navController)
-    }
 
 
-    composable("settings/integrations/lastfm") {
-        LastFMSettings(navController)
-    }
 
     composable(route = "settings/integrations/listen_together") {
         ListenTogetherSettings(navController)
@@ -400,9 +391,6 @@ fun NavGraphBuilder.navigationBuilder(
         UpdaterScreen(navController)
     }
 
-    composable("settings/about") {
-        AboutScreen(navController)
-    }
 
     composable("login") {
         LoginScreen(navController)
