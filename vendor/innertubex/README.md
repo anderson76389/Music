@@ -4,7 +4,7 @@ Moteur Kotlin Multiplatform pour les API InnerTube, la résolution locale EJS et
 
 Coordonnée locale : `fr.makoff.music:innertubex`. Le projet Android la remplace par ce dossier au moyen de `includeBuild` dans son `settings.gradle.kts`. Il n’est pas nécessaire de publier cette bibliothèque sur un service Maven ou sur JitPack pour construire l’application.
 
-La configuration distante du lecteur est désactivée par l’hôte Android. Des adresses historiques Faraday restent dans deux classes de compatibilité et leurs tests ; elles ne sont pas utilisées par la configuration actuelle de l’application. Voir le rapport d’indépendance à la racine du dépôt.
+La configuration distante du lecteur est désactivée par l’hôte Android. Les anciennes adresses Faraday et leurs replis imposés ont été supprimés des classes de compatibilité et des tests. Les règles restantes ciblent uniquement le dépôt Music ; aucune configuration distante n’est activée ni présentée comme disponible. Voir le rapport d’indépendance à la racine du dépôt.
 
 ## Vérification
 

@@ -7,8 +7,9 @@ Discord reste supprimé sur demande.
 
 Les sources du moteur de lecture InnerTubeX v0.8.4 sont embarquées dans vendor.
 Gradle remplace son artefact distant par le projet local ; aucun téléchargement
-de ce moteur depuis Metrolist/JitPack n’est nécessaire. Les configurations de
-lecture distantes de Metrolist/Faraday restent désactivées : résolution EJS locale.
+de ce moteur depuis Metrolist/JitPack n’est nécessaire. Les anciennes URL
+de lecture Metrolist/Faraday ont été retirées ; configuration distante toujours
+désactivée et résolution EJS locale.
 
 Mises à jour : uniquement https://github.com/anderson76389/Music/releases.
 Le workflow Publier les APK stables signés exige votre propre clé privée via quatre

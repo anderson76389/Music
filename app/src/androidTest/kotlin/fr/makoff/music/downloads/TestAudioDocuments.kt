@@ -31,7 +31,7 @@ class TestAudioDocuments : ContentProvider() {
             "flags" -> DocumentsContract.Document.FLAG_SUPPORTS_WRITE or DocumentsContract.Document.FLAG_SUPPORTS_DELETE or DocumentsContract.Document.FLAG_SUPPORTS_RENAME or DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE
             "_size" -> f.length()
             else -> null
-        } }.toTypedArray()) }
+        } }.toTypedArray<Any?>()) }
         return cursor
     }
     override fun openFile(uri: Uri, mode: String): ParcelFileDescriptor = ParcelFileDescriptor.open(file(uri), ParcelFileDescriptor.parseMode(mode))

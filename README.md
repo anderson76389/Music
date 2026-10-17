@@ -15,6 +15,7 @@
 - **Votre musique** : recherche, albums, artistes, playlists et bibliothèque ; connexion au compte YouTube Music facultative.
 - **Lecture au quotidien** : arrière-plan, écran verrouillé, file d’attente, lecture aléatoire, répétition et minuterie.
 - **Écoute hors connexion** : téléchargements, cache et gestion des morceaux enregistrés.
+- **Fichiers audio accessibles** : mode yt-dlp 2026.08.19 embarqué pour enregistrer un morceau dans un dossier Android choisi, avec progression et annulation.
 - **Son personnalisable** : qualité élevée par défaut, égaliseur et réglages de lecture.
 - **Paroles et découverte** : paroles synchronisées, traduction et reconnaissance musicale selon les fournisseurs disponibles.
 - **Sur vos appareils** : widgets, Android Auto et Google Cast avec la variante compatible.
@@ -54,6 +55,14 @@ Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire pr
 Le circuit de publication stable produit les deux APK signés, les sources et leurs sommes de contrôle dans les Releases de ce dépôt. Il nécessite la configuration de la clé privée du projet. Les futures versions doivent conserver cette clé et augmenter leur numéro de version pour permettre la mise à jour Android.
 
 L’application stable recherche ses mises à jour exclusivement dans **ce dépôt**. Une préversion de test n’est pas présentée comme une version stable. Aucune publication stable n’est garantie tant que la signature n’est pas configurée.
+
+## Enregistrer de vrais fichiers audio
+
+Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente, choisissez **« Enregistrer un fichier audio (yt-dlp) »**. Android vous demande un dossier au premier usage : créez ou choisissez par exemple `Téléchargements/MAKOFF Music`, puis autorisez son utilisation.
+
+Le dossier est mémorisé. **Paramètres → Stockage → Fichiers audio — yt-dlp** permet de le changer, de suivre les tâches, de les annuler et d’ouvrir les fichiers terminés. Le mode hors connexion existant continue à utiliser son cache privé séparé.
+
+Les fichiers gardent le meilleur flux audio disponible dans son format d’origine, généralement WebM/Opus ou M4A, sans réencodage. Il n’est pas nécessaire d’installer YTDLnis ou une autre application pour lancer le téléchargement. [Lire le guide et les limites](TELECHARGEMENTS-FICHIERS.txt).
 
 ## La qualité sonore, sans promesse artificielle
 

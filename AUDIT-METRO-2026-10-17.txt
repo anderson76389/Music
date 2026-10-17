@@ -52,17 +52,16 @@ A. LE LOGO : VOLONTAIRE
    C’est bien le logo de Metrolist, copié dans les sources de Music et conservé.
    Une ressemblance graphique / origine commune reste donc volontaire.
 
-B. ANCIENNES ADRESSES FARADAY : PRÉSENTES MAIS INACTIVES DANS L’APPLICATION
+B. ANCIENNES ADRESSES FARADAY : SUPPRIMÉES DEPUIS CET AUDIT INITIAL
+   Les constantes d’adresses et les replis imposés ont été retirés dans :
    vendor/innertubex/src/commonMain/kotlin/com/metrolist/innertubex/cipher/
      GitHubPlayerConfigClient.kt
      RemotePlayerConfigStore.kt
-   Ces classes contiennent encore les adresses GitHub/jsDelivr de
-   MetrolistGroup/faraday et des règles de validation de compatibilité.
-   Leur utilisation est bloquée par enabled=false dans l’hôte Android.
-   Les mêmes adresses figurent dans des tests de la bibliothèque.
-   Je n’ai pas supprimé ces branches internes : elles ne sont pas nécessaires
-   avec cette configuration et leur retrait modifierait le moteur de lecture.
-   Réactiver la configuration distante demanderait un nouvel audit.
+   Les anciennes URL ont également été supprimées des tests de la bibliothèque.
+   Les règles de compatibilité restantes ciblent seulement le dépôt Music.
+   La configuration distante demeure désactivée : aucun fichier distant n’est
+   fabriqué ni requis. Les constats et APK test 9 décrits plus bas correspondent
+   à l’audit initial, avant ce changement et l’ajout du téléchargement yt-dlp.
 
 C. NOMS TECHNIQUES : LOCAUX, SANS DÉPENDANCE RÉSEAU
    Packages com.metrolist.innertube / innertubex / fournisseurs embarqués,

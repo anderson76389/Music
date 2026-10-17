@@ -19,7 +19,16 @@ class YouTubeAudioLiveTest {
                 YtDlpAudioEngine.download(context, "https://www.youtube.com/watch?v=BaW_jenozKc", directory, "live-${UUID.randomUUID()}") { }
             } catch (error: Exception) {
                 // Suppress stderr and signed URLs in public CI logs.
-                throw AssertionError("Téléchargement YouTube refusé ou indisponible depuis ce réseau (${error.javaClass.simpleName}).")
+                val diagnostic = listOf(
+                    "HTTP Error 403" to "HTTP_403",
+                    "HTTP Error 429" to "HTTP_429",
+                    "CERTIFICATE_VERIFY_FAILED" to "TLS_CERTIFICATE",
+                    "Sign in" to "YOUTUBE_AUTH_REQUIRED",
+                    "JavaScript runtime" to "JS_RUNTIME",
+                    "ffmpeg" to "FFMPEG_REQUIRED",
+                    "not available" to "VIDEO_UNAVAILABLE",
+                ).firstOrNull { error.message.orEmpty().contains(it.first, ignoreCase = true) }?.second ?: error.javaClass.simpleName
+                throw AssertionError("Téléchargement YouTube non réussi depuis ce réseau ($diagnostic).")
             }
             assertTrue(file.length() > 1000)
             assertTrue(file.extension in setOf("m4a", "webm", "opus", "ogg", "mp4"))
