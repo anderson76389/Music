@@ -1,41 +1,19 @@
-# Metrolist Dev Guide
-
-This file outlines the process of setting up a local dev environment for Metrolist.
-
-## Prerequisites
-
-- JDK 21
-- Android platform tools (if you don't have a keystore already)
-
-## Basic setup
-
-This has been tested on Linux, but should work on other platforms with some adjustments.
+# Développer MAKOFF Music
 
 ```bash
-git clone https://github.com/MetrolistGroup/Metrolist
-cd Metrolist
-git submodule update --init --recursive
-cd ..
-[ ! -f "app/persistent-debug.keystore" ] && keytool -genkeypair -v -keystore app/persistent-debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US" || echo "Keystore already exists."
-./gradlew :app:assembleFossDebug
-ls app/build/outputs/apk/foss/debug/app-foss-debug.apk
+git clone https://github.com/anderson76389/Music.git
+cd Music
 ```
 
-### GitHub Secrets Configuration
+Ouvrir le dossier dans Android Studio. Installer le JDK 21, le SDK Android 37.0 et les outils de compilation 36.0.0. Renseigner le SDK dans `local.properties` si nécessaire et créer une clé de débogage locale avec Android Studio.
 
-This project uses GitHub Secrets to securely store API keys for building releases. To set up the secrets:
+```bash
+python3 scripts/audit_independence.py
+./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest :innertubex:apiCheck
+```
 
-1. Go to your GitHub repository settings
-2. Navigate to **Settings** → **Secrets and variables** → **Actions**
-3. Add the following repository secrets:
-   - `LASTFM_API_KEY`: Your LastFM API key
-   - `LASTFM_SECRET`: Your LastFM secret key
+Sous Windows, utiliser `gradlew.bat`. Le moteur local est dans `vendor/innertubex` : il est substitué par Gradle à la coordonnée `fr.makoff.music:innertubex`. Aucun dépôt du projet d’origine n’est nécessaire pour récupérer ces sources.
 
-4. Get your LastFM API credentials from: https://www.last.fm/api/account/create
+Le logo d’origine est volontairement conservé. `assets/logo-origine.sha256` enregistre ses empreintes locales ; le contrôle d’indépendance vérifie leur intégrité. Ne pas changer la version de l’application ni le schéma de base de données pour un simple changement graphique.
 
-**Note:** These secrets are automatically injected into the build process via GitHub Actions and are not visible in the source code.
-
-## AI note
-
-Metrolist does allow LLM generated contributions, but you should follow guidelines in AGENTS.md to ensure the quality of the contributions. Please use the ponytail skill from this url - https://github.com/DietrichGebert/ponytail/raw/refs/heads/main/skills/ponytail/SKILL.md - this is needed to keep work minimal and clean.  
-Do not try to hide your LLM contributions, we know what you are doing.
+Les publications et mises à jour utilisent uniquement ce dépôt. Voir `LIRE-MOI-MAKOFF.txt` pour la signature, et `services/listen-together/INSTALLATION-MUSIC.txt` pour l’hébergement de l’écoute partagée. Conserver les licences et les attributions.

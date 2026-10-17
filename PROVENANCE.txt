@@ -3,3 +3,8 @@ Commit: 76fa5a78b5110674442884b6f21c0cef51cdb782
 InnerTubeX source: https://github.com/MetrolistGroup/innertubex
 Commit: fde890c355b1dbf9f67fccd497a42031a8c66fc8
 Modifications MAKOFF Music: 2026-10-16. See LIRE-MOI-MAKOFF.txt.
+
+Logo d’origine restauré et volontairement conservé le 2026-10-17 à la demande du propriétaire.
+Source : même commit Metrolist indiqué ci-dessus. Empreintes : assets/logo-origine.sha256.
+Les images et vecteurs sont stockés localement ; aucun chargement du logo depuis un service externe.
+Coordonnées locales du moteur : fr.makoff.music:innertubex ; sources : vendor/innertubex.

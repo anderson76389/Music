@@ -143,7 +143,7 @@ mavenPublishing {
             "Extended Android and JVM Kotlin Multiplatform client for YouTube's InnerTube APIs, SABR audio/video, and player cipher deobfuscation.",
         )
         inceptionYear.set("2026")
-        url.set("https://github.com/MetrolistGroup/innertubex")
+        url.set("https://github.com/anderson76389/Music")
 
         licenses {
             license {
@@ -157,19 +157,18 @@ mavenPublishing {
             developer {
                 id.set("metrolistgroup")
                 name.set("Metrolist contributors")
-                url.set("https://github.com/MetrolistGroup")
             }
         }
 
         scm {
-            url.set("https://github.com/MetrolistGroup/innertubex")
-            connection.set("scm:git:git://github.com/MetrolistGroup/innertubex.git")
-            developerConnection.set("scm:git:ssh://git@github.com/MetrolistGroup/innertubex.git")
+            url.set("https://github.com/anderson76389/Music")
+            connection.set("scm:git:https://github.com/anderson76389/Music.git")
+            developerConnection.set("scm:git:ssh://git@github.com/anderson76389/Music.git")
         }
 
         issueManagement {
             system.set("GitHub")
-            url.set("https://github.com/MetrolistGroup/innertubex/issues")
+            url.set("https://github.com/anderson76389/Music/issues")
         }
     }
 }

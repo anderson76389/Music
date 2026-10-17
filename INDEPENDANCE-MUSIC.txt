@@ -11,7 +11,7 @@ de ce moteur depuis Metrolist/JitPack n’est nécessaire. Les configurations de
 lecture distantes de Metrolist/Faraday restent désactivées : résolution EJS locale.
 
 Mises à jour : uniquement https://github.com/anderson76389/Music/releases.
-Le workflow Publish signed Music APKs exige votre propre clé privée via quatre
+Le workflow Publier les APK stables signés exige votre propre clé privée via quatre
 secrets : MUSIC_KEYSTORE_BASE64, MUSIC_STORE_PASSWORD, MUSIC_KEY_ALIAS,
 MUSIC_KEY_PASSWORD. Sans ces secrets, aucune publication signée durable n’a lieu.
 Les APK debug sont des versions de test ; leur mise à jour automatique est désactivée
@@ -39,3 +39,9 @@ pour le droit d’auteur et la compatibilité ; ils ne contactent aucun serveur.
 Vérification : scripts/audit_independence.py, construction Android, tests unitaires,
 construction et tests Go du serveur. La lecture réelle sur téléphone et un salon
 entre deux appareils nécessitent encore des essais sur les appareils et un serveur.
+
+AUDIT DU 17 OCTOBRE 2026
+Logo d’origine volontairement conservé localement à la demande du propriétaire.
+Coordonnées Gradle du moteur remplacées par fr.makoff.music:innertubex.
+SCM, suivi des problèmes et documentation opérationnelle redirigés vers ce dépôt.
+Voir AUDIT-METRO-2026-10-17.txt pour l’inventaire des références restantes et les limites.

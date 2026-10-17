@@ -11,7 +11,7 @@ APK de test : https://github.com/anderson76389/Music/actions/runs/38954538211/ar
 APK Google Cast : https://github.com/anderson76389/Music/actions/runs/38954538211/artifacts/12069998385
 La lecture réelle, la connexion et les salons synchronisés restent à tester sur téléphone.
 
-Modifications : identité propre, nouveaux vecteurs de lancement, bibliothèque
+Modifications : identité propre, logo d’origine conservé localement, bibliothèque
 InnerTubeX v0.8.4 embarquée avec sa licence, mises à jour Metrolist et migration KMP
 neutralisées, moteur local EJS à la place des configurations de lecture distantes,
 écoute partagée sans serveur imposé, suppression complète de Discord.

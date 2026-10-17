@@ -33,7 +33,7 @@ jobs:
       - name: Build and test
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest
+          ./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest :innertubex:apiCheck
       - uses: actions/upload-artifact@v4
         with:
           name: MAKOFF-Music-test-APK

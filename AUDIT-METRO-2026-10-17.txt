@@ -1,0 +1,116 @@
+MAKOFF MUSIC — AUDIT DES LIENS AVEC METROLIST, 17 OCTOBRE 2026
+
+CONCLUSION
+Aucun service Metrolist nécessaire au fonctionnement n’a été identifié dans la
+configuration actuelle de l’application. Le moteur et le serveur sont inclus
+localement. Cela ne signifie pas que toute occurrence du nom a disparu, ni que
+l’application est indépendante de YouTube ou de tous ses fournisseurs tiers.
+Le logo d’origine est volontairement conservé à votre demande.
+
+CHANGEMENTS EFFECTUÉS
+1. Logo exact de la base 76fa5a78b5110674442884b6f21c0cef51cdb782 restauré :
+   vecteurs de lancement, icônes adaptatives Android 8+ / Android 12+, monochrome,
+   icônes statiques et logo utilisé dans l’application. 31 fichiers graphiques
+   et de couleurs vérifiés ; seuls les 10 fichiers différents ont été restaurés.
+   Les fichiers sont locaux : leur affichage ne demande aucun accès à Metrolist.
+   Le symbole a également été remis dans la bannière du dépôt.
+2. Empreintes SHA-256 conservées dans assets/logo-origine.sha256 et vérifiées
+   par scripts/audit_independence.py, sans téléchargement du logo à chaque build.
+3. Anciennes coordonnées Maven com.github.MetrolistGroup remplacées par
+   fr.makoff.music:innertubex. settings.gradle.kts impose le projet embarqué
+   vendor/innertubex ; il n’utilise pas un binaire du dépôt d’origine.
+4. Métadonnées SCM, dépôt et suivi des problèmes du moteur redirigés vers Music.
+5. Guides de construction, README du serveur, README du moteur, guide de
+   publication et politique de sécurité actualisés pour ce dépôt. Les anciennes
+   commandes qui clonaient Metrolist ou utilisaient son image Docker ont été
+   remplacées. Aucun signalement n’est envoyé automatiquement.
+
+POINTS CONTRÔLÉS
+- Application / espace de noms Android : fr.makoff.music ; tests : .debug.
+- Mises à jour et historique affiché dans l’app : API anderson76389/Music.
+- Téléchargements acceptés par Updater : fichiers des Releases de ce dépôt.
+- À propos : lien vers ce dépôt ; aucune communauté ou donation Metrolist imposée.
+- Connexion : comptes Google/YouTube ; pas de compte Metrolist nécessaire.
+- Moteur de lecture : sources locales, résolution EJS locale. La configuration
+  distante est désactivée dans AndroidPlayerConfigRepository (enabled=false,
+  sourceUrl et defaultSourceUrl vides).
+- Les chemins de rafraîchissement et de récupération Faraday vérifient enabled
+  avant leurs appels réseau dans les deux classes indiquées ci-dessous.
+- Écoute partagée : liste publique vide ; adresse définie par l’utilisateur,
+  serveur et protocole embarqués ; module Go sur anderson76389/Music.
+- Aucun sous-module Git distant (aucune entrée gitlink) nécessaire.
+- Aucun endpoint Metrolist identifié dans le code ou les ressources Android.
+- Discord absent du code et des ressources de l’application.
+- GPL, notices d’origine et protocole Android/serveur conservés et vérifiés.
+- Les fichiers .github/workflows/*.yml actifs utilisent les sources du dépôt.
+- Les dépendances Gradle du moteur embarqué ne référencent plus le groupe Maven
+  de Metrolist. Les dépendances usuelles Kotlin/Android/Go restent externes.
+
+CE QUI RESTE LIÉ À L’ORIGINE ET POURQUOI
+
+A. LE LOGO : VOLONTAIRE
+   C’est bien le logo de Metrolist, copié dans les sources de Music et conservé.
+   Une ressemblance graphique / origine commune reste donc volontaire.
+
+B. ANCIENNES ADRESSES FARADAY : PRÉSENTES MAIS INACTIVES DANS L’APPLICATION
+   vendor/innertubex/src/commonMain/kotlin/com/metrolist/innertubex/cipher/
+     GitHubPlayerConfigClient.kt
+     RemotePlayerConfigStore.kt
+   Ces classes contiennent encore les adresses GitHub/jsDelivr de
+   MetrolistGroup/faraday et des règles de validation de compatibilité.
+   Leur utilisation est bloquée par enabled=false dans l’hôte Android.
+   Les mêmes adresses figurent dans des tests de la bibliothèque.
+   Je n’ai pas supprimé ces branches internes : elles ne sont pas nécessaires
+   avec cette configuration et leur retrait modifierait le moteur de lecture.
+   Réactiver la configuration distante demanderait un nouvel audit.
+
+C. NOMS TECHNIQUES : LOCAUX, SANS DÉPENDANCE RÉSEAU
+   Packages com.metrolist.innertube / innertubex / fournisseurs embarqués,
+   chemins app/src/main/kotlin/com/metrolist, MetrolistTheme, clés de ressources
+   metrolist et listen_on_metrolist, noms des fichiers metrolist_strings.xml,
+   nom interne cmd/metroserver, champs et écrans historiques KMP restants.
+   Les valeurs visibles des chaînes ont déjà été remplacées par MAKOFF Music.
+   __metrolist_search_query__ reste conservé pour la compatibilité des routes.
+   Renommer tous ces identifiants n’apporterait pas d’indépendance réseau.
+
+D. HISTORIQUE ET ATTRIBUTIONS : CONSERVÉS
+   LICENSE, PROVENANCE.txt, licences embarquées, en-têtes de copyright,
+   auteur d’origine dans le POM du moteur, changelog.md, consignes AGENTS.md
+   et anciens workflows *.yml.disabled. Ces derniers ne sont pas exécutés par
+   GitHub Actions. Le changelog historique à la racine n’est pas chargé par
+   l’écran de l’app : celui-ci récupère les Releases de anderson76389/Music.
+   Les noms et liens historiques qui restent ici documentent l’origine.
+
+DÉPENDANCES À DES TIERS QUI RESTENT (PAS DES GARANTIES METROLIST)
+- YouTube / Google : recherche, connexion, contenus, flux, miniatures, jetons.
+- Google Cast dans la variante GMS ; Google/Android pour les outils système.
+- Paroles selon les fournisseurs activés : LRCLIB, KuGou, Paxsenix, BetterLyrics,
+  Zemer, LyricsPlus et ses miroirs (dont lyricsplus.atomix.one).
+- Shazam pour la reconnaissance ; Last.fm si configuré avec vos propres clés.
+- AutoEq : dépôt ndellagrotte/AutoEq pour les profils recherchés en ligne.
+- Traduction : fournisseur et clé configurés par l’utilisateur, dont DeepL ou
+  les API d’IA proposées. Ces services restent externes.
+- GitHub pour les sources et mises à jour ; Maven Central, Google Maven,
+  Gradle, JitPack et les autres dépôts déclarés pour les outils/bibliothèques.
+La propriété de chaque miroir tiers n’est pas démontrée par cet audit de code.
+Il ne faut pas présenter ces services comme hébergés ou contrôlés par Music.
+
+SI METROLIST SUPPRIME SES DÉPÔTS
+Les sources du moteur, du serveur, du protocole et du logo restent dans Music.
+Aucun appel actif à un dépôt Metrolist n’a été identifié dans la configuration
+contrôlée. La suppression de Metrolist ne retire pas ces fichiers de Music.
+Cela n’empêche pas une panne ou un changement de YouTube ou d’un fournisseur
+externe de demander une maintenance. Ce contrôle statique ne remplace pas une
+capture complète du trafic de toutes les fonctions et de tous les scénarios.
+
+PUBLICATION ET VALIDATION
+Le contrôle local scripts/audit_independence.py est réussi après modification.
+Une nouvelle compilation FOSS/GMS, les tests unitaires, le contrôle d’API du moteur
+et les essais d’installation/démarrage sur émulateur sont déclenchés sur GitHub.
+Le résultat exact de cette exécution doit être consulté avant de déclarer les
+nouveaux APK validés. L’audit ne valide pas à lui seul la lecture sonore réelle,
+la connexion avec compte, Cast ou un salon entre plusieurs appareils.
+
+Le précédent essai de publication dans Releases a échoué avec HTTP 403 malgré
+contents:write. La clé privée de signature stable doit encore être configurée.
+L’écoute partagée nécessite toujours l’hébergement de votre serveur.

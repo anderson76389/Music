@@ -39,3 +39,14 @@ app_proto = (r/'app/src/main/proto/listentogether.proto').read_text()
 server_proto = (r/'services/listen-together/metroproto/listentogether.proto').read_text()
 assert app_proto == server_proto, 'Application and server must use the same protocol'
 print('PASS: no upstream branding in UI resources; own server and protocol fully bundled; GPL preserved')
+
+# Keep the requested original icon local and byte-identical to the pinned source.
+import hashlib
+for entry in (r/'assets/logo-origine.sha256').read_text().splitlines():
+    expected, path = entry.split('  ', 1)
+    assert hashlib.sha256((r/path).read_bytes()).hexdigest() == expected, path
+assert 'fr.makoff.music:innertubex' in (r/'gradle/libs.versions.toml').read_text()
+assert 'GROUP=fr.makoff.music' in (r/'vendor/innertubex/gradle.properties').read_text()
+for path in ('settings.gradle.kts', 'gradle/libs.versions.toml', 'vendor/innertubex/gradle.properties', 'vendor/innertubex/build.gradle.kts'):
+    assert 'com.github.MetrolistGroup' not in (r/path).read_text(), path
+print('PASS: original logo preserved locally; own library coordinates and local substitution')

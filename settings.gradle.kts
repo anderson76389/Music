@@ -27,7 +27,6 @@ include(":innertube")
 
 includeBuild("vendor/innertubex") {
     dependencySubstitution {
-        substitute(module("com.github.MetrolistGroup.innertubex:innertubex")).using(project(":"))
-        substitute(module("com.github.MetrolistGroup:innertubex")).using(project(":"))
+        substitute(module("fr.makoff.music:innertubex")).using(project(":"))
     }
 }

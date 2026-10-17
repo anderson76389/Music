@@ -2,7 +2,7 @@
 
 ## Ce qui appartient au projet
 
-- Identifiant Android `fr.makoff.music`, nom et icônes propres.
+- Identifiant Android `fr.makoff.music` et nom propre. Logo d’origine volontairement conservé localement à la demande du propriétaire.
 - Téléchargements, mises à jour et publications sur `anderson76389/Music`.
 - Sources InnerTubeX embarquées dans `vendor/innertubex`, sans téléchargement du moteur depuis le dépôt d’origine.
 - Sources et protocole du serveur d’écoute partagée inclus dans `services/listen-together` ; aucun serveur public présélectionné.
@@ -15,8 +15,8 @@
 | --- | --- | --- |
 | `LICENSE`, `PROVENANCE.txt`, notices et en-têtes | Origine, auteurs et licences | Attribution conservée ; ne constitue pas une dépendance de fonctionnement |
 | Espaces de noms `com.metrolist` et noms internes | Organisation historique du code | Code local ; aucun appel réseau déclenché par ces noms |
-| `gradle/libs.versions.toml`, `settings.gradle.kts` | Anciennes coordonnées Maven et substitution locale | La construction utilise les sources embarquées |
-| Métadonnées de publication de `vendor/innertubex` | Ancien groupe et ancienne origine du composant | Ne publie pas le composant automatiquement et ne sert pas de canal de mise à jour Android |
+| `gradle/libs.versions.toml`, `settings.gradle.kts` | Coordonnées propres `fr.makoff.music:innertubex` et substitution locale | Ancien groupe Maven remplacé ; la construction utilise les sources embarquées |
+| Métadonnées de publication de `vendor/innertubex` | Groupe et liens de publication de Music ; auteurs d’origine conservés | Ne publie pas le composant automatiquement et ne sert pas de canal de mise à jour Android |
 | `GitHubPlayerConfigClient.kt`, `RemotePlayerConfigStore.kt` dans le moteur embarqué | Anciennes adresses Faraday et règles de compatibilité | Chemin distant désactivé par la configuration de l’application ; chaînes encore présentes dans les sources |
 | Tests du moteur | Adresses de données de test | Aucun service de production imposé |
 | Fichiers `.github/workflows/*.yml.disabled` | Anciennes procédures archivées | Non exécutées par GitHub Actions |
@@ -52,3 +52,7 @@ Exécution [38977059046](https://github.com/anderson76389/Music/actions/runs/389
 - Les secrets de signature stable ne sont pas configurés dans le cadre de ces essais. Les APK validés sont des versions de test à signature temporaire.
 
 La vérification automatisée ne valide pas la lecture sonore réelle, le téléchargement hors connexion, la connexion au compte ou Cast. Le contrôle d’installation/démarrage des futures versions stables est configuré, mais n’a pas encore été exécuté sur des APK de publication signés.
+
+## Nouvel audit et logo conservé
+
+Le [rapport du 17 octobre 2026](../AUDIT-METRO-2026-10-17.txt) détaille les corrections supplémentaires, le logo restauré, les adresses Faraday encore inactives, les noms internes et les dépendances tierces. Le contrôle local vérifie désormais aussi les 31 empreintes du logo et les coordonnées propres du moteur.
