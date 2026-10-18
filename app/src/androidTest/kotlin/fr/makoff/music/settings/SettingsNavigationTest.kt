@@ -79,9 +79,40 @@ class SettingsNavigationTest {
         }
     }
 
-    private fun open(id: Int) {
-        val bounds = findText(id)
-        assertTrue("Click ${label(id)}", device.click(bounds.centerX(), bounds.centerY()))
+    private fun open(id: Int, switchOnly: Boolean = false) {
+        findText(id)
+        val text = label(id)
+        fun clickSwitch(node: android.view.accessibility.AccessibilityNodeInfo): Boolean {
+            if (!node.refresh()) return false
+            if (node.isCheckable && node.isEnabled && node.isVisibleToUser) {
+                return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+            }
+            for (index in 0 until node.childCount) {
+                val child = node.getChild(index) ?: continue
+                try { if (clickSwitch(child)) return true } finally { child.recycle() }
+            }
+            return false
+        }
+        fun visit(node: android.view.accessibility.AccessibilityNodeInfo,
+                  parentAction: android.view.accessibility.AccessibilityNodeInfo?): Boolean {
+            try {
+                if (!node.refresh()) return false
+                val action = if (node.isClickable && node.isEnabled) node else parentAction
+                if (node.isVisibleToUser && node.text?.toString() == text && action != null) {
+                    // Activate the same UI callback as accessibility users. A physical tap
+                    // immediately after a fling can merely stop scrolling instead of clicking.
+                    return if (switchOnly) clickSwitch(action)
+                    else action.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                }
+                for (index in 0 until node.childCount) {
+                    val child = node.getChild(index) ?: continue
+                    if (visit(child, action)) return true
+                }
+                return false
+            } finally { node.recycle() }
+        }
+        val root = instrumentation.uiAutomation.rootInActiveWindow
+        assertTrue("Activate $text", root != null && visit(root, null))
         device.waitForIdle()
     }
 
@@ -185,16 +216,7 @@ class SettingsNavigationTest {
                 R.string.content -> {
                     toggleAndRestore(R.string.enable_lyricsplus, EnableLyricsPlus, true,
                         effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
-                        clicker = { id ->
-                            val title = findText(id)
-                            val switch = visibleControls().filter { it.checkable }.minByOrNull {
-                                kotlin.math.abs(it.bounds.centerY() - title.centerY())
-                            }
-                            assertNotNull("LyricsPlus switch", switch)
-                            assertTrue("Switch belongs to provider row", kotlin.math.abs(switch!!.bounds.centerY() - title.centerY()) < 150)
-                            device.click(switch.bounds.centerX(), switch.bounds.centerY())
-                            device.waitForIdle()
-                        })
+                        clicker = { id -> open(id, switchOnly = true) })
                     assertEquals(runBlocking { context.dataStore.data.first()[EnableLyricsPlus] ?: true },
                         fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context))
                     listOf(
