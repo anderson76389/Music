@@ -76,6 +76,9 @@ class OfflinePlayerInstrumentedTest {
 
     @Test(timeout = 210000)
     fun realCachedAudioPlayerControlsQueueTimersAndQuality() = runBlocking {
+        await("Offline test requires no active Android network", 20000) {
+            context.getSystemService(android.net.ConnectivityManager::class.java).activeNetwork == null
+        }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, AutoDownloadOnLikeKey)
         val before = context.dataStore.data.first()
@@ -132,7 +135,7 @@ class OfflinePlayerInstrumentedTest {
             title!!.click()
             clickDescription(R.string.play)
             await("UI Play did not render audio") { main { active.player.isPlaying && active.player.currentPosition > 200 } }
-            await("No audio buffers rendered") { main { (active.player.audioCounters?.renderedOutputBufferCount ?: 0) > 0 } }
+            await("No audio buffers rendered") { main { (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 } }
             clickDescription(R.string.player_pause)
             await("UI Pause did not stop playback") { main { !active.player.playWhenReady } }
             println("PLAYER_UI_OK: cached WAV decoded; real UI play/pause and rendered audio buffers")
@@ -215,6 +218,8 @@ class OfflinePlayerInstrumentedTest {
                 active.database.song(track.id).first()?.let { active.database.delete(it.song) }
             } }
             if (bound) context.unbindService(binding)
+            device.pressBack()
+            device.waitForIdle()
             context.dataStore.edit { prefs ->
                 keys.forEach { key -> before[key]?.let { prefs[key] = it } ?: prefs.remove(key) }
                 before[AudioQualityKey]?.let { prefs[AudioQualityKey] = it } ?: prefs.remove(AudioQualityKey)
