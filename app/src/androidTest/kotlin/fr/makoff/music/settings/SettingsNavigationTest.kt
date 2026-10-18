@@ -49,7 +49,13 @@ class SettingsNavigationTest {
     private fun findText(id: Int): android.graphics.Rect {
         val text = label(id)
         fun current() = visibleControls().firstOrNull { it.text == text }?.bounds
-        current()?.let { return it }
+        // Accessibility actions are queued on the app main thread. Give a newly
+        // opened screen/dialog a chance to compose before injecting scroll gestures.
+        val appearDeadline = SystemClock.elapsedRealtime() + 2000
+        do {
+            current()?.let { return it }
+            SystemClock.sleep(100)
+        } while (SystemClock.elapsedRealtime() < appearDeadline)
         val x = device.displayWidth / 2
         val top = device.displayHeight * 3 / 10
         val bottom = device.displayHeight * 8 / 10
@@ -113,6 +119,8 @@ class SettingsNavigationTest {
         }
         val root = instrumentation.uiAutomation.rootInActiveWindow
         assertTrue("Activate $text", root != null && visit(root, null))
+        instrumentation.waitForIdleSync()
+        SystemClock.sleep(500)
         device.waitForIdle()
     }
 
