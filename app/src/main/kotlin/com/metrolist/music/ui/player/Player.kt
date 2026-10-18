@@ -1318,7 +1318,6 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
-                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable {
                                             menuState.show {
                                                 fr.makoff.music.ui.menu.LyricsMenu(

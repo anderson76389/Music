@@ -217,9 +217,7 @@ class OfflinePlayerInstrumentedTest {
                 device.dumpWindowHierarchy(hierarchy)
                 hierarchy.toString("UTF-8").replace("><", ">\n<").lineSequence()
                     .forEach { println("PLAYER_FAILURE_UI: $it") }
-                val directory = requireNotNull(context.getExternalFilesDir(null))
-                java.io.File(directory, "offline-player-failure.xml").writeBytes(hierarchy.toByteArray())
-                device.takeScreenshot(java.io.File(directory, "offline-player-failure.png"))
+                device.executeShellCommand("screencap -p /data/local/tmp/offline-player-failure.png")
             }.onFailure { println("PLAYER_FAILURE_CAPTURE: $it") }
             throw failure
         } finally {

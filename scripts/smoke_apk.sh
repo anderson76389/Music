@@ -29,8 +29,7 @@ for variant in foss gms; do
     adb shell settings get global airplane_mode_on | tee smoke-results/offline-network-state.txt
     grep -q '^1' smoke-results/offline-network-state.txt
     timeout 240s adb shell am instrument -w -r -e class fr.makoff.music.playback.OfflinePlayerInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/offline-player-tests.txt
-    adb pull "/sdcard/Android/data/$package/files/offline-player-failure.xml" smoke-results/ || true
-    adb pull "/sdcard/Android/data/$package/files/offline-player-failure.png" smoke-results/ || true
+    adb pull /data/local/tmp/offline-player-failure.png smoke-results/ || true
     adb logcat -d > smoke-results/offline-player-logcat.txt
     adb exec-out screencap -p > smoke-results/offline-player.png
     adb shell cmd connectivity airplane-mode disable
