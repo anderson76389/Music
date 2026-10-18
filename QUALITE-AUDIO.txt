@@ -40,3 +40,13 @@ Références officielles
 https://support.google.com/youtubemusic/answer/9076559?hl=fr
 https://github.com/yt-dlp/yt-dlp#format-selection
 https://github.com/yt-dlp/yt-dlp#sorting-formats
+
+6. Résultats Android confirmés
+Exécution réussie : https://github.com/anderson76389/Music/actions/runs/39087866925
+Sources testées : 96f05ce133f92a53d942e9743870c760d95628b6
+Trois tests instrumentés audio réussis, dont AAC/M4A et Opus/WebM, conservation des octets, non-écrasement et nettoyage après échec.
+Le test des sept parcours de réglages et du journal a également réussi.
+Preuves : https://github.com/anderson76389/Music/actions/runs/39087866925/artifacts/12121956286
+L'essai YouTube réel anonyme est resté en échec ; aucun résultat avec compte Premium n'est affirmé.
+Publication contrôlée : https://github.com/anderson76389/Music/releases/tag/test-21-96f05ce
+Un seul fichier APK : MAKOFF-Music-universal.apk. Les deux autres fichiers joints sont les sources et les sommes de contrôle.
