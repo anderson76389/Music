@@ -1793,26 +1793,25 @@ class MusicService :
         }
     }
 
-    fun addToQueueAutomix(
-        item: MediaItem,
-        position: Int,
-    ) {
-        automixItems.value =
-            automixItems.value.toMutableList().apply {
-                removeAt(position)
-            }
-        addToQueue(listOf(item))
+    private fun takeAutomixSuggestion(item: MediaItem, position: Int): Boolean {
+        while (true) {
+            val current = automixItems.value
+            val index = if (current.getOrNull(position)?.mediaId == item.mediaId) position
+                else current.indexOfFirst { it.mediaId == item.mediaId }
+            if (index < 0) return false
+            val remaining = current.toMutableList().apply { removeAt(index) }
+            if (automixItems.compareAndSet(current, remaining)) return true
+        }
     }
 
-    fun playNextAutomix(
-        item: MediaItem,
-        position: Int,
-    ) {
-        automixItems.value =
-            automixItems.value.toMutableList().apply {
-                removeAt(position)
-            }
+    fun addToQueueAutomix(item: MediaItem, position: Int) {
+        if (takeAutomixSuggestion(item, position)) addToQueue(listOf(item))
+    }
+
+    fun playNextAutomix(item: MediaItem, position: Int): Boolean {
+        if (!takeAutomixSuggestion(item, position)) return false
         playNext(listOf(item))
+        return true
     }
 
     fun clearAutomix() {

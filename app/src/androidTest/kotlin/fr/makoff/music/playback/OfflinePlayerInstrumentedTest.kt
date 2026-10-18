@@ -168,6 +168,21 @@ class OfflinePlayerInstrumentedTest {
             main { active.player.setPlaybackSpeed(1f) }
             println("PLAYER_QUEUE_OK: insert, append, move, remove, shuffle, repeat cycle, speed")
 
+            main {
+                active.automixItems.value = listOf(tracks[3].toMediaItem())
+                assertTrue(active.playNextAutomix(tracks[3].toMediaItem(), 99))
+                assertFalse(active.playNextAutomix(tracks[3].toMediaItem(), 99))
+                assertEquals(4, active.player.mediaItemCount)
+                assertEquals(tracks[3].id, active.player.getMediaItemAt(1).mediaId)
+                active.player.removeMediaItem(1)
+                active.automixItems.value = listOf(tracks[3].toMediaItem())
+                active.addToQueueAutomix(tracks[3].toMediaItem(), -1)
+                active.addToQueueAutomix(tracks[3].toMediaItem(), -1)
+                assertEquals(4, active.player.mediaItemCount)
+                active.player.removeMediaItem(3)
+            }
+            println("PLAYER_AUTOMIX_OK: stale positions resolved by ID; consumed suggestions cannot be added twice")
+
             main { controller.toggleLibrary() }
             await("Library action not persisted") { runBlocking { active.database.song(tracks[0].id).first()?.song?.inLibrary != null } }
             main { controller.toggleLibrary() }

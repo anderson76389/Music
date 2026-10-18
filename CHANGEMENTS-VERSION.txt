@@ -1,5 +1,6 @@
 ## Changements de cette préversion
 
+- Suggestions Automix : toucher un morceau lance sa lecture ; sélection par identifiant pour éviter les erreurs de position et les doubles ajouts.
 - Libellés d’accessibilité ajoutés aux commandes précédent/suivant et lecture/pause du lecteur.
 - Essai Android du véritable service de lecture sur un fichier WAV dans le cache : décodage, boutons, déplacements, file d’attente, répétition, aléatoire, vitesse, favoris, bibliothèque et minuteurs.
 - Essai du lecteur lancé en mode avion pour vérifier son utilisation sans serveur externe sur ce scénario local.
