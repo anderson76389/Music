@@ -28,13 +28,10 @@ import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.util.UUID
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.math.sin
 
 @RunWith(AndroidJUnit4::class)
 class OfflinePlayerInstrumentedTest {
@@ -67,16 +64,10 @@ class OfflinePlayerInstrumentedTest {
         button!!.click()
     }
 
-    private fun wave(): ByteArray {
-        val rate = 16000
-        val samples = rate * 20
-        val out = ByteBuffer.allocate(44 + samples * 2).order(ByteOrder.LITTLE_ENDIAN)
-        out.put("RIFF".toByteArray()).putInt(36 + samples * 2).put("WAVEfmt ".toByteArray())
-            .putInt(16).putShort(1).putShort(1).putInt(rate).putInt(rate * 2)
-            .putShort(2).putShort(16).put("data".toByteArray()).putInt(samples * 2)
-        repeat(samples) { out.putShort((sin(2 * Math.PI * 440 * it / rate) * 4000).toInt().toShort()) }
-        return out.array()
-    }
+    private fun audioFixture(): ByteArray = android.util.Base64.decode(
+        instrumentation.context.assets.open("audio/player-aac.m4a.base64").use { it.readBytes() },
+        android.util.Base64.DEFAULT,
+    )
 
     @Test(timeout = 210000)
     fun realCachedAudioPlayerControlsQueueTimersAndQuality() = runBlocking {
@@ -112,8 +103,8 @@ class OfflinePlayerInstrumentedTest {
             val active = binder.service
             service = active
             await("Production player not ready") { active.isPlayerReady.value }
-            val audio = wave()
-            println("PLAYER_STAGE: caching WAV fixtures")
+            val audio = audioFixture()
+            println("PLAYER_STAGE: caching AAC/M4A fixtures")
             for (track in tracks) {
                 active.database.insert(track)
                 val hole = active.downloadCache.startReadWrite(track.id, 0, audio.size.toLong())
@@ -133,7 +124,7 @@ class OfflinePlayerInstrumentedTest {
             val controller = main { PlayerConnection(context, binder, active.database, scope) }
             connection = controller
             main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
-            await("Cached PCM did not decode: ${main { active.player.playerError }}") {
+            await("Cached AAC/M4A did not decode: ${main { active.player.playerError }}") {
                 main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
             }
             assertNull(main { active.player.playerError })
@@ -146,7 +137,7 @@ class OfflinePlayerInstrumentedTest {
             await("No audio buffers rendered") { main { (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 } }
             clickDescription(R.string.player_pause)
             await("UI Pause did not stop playback") { main { !active.player.playWhenReady } }
-            println("PLAYER_UI_OK: cached WAV decoded; real UI play/pause and rendered audio buffers")
+            println("PLAYER_UI_OK: cached AAC/M4A decoded; real UI play/pause and rendered audio buffers")
 
             main { controller.seekTo(8000) }
             await("Seek failed") { main { active.player.currentPosition in 7800..8200 } }

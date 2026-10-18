@@ -6,3 +6,7 @@ ffmpeg -f lavfi -i sine=frequency=997:sample_rate=48000:duration=0.3 -ac 2 -c:a 
 La cible de débit d'un encodeur ne garantit pas un débit moyen exact pour un signal court.
 Le test Android vérifie AAC/Opus, 48 kHz, stéréo et identité octet par octet après yt-dlp et export SAF.
 Ces fixtures testent le transfert sans conversion ; elles ne prouvent pas l'accès aux flux YouTube Premium.
+
+Fixture du lecteur hors connexion : player-aac.m4a.base64, signal synthétique de 20 s.
+ffmpeg -f lavfi -i sine=frequency=997:sample_rate=48000:duration=20 -ac 1 -c:a aac -b:a 32k player-aac.m4a
+Ce débit sert à un petit fichier de test ; il ne représente pas la qualité des flux YouTube.
