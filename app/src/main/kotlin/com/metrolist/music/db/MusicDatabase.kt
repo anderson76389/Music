@@ -79,7 +79,7 @@ class MusicDatabase(
             }
         }
 
-    suspend fun withTransaction(block: suspend MusicDatabase.() -> Unit) =
+    suspend fun <T> withTransaction(block: suspend MusicDatabase.() -> T): T =
         delegate.withTransaction {
             block(this@MusicDatabase)
         }

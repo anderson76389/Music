@@ -1,5 +1,7 @@
 ## Changements de cette préversion
 
+- Bibliothèque et favoris : lecture puis écriture atomiques de l’état courant pour que des appuis rapprochés ne réutilisent pas un état périmé. La synchronisation réseau suit la sauvegarde locale.
+
 - LyricsPlus : valeur par défaut du fournisseur alignée sur son interrupteur ; contrôle ajouté entre le réglage et son consommateur.
 - Accueil : correction d’un plantage lorsque la base retire un morceau encore affiché dans les suggestions.
 - Essais instrumentés exécutés sur la variante Google Cast qui est réellement publiée.

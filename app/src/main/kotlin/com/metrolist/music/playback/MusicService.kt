@@ -1938,50 +1938,47 @@ class MusicService :
     }
 
     fun toggleLibrary() {
+        val songId = player.currentMediaItem?.mediaId ?: return
         scope.launch {
-            val songToToggle = currentSong.first()
-            songToToggle?.let {
-                val isInLibrary = it.song.inLibrary != null
-                val token = if (isInLibrary) it.song.libraryRemoveToken else it.song.libraryAddToken
-
-                token?.let { feedbackToken ->
-                    YouTube.feedback(listOf(feedbackToken))
-                }
-
-                database.query {
-                    update(it.song.toggleLibrary())
-                }
-                currentMediaMetadata.value = player.currentMetadata
-            }
+            // Read and write in one transaction; the observed song can lag behind a rapid second tap.
+            val previous = database.withTransaction {
+                val latest = songEntity(songId) ?: return@withTransaction null
+                update(latest.toggleLibrary(syncToYouTube = false))
+                latest
+            } ?: return@launch
+            currentMediaMetadata.value = player.currentMetadata
+            val wasInLibrary = previous.inLibrary != null
+            val token = if (wasInLibrary) previous.libraryRemoveToken else previous.libraryAddToken
+            token?.let { YouTube.feedback(listOf(it)) }
+            YouTube.toggleSongLibrary(songId, !wasInLibrary)
         }
     }
 
     fun toggleLike() {
+        val songId = player.currentMediaItem?.mediaId ?: return
         scope.launch {
-            val songToToggle = currentSong.first()
-            songToToggle?.let { librarySong ->
-                val songEntity = librarySong.song
-
-                // For podcast episodes, toggle save for later instead of like
-                if (songEntity.isEpisode) {
-                    toggleEpisodeSaveForLater(songEntity)
-                    return@let
+            val (previous, song) = database.withTransaction {
+                val latest = songEntity(songId) ?: return@withTransaction null
+                val updated = if (latest.isEpisode) {
+                    latest.copy(inLibrary = if (latest.inLibrary != null) null else java.time.LocalDateTime.now())
+                } else {
+                    latest.toggleLike(syncToYouTube = false)
                 }
-
-                val song = songEntity.toggleLike(syncToYouTube = false)
-
-                updateNotification(isLiked = song.liked)
-                updateWidgetUI(player.isPlaying, isLiked = song.liked)
-
-                database.query {
-                    update(song)
-                    syncUtils.likeSong(song)
-
-                    if (dataStore.get(AutoDownloadOnLikeKey, false) && song.liked) {
-                        downloadUtil.download(song.id)
-                    }
+                update(updated)
+                latest to updated
+            } ?: return@launch
+            val isLikedOrSaved = if (song.isEpisode) song.inLibrary != null else song.liked
+            updateNotification(isLiked = isLikedOrSaved)
+            updateWidgetUI(player.isPlaying, isLiked = isLikedOrSaved)
+            currentMediaMetadata.value = player.currentMetadata
+            if (song.isEpisode) {
+                val setVideoId = if (previous.inLibrary != null) database.getSetVideoId(songId)?.setVideoId else null
+                syncUtils.saveEpisode(songId, isLikedOrSaved, setVideoId)
+            } else {
+                syncUtils.likeSong(song)
+                if (dataStore.get(AutoDownloadOnLikeKey, false) && song.liked) {
+                    downloadUtil.download(song.id)
                 }
-                currentMediaMetadata.value = player.currentMetadata
             }
         }
     }
@@ -2016,30 +2013,6 @@ class MusicService :
                 )
             }
         }
-    }
-
-    private suspend fun toggleEpisodeSaveForLater(songEntity: fr.makoff.music.db.entities.SongEntity) {
-        val isCurrentlySaved = songEntity.inLibrary != null
-        val shouldBeSaved = !isCurrentlySaved
-
-        updateNotification(isLiked = shouldBeSaved)
-        updateWidgetUI(player.isPlaying, isLiked = shouldBeSaved)
-
-        // Update database first (optimistic update)
-        // Also ensure isEpisode = true so it appears in saved episodes list
-        database.query {
-            update(
-                songEntity.copy(
-                    inLibrary = if (isCurrentlySaved) null else java.time.LocalDateTime.now(),
-                    isEpisode = true,
-                ),
-            )
-        }
-        currentMediaMetadata.value = player.currentMetadata
-
-        // Sync with YouTube (handles login check internally)
-        val setVideoId = if (isCurrentlySaved) database.getSetVideoId(songEntity.id)?.setVideoId else null
-        syncUtils.saveEpisode(songEntity.id, shouldBeSaved, setVideoId)
     }
 
     fun toggleStartRadio() {
