@@ -134,7 +134,7 @@ object Updater {
                     return@runCatching cachedReleaseInfo!!
                 }
                 
-                check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour MAKOFF Music" }
+                check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour Metrolist" }
                 val response = client.get("$GITHUB_API_BASE/releases/latest")
                     .bodyAsText()
                 val json = JSONObject(response)
