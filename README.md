@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/makoff-banner.svg" alt="MAKOFF Music — Votre musique. Votre application." width="100%"></p>
+<p align="center"><img src="assets/makoff-banner.svg" alt="Metrolist — Votre musique. Votre application." width="100%"></p>
 
 <p align="center">
   <strong>Un client YouTube Music libre pour Android, avec votre bibliothèque, vos téléchargements et votre son.</strong>
@@ -17,18 +17,17 @@
 - **Écoute hors connexion** : téléchargements, cache et gestion des morceaux enregistrés.
 - **Fichiers audio accessibles** : mode yt-dlp 2026.08.19 embarqué pour enregistrer un morceau dans un dossier Android choisi, avec progression et annulation.
 - **Son personnalisable** : qualité élevée par défaut, égaliseur et réglages de lecture.
-- **Paroles et découverte** : paroles synchronisées, traduction et reconnaissance musicale selon les fournisseurs disponibles.
+- **Paroles et découverte** : paroles synchronisées et reconnaissance musicale selon les fournisseurs disponibles.
 - **Sur vos appareils** : widgets, Android Auto et Google Cast intégré à l’APK universel.
-- **Écoute partagée** : service inclus dans le dépôt, à héberger puis à configurer dans l’application.
 - **Interface personnalisable** : thèmes, couleurs et préférences de présentation.
 
 ## Télécharger et installer
 
-> **[Préversion test 22 vérifiée](https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07) — un seul APK pour Android :** MAKOFF Music universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt) · [Fonctions et limites vérifiées](VERIFICATION-FONCTIONS.txt).
+> **[Préversion test 22 vérifiée](https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07) — un seul APK pour Android :** Metrolist universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt) · [Fonctions et limites vérifiées](VERIFICATION-FONCTIONS.txt).
 
 | Application | Téléchargement |
 | --- | --- |
-| MAKOFF Music universel, avec Google Cast | [Télécharger l’APK universel — test 22](https://github.com/anderson76389/Music/releases/download/test-22-ead3a07/MAKOFF-Music-universal.apk) |
+| Metrolist universel, avec Google Cast | [Télécharger l’APK universel — test 22](https://github.com/anderson76389/Music/releases/download/test-22-ead3a07/MAKOFF-Music-universal.apk) |
 
 Installez directement **`MAKOFF-Music-universal.apk`** ; aucune décompression n’est nécessaire. L’archive de code source et le fichier de sommes de contrôle ne sont pas des versions supplémentaires de l’application.
 
@@ -52,7 +51,7 @@ L’application stable recherche ses mises à jour exclusivement dans **ce dép�
 
 ## Enregistrer de vrais fichiers audio
 
-Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente, choisissez **« Enregistrer un fichier audio (yt-dlp) »**. Android vous demande un dossier au premier usage : créez ou choisissez par exemple `Téléchargements/MAKOFF Music`, puis autorisez son utilisation.
+Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente, choisissez **« Enregistrer un fichier audio (yt-dlp) »**. Android vous demande un dossier au premier usage : créez ou choisissez par exemple `Téléchargements/Metrolist`, puis autorisez son utilisation.
 
 Si YouTube exige une connexion, connectez-vous à votre compte YouTube dans l’application puis relancez le téléchargement. Les restrictions du compte et du service restent applicables.
 
@@ -77,7 +76,7 @@ Les essais Android sur fichiers synthétiques AAC/M4A et Opus/WebM ont réussi :
 
 ## Un projet géré dans ce dépôt
 
-Le code du moteur de lecture et celui du serveur d’écoute partagée sont inclus dans les sources. L’identité Android, les liens de publication et le canal de mises à jour appartiennent à MAKOFF Music. Aucun serveur d’écoute partagée n’est imposé. L’intégration Discord a été retirée.
+Le moteur de lecture est inclus dans les sources. Le nom affiché est Metrolist ; l’identifiant Android reste `fr.makoff.music` et les mises à jour utilisent uniquement ce dépôt. Les fonctions de salons et les services de traduction IA ont été retirés.
 
 L’application reste dépendante des services YouTube Music et des fournisseurs tiers activés. Un changement de ces services peut demander une correction du moteur. Les références techniques héritées et les notices légales sont détaillées dans le [rapport d’indépendance](docs/AUDIT-INDEPENDANCE.md).
 
@@ -96,17 +95,16 @@ Sous Windows, utilisez `gradlew.bat`. Les APK sont générés dans `app/build/ou
 | --- | --- |
 | `app/` | Application Android |
 | `vendor/innertubex/` | Moteur de lecture embarqué |
-| `services/listen-together/` | Serveur d’écoute partagée et instructions d’hébergement |
 | [Guide de démarrage](DEMARRER-ICI.txt) | Installation et premiers repères |
 | [Guide technique](LIRE-MOI-MAKOFF.txt) | Construction, signature et essais sur téléphone |
 | [Audit d’indépendance](docs/AUDIT-INDEPENDANCE.md) | Références restantes et limites vérifiées |
 
-## Contributeur du projet MAKOFF Music
+## Contributeur du projet Metrolist
 
-**[anderson76389](https://github.com/anderson76389)** — maintenance et développement de MAKOFF Music.
+**[anderson76389](https://github.com/anderson76389)** — maintenance et développement de Metrolist.
 
 Pour signaler un problème, indiquez la version de l’application, votre version Android et les étapes permettant de le reproduire. Retirez toute information privée des journaux partagés.
 
 ## Licence
 
-Projet libre sous **GPL-3.0**. La licence, les auteurs et les notices des composants d’origine sont conservés dans [LICENSE](LICENSE), [PROVENANCE.txt](PROVENANCE.txt) et les fichiers légaux embarqués. La présentation et les téléchargements de cette page concernent uniquement MAKOFF Music.
+Projet libre sous **GPL-3.0**. La licence, les auteurs et les notices des composants d’origine sont conservés dans [LICENSE](LICENSE), [PROVENANCE.txt](PROVENANCE.txt) et les fichiers légaux embarqués. La présentation et les téléchargements de cette page concernent uniquement Metrolist.

@@ -6,7 +6,6 @@ assert 'fr.makoff.music' in (r/'app/build.gradle.kts').read_text()
 assert 'includeBuild("vendor/innertubex")' in (r/'settings.gradle.kts').read_text()
 assert (r/'vendor/innertubex/LICENSE').exists()
 assert 'override val enabled: Boolean = false' in (k/'utils/InnerTubeXPlayer.kt').read_text()
-assert 'servers.firstOrNull()?.url.orEmpty()' in (k/'listentogether/ListenTogetherServers.kt').read_text()
 for p in (r/'app/src').rglob('*'):
     if p.suffix not in ('.kt', '.xml') or 'test' in str(p).lower(): continue
     text = p.read_text()
@@ -28,17 +27,15 @@ for p in (r/'app/src/main/res').rglob('*.xml'):
         for item in root:
             if item.tag in ('string', 'plurals', 'string-array'):
                 visible = ''.join(item.itertext())
-                assert not re.search(r'metrolist|meowery|mostafaalagamy|মেট্রোলিস্ট', visible, re.I), p
-for p in (r/'services/listen-together').rglob('*'):
-    assert p.name not in ('.git', '.gitmodules'), p
-    if p.suffix in ('.go', '.mod', '.proto'):
-        assert 'github.com/MetrolistGroup/' not in p.read_text(), p
-assert (r/'services/listen-together/metroproto/listentogether.proto').exists()
+                assert not re.search(r'meowery|mostafaalagamy', visible, re.I), p
 assert (r/'app/src/main/assets/legal/GPL-3.0.txt').read_text() == (r/'LICENSE').read_text()
-app_proto = (r/'app/src/main/proto/listentogether.proto').read_text()
-server_proto = (r/'services/listen-together/metroproto/listentogether.proto').read_text()
-assert app_proto == server_proto, 'Application and server must use the same protocol'
-print('PASS: no upstream branding in UI resources; own server and protocol fully bundled; GPL preserved')
+assert not (k/'listentogether').exists()
+assert not (r/'services/listen-together').exists()
+for p in (r/'app/src/main').rglob('*'):
+    if p.suffix in ('.kt', '.java', '.xml'):
+        assert not re.search(r'ListenTogether|listen_together|LyricsTranslationHelper|OpenRouter|DeepLService|AiSettings|R\.string\.ai_', p.read_text()), p
+assert '?: "Metrolist"' in (r/'app/build.gradle.kts').read_text()
+print('PASS: removed shared-listening and AI code/resources absent; requested app name; GPL preserved')
 
 # Keep the requested original icon local and byte-identical to the pinned source.
 import hashlib

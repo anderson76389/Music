@@ -69,7 +69,6 @@ import fr.makoff.music.constants.GridItemsSizeKey
 import fr.makoff.music.constants.HidePlayerThumbnailKey
 import fr.makoff.music.constants.HideStatusBarOnFullscreenKey
 import fr.makoff.music.constants.LibraryFilter
-import fr.makoff.music.constants.ListenTogetherInTopBarKey
 import fr.makoff.music.constants.LyricsAnimationStyle
 import fr.makoff.music.constants.LyricsAnimationStyleKey
 import fr.makoff.music.constants.LyricsClickKey
@@ -280,12 +279,6 @@ fun AppearanceSettings(
 
     val (densityScale, onDensityScaleChange) = rememberPreference(DensityScaleKey, defaultValue = 1f)
     var showDensityScaleDialog by rememberSaveable { mutableStateOf(false) }
-
-    val (listenTogetherInTopBar, onListenTogetherInTopBarChange) =
-        rememberPreference(
-            ListenTogetherInTopBarKey,
-            defaultValue = true,
-        )
 
     val (swipeToSong, onSwipeToSongChange) =
         rememberPreference(
@@ -1675,28 +1668,7 @@ fun AppearanceSettings(
                         },
                         onClick = { onSlimNavChange(!slimNav) },
                     ),
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.group_outlined),
-                        title = { Text(stringResource(R.string.listen_together_in_top_bar)) },
-                        description = { Text(stringResource(R.string.listen_together_in_top_bar_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = listenTogetherInTopBar,
-                                onCheckedChange = onListenTogetherInTopBarChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter =
-                                            painterResource(
-                                                id = if (listenTogetherInTopBar) R.drawable.check else R.drawable.close,
-                                            ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    )
-                                },
-                            )
-                        },
-                        onClick = { onListenTogetherInTopBarChange(!listenTogetherInTopBar) },
-                    ),
+
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.grid_view),
                         title = { Text(stringResource(R.string.grid_cell_size)) },

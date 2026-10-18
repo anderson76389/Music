@@ -68,8 +68,6 @@ fun YouTubeSelectionSongMenu(
         mutableStateOf(false)
     }
 
-    val listenTogetherManager = fr.makoff.music.LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
     var downloadState by remember {
         mutableIntStateOf(Download.STATE_STOPPED)
@@ -223,7 +221,7 @@ fun YouTubeSelectionSongMenu(
         item {
             Material3MenuGroup(
                 listOfNotNull(
-                    if (!isGuest) {
+                    run {
                         Material3MenuItemData(
                             icon = { Icon(painterResource(R.drawable.play), null) },
                             title = { Text(stringResource(R.string.play)) },
@@ -238,10 +236,8 @@ fun YouTubeSelectionSongMenu(
                                 onDismiss()
                             },
                         )
-                    } else {
-                        null
                     },
-                    if (!isGuest) {
+                    run {
                         Material3MenuItemData(
                             icon = { Icon(painterResource(R.drawable.shuffle), null) },
                             title = { Text(stringResource(R.string.shuffle)) },
@@ -256,10 +252,8 @@ fun YouTubeSelectionSongMenu(
                                 onDismiss()
                             },
                         )
-                    } else {
-                        null
                     },
-                    if (!isGuest) {
+                    run {
                         Material3MenuItemData(
                             icon = { Icon(painterResource(R.drawable.queue_music), null) },
                             title = { Text(stringResource(R.string.add_to_queue)) },
@@ -269,8 +263,6 @@ fun YouTubeSelectionSongMenu(
                                 onDismiss()
                             },
                         )
-                    } else {
-                        null
                     },
                     Material3MenuItemData(
                         icon = { Icon(painterResource(R.drawable.playlist_add), null) },

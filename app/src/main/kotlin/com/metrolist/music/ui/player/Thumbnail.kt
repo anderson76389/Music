@@ -70,7 +70,6 @@ import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import coil3.request.CachePolicy
 import coil3.request.ImageRequest
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
 import fr.makoff.music.constants.CropAlbumArtKey
@@ -81,7 +80,6 @@ import fr.makoff.music.constants.PlayerHorizontalPadding
 import fr.makoff.music.constants.SeekExtraSeconds
 import fr.makoff.music.constants.SwipeThumbnailKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
-import fr.makoff.music.listentogether.RoomRole
 import fr.makoff.music.ui.component.CastButton
 import fr.makoff.music.utils.rememberEnumPreference
 import fr.makoff.music.utils.rememberPreference
@@ -147,11 +145,11 @@ private fun getMediaItems(
     val timeline = player.currentTimeline
     val currentIndex = player.currentMediaItemIndex
     val shuffleModeEnabled = player.shuffleModeEnabled
-    
+
     val currentMediaItem = try {
         player.currentMediaItem
     } catch (e: Exception) { null }
-    
+
     val previousMediaItem = if (swipeThumbnail && !timeline.isEmpty) {
         val previousIndex = timeline.getPreviousWindowIndex(
             currentIndex,
@@ -176,7 +174,7 @@ private fun getMediaItems(
 
     val items = listOfNotNull(previousMediaItem, currentMediaItem, nextMediaItem)
     val currentMediaIndex = items.indexOf(currentMediaItem)
-    
+
     return MediaItemsData(items, currentMediaIndex)
 }
 
@@ -201,7 +199,6 @@ fun Thumbnail(
     modifier: Modifier = Modifier,
     isPlayerExpanded: () -> Boolean = { true },
     isLandscape: Boolean = false,
-    isListenTogetherGuest: Boolean = false,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -215,22 +212,21 @@ fun Thumbnail(
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
 
     // Preferences - computed once
-    // Disable swipe for Listen Together guests
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
-    val swipeThumbnail = swipeThumbnailPref && !isListenTogetherGuest
+    val swipeThumbnail = swipeThumbnailPref
     val hidePlayerThumbnail by rememberPreference(HidePlayerThumbnailKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val playerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
     )
-    
+
     // Pre-calculate text color based on background style
     val textBackgroundColor = getTextColor(playerBackground)
-    
+
     // Grid state
     val thumbnailLazyGridState = rememberLazyGridState()
-    
+
     // Calculate media items data - memoized
     val mediaItemsData by remember(
         playerConnection.player.currentMediaItemIndex,
@@ -242,7 +238,7 @@ fun Thumbnail(
             getMediaItems(playerConnection.player, swipeThumbnail)
         }
     }
-    
+
     val mediaItems = mediaItemsData.items
     val currentMediaIndex = mediaItemsData.currentIndex
 
@@ -341,7 +337,7 @@ fun Thumbnail(
                         textColor = textBackgroundColor
                     )
                 }
-                
+
                 // Thumbnail content
                 BoxWithConstraints(
                     contentAlignment = Alignment.Center,
@@ -367,12 +363,12 @@ fun Thumbnail(
                             showSeekEffect = showEffect
                         }
                     }
-                    
+
                     // Derive scroll enabled state to prevent unnecessary recomposition
                     val isScrollEnabled by remember(swipeThumbnail) {
                         derivedStateOf { swipeThumbnail && isPlayerExpanded() }
                     }
-                    
+
                     LazyHorizontalGrid(
                         state = thumbnailLazyGridState,
                         rows = GridCells.Fixed(1),
@@ -386,7 +382,7 @@ fun Thumbnail(
                     ) {
                         items(
                             items = mediaItems,
-                            key = { item -> 
+                            key = { item ->
                                 item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
                             }
                         ) { item ->
@@ -401,7 +397,6 @@ fun Thumbnail(
                                 playerConnection = playerConnection,
                                 context = context,
                                 isLandscape = isLandscape,
-                                isListenTogetherGuest = isListenTogetherGuest,
                                 currentMediaId = mediaMetadata?.id,
                                 currentMediaThumbnail = mediaMetadata?.thumbnailUrl
                             )
@@ -440,9 +435,6 @@ private fun ThumbnailHeader(
     textColor: Color,
     modifier: Modifier = Modifier
 ) {
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val listenTogetherRoleState = listenTogetherManager?.role?.collectAsStateWithLifecycle(initialValue = RoomRole.NONE)
-    val isListenTogetherGuest = listenTogetherRoleState?.value == RoomRole.GUEST
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -454,20 +446,11 @@ private fun ThumbnailHeader(
                 .align(Alignment.Center)
                 .padding(horizontal = 48.dp)
         ) {
-            // Listen Together indicator
-            if (listenTogetherRoleState?.value != RoomRole.NONE) {
-                Text(
-                    text = if (listenTogetherRoleState?.value == RoomRole.HOST) "Hosting Listen Together" else "Listening Together",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
-                )
-            } else {
-                Text(
-                    text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = textColor
-                )
-            }
+            Text(
+                text = stringResource(R.string.now_playing),
+                style = MaterialTheme.typography.titleMedium,
+                color = textColor
+            )
             val playingFrom = queueTitle ?: albumTitle
             if (!playingFrom.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))
@@ -498,7 +481,6 @@ private fun ThumbnailItem(
     playerConnection: fr.makoff.music.playback.PlayerConnection,
     context: android.content.Context,
     isLandscape: Boolean = false,
-    isListenTogetherGuest: Boolean = false,
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
     modifier: Modifier = Modifier,
@@ -526,7 +508,7 @@ private fun ThumbnailItem(
             .pointerInput(Unit) {
                 detectTapGestures(
                     onDoubleTap = { offset ->
-                        if (isListenTogetherGuest) return@detectTapGestures
+
 
                         val currentPosition = playerConnection.player.currentPosition
                         val duration = playerConnection.player.duration
@@ -575,7 +557,7 @@ private fun ThumbnailItem(
                     cropArtwork = cropAlbumArt
                 )
             }
-            
+
             // Cast button at top-right corner of thumbnail
             CastButton(
                 modifier = Modifier

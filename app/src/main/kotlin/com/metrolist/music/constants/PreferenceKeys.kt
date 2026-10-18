@@ -168,21 +168,8 @@ val EnableDynamicIconKey = booleanPreferencesKey("enableDynamicIcon")
 // Google Cast
 val EnableGoogleCastKey = booleanPreferencesKey("enableGoogleCast")
 
-// Listen Together
-val ListenTogetherServerUrlKey = stringPreferencesKey("listenTogetherServerUrl")
-val ListenTogetherUsernameKey = stringPreferencesKey("listenTogetherUsername")
-val ListenTogetherAutoApprovalKey = booleanPreferencesKey("listenTogetherAutoApproval")
-val ListenTogetherAutoApproveSuggestionsKey = booleanPreferencesKey("listenTogetherAutoApproveSuggestions")
-val ListenTogetherSyncVolumeKey = booleanPreferencesKey("listenTogetherSyncVolume")
-val ListenTogetherBlockedUsersKey = stringPreferencesKey("listenTogetherBlockedUsers")
-val ListenTogetherInTopBarKey = booleanPreferencesKey("listenTogetherInTopBar")
 
 // Session persistence for reconnection
-val ListenTogetherSessionTokenKey = stringPreferencesKey("listenTogetherSessionToken")
-val ListenTogetherRoomCodeKey = stringPreferencesKey("listenTogetherRoomCode")
-val ListenTogetherUserIdKey = stringPreferencesKey("listenTogetherUserId")
-val ListenTogetherIsHostKey = booleanPreferencesKey("listenTogetherIsHost")
-val ListenTogetherSessionTimestampKey = longPreferencesKey("listenTogetherSessionTimestamp")
 
 val ChipSortTypeKey = stringPreferencesKey("chipSortType")
 val SongSortTypeKey = stringPreferencesKey("songSortType")
@@ -414,29 +401,7 @@ val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 val HideStatusBarOnFullscreenKey = booleanPreferencesKey("hideStatusBarOnFullscreen")
 val LyricsRomanizeAsMainKey = booleanPreferencesKey("lyricsRomanizeAsMain")
 val LyricsRomanizeCyrillicByLineKey = booleanPreferencesKey("lyricsRomanizeCyrillicByLine")
-val OpenRouterApiKey = stringPreferencesKey("openRouterApiKey")
-val AiProviderKey = stringPreferencesKey("aiProvider")
-val OpenRouterBaseUrlKey = stringPreferencesKey("openRouterBaseUrl")
-val OpenRouterModelKey = stringPreferencesKey("openRouterModel")
 
-const val OpenRouterDefaultBaseUrl = "https://openrouter.ai/api/v1/chat/completions"
-const val OpenRouterDefaultModel = "google/gemini-2.5-flash-lite"
-
-val TranslateModeKey = stringPreferencesKey("translateMode")
-val TranslateLanguageKey = stringPreferencesKey("translateLanguage")
-val DeeplApiKey = stringPreferencesKey("deeplApiKey")
-val DeeplFormalityKey = stringPreferencesKey("deeplFormality")
-val AiSystemPromptKey = stringPreferencesKey("aiSystemPrompt")
-
-const val DEFAULT_AI_SYSTEM_PROMPT = """You are a precise lyrics translation assistant. Your output must ALWAYS be a valid JSON object of the form {"lines": ["line1", "line2", "line3"]}.
-
-CRITICAL RULES:
-1. Output ONLY the JSON object: {"lines": ["line1", "line2", "line3"]}
-2. NO explanations, NO questions, NO additional text
-3. Each input line maps to exactly one entry in the "lines" array
-4. Preserve empty lines as empty strings ""
-5. The "lines" array must contain EXACTLY {lineCount} items
-6. If uncertain, provide best approximation but maintain line count"""
 val LyricsGlowEffectKey = booleanPreferencesKey("lyricsGlowEffect")
 
 val LyricsRomanizeList = stringPreferencesKey("lyricsRomanizeList")

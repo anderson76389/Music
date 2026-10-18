@@ -130,7 +130,6 @@
     <string name="update_notifications">Update meldingen aanzetten</string>
     <string name="update_available_title">Update beschikbaar</string>
     <string name="integrations">Integraties</string>
-    <string name="username">Gebruikersnaam</string>
     <string name="password">Wachtwoord</string>
     <string name="lastfm_integration">Last.fm Integratie</string>
     <string name="enable_scrobbling">Scrobbling aanzetten</string>
@@ -204,7 +203,6 @@
     <string name="add_to_queue_desc">Voeg toe aan het einde van je wachtrij</string>
     <string name="share_desc">Deel een link naar dit item</string>
     <string name="delete_desc">Dit item permanent verwijderen</string>
-    <string name="permanently_kick_user">Permanent Blokkeren</string>
     <string name="enable">Activeer</string>
     <string name="player_background_solid">Solide</string>
     <string name="restart">Herstart</string>
@@ -237,7 +235,7 @@
     <string name="try_again">Probeer opnieuw</string>
     <string name="delete_from_history">Verwijder van geschiedenis</string>
     <string name="re_listen">Luister opnieuw</string>
-    <string name="play_on_app">Speel af op MAKOFF Music</string>
+    <string name="play_on_app">Speel af op Metrolist</string>
     <string name="mixes">Mixen</string>
     <string name="parsed_from_link">verwerkt vanuit link</string>
     <string name="weekly_most_playlist_name">meest gespeeld deze week</string>

@@ -353,12 +353,11 @@
     <string name="google_cast_description">Трансляцыя гуку на Chromecast і іншыя прылады з падтрымкай Cast</string>
     <string name="lyrics_romanize_as_main">Паказваць раманізаваныя тэксты як асноўныя</string>
     <string name="integrations">Інтэграцыі</string>
-    <string name="username">Імя карыстальніка</string>
     <string name="password">Пароль</string>
     <string name="lastfm_integration">Інтэграцыя з Last.fm</string>
     <string name="enable_scrobbling">Уключыць скробблінг</string>
     <string name="lastfm_now_playing">Адпраўляць статус \"Зараз іграе\"</string>
     <string name="last_fm_send_likes">Сінхранізаваць адзнакі «Падабаецца»</string>
-    <string name="last_fm_send_likes_description">Дадаваць ці прыбіраць адзнаку «Любімае» на Last.fm, калі ставіцца ці здымаецца адзнака «Падабаецца» ў MAKOFF Music</string>
+    <string name="last_fm_send_likes_description">Дадаваць ці прыбіраць адзнаку «Любімае» на Last.fm, калі ставіцца ці здымаецца адзнака «Падабаецца» ў Metrolist</string>
     <string name="logging_in">Выконваецца ўваход…</string>
 </resources>

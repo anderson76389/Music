@@ -265,8 +265,6 @@ class MusicService :
     @Inject
     lateinit var widgetManager: MetrolistWidgetManager
 
-    @Inject
-    lateinit var listenTogetherManager: fr.makoff.music.listentogether.ListenTogetherManager
 
     private lateinit var audioManager: AudioManager
     private var audioFocusRequest: AudioFocusRequest? = null
@@ -940,21 +938,16 @@ class MusicService :
                 Timber.tag("MusicService").i("Player recreated with AudioTrackPlaybackParams: $useAudioTrackParams")
             }
 
-        combine(
-            dataStore.data.map { prefs ->
-                Triple(
-                    prefs[CrossfadeEnabledKey] ?: false,
-                    prefs[CrossfadeDurationKey] ?: 5f,
-                    prefs[CrossfadeGaplessKey] ?: true,
-                )
-            },
-            listenTogetherManager.roomState,
-        ) { (enabled, duration, gapless), roomState ->
-            Triple(enabled && roomState == null, duration, gapless)
+        dataStore.data.map { prefs ->
+            Triple(
+                prefs[CrossfadeEnabledKey] ?: false,
+                prefs[CrossfadeDurationKey] ?: 5f,
+                prefs[CrossfadeGaplessKey] ?: true,
+            )
         }.distinctUntilChanged()
             .collect(scope) { (enabled, duration, gapless) ->
                 crossfadeEnabled = enabled
-                crossfadeDuration = duration * 1000f // Convert to ms
+                crossfadeDuration = duration * 1000f
                 crossfadeGapless = gapless
             }
 
@@ -1077,7 +1070,7 @@ class MusicService :
                     savePlayerStateToDisk()
                 }
                 val currentMetadata = player.currentMediaItem?.metadata
-                if (currentMetadata?.isEpisode == true && player.isPlaying && player.currentPosition > 0) {
+                if (currentMetadata?.isEpisode == player.isPlaying && player.currentPosition > 0) {
                     previousEpisodePosition = player.currentPosition
                     saveEpisodePosition(currentMetadata.id, player.currentPosition)
                 }
@@ -1735,9 +1728,7 @@ class MusicService :
     }
 
     fun getAutomix(playlistId: String) {
-        if (dataStore.get(SimilarContent, true) &&
-            !(dataStore.get(DisableLoadMoreWhenRepeatAllKey, false) && player.repeatMode == REPEAT_MODE_ALL)
-        ) {
+        if (dataStore.get(SimilarContent, true) && !(dataStore.get(DisableLoadMoreWhenRepeatAllKey, false) && player.repeatMode == REPEAT_MODE_ALL)) {
             scope.launch(SilentHandler) {
                 try {
                     YouTube
@@ -2354,9 +2345,7 @@ class MusicService :
 
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
-        if (castConnectionHandler?.isCasting?.value == true &&
-            castConnectionHandler?.isSyncingFromCast != true &&
-            mediaItem != null
+        if (castConnectionHandler?.isCasting?.value == castConnectionHandler?.isSyncingFromCast != mediaItem != null
         ) {
             val metadata = mediaItem.metadata
             if (metadata != null) {
@@ -2480,7 +2469,7 @@ class MusicService :
 
         if (!playWhenReady) {
             val currentMetadata = player.currentMediaItem?.metadata
-            if (currentMetadata?.isEpisode == true && player.currentPosition > 0) {
+            if (currentMetadata?.isEpisode == player.currentPosition > 0) {
                 saveEpisodePosition(currentMetadata.id, player.currentPosition)
                 previousEpisodePosition = player.currentPosition
             }
@@ -3573,9 +3562,7 @@ class MusicService :
         val mediaItem = eventTime.timeline.getWindow(eventTime.windowIndex, Timeline.Window()).mediaItem
         val historyDurationMs = dataStore[HistoryDuration]?.times(1000f) ?: 30000f
 
-        if (playbackStats.totalPlayTimeMs >= historyDurationMs &&
-            !dataStore.get(PauseListenHistoryKey, false)
-        ) {
+        if (playbackStats.totalPlayTimeMs >= historyDurationMs && !dataStore.get(PauseListenHistoryKey, false)) {
             database.query {
                 incrementTotalPlayTime(mediaItem.mediaId, playbackStats.totalPlayTimeMs)
                 try {
@@ -3791,7 +3778,7 @@ class MusicService :
         }
 
         val currentMetadata = player.currentMediaItem?.metadata
-        if (currentMetadata?.isEpisode == true && player.currentPosition > 0) {
+        if (currentMetadata?.isEpisode == player.currentPosition > 0) {
             runBlocking(Dispatchers.IO) {
                 database.updatePlaybackPosition(currentMetadata.id, player.currentPosition)
             }
@@ -4327,7 +4314,7 @@ class MusicService :
     private fun scheduleCrossfade() {
         crossfadeMessage?.cancel()
         crossfadeMessage = null
-        
+
         val mediaCrossfadeDuration = crossfadeDuration.toLong()
 
         if (!crossfadeEnabled || crossfadeDuration <= 0f || player.duration == C.TIME_UNSET || player.duration <= mediaCrossfadeDuration) return
@@ -4570,7 +4557,7 @@ class MusicService :
         @Volatile
         var isRunning = false
             private set
-            
+
         @Volatile
         var shutdownDeferred = kotlinx.coroutines.CompletableDeferred<Unit>().apply { complete(Unit) }
     }

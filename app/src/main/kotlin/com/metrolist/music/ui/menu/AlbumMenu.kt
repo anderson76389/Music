@@ -67,7 +67,6 @@ import fr.makoff.music.LocalNavController
 import com.metrolist.innertube.YouTube
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalDownloadUtil
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
 import fr.makoff.music.constants.ListItemHeight
@@ -104,8 +103,6 @@ fun AlbumMenu(
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
     val scope = rememberCoroutineScope()
     val libraryAlbum by database.album(originalAlbum.id).collectAsStateWithLifecycle(initialValue = originalAlbum)
     val album = libraryAlbum ?: originalAlbum
@@ -298,7 +295,7 @@ fun AlbumMenu(
             NewActionGrid(
                 actions =
                     listOfNotNull(
-                        if (!isGuest) {
+                        run {
                             NewAction(
                                 icon = {
                                     Icon(
@@ -347,8 +344,6 @@ fun AlbumMenu(
                                     }
                                 },
                             )
-                        } else {
-                            null
                         },
                         NewAction(
                             icon = {
@@ -373,14 +368,14 @@ fun AlbumMenu(
                         ),
                     ),
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
-                columns = if (isGuest) 1 else 3,
+                columns = 3,
             )
         }
         item {
             Material3MenuGroup(
                 items =
                     listOfNotNull(
-                        if (!isGuest) {
+                        run {
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.play_next)) },
                                 description = { Text(text = stringResource(R.string.play_next_desc)) },
@@ -395,10 +390,8 @@ fun AlbumMenu(
                                     playerConnection.playNext(songs.map { it.toMediaItem() })
                                 },
                             )
-                        } else {
-                            null
                         },
-                        if (!isGuest) {
+                        run {
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.add_to_queue)) },
                                 description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
@@ -413,8 +406,6 @@ fun AlbumMenu(
                                     playerConnection.addToQueue(songs.map { it.toMediaItem() })
                                 },
                             )
-                        } else {
-                            null
                         },
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.add_to_playlist)) },

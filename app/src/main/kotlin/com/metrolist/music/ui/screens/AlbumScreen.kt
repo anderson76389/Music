@@ -73,7 +73,6 @@ import androidx.navigation.NavController
 import coil3.compose.AsyncImage
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalDownloadUtil
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -109,8 +108,6 @@ fun AlbumScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
 
     val scope = rememberCoroutineScope()
 
@@ -335,7 +332,7 @@ fun AlbumScreen(
                         // Play Button - Larger primary circular button
                         Surface(
                             onClick = {
-                                if (!isListenTogetherGuest) {
+                                run {
                                     playerConnection.service.getAutomix(playlistId)
                                     playerConnection.playQueue(
                                         LocalAlbumRadio(albumWithSongs),
@@ -443,7 +440,7 @@ fun AlbumScreen(
                                     onClick = {
                                         if (inSelectMode) {
                                             onCheckedChange(song.id !in selection)
-                                        } else if (!isListenTogetherGuest) {
+                                        } else run {
                                             if (song.id == mediaMetadata?.id) {
                                                 playerConnection.togglePlayPause()
                                             } else {

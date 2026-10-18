@@ -32,7 +32,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.metrolist.innertube.models.ArtistItem
 import fr.makoff.music.LocalDatabase
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
 import fr.makoff.music.db.entities.SpeedDialItem
@@ -59,8 +58,6 @@ fun YouTubeArtistMenu(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val libraryArtist by database.artist(artist.id).collectAsStateWithLifecycle(initialValue = null)
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
     val isPinned by database.speedDialDao.isPinned(artist.id).collectAsStateWithLifecycle(initialValue = false)
     val coroutineScope = rememberCoroutineScope()
 
@@ -87,7 +84,7 @@ fun YouTubeArtistMenu(
         item {
             NewActionGrid(
                 actions = buildList {
-                    if (!isGuest) {
+                    run {
                         artist.radioEndpoint?.let { watchEndpoint ->
                             add(
                                 NewAction(
@@ -157,7 +154,7 @@ fun YouTubeArtistMenu(
                     )
                 },
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),
-                columns = if (isGuest) 1 else 3
+                columns = 3
             )
         }
 

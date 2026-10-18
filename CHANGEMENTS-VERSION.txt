@@ -1,9 +1,9 @@
 ## Changements de cette préversion
 
-- Retrait du miroir de paroles LyricsPlus annoté « meow ».
-- AutoEQ : utilisation du dépôt officiel jaakkopasanen/AutoEq et récupération des profils corrigée quand GitHub tronque ses réponses ; cache séparée et refus des index incomplets.
-- Informations audio affichables depuis les données locales même lorsque les métadonnées YouTube ne répondent pas.
-- Audit des adresses étendu à tous les modules de production.
-- Rapport VERIFICATION-FONCTIONS.txt : fonctions conservées, dépendances externes, essais réellement effectués et limites explicites.
+- Nom affiché de l’application : Metrolist. Identifiant Android et mises à jour conservés sur le projet personnel.
+- Suppression complète de l’écoute partagée : client, serveur, protocole, onglet, menus, invitations, notifications et restrictions d’invité dans le lecteur.
+- Suppression de la traduction IA : services, clés et modèles proposés, écran de réglages, déclencheurs et affichage des traductions.
+- Nettoyage des ressources dans toutes les langues et suppression des dépendances Protobuf devenues inutiles.
+- Paroles originales, romanisation locale, lecture, égaliseur et deux modes de téléchargement conservés.
 
-Un seul APK universel publié. Écoute partagée : votre serveur est nécessaire. Connexion YouTube avec votre compte, Cast, Bluetooth et toutes les combinaisons de réglages ne sont pas certifiés sur votre téléphone. Signature temporaire de test : sauvegardez vos données avant de remplacer une ancienne installation.
+Un seul APK universel publié. Signature temporaire de test : sauvegardez les données avant de remplacer une ancienne installation. Le téléchargement YouTube authentifié et les fonctions liées au matériel restent à vérifier sur votre appareil.

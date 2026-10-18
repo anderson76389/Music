@@ -107,7 +107,6 @@ import com.metrolist.innertube.utils.completed
 import com.metrolist.innertube.utils.parseCookieString
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalArtistNameAliases
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -212,8 +211,6 @@ fun CommunityPlaylistCard(
 ) {
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
     val scope = rememberCoroutineScope()
     val isDark = isSystemInDarkTheme()
     val artistNameAliases = LocalArtistNameAliases.current
@@ -397,7 +394,7 @@ fun CommunityPlaylistCard(
             ) {
                 IconButton(
                     onClick = {
-                        if (!isListenTogetherGuest) {
+                        run {
                             item.playlist.playEndpoint?.let {
                                 playerConnection?.playQueue(YouTubeQueue(it))
                             }
@@ -418,7 +415,7 @@ fun CommunityPlaylistCard(
 
                 IconButton(
                     onClick = {
-                        if (!isListenTogetherGuest) {
+                        run {
                             item.playlist.radioEndpoint?.let {
                                 playerConnection?.playQueue(YouTubeQueue(it))
                             }
@@ -654,8 +651,6 @@ fun HomeScreen(
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val haptic = LocalHapticFeedback.current
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isListenTogetherGuest = listenTogetherManager?.let { it.isInRoom && !it.isHost } ?: false
 
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
@@ -819,7 +814,7 @@ fun HomeScreen(
                             .fillMaxWidth()
                             .combinedClickable(
                                 onClick = {
-                                    if (!isListenTogetherGuest) {
+                                    run {
                                         if (it.id == mediaMetadata?.id) {
                                             playerConnection.togglePlayPause()
                                         } else {
@@ -922,7 +917,7 @@ fun HomeScreen(
                         onClick = {
                             when (item) {
                                 is SongItem -> {
-                                    if (!isListenTogetherGuest) {
+                                    run {
                                         playerConnection.playQueue(
                                             if (autoRadioQueue) {
                                                 YouTubeQueue(
@@ -958,7 +953,7 @@ fun HomeScreen(
                                 }
 
                                 is EpisodeItem -> {
-                                    if (!isListenTogetherGuest) {
+                                    run {
                                         playerConnection.playQueue(
                                             ListQueue(
                                                 title = item.title,
@@ -1500,7 +1495,7 @@ fun HomeScreen(
                                                                         onClick = {
                                                                             if (isRandomizing) {
                                                                                 randomizeJob?.cancel()
-                                                                            } else if (!isListenTogetherGuest) {
+                                                                            } else run {
                                                                                 randomizeJob =
                                                                                     scope.launch {
                                                                                         val randomItem = viewModel.getRandomItem()
@@ -1596,7 +1591,7 @@ fun HomeScreen(
                                                                                     onClick = {
                                                                                         when (item) {
                                                                                             is SongItem -> {
-                                                                                                if (!isListenTogetherGuest) {
+                                                                                                run {
                                                                                                     playerConnection.playQueue(
                                                                                                         if (autoRadioQueue) {
                                                                                                             YouTubeQueue(
@@ -1649,7 +1644,7 @@ fun HomeScreen(
                                                                                             }
 
                                                                                             is EpisodeItem -> {
-                                                                                                if (!isListenTogetherGuest) {
+                                                                                                run {
                                                                                                     playerConnection.playQueue(
                                                                                                         ListQueue(
                                                                                                             title = item.title,
@@ -1768,7 +1763,7 @@ fun HomeScreen(
                                     NavigationTitle(
                                         title = quickPicksTitle,
                                         onPlayAllClick =
-                                            if (!isListenTogetherGuest) {
+                                            run {
                                                 {
                                                     playerConnection.playQueue(
                                                         ListQueue(
@@ -1777,8 +1772,6 @@ fun HomeScreen(
                                                         ),
                                                     )
                                                 }
-                                            } else {
-                                                null
                                             },
                                     )
                                 }
@@ -1834,7 +1827,7 @@ fun HomeScreen(
                                                         .width(horizontalLazyGridItemWidth)
                                                         .combinedClickable(
                                                             onClick = {
-                                                                if (!isListenTogetherGuest) {
+                                                                run {
                                                                     if (song!!.id == mediaMetadata?.id) {
                                                                         playerConnection.togglePlayPause()
                                                                     } else {
@@ -1890,7 +1883,7 @@ fun HomeScreen(
                                                     navController.navigate("online_playlist/${item.playlist.id.removePrefix("VL")}")
                                                 },
                                                 onSongClick = { song ->
-                                                    if (!isListenTogetherGuest) {
+                                                    run {
                                                         playerConnection.playQueue(
                                                             YouTubeQueue(
                                                                 song.endpoint ?: WatchEndpoint(videoId = song.id),
@@ -1953,7 +1946,7 @@ fun HomeScreen(
                                             DailyDiscoverCard(
                                                 dailyDiscover = item,
                                                 onClick = {
-                                                    if (!isListenTogetherGuest) {
+                                                    run {
                                                         val song = item.recommendation as? SongItem
                                                         val mediaMetadata = song?.toMediaMetadata()
                                                         if (mediaMetadata != null) {
@@ -2086,7 +2079,7 @@ fun HomeScreen(
                                     NavigationTitle(
                                         title = forgottenFavoritesTitle,
                                         onPlayAllClick =
-                                            if (!isListenTogetherGuest) {
+                                            run {
                                                 {
                                                     playerConnection.playQueue(
                                                         ListQueue(
@@ -2095,8 +2088,6 @@ fun HomeScreen(
                                                         ),
                                                     )
                                                 }
-                                            } else {
-                                                null
                                             },
                                     )
                                 }
@@ -2157,7 +2148,7 @@ fun HomeScreen(
                                                         .width(horizontalLazyGridItemWidth)
                                                         .combinedClickable(
                                                             onClick = {
-                                                                if (!isListenTogetherGuest) {
+                                                                run {
                                                                     if (song!!.id == mediaMetadata?.id) {
                                                                         playerConnection.togglePlayPause()
                                                                     } else {
@@ -2324,7 +2315,7 @@ fun HomeScreen(
                                                 }
                                             },
                                         onPlayAllClick =
-                                            if (hasPlayableSongs && !isListenTogetherGuest) {
+                                            if (hasPlayableSongs) {
                                                 {
                                                     playerConnection.playQueue(
                                                         ListQueue(
@@ -2385,7 +2376,7 @@ fun HomeScreen(
                                                             .width(horizontalLazyGridItemWidth)
                                                             .combinedClickable(
                                                                 onClick = {
-                                                                    if (!isListenTogetherGuest) {
+                                                                    run {
                                                                         playerConnection.playQueue(
                                                                             if (autoRadioQueue) {
                                                                                 YouTubeQueue(
@@ -2535,7 +2526,7 @@ fun HomeScreen(
                 lazyListState = lazylistState,
                 icon = R.drawable.shuffle,
                 onClick = {
-                    if (!isListenTogetherGuest) {
+                    run {
                         val local =
                             when {
                                 allLocalItems.isNotEmpty() && allYtItems.isNotEmpty() -> Random.nextFloat() < 0.5

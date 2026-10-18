@@ -1,25 +1,16 @@
-MAKOFF MUSIC — VÉRIFICATION DES FONCTIONS ET DE L'INDÉPENDANCE
-18 octobre 2026
+METROLIST PERSONNEL — VÉRIFICATION DES FONCTIONS, 18 OCTOBRE 2026
 
-RÉPONSE HONNÊTE
-Non, toutes les fonctions historiques ne sont pas présentes et validées à 100 %.
-Discord, Last.fm, Intégrations et À propos ont été retirés à votre demande.
-Le reste du code a été conservé, mais code présent et compilation réussie ne
-prouvent pas le bon fonctionnement de chaque action avec chaque appareil/compte.
+Nom affiché rétabli à Metrolist ; identifiant et mises à jour du projet personnel
+conservés. Les fonctions de salons et de traduction IA sont supprimées, ainsi
+que leurs ressources et services. Le lecteur, les paroles originales et la
+romanisation locale restent présents.
 
-INDÉPENDANCE DE METROLIST
-Les sources du moteur, le protocole, le serveur d'écoute partagée et le logo
-sont dans ce dépôt. Les mises à jour et l'historique utilisent ce GitHub.
-Aucun endpoint Metrolist actif connu n'est requis par la configuration contrôlée.
-Le miroir de paroles annoté « meow » a été retiré par précaution ; son propriétaire
-n'a pas été vérifié. AutoEQ utilise désormais le dépôt officiel de ses profils.
-Les noms internes et mentions légales n'introduisent aucun appel réseau.
-Un contrôle statique d'adresses connues ne prouve pas l'absence de toute dépendance
-indirecte chez les fournisseurs tiers, ni une capture exhaustive du trafic.
+Les champs historiques de la base sont conservés pour la compatibilité des
+données, sans service IA actif. Aucun schéma de base n'a été modifié.
 
 FONCTIONS / DÉPENDANCES / PREUVES
-- Interface et réglages : navigation Android automatisée dans les sept catégories,
-  bascule du fondu et ouverture de la qualité testées dans la préversion 22.
+- Interface et réglages : navigation Android automatisée dans les six catégories,
+  bascule du fondu et ouverture de la qualité testées dans la dernière préversion.
   Ce test ne clique pas chaque combinaison de chaque réglage.
 - Historique : chargement réel des Releases de ce GitHub testé sur émulateur.
 - Lecture, recherche, comptes, playlists et bibliothèque en ligne : code présent,
@@ -54,32 +45,6 @@ FONCTIONS / DÉPENDANCES / PREUVES
   stables pouvant se mettre à jour sans réinstallation. Ne pas désinstaller sans
   sauvegarde des données.
 
-CORRECTIONS DE CETTE RÉVISION
-1. Retrait du miroir LyricsPlus annoté « meow ».
-2. AutoEQ : dépôt officiel, cache distincte, récupération complète des profils,
-   refus d'un index vide/incomplet ; tests des réponses tronquées et erreurs.
-3. Informations audio : affichage possible à partir du format ou morceau local
-   même quand la requête de métadonnées YouTube échoue.
-4. Audit d'adresses étendu aux fournisseurs embarqués, à InnerTube et InnerTubeX.
-5. Documentation corrigée concernant Last.fm, À propos et l'APK unique.
-
-VALIDATION DE CETTE RÉVISION
-Sources ead3a07b2cd70ecc973398dd83faf2a5bfd79d2d :
-https://github.com/anderson76389/Music/actions/runs/39150834233
-- Compilation des APK FOSS et GMS : RÉUSSIE.
-- Tests unitaires Android et tests/APIcheck du moteur : RÉUSSIS.
-- Tests et compilation du serveur : RÉUSSIS.
-- Installation et démarrage des deux APK sur Android 11 : RÉUSSIS.
-- Trois tests Android de téléchargement/export audio : RÉUSSIS.
-- Test Android des réglages, persistance et historique GitHub : RÉUSSI.
-- Essai YouTube public anonyme : ÉCHEC YOUTUBE_AUTH_REQUIRED, YouTube demande
-  de se connecter pour confirmer l'absence de robot. Cet essai séparé est
-  non bloquant dans la CI ; une CI verte ne valide donc pas ce scénario.
-- Préversion 22 publiée : un seul APK universel, sources et SHA-256.
-https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07
-Preuves, journaux et captures :
-https://github.com/anderson76389/Music/actions/runs/39150834233/artifacts/12144693896
-
-AutoEQ : contrôle du dépôt officiel réel, 8 850 profils avec chemins compatibles,
-26 requêtes pour obtenir toutes les branches ; ce contrôle du catalogue ne
-valide pas l'application audible des réglages sur le casque de l'utilisateur.
+VALIDATION DE LA NOUVELLE RÉVISION
+Compilation, tests et publication à confirmer dans GitHub Actions avant de
+considérer la nouvelle préversion comme vérifiée.

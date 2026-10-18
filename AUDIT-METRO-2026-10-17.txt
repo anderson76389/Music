@@ -1,3 +1,8 @@
+DOCUMENT HISTORIQUE DU 17 OCTOBRE 2026
+L'état courant est décrit dans INDEPENDANCE-MUSIC.txt et VERIFICATION-FONCTIONS.txt.
+Les fonctions de salons et de traduction IA décrites ci-dessous ont depuis été
+supprimées à la demande du propriétaire. Le nom affiché est redevenu Metrolist.
+
 MAKOFF MUSIC — AUDIT DES LIENS AVEC METROLIST, 17 OCTOBRE 2026
 
 CONCLUSION

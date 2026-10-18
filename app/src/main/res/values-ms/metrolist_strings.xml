@@ -78,11 +78,6 @@
     <string name="widget_recognizer_channel_name">Pengecaman Muzik</string>
     <string name="widget_recognizer_channel_desc">Memunculkan notifikasi sambil mengenalpasti lagu dari widget</string>
     <string name="widget_recognizer_notification_text">Merekod suara untuk mengenalpasti lagu…</string>
-    <string name="ai_provider_xai_help">Layari https://console.x.ai</string>
-    <string name="ai_provider_deepl_help">Layari https://deepl.com/pro-api untuk mendapatkan kekunci api percuma dan berbayar</string>
-    <string name="ai_deepl_formality_default">Asal</string>
-    <string name="ai_deepl_formality_more">Lebih formal</string>
-    <string name="ai_deepl_formality_less">Kurang formal</string>
     <string name="resume_on_bluetooth_connect">Sambung semula apabila disambungkan ke Bluetooth</string>
     <string name="lyrics_romanize_as_main">Tunjuk lirik dirumikan sebagai lirik utama</string>
     <string name="restart">Mulakan semula</string>
@@ -115,10 +110,6 @@
     <string name="error_episode_remove">Gagal untuk membuang episod</string>
     <string name="error_podcast_subscribe">Gagal untuk melanggani podcast tersebut</string>
     <string name="error_podcast_unsubscribe">Gagal untuk nyahlanggan daripada podcast tersebut</string>
-    <string name="listen_together_auto_approval_joins">Sahkan permintaan masuk secara automatik</string>
-    <string name="listen_together_auto_approval_joins_desc">Sahkan permintaan masuk secara automatik tanpa menyemak secara manual</string>
-    <string name="listen_together_auto_approval_suggestions">Sahkan pengesyoran lagu secara automatik</string>
-    <string name="listen_together_auto_approval_suggestions_desc">Sahkan dan bariskan lagu yang disyorkan daripada tetamu secara automatik</string>
     <string name="speed_dial">Dailan cepat</string>
     <string name="pin_to_speed_dial">Sematkan pada dailan pantas</string>
     <string name="unpin_from_speed_dial">Tanggalkan sematan daripada dailan pantas</string>

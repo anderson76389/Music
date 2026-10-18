@@ -42,7 +42,6 @@ import fr.makoff.music.ui.screens.recognition.RecognitionHistoryScreen
 import fr.makoff.music.ui.screens.recognition.RecognitionScreen
 import fr.makoff.music.ui.screens.search.OnlineSearchResult
 import fr.makoff.music.ui.screens.search.SearchScreen
-import fr.makoff.music.ui.screens.settings.AiSettings
 import fr.makoff.music.ui.screens.settings.AndroidAutoSettings
 import fr.makoff.music.ui.screens.settings.AppearanceSettings
 import fr.makoff.music.ui.screens.settings.BackupAndRestore
@@ -55,7 +54,6 @@ import fr.makoff.music.ui.screens.settings.SettingsScreen
 import fr.makoff.music.ui.screens.settings.StorageSettings
 import fr.makoff.music.ui.screens.settings.ThemeScreen
 import fr.makoff.music.ui.screens.settings.UpdaterScreen
-import fr.makoff.music.ui.screens.settings.integrations.ListenTogetherSettings
 
 import fr.makoff.music.ui.screens.wrapped.WrappedScreen
 import fr.makoff.music.utils.rememberEnumPreference
@@ -95,15 +93,9 @@ fun NavGraphBuilder.navigationBuilder(
         LibraryScreen()
     }
 
-    composable(Screens.ListenTogether.route) {
-        ListenTogetherScreen(navController, showTopBar = false)
-    }
 
-    composable(
-        route = "listen_together_from_topbar",
-    ) {
-        ListenTogetherScreen(navController, showTopBar = true)
-    }
+
+
 
     composable("history") {
         HistoryScreen(navController)
@@ -360,9 +352,7 @@ fun NavGraphBuilder.navigationBuilder(
         RomanizationSettings(navController)
     }
 
-    composable("settings/ai") {
-        AiSettings(navController)
-    }
+
 
     composable("settings/player") {
         PlayerSettings(navController)
@@ -383,9 +373,7 @@ fun NavGraphBuilder.navigationBuilder(
 
 
 
-    composable(route = "settings/integrations/listen_together") {
-        ListenTogetherSettings(navController)
-    }
+
 
     composable("settings/updater") {
         UpdaterScreen(navController)

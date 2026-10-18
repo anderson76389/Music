@@ -5,11 +5,11 @@ r = Path(__file__).resolve().parents[1]
 k = r / 'app/src/main/kotlin/com/metrolist/music'
 nav = (k/'ui/screens/NavigationBuilder.kt').read_text()
 routes = set(re.findall(r'composable\((?:route\s*=\s*)?"([^"]+)"', nav))
-for removed in ('settings/about', 'settings/integrations', 'settings/integrations/lastfm'):
+for removed in ('settings/about', 'settings/integrations', 'settings/integrations/lastfm', 'settings/ai', 'settings/integrations/listen_together'):
     assert removed not in routes, removed
 for p in (r/'app/src/main/kotlin').rglob('*.kt'):
     s = p.read_text()
-    assert not re.search(r'LastFM|lastfm|ScrobbleManager|discord', s, re.I), p
+    assert not re.search(r'LastFM|lastfm|ScrobbleManager|discord|ListenTogether|LyricsTranslationHelper|OpenRouter|DeepLService', s, re.I), p
 for p in sorted((k/'ui/screens/settings').rglob('*.kt')):
     s = p.read_text()
     for route in re.findall(r'navigate\("([^"$]+)"\)', s):

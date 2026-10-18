@@ -1,3 +1,0 @@
-{$MUSIC_DOMAIN} {
-    reverse_proxy listen-server:8080
-}

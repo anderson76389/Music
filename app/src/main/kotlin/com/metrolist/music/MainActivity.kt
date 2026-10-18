@@ -148,8 +148,6 @@ import fr.makoff.music.constants.EnableLandscapeScalingKey
 import fr.makoff.music.constants.ExperimentalLyricsKey
 import fr.makoff.music.constants.ForceBottomNavBarKey
 import fr.makoff.music.constants.LastSeenVersionKey
-import fr.makoff.music.constants.ListenTogetherInTopBarKey
-import fr.makoff.music.constants.ListenTogetherUsernameKey
 import fr.makoff.music.constants.LyricsProviderOrderKey
 import fr.makoff.music.constants.MiniPlayerBottomSpacing
 import fr.makoff.music.constants.MiniPlayerHeight
@@ -258,8 +256,6 @@ class MainActivity : FragmentActivity() {
     @Inject
     lateinit var syncUtils: SyncUtils
 
-    @Inject
-    lateinit var listenTogetherManager: fr.makoff.music.listentogether.ListenTogetherManager
 
     private lateinit var navController: NavHostController
     private var pendingIntent: Intent? = null
@@ -283,13 +279,10 @@ class MainActivity : FragmentActivity() {
                 if (service is MusicBinder) {
                     playerConnection = PlayerConnection(this@MainActivity, service, database, lifecycleScope)
                     playerConnectionSnapshot = playerConnection
-                    listenTogetherManager.setPlayerConnection(playerConnection)
                 }
             }
 
             override fun onServiceDisconnected(name: ComponentName?) {
-                // Disconnect Listen Together manager
-                listenTogetherManager.setPlayerConnection(null)
                 playerConnection?.dispose()
                 // DO NOT null out playerConnection here - keep it for when service reconnects
                 // DO NOT update playerConnectionSnapshot - this is the key to preventing recomposition
@@ -304,7 +297,6 @@ class MainActivity : FragmentActivity() {
             Timber.tag("MainActivity").w(e, "Service was not bound when attempting to unbind in $source")
         } finally {
             isServiceBound = false
-            listenTogetherManager.setPlayerConnection(null)
             playerConnection?.dispose()
             // DO NOT null out playerConnection here - keep it for reconnection
             // DO NOT update playerConnectionSnapshot - this prevents UI recomposition
@@ -351,18 +343,11 @@ class MainActivity : FragmentActivity() {
     }
 
     override fun onStop() {
-        // Keep the service binding, PlayerConnection and Listen Together wiring alive while
-        // the Activity is backgrounded. The MusicService is a foreground service and keeps
-        // running, so the host must keep reporting playback state to the LT server; detaching
-        // the player listener here used to break LT for any host that wasn't staring at the
-        // app the whole session. Full teardown happens in onDestroy() via safeUnbindService().
+        // The foreground music service keeps playing while the activity is backgrounded.
         super.onStop()
     }
 
     override fun onDestroy() {
-        if (isFinishing) {
-            listenTogetherManager.disconnect()
-        }
         super.onDestroy()
         val stopServiceOnClear = dataStore.get(StopMusicOnTaskClearKey, false) && isFinishing
 
@@ -396,8 +381,6 @@ class MainActivity : FragmentActivity() {
         window.decorView.layoutDirection = View.LAYOUT_DIRECTION_LTR
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Initialize Listen Together manager
-        listenTogetherManager.initialize()
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             val locale =
@@ -732,15 +715,7 @@ class MainActivity : FragmentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val (previousTab, setPreviousTab) = rememberSaveable { mutableStateOf("home") }
 
-                val (listenTogetherInTopBar) = rememberPreference(ListenTogetherInTopBarKey, defaultValue = true)
-                val navigationItems =
-                    remember(listenTogetherInTopBar) {
-                        if (listenTogetherInTopBar) {
-                            Screens.MainScreens.filter { it != Screens.ListenTogether }
-                        } else {
-                            Screens.MainScreens
-                        }
-                    }
+                val navigationItems = Screens.MainScreens
                 val routeIndexMap = remember(navigationItems) {
                     navigationItems.mapIndexed { i, s -> s.route to i }.toMap()
                 }
@@ -769,7 +744,6 @@ class MainActivity : FragmentActivity() {
                         listOf(
                             Screens.Home.route,
                             Screens.Library.route,
-                            Screens.ListenTogether.route,
                             "settings",
                         )
                     }
@@ -963,14 +937,9 @@ class MainActivity : FragmentActivity() {
 
                 var shouldShowTopBar by rememberSaveable { mutableStateOf(false) }
 
-                LaunchedEffect(navBackStackEntry, listenTogetherInTopBar) {
+                LaunchedEffect(navBackStackEntry) {
                     val currentRoute = navBackStackEntry?.destination?.route
-                    val isListenTogetherScreen =
-                        currentRoute == Screens.ListenTogether.route ||
-                            currentRoute == "listen_together_from_topbar"
-                    shouldShowTopBar = currentRoute in topLevelScreens &&
-                        currentRoute != "settings" &&
-                        !(isListenTogetherScreen && listenTogetherInTopBar)
+                    shouldShowTopBar = currentRoute in topLevelScreens && currentRoute != "settings"
                 }
 
                 val coroutineScope = rememberCoroutineScope()
@@ -1010,7 +979,6 @@ class MainActivity : FragmentActivity() {
                             Screens.Home.route -> R.string.home
                             Screens.Search.route -> R.string.search
                             Screens.Library.route -> R.string.filter_library
-                            Screens.ListenTogether.route -> R.string.together
                             else -> null
                         }
                     }
@@ -1036,7 +1004,6 @@ class MainActivity : FragmentActivity() {
                     LocalDownloadUtil provides downloadUtil,
                     LocalShimmerTheme provides ShimmerTheme,
                     LocalSyncUtils provides syncUtils,
-                    LocalListenTogetherManager provides listenTogetherManager,
                     LocalChangelogState provides showChangelog,
                     LocalArtistNameAliases provides artistNameAliases,
                 ) {
@@ -1075,14 +1042,7 @@ class MainActivity : FragmentActivity() {
                                                     contentDescription = stringResource(R.string.stats),
                                                 )
                                             }
-                                            if (listenTogetherInTopBar) {
-                                                IconButton(onClick = { navController.navigate("listen_together_from_topbar") }) {
-                                                    Icon(
-                                                        painter = painterResource(R.drawable.group_outlined),
-                                                        contentDescription = stringResource(R.string.together),
-                                                    )
-                                                }
-                                            }
+
                                             IconButton(onClick = { showAccountDialog = true }) {
                                                 BadgedBox(badge = {
                                                     if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
@@ -1590,17 +1550,6 @@ class MainActivity : FragmentActivity() {
         intent.removeExtra(Intent.EXTRA_TEXT)
         val coroutineScope = lifecycle.coroutineScope
 
-        val listenCode =
-            uri.getQueryParameter("code")
-                ?: uri.getQueryParameter("room")
-                ?: uri.pathSegments.getOrNull(1)
-        val isListenLink = uri.pathSegments.firstOrNull() == "listen" || uri.host?.equals("listen", ignoreCase = true) == true
-        if (!listenCode.isNullOrBlank() && isListenLink) {
-            val username = dataStore.get(ListenTogetherUsernameKey, "").ifBlank { "Guest" }
-            listenTogetherManager.joinRoom(listenCode, username)
-            return
-        }
-
         when (val path = uri.pathSegments.firstOrNull()) {
             "playlist" -> {
                 val playlistId = uri.getQueryParameter("list")
@@ -1715,7 +1664,6 @@ val LocalPlayerConnection = staticCompositionLocalOf<PlayerConnection?> { error(
 val LocalPlayerAwareWindowInsets = compositionLocalOf<WindowInsets> { error("No WindowInsets provided") }
 val LocalDownloadUtil = staticCompositionLocalOf<DownloadUtil> { error("No DownloadUtil provided") }
 val LocalSyncUtils = staticCompositionLocalOf<SyncUtils> { error("No SyncUtils provided") }
-val LocalListenTogetherManager = staticCompositionLocalOf<fr.makoff.music.listentogether.ListenTogetherManager?> { null }
 val LocalChangelogState = staticCompositionLocalOf<MutableState<Boolean>> { error("No LocalChangelogState provided") }
 val LocalArtistNameAliases = staticCompositionLocalOf<Map<String, String>> { emptyMap() }
 val LocalIsPlayerExpanded = compositionLocalOf { false }

@@ -84,8 +84,6 @@ fun SelectionSongMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val syncUtils = LocalSyncUtils.current
     val deletedNSongsTemplate = stringResource(R.string.deleted_n_songs)
-    val listenTogetherManager = fr.makoff.music.LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
     val allInLibrary by remember {
         mutableStateOf(
@@ -298,7 +296,7 @@ fun SelectionSongMenu(
             NewActionGrid(
                 actions =
                     listOfNotNull(
-                        if (!isGuest) {
+                        run {
                             NewAction(
                                 icon = {
                                     Icon(
@@ -320,10 +318,8 @@ fun SelectionSongMenu(
                                     clearAction()
                                 },
                             )
-                        } else {
-                            null
                         },
-                        if (!isGuest) {
+                        run {
                             NewAction(
                                 icon = {
                                     Icon(
@@ -345,8 +341,6 @@ fun SelectionSongMenu(
                                     clearAction()
                                 },
                             )
-                        } else {
-                            null
                         },
                         NewAction(
                             icon = {
@@ -370,7 +364,7 @@ fun SelectionSongMenu(
             Material3MenuGroup(
                 items =
                     buildList {
-                        if (!isGuest) {
+                        run {
                             add(
                                 Material3MenuItemData(
                                     title = { Text(text = stringResource(R.string.play_next)) },
@@ -668,8 +662,6 @@ fun SelectionMediaMetadataMenu(
     val downloadUtil = LocalDownloadUtil.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
-    val listenTogetherManager = fr.makoff.music.LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && listenTogetherManager.isHost == false
 
     val allLiked by remember(songSelection) {
         mutableStateOf(songSelection.isNotEmpty() && songSelection.all { it.liked })
@@ -774,7 +766,7 @@ fun SelectionMediaMetadataMenu(
             Material3MenuGroup(
                 items =
                     buildList {
-                        if (currentItems.isNotEmpty() && !isGuest) {
+                        if (currentItems.isNotEmpty()) {
                             add(
                                 Material3MenuItemData(
                                     title = { Text(text = stringResource(R.string.delete)) },
@@ -800,7 +792,7 @@ fun SelectionMediaMetadataMenu(
                                 ),
                             )
                         }
-                        if (!isGuest) {
+                        run {
                             add(
                                 Material3MenuItemData(
                                     title = { Text(text = stringResource(R.string.play)) },
@@ -843,7 +835,7 @@ fun SelectionMediaMetadataMenu(
                                     },
                                 ),
                             )
-                            if (!isGuest) {
+                            run {
                                 add(
                                     Material3MenuItemData(
                                         title = { Text(text = stringResource(R.string.add_to_queue)) },

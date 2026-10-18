@@ -102,11 +102,7 @@ fun SettingsScreen(
                     title = { Text(stringResource(R.string.content)) },
                     onClick = { navController.navigate("settings/content") }
                 ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.translate),
-                    title = { Text(stringResource(R.string.ai_lyrics_translation)) },
-                    onClick = { navController.navigate("settings/ai") }
-                )
+
             )
         )
 
@@ -127,7 +123,7 @@ fun SettingsScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
         }
-        
+
         // Privacy & Security Section
         Material3SettingsGroup(
             title = stringResource(R.string.settings_section_privacy),
@@ -234,7 +230,7 @@ fun SettingsScreen(
                         add(
                             Material3SettingsItem(
                                 icon = painterResource(R.drawable.update),
-                                title = { 
+                                title = {
                                     Text(
                                         text = stringResource(R.string.new_version_available),
                                     )

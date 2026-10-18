@@ -88,7 +88,6 @@ import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertube.models.WatchEndpoint
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalArtistNameAliases
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -144,8 +143,6 @@ fun ArtistScreen(
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
-    val listenTogetherManager = LocalListenTogetherManager.current
-    val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
     val isPlaying by playerConnection.isEffectivelyPlaying.collectAsStateWithLifecycle()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsStateWithLifecycle()
     val artistPage = viewModel.artistPage
@@ -397,7 +394,7 @@ fun ArtistScreen(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         // Radio Button
-                                        if (!showLocal && !isGuest) {
+                                        if (!showLocal) {
                                             artistPage?.artist?.radioEndpoint?.let { radioEndpoint ->
                                                 OutlinedButton(
                                                     onClick = {
@@ -421,7 +418,7 @@ fun ArtistScreen(
                                         }
 
                                         // Shuffle Button
-                                        if (!showLocal && !isGuest) {
+                                        if (!showLocal) {
                                             artistPage?.artist?.shuffleEndpoint?.let { shuffleEndpoint ->
                                                 IconButton(
                                                     onClick = {
@@ -585,7 +582,7 @@ fun ArtistScreen(
                                         .fillMaxWidth()
                                         .combinedClickable(
                                             onClick = {
-                                                if (!isGuest) {
+                                                run {
                                                     if (song.id == mediaMetadata?.id) {
                                                         playerConnection.togglePlayPause()
                                                     } else {
@@ -713,7 +710,7 @@ fun ArtistScreen(
                                         Modifier
                                             .combinedClickable(
                                                 onClick = {
-                                                    if (!isGuest) {
+                                                    run {
                                                         if (song.id == mediaMetadata?.id) {
                                                             playerConnection.togglePlayPause()
                                                         } else {
@@ -764,7 +761,7 @@ fun ArtistScreen(
                                                         onClick = {
                                                             when (item) {
                                                                 is SongItem -> {
-                                                                    if (!isGuest) {
+                                                                    run {
                                                                         playerConnection.playQueue(
                                                                             YouTubeQueue(
                                                                                 WatchEndpoint(videoId = item.id),
@@ -791,7 +788,7 @@ fun ArtistScreen(
                                                                 }
 
                                                                 is EpisodeItem -> {
-                                                                    if (!isGuest) {
+                                                                    run {
                                                                         playerConnection.playQueue(
                                                                             YouTubeQueue(
                                                                                 WatchEndpoint(videoId = item.id),
@@ -879,7 +876,7 @@ fun ArtistScreen(
 
         // Play All FAB (Stacked above Library/Local FAB if visible)
         val canPlayAll =
-            !isGuest && (
+            (
                 (showLocal && librarySongs.isNotEmpty()) ||
                     (
                         !showLocal && artistPage?.sections?.any {
@@ -905,7 +902,7 @@ fun ArtistScreen(
                         .padding(bottom = if (showLocalFab) 64.dp else 0.dp),
             ) {
                 val onPlayAllClick: () -> Unit = {
-                    if (!isGuest) {
+                    run {
                         if (showLocal) {
                             if (librarySongs.isNotEmpty()) {
                                 playerConnection.playQueue(

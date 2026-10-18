@@ -1,5 +1,0 @@
-Source: https://github.com/MetrolistGroup/metroserver
-Commit: 9da6f9da1f3ec92183a26dc8f6fbf9c8b3f0ede8
-Protocol source: https://github.com/MetrolistGroup/metroproto
-Commit: e7c5e3d811af21b66bfe8e88de87777fcde16f90
-Modified for MAKOFF Music; original licenses and notices retained.

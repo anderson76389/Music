@@ -51,7 +51,7 @@ jobs:
           assert os.environ['RELEASE_TAG'] == 'v' + version, 'Release tag must match versionName'
           PYCODE
           mkdir -p "$HOME/.android"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=MAKOFF Music Test,O=MAKOFF,C=FR"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Metrolist Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
@@ -91,7 +91,7 @@ jobs:
         run: |
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           cat > notes.txt <<'NOTES'
-          ## MAKOFF Music pour Android
+          ## Metrolist pour Android
 
           - **MAKOFF-Music-universal.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle des APK jointes.
@@ -99,7 +99,7 @@ jobs:
           APK signés avec la clé privée du projet. Tests unitaires et contrôle d'installation/démarrage des deux APK sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
           NOTES
           cat CHANGEMENTS-VERSION.txt >> notes.txt
-          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "MAKOFF Music $RELEASE_TAG" --notes-file notes.txt dist/*
+          gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "Metrolist $RELEASE_TAG" --notes-file notes.txt dist/*
       - name: Delete private key
         if: always()
         run: rm -f app/keystore/release.keystore

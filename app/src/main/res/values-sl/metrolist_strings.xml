@@ -164,7 +164,6 @@
     <string name="settings_section_privacy">Zasebnost in varnost</string>
     <string name="update_channel_desc">Obvestila o novih različicah</string>
     <string name="integrations">Integracije</string>
-    <string name="username">Uporabniško ime</string>
     <string name="password">Geslo</string>
     <string name="lastfm_integration">Integracija z Last.fm</string>
     <string name="enable_scrobbling">Omogoči beleženje</string>
@@ -174,7 +173,7 @@
     <string name="scrobble_delay_percent">Odstotek zakasnitve beleženja</string>
     <string name="scrobble_delay_minutes">Zakasnitev beleženja v minutah</string>
     <string name="last_fm_send_likes">Pošlji všečke/nevšečke</string>
-    <string name="last_fm_send_likes_description">Dodaj/odstrani pesmi med priljubljenimi na Last.fm, ko jih všečkaš/odvšečkaš v MAKOFF Musicu</string>
+    <string name="last_fm_send_likes_description">Dodaj/odstrani pesmi med priljubljenimi na Last.fm, ko jih všečkaš/odvšečkaš v Metrolistu</string>
     <string name="edit_playlist_cover_note">Opomba: Vaš račun mora biti povezan s telefonsko številko in preverjen na YouTube Music, da lahko spremenite naslovnico seznama predvajanja.</string>
     <string name="settings_section_player_content">Predvajalnik in vsebina</string>
     <string name="settings_section_storage">Shramba in podatki</string>

@@ -15,8 +15,6 @@ import androidx.media3.datasource.cache.SimpleCache
 import fr.makoff.music.constants.MaxSongCacheSizeKey
 import fr.makoff.music.db.InternalDatabase
 import fr.makoff.music.db.MusicDatabase
-import fr.makoff.music.listentogether.ListenTogetherClient
-import fr.makoff.music.listentogether.ListenTogetherManager
 import fr.makoff.music.utils.dataStore
 import fr.makoff.music.utils.get
 import dagger.Module
@@ -95,16 +93,5 @@ object AppModule {
         databaseProvider,
     )
 
-    @Singleton
-    @Provides
-    fun provideListenTogetherClient(
-        @ApplicationContext context: Context,
-    ): ListenTogetherClient = ListenTogetherClient(context)
 
-    @Singleton
-    @Provides
-    fun provideListenTogetherManager(
-        @ApplicationContext context: Context,
-        client: ListenTogetherClient,
-    ): ListenTogetherManager = ListenTogetherManager(client, context)
 }

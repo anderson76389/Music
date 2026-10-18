@@ -65,7 +65,6 @@ import fr.makoff.music.LocalDatabase
 import fr.makoff.music.R
 import fr.makoff.music.db.entities.LyricsEntity
 import fr.makoff.music.db.entities.SongEntity
-import fr.makoff.music.lyrics.LyricsTranslationHelper
 import fr.makoff.music.lyrics.LyricsUtils
 import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.ui.component.DefaultDialog
@@ -76,18 +75,8 @@ import fr.makoff.music.ui.component.NewAction
 import fr.makoff.music.ui.component.NewActionGrid
 import fr.makoff.music.ui.component.TextFieldDialog
 import fr.makoff.music.viewmodels.LyricsMenuViewModel
-import fr.makoff.music.constants.OpenRouterApiKey
-import fr.makoff.music.constants.DeeplApiKey
-import fr.makoff.music.constants.AiProviderKey
-import fr.makoff.music.constants.TranslateLanguageKey
-import fr.makoff.music.constants.TranslateModeKey
 import fr.makoff.music.constants.RespectAgentPositioningKey
 import fr.makoff.music.constants.ShowIntervalIndicatorKey
-import fr.makoff.music.constants.OpenRouterBaseUrlKey
-import fr.makoff.music.constants.OpenRouterDefaultBaseUrl
-import fr.makoff.music.constants.OpenRouterDefaultModel
-import fr.makoff.music.constants.OpenRouterModelKey
-import fr.makoff.music.constants.DeeplFormalityKey
 import fr.makoff.music.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,23 +91,10 @@ fun LyricsMenu(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
-    
-    val openRouterApiKey by rememberPreference(OpenRouterApiKey, "")
-    val deeplApiKey by rememberPreference(DeeplApiKey, "")
-    val aiProvider by rememberPreference(AiProviderKey, "OpenRouter")
-    val translateLanguage by rememberPreference(TranslateLanguageKey, "en")
-    val translateMode by rememberPreference(TranslateModeKey, "Literal")
-    val openRouterBaseUrl by rememberPreference(OpenRouterBaseUrlKey, OpenRouterDefaultBaseUrl)
-    val openRouterModel by rememberPreference(OpenRouterModelKey, OpenRouterDefaultModel)
-    val deeplFormality by rememberPreference(DeeplFormalityKey, "default")
+
     var respectAgentPositioning by rememberPreference(RespectAgentPositioningKey, true)
     var showIntervalIndicator by rememberPreference(ShowIntervalIndicatorKey, true)
 
-    val hasApiKey = if (aiProvider == "DeepL") deeplApiKey.isNotBlank() else openRouterApiKey.isNotBlank()
-    
-    // Observe the authoritative translation-active state from the singleton; this persists
-    // correctly across menu open/close cycles and avoids the lyricsProvider() race condition.
-    val hasTranslations by LyricsTranslationHelper.hasActiveTranslations.collectAsStateWithLifecycle()
 
     var showEditDialog by rememberSaveable {
         mutableStateOf(false)
@@ -229,7 +205,7 @@ fun LyricsMenu(
                             searchMediaMetadata.album?.title
                         )
                         showSearchResultDialog = true
-                        
+
                         // Show warning only if network is definitely unavailable
                         if (!isNetworkAvailable) {
                             Toast.makeText(context, context.getString(R.string.error_no_internet), Toast.LENGTH_SHORT).show()
@@ -474,71 +450,8 @@ fun LyricsMenu(
         item {
             Material3MenuGroup(
                 items = buildList {
-                    // Add translation toggle option if API key is configured
-                    if (hasApiKey) {
-                        add(
-                            Material3MenuItemData(
-                                title = { Text(stringResource(R.string.ai_lyrics_translation)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.translate),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    if (hasTranslations) {
-                                        // Remove translations
-                                        lyricsProvider()?.let { lyrics ->
-                                            val clearedLyrics = LyricsTranslationHelper.clearTranslations(lyrics)
-                                            database.query {
-                                                upsert(clearedLyrics)
-                                            }
-                                            // Resets hasActiveTranslations and clears in-memory translations
-                                            LyricsTranslationHelper.triggerClearTranslations()
-                                        }
-                                    } else {
-                                        // Trigger translation
-                                        LyricsTranslationHelper.triggerManualTranslation()
-                                    }
-                                },
-                                trailingContent = {
-                                    Switch(
-                                        checked = hasTranslations,
-                                        onCheckedChange = { newCheckedState ->
-                                            if (newCheckedState) {
-                                                // Enable translations – hasActiveTranslations updates when done
-                                                LyricsTranslationHelper.triggerManualTranslation()
-                                            } else {
-                                                // Disable translations – triggerClearTranslations resets hasActiveTranslations
-                                                lyricsProvider()?.let { lyrics ->
-                                                    val clearedLyrics = LyricsTranslationHelper.clearTranslations(lyrics)
-                                                    database.query {
-                                                        upsert(clearedLyrics)
-                                                    }
-                                                    LyricsTranslationHelper.triggerClearTranslations()
-                                                }
-                                            }
-                                        },
-                                        thumbContent = {
-                                            Icon(
-                                                painter = painterResource(
-                                                    id = if (hasTranslations) R.drawable.check else R.drawable.close
-                                                ),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(SwitchDefaults.IconSize)
-                                            )
-                                        },
-                                        colors = SwitchDefaults.colors(
-                                            uncheckedThumbColor = MaterialTheme.colorScheme.primaryContainer,
-                                            checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                                            checkedTrackColor = MaterialTheme.colorScheme.primary
-                                        )
-                                    )
-                                }
-                            )
-                        )
-                    }
-                    
+
+
                     add(
                         Material3MenuItemData(
                             title = { Text(stringResource(R.string.respect_agent_positioning)) },
@@ -576,7 +489,7 @@ fun LyricsMenu(
                             }
                         )
                     )
-                    
+
                     add(
                         Material3MenuItemData(
                             title = { Text(stringResource(R.string.show_interval_indicator)) },
@@ -614,7 +527,7 @@ fun LyricsMenu(
                             }
                         )
                     )
-                    
+
                     add(
                         Material3MenuItemData(
                             title = { Text(stringResource(R.string.lyrics_offset)) },
@@ -637,7 +550,7 @@ fun LyricsMenu(
                             }
                         )
                     )
-                    
+
                     add(
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.romanize_current_track)) },

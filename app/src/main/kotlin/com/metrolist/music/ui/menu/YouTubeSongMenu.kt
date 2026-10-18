@@ -62,7 +62,6 @@ import com.metrolist.innertube.models.SongItem
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalArtistNameAliases
 import fr.makoff.music.LocalDownloadUtil
-import fr.makoff.music.LocalListenTogetherManager
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.R
@@ -111,7 +110,6 @@ fun YouTubeSongMenu(
     val download by downloadUtil.getDownload(song.id).collectAsStateWithLifecycle(initialValue = null)
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
-    val listenTogetherManager = LocalListenTogetherManager.current
     val isPinned by database.speedDialDao.isPinned(song.id).collectAsStateWithLifecycle(initialValue = false)
     val artistNameAliases = LocalArtistNameAliases.current
     val artists = remember(song.artists, artistNameAliases) {
@@ -125,9 +123,9 @@ fun YouTubeSongMenu(
         }
     }
 
-    var showChoosePlaylistDialog by rememberSaveable {  
-        mutableStateOf(false)  
-    }  
+    var showChoosePlaylistDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     AddToPlaylistDialog(
         isVisible = showChoosePlaylistDialog,
@@ -139,56 +137,56 @@ fun YouTubeSongMenu(
         },
         onGetSongIds = { listOf(song.id) },
         onDismiss = { showChoosePlaylistDialog = false }
-    )  
+    )
 
-    var showSelectArtistDialog by rememberSaveable {  
-        mutableStateOf(false)  
-    }  
+    var showSelectArtistDialog by rememberSaveable {
+        mutableStateOf(false)
+    }
 
-    if (showSelectArtistDialog) {  
-        ListDialog(  
-            onDismiss = { showSelectArtistDialog = false },  
-        ) {  
-            items(artists) { artist ->  
-                Row(  
-                    verticalAlignment = Alignment.CenterVertically,  
-                    modifier =  
-                    Modifier  
-                        .height(ListItemHeight)  
-                        .clickable {  
-                            navController.navigate("artist/${artist.id}")  
-                            showSelectArtistDialog = false  
-                            onDismiss()  
-                        }  
-                        .padding(horizontal = 12.dp),  
-                ) {  
-                    Box(  
-                        contentAlignment = Alignment.CenterStart,  
-                        modifier =  
-                        Modifier  
-                            .fillParentMaxWidth()  
-                            .height(ListItemHeight)  
-                            .clickable {  
-                                navController.navigate("artist/${artist.id}")  
-                                showSelectArtistDialog = false  
-                                onDismiss()  
-                            }  
-                            .padding(horizontal = 24.dp),  
-                    ) {  
-                        Text(  
-                            text = artist.name,  
-                            fontSize = 18.sp,  
-                            fontWeight = FontWeight.Bold,  
-                            maxLines = 1,  
-                            overflow = TextOverflow.Ellipsis,  
-                        )  
-                    }  
-                }  
-            }  
-        }  
-    }  
+    if (showSelectArtistDialog) {
+        ListDialog(
+            onDismiss = { showSelectArtistDialog = false },
+        ) {
+            items(artists) { artist ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier =
+                    Modifier
+                        .height(ListItemHeight)
+                        .clickable {
+                            navController.navigate("artist/${artist.id}")
+                            showSelectArtistDialog = false
+                            onDismiss()
+                        }
+                        .padding(horizontal = 12.dp),
+                ) {
+                    Box(
+                        contentAlignment = Alignment.CenterStart,
+                        modifier =
+                        Modifier
+                            .fillParentMaxWidth()
+                            .height(ListItemHeight)
+                            .clickable {
+                                navController.navigate("artist/${artist.id}")
+                                showSelectArtistDialog = false
+                                onDismiss()
+                            }
+                            .padding(horizontal = 24.dp),
+                    ) {
+                        Text(
+                            text = artist.name,
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+        }
+    }
 
-    ListItem(  
+    ListItem(
         content = {
             Text(
                 text = song.title,
@@ -196,17 +194,17 @@ fun YouTubeSongMenu(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-        },  
-        supportingContent = {  
-            Text(  
+        },
+        supportingContent = {
+            Text(
                 text = joinByBullet(
                     song.artists.joinToString {
                         ArtistNameAliases.resolve(artistNameAliases, it.id, it.name)
                     },
                     song.duration?.let { makeTimeString(it * 1000L) },
                 )
-            )  
-        },  
+            )
+        },
         leadingContent = {
             Box(
                 contentAlignment = Alignment.Center,
@@ -273,8 +271,8 @@ fun YouTubeSongMenu(
                     contentDescription = null,
                 )
             }
-        },  
-    )  
+        },
+    )
 
     HorizontalDivider()
 
@@ -284,7 +282,6 @@ fun YouTubeSongMenu(
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
-    val isGuest = listenTogetherManager?.isInRoom == true && !listenTogetherManager.isHost
 
     LazyColumn(
         contentPadding = PaddingValues(
@@ -297,7 +294,7 @@ fun YouTubeSongMenu(
         item {
             NewActionGrid(
                 actions = listOfNotNull(
-                    if (!isGuest) {
+                    run {
                         NewAction(
                             icon = {
                                 Icon(
@@ -313,7 +310,7 @@ fun YouTubeSongMenu(
                                 onDismiss()
                             }
                         )
-                    } else null,
+                    },
                     NewAction(
                         icon = {
                             Icon(
@@ -349,7 +346,7 @@ fun YouTubeSongMenu(
                         }
                     )
                 ),
-                columns = if (isGuest) 2 else 3,
+                columns = 3,
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp)
             )
         }
@@ -357,31 +354,7 @@ fun YouTubeSongMenu(
         item {
             Material3MenuGroup(
                 items = listOfNotNull(
-                    if (listenTogetherManager != null && listenTogetherManager.isInRoom && !listenTogetherManager.isHost) {
-                        Material3MenuItemData(
-                            title = { Text(text = stringResource(R.string.suggest_to_host)) },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.queue_music),
-                                    contentDescription = null,
-                                )
-                            },
-                            onClick = {
-                                val durationMs = if (song.duration != null && song.duration!! > 0) song.duration!! * 1000L else 180000L
-                                val trackInfo = fr.makoff.music.listentogether.TrackInfo(
-                                    id = song.id,
-                                    title = song.title,
-                                    artist = artists.joinToString(", ") { it.name },
-                                    album = song.album?.name,
-                                    duration = durationMs,
-                                    thumbnail = song.thumbnail
-                                )
-                                listenTogetherManager.suggestTrack(trackInfo)
-                                onDismiss()
-                            }
-                        )
-                    } else null,
-                    if (!isGuest) {
+                    run {
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.start_radio)) },
                             description = { Text(text = stringResource(R.string.start_radio_desc)) },
@@ -396,8 +369,8 @@ fun YouTubeSongMenu(
                                 onDismiss()
                             }
                         )
-                    } else null,
-                    if (!isGuest) {
+                    },
+                    run {
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.add_to_queue)) },
                             description = { Text(text = stringResource(R.string.add_to_queue_desc)) },
@@ -412,7 +385,7 @@ fun YouTubeSongMenu(
                                 onDismiss()
                             }
                         )
-                    } else null
+                    }
                 )
             )
         }
@@ -505,10 +478,10 @@ fun YouTubeSongMenu(
                     }
                     add(
                         Material3MenuItemData(
-                            title = { 
+                            title = {
                                 Text(
                                     text = if (isPinned) stringResource(R.string.unpin_from_speed_dial) else stringResource(R.string.pin_to_speed_dial)
-                                ) 
+                                )
                             },
                             icon = {
                                 Icon(

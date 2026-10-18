@@ -1,4 +1,4 @@
-name: MAKOFF Music Android
+name: Metrolist Android
 on:
   workflow_dispatch:
   push:
@@ -31,7 +31,7 @@ jobs:
       - name: Create test signing key
         run: |
           mkdir -p "$HOME/.android"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=MAKOFF Music Test,O=MAKOFF,C=FR"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Metrolist Test,O=MAKOFF,C=FR"
       - name: Build and test
         run: |
           chmod +x gradlew
@@ -53,28 +53,6 @@ jobs:
           name: MAKOFF-Music-instrumentation-APK
           path: app/build/outputs/apk/androidTest/foss/debug/*.apk
           if-no-files-found: error
-
-  listening-server:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/listen-together
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: services/listen-together/go.mod
-          cache-dependency-path: services/listen-together/go.sum
-      - name: Install protocol compiler
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y protobuf-compiler
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.11
-      - name: Build and test independent listening server
-        run: |
-          bash scripts/generate_proto.sh
-          go test ./...
-          go build -o /tmp/makoff-listening-server ./cmd/metroserver
 
   apk-smoke:
     name: Installation et démarrage des deux APK
@@ -118,7 +96,7 @@ jobs:
 
   publish-test:
     name: Publier l’APK universel vérifié dans Releases
-    needs: [android, listening-server, apk-smoke]
+    needs: [android, apk-smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
@@ -142,7 +120,7 @@ jobs:
         run: |
           tag="test-${GITHUB_RUN_NUMBER}-${GITHUB_SHA:0:7}"
           cat > notes.txt <<'NOTES'
-          ## APK de test MAKOFF Music
+          ## APK de test Metrolist
 
           - **MAKOFF-Music-universal.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle SHA-256 jointes.
@@ -154,5 +132,5 @@ jobs:
           cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\nVérifications : %s/%s/actions/runs/%s\n' "$GITHUB_SHA" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" >> notes.txt
           if ! gh release view "$tag" >/dev/null 2>&1; then
-            gh release create "$tag" --target "$GITHUB_SHA" --title "MAKOFF Music — test ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7})" --prerelease --latest=false --notes-file notes.txt dist/*
+            gh release create "$tag" --target "$GITHUB_SHA" --title "Metrolist — test ${GITHUB_RUN_NUMBER} (${GITHUB_SHA:0:7})" --prerelease --latest=false --notes-file notes.txt dist/*
           fi

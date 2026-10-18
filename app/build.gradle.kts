@@ -29,7 +29,6 @@ plugins {
     alias(libs.plugins.kotlin.ksp)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlin.serialization)
-    alias(libs.plugins.protobuf)
 }
 
 android {
@@ -45,7 +44,7 @@ android {
         val baseVersionName = requireNotNull(versionName)
         buildConfigField("String", "BASE_VERSION_NAME", "\"$baseVersionName\"")
         buildCommit?.let { versionName = "$baseVersionName+$it" }
-        resValue("string", "app_name", appNameOverride ?: "MAKOFF Music")
+        resValue("string", "app_name", appNameOverride ?: "Metrolist")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -129,7 +128,7 @@ android {
             }
             isDebuggable = true
             if (appNameOverride == null) {
-                resValue("string", "app_name", "MAKOFF Music Test")
+                resValue("string", "app_name", "Metrolist")
             }
             signingConfig =
                 if (workflowDebugKeystoreFile != null) {
@@ -199,28 +198,6 @@ android {
             excludes += "META-INF/io.netty.versions.properties"
         }
     }
-}
-
-protobuf {
-    protoc {
-        artifact = "com.google.protobuf:protoc:${libs.versions.protobuf.get()}"
-    }
-    generateProtoTasks {
-        all().configureEach {
-            builtins {
-                create("java") { option("lite") }
-                create("kotlin") { option("lite") }
-            }
-        }
-    }
-}
-
-val cleanLegacyProtoSources = tasks.register<Delete>("cleanLegacyProtoSources") {
-    delete(layout.projectDirectory.dir("src/main/java/fr/makoff/music/listentogether/proto"))
-}
-
-tasks.named("preBuild") {
-    dependsOn(cleanLegacyProtoSources)
 }
 
 ksp {
@@ -310,9 +287,6 @@ dependencies {
     implementation(libs.ktor.client.encoding)
     implementation(libs.ktor.serialization.json)
 
-    // Protobuf for message serialization (lite version for Android)
-    implementation(libs.protobuf.javalite)
-    implementation(libs.protobuf.kotlin.lite)
 
     coreLibraryDesugaring(libs.desugaring)
 

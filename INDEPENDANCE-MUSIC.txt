@@ -1,56 +1,27 @@
-MAKOFF MUSIC — INDÉPENDANCE VIS-À-VIS DU PROJET D’ORIGINE
+METROLIST PERSONNEL — INDÉPENDANCE, 18 OCTOBRE 2026
 
-Lecture, recherche, comptes YouTube, playlists, bibliothèque, téléchargements,
-cache, paroles, égaliseur, reconnaissance, widgets et Android Auto : code conservé.
-Qualité Élevée par défaut. Un seul APK universel publié, avec Google Cast (GMS).
-La variante FOSS est aussi compilée et testée en interne.
-Discord, Last.fm et la page À propos sont supprimés sur demande.
+Nom affiché : Metrolist, à la demande du propriétaire.
+Identifiant Android : fr.makoff.music ; tests : fr.makoff.music.debug.
+Dépôt, sources et mises à jour : https://github.com/anderson76389/Music
+Logo d'origine conservé localement et contrôlé par 31 empreintes SHA-256.
+Moteur InnerTubeX inclus dans vendor ; configuration distante désactivée,
+anciennes adresses Faraday supprimées. Aucun service Metrolist actif connu
+n'est nécessaire dans la configuration auditée.
 
-Les sources du moteur de lecture InnerTubeX v0.8.4 sont embarquées dans vendor.
-Gradle remplace son artefact distant par le projet local ; aucun téléchargement
-de ce moteur depuis Metrolist/JitPack n’est nécessaire. Les anciennes URL
-de lecture Metrolist/Faraday ont été retirées ; configuration distante toujours
-désactivée et résolution EJS locale.
+Les fonctions de salons et de traduction IA ont été retirées : interfaces,
+clients réseau, réglages, ressources multilingues, serveur, protocole et
+outillage Protobuf. Discord et Last.fm restent retirés.
+Les champs historiques de traduction de la base locale sont conservés pour
+ouvrir les sauvegardes/installations existantes sans modifier le schéma ;
+ils ne sont plus utilisés par une fonction de traduction ou un service IA.
 
-Mises à jour : uniquement https://github.com/anderson76389/Music/releases.
-Le workflow Publier les APK stables signés exige votre propre clé privée via quatre
-secrets : MUSIC_KEYSTORE_BASE64, MUSIC_STORE_PASSWORD, MUSIC_KEY_ALIAS,
-MUSIC_KEY_PASSWORD. Sans ces secrets, aucune publication signée durable n’a lieu.
-Les APK debug sont des versions de test ; leur mise à jour automatique est désactivée
-pour éviter d’installer une version signée par une autre clé ou d’un autre paquet.
-La clé de publication doit être sauvegardée durablement par le propriétaire.
+Dépendances en ligne restantes : YouTube/Google, fournisseurs de paroles,
+Shazam, AutoEQ officiel, Return YouTube Dislike et GitHub. Google Cast utilise
+le SDK Google dans l'APK universel publié. Les bibliothèques et outils de
+construction Android/Maven/Gradle/JitPack restent extérieurs ; ils ne sont pas
+intégralement archivés dans ce dépôt. Voir VERIFICATION-FONCTIONS.txt.
 
-Écoute partagée : serveur et protocole complets dans services/listen-together.
-Aucun sous-module distant. Docker Compose + Caddy sont fournis pour votre serveur.
-Le serveur n’est PAS déployé automatiquement et GitHub Pages ne peut pas l’héberger.
-Lire services/listen-together/INSTALLATION-MUSIC.txt. Il faut un hébergement actif
-et renseigner son URL wss:// dans les paramètres pour cette fonction seulement.
-
-Traduction IA : clé et fournisseur choisis par l’utilisateur, inchangés.
-YouTube, les fournisseurs de paroles, Shazam, AutoEQ, les dépôts Android/Maven,
-GitHub et les composants libres externes restent des dépendances tierces.
-L’indépendance du projet d’origine ne signifie pas l’indépendance de YouTube,
-ni la garantie que ses API ne changeront jamais.
-
-Les mentions visibles, liens promotionnels, noms d’exports et rapports de plantage
-ont été remplacés par MAKOFF Music. Les copyright, licences, provenances, noms
-internes de bibliothèques et un identifiant technique de recherche sont conservés
-pour le droit d’auteur et la compatibilité ; ils ne contactent aucun serveur.
-
-Vérification : scripts/audit_independence.py, construction Android, tests unitaires,
-construction et tests Go du serveur. La lecture réelle sur téléphone et un salon
-entre deux appareils nécessitent encore des essais sur les appareils et un serveur.
-
-AUDIT DU 17 OCTOBRE 2026
-Logo d’origine volontairement conservé localement à la demande du propriétaire.
-Coordonnées Gradle du moteur remplacées par fr.makoff.music:innertubex.
-SCM, suivi des problèmes et documentation opérationnelle redirigés vers ce dépôt.
-Voir AUDIT-METRO-2026-10-17.txt pour l’inventaire des références restantes et les limites.
-
-MISE À JOUR DU 18 OCTOBRE 2026
-Le miroir LyricsPlus annoté « meow » a été retiré. AutoEQ consulte le dépôt
-original jaakkopasanen/AutoEq et reconstruit les réponses tronquées par GitHub.
-L'ancienne cache AutoEQ est séparée pour ne pas mélanger deux dépôts.
-Les informations de format peuvent s'afficher depuis la base locale même si
-les métadonnées YouTube ne répondent pas.
-Voir VERIFICATION-FONCTIONS.txt pour les limites et les preuves disponibles.
+La disparition du dépôt d'origine ne retire pas les sources embarquées.
+Ce contrôle du code ne garantit pas tous les scénarios réseau ni la pérennité
+des services tiers. Les versions de test ont une signature temporaire ; une
+clé privée durable est nécessaire pour les futures versions stables.

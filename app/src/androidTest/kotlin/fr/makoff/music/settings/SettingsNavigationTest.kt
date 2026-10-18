@@ -45,9 +45,12 @@ class SettingsNavigationTest {
         assertFalse(device.hasObject(By.text(label(R.string.about))))
         assertFalse(device.hasObject(By.textContains("Last.fm")))
         assertFalse(device.hasObject(By.textContains("Discord")))
+        assertFalse(device.hasObject(By.textContains("AI lyrics translation")))
+        assertFalse(device.hasObject(By.textContains("Listen Together")))
     }
 
     @Test(timeout = 180000) fun settingsRoutesPersistenceAndOwnChangelog() {
+        assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
         assertNotNull("Account button", account)
@@ -61,7 +64,6 @@ class SettingsNavigationTest {
             R.string.appearance to R.string.theme,
             R.string.player_and_audio to R.string.audio_quality,
             R.string.content to R.string.content_language,
-            R.string.ai_lyrics_translation to R.string.ai_provider,
             R.string.privacy to R.string.pause_listen_history,
             R.string.storage to R.string.downloaded_songs,
             R.string.backup_restore to R.string.action_backup,
