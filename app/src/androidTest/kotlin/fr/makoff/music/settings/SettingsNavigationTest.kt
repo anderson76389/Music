@@ -57,8 +57,8 @@ class SettingsNavigationTest {
             var previous = ""
             var unchanged = 0
             for (attempt in 0 until limit) {
-                device.swipe(x, if (forward) bottom else top, x, if (forward) top else bottom, 20)
-                SystemClock.sleep(150)
+                device.swipe(x, if (forward) bottom else top, x, if (forward) top else bottom, 55)
+                device.waitForIdle()
                 current()?.let { return it }
                 val signature = visibleControls().joinToString { it.text + it.bounds.toShortString() }
                 unchanged = if (signature == previous) unchanged + 1 else 0
@@ -66,13 +66,17 @@ class SettingsNavigationTest {
                 if (unchanged >= 2) break
             }
         }
+        captureFailure()
+        error("Missing control: $text")
+    }
+
+    private fun captureFailure() {
         runCatching {
             device.executeShellCommand("screencap -p /data/local/tmp/settings-failure.png")
             val xml = java.io.ByteArrayOutputStream()
             device.dumpWindowHierarchy(xml)
             xml.toString("UTF-8").replace("><", ">\n<").lineSequence().forEach { println("SETTINGS_FAILURE_UI: $it") }
         }
-        error("Missing control: $text")
     }
 
     private fun open(id: Int) {
@@ -93,7 +97,10 @@ class SettingsNavigationTest {
     private fun awaitPreference(label: String, condition: suspend () -> Boolean) {
         val deadline = SystemClock.elapsedRealtime() + 5000
         while (!runBlocking { condition() }) {
-            check(SystemClock.elapsedRealtime() < deadline) { "Preference did not change: $label" }
+            if (SystemClock.elapsedRealtime() >= deadline) {
+                captureFailure()
+                error("Preference did not change: $label")
+            }
             SystemClock.sleep(50)
         }
     }
