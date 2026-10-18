@@ -23,11 +23,11 @@
 
 ## Télécharger et installer
 
-> **[Préversion test 22 vérifiée](https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07) — un seul APK pour Android :** Metrolist universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt) · [Fonctions et limites vérifiées](VERIFICATION-FONCTIONS.txt).
+> **[Préversion test 25 vérifiée](https://github.com/anderson76389/Music/releases/tag/test-25-20506ac) — un seul APK pour Android :** Metrolist universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt) · [Fonctions et limites vérifiées](VERIFICATION-FONCTIONS.txt).
 
 | Application | Téléchargement |
 | --- | --- |
-| Metrolist universel, avec Google Cast | [Télécharger l’APK universel — test 22](https://github.com/anderson76389/Music/releases/download/test-22-ead3a07/MAKOFF-Music-universal.apk) |
+| Metrolist universel, avec Google Cast | [Télécharger l’APK universel — test 25](https://github.com/anderson76389/Music/releases/download/test-25-20506ac/MAKOFF-Music-universal.apk) |
 
 Installez directement **`MAKOFF-Music-universal.apk`** ; aucune décompression n’est nécessaire. L’archive de code source et le fichier de sommes de contrôle ne sont pas des versions supplémentaires de l’application.
 
@@ -72,7 +72,7 @@ L’export en dossier utilise `bestaudio` de yt-dlp, sans réencodage. Son class
 
 Un morceau déjà téléchargé conserve son format : pour obtenir une nouvelle qualité, supprimez son téléchargement puis téléchargez-le à nouveau. Le changement de réglage ne doit pas effacer automatiquement votre copie hors connexion. Les détails du morceau indiquent le type MIME, le codec, le débit annoncé et la fréquence d’échantillonnage lorsque ces informations sont disponibles. Le casque, la sortie Android et le codec Bluetooth influencent aussi le résultat.
 
-Les essais Android sur fichiers synthétiques AAC/M4A et Opus/WebM ont réussi : codec, 48 kHz stéréo et identité des octets après téléchargement et export. L’essai YouTube anonyme depuis le réseau GitHub a échoué ; l’accès aux flux de votre compte reste à vérifier sur votre téléphone. [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39150834233) · [Contrôles audio et limites](QUALITE-AUDIO.txt).
+Les essais Android sur fichiers synthétiques AAC/M4A et Opus/WebM ont réussi : codec, 48 kHz stéréo et identité des octets après téléchargement et export. L’essai YouTube anonyme depuis le réseau GitHub a échoué ; l’accès aux flux de votre compte reste à vérifier sur votre téléphone. [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39153858475) · [Contrôles audio et limites](QUALITE-AUDIO.txt).
 
 ## Un projet géré dans ce dépôt
 

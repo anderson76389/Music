@@ -14,3 +14,5 @@ python3 scripts/audit_settings.py
 ```
 
 Voir le [rapport des fonctions](../VERIFICATION-FONCTIONS.txt) pour les résultats de la dernière révision. Un contrôle statique n’est pas une capture exhaustive du trafic ni une validation de toutes les actions sur tous les téléphones.
+
+La [préversion 25](https://github.com/anderson76389/Music/releases/tag/test-25-20506ac) a passé la compilation, les tests unitaires, les tests/APIcheck du moteur et les essais Android : démarrage, nom installé, réglages et trois exports audio. Le contrôle ciblé des 32 fichiers DEX et de la table de ressources de l’APK publié ne trouve plus les classes et libellés des fonctions supprimées. Voir le [rapport détaillé](../VERIFICATION-FONCTIONS.txt). L’essai YouTube anonyme séparé reste non réussi depuis le réseau de CI.

@@ -41,6 +41,32 @@ FONCTIONS / DÉPENDANCES / PREUVES
   stables pouvant se mettre à jour sans réinstallation. Ne pas désinstaller sans
   sauvegarde des données.
 
-VALIDATION DE LA NOUVELLE RÉVISION
-Compilation, tests et publication à confirmer dans GitHub Actions avant de
-considérer la nouvelle préversion comme vérifiée.
+VALIDATION DE CETTE RÉVISION
+Sources : 20506acd66637a59b557ff80a76d085199fde51e.
+https://github.com/anderson76389/Music/actions/runs/39153858475
+- Compilation des variantes FOSS et Google Cast : RÉUSSIE.
+- Tests unitaires, tests du moteur et contrôle API : RÉUSSIS.
+- Installation et démarrage des deux variantes sur Android 11 : RÉUSSIS.
+- Trois tests Android d'export audio : RÉUSSIS.
+- Test Android des six catégories de réglages, de leur persistance et de
+  l'historique GitHub : RÉUSSI. Le test vérifie aussi le nom installé « Metrolist »
+  et l'absence des anciennes entrées de salons et traduction IA.
+- Essai YouTube anonyme : NON RÉUSSI depuis le réseau de l'émulateur ; cet essai
+  séparé est non bloquant. Les tests verts ne valident pas ce scénario ni le
+  téléchargement authentifié avec le compte de l'utilisateur.
+- Publication : un seul APK universel dans la préversion 25.
+https://github.com/anderson76389/Music/releases/tag/test-25-20506ac
+Preuves et journaux :
+https://github.com/anderson76389/Music/actions/runs/39153858475/artifacts/12146381610
+
+CONTRÔLE DU FICHIER APK GOOGLE CAST PUBLIÉ
+110 797 972 octets ; SHA-256 :
+99d4493f79ea64f37741f04ab094323eeb4fa1a4406d4c9ffa3201cf2e470c7e
+32 fichiers DEX, 491 475 chaînes examinées : aucune correspondance pour les
+classes et identifiants recherchés ListenTogether/listentogether/listen_together,
+LyricsTranslationHelper, OpenRouterService, OpenRouterStreamingService,
+DeepLService, AiSettings, ai_lyrics_translation et les anciennes adresses
+OpenRouter, OpenAI et DeepL testées. Les identifiants et libellés correspondants
+recherchés sont absents de resources.arsc. Ce contrôle ciblé ne constitue pas
+une preuve universelle d'absence de tout appel extérieur.
+Le digest de l'asset publié correspond au fichier contrôlé.
