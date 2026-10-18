@@ -24,7 +24,12 @@ for variant in foss gms; do
     timeout 180s adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/yt-dlp-saf-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/yt-dlp-saf-tests.txt
-    timeout 210s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
+    adb shell cmd connectivity airplane-mode enable
+    timeout 240s adb shell am instrument -w -r -e class fr.makoff.music.playback.OfflinePlayerInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/offline-player-tests.txt
+    adb shell cmd connectivity airplane-mode disable
+    grep -Eq 'OK \(1 test\)' smoke-results/offline-player-tests.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
+    timeout 420s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/settings-navigation-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/settings-navigation-tests.txt
     timeout 150s adb shell am instrument -w -r -e class fr.makoff.music.downloads.YouTubeAudioLiveTest "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/youtube-live-test.txt || echo "Essai YouTube interrompu ou délai dépassé" >> smoke-results/youtube-live-test.txt

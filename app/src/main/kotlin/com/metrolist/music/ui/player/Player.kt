@@ -1596,7 +1596,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_previous),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.previous),
                                     modifier = Modifier.size(32.dp),
                                 )
                             }
@@ -1679,7 +1679,7 @@ fun BottomSheetPlayer(
                             ) {
                                 Icon(
                                     painter = painterResource(R.drawable.skip_next),
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.next),
                                     modifier = Modifier.size(32.dp),
                                 )
                             }
@@ -1719,6 +1719,7 @@ fun BottomSheetPlayer(
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
                                     icon = R.drawable.skip_previous,
+                                    contentDescription = stringResource(R.string.previous),
                                     enabled = canSkipPrevious,
                                     color = TextBackgroundColor,
                                     modifier =
@@ -1768,7 +1769,7 @@ fun BottomSheetPlayer(
                                                 R.drawable.play
                                             },
                                         ),
-                                    contentDescription = null,
+                                    contentDescription = if (effectiveIsPlaying) stringResource(R.string.player_pause) else stringResource(R.string.play),
                                     colorFilter = ColorFilter.tint(iconButtonColor),
                                     modifier =
                                         Modifier
@@ -1782,6 +1783,7 @@ fun BottomSheetPlayer(
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
                                     icon = R.drawable.skip_next,
+                                    contentDescription = stringResource(R.string.next),
                                     enabled = canSkipNext,
                                     color = TextBackgroundColor,
                                     modifier =

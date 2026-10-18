@@ -1,0 +1,106 @@
+INVENTAIRE DU LECTEUR ET DES PARAMÈTRES — 18 OCTOBRE 2026
+
+Ce relevé statique répertorie les branchements du code. Une action présente
+dans le code ne constitue pas une preuve de fonctionnement sur appareil.
+Les préférences transmises sur plusieurs lignes sont incluses lorsque leur
+clé est donnée directement à rememberPreference/rememberEnumPreference.
+
+app/src/main/kotlin/com/metrolist/music/ui/player/MiniPlayer.kt
+  Actions reliées : 6
+  Clés : CropAlbumArtKey, DarkModeKey, MiniPlayerBackgroundStyleKey, PureBlackMiniPlayerKey, SwipeSensitivityKey, SwipeThumbnailKey, UseNewMiniPlayerDesignKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/player/PlaybackError.kt
+  Actions reliées : 2
+  Clés : aucune clé directe relevée
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/player/Player.kt
+  Actions reliées : 24
+  Clés : CropAlbumArtKey, DarkModeKey, HidePlayerThumbnailKey, HideStatusBarOnFullscreenKey, KeepScreenOn, PlayerBackgroundStyleKey, PlayerButtonsStyleKey, SleepTimerDefaultKey, SleepTimerFadeOutKey, SleepTimerStopAfterCurrentSongKey, SliderStyleKey, SquigglySliderKey, UseNewPlayerDesignKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/player/Queue.kt
+  Actions reliées : 26
+  Clés : QueueEditLockKey, SleepTimerDefaultKey, SleepTimerFadeOutKey, SleepTimerStopAfterCurrentSongKey, UseNewPlayerDesignKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/player/Thumbnail.kt
+  Actions reliées : 0
+  Clés : CropAlbumArtKey, HidePlayerThumbnailKey, PlayerBackgroundStyleKey, SeekExtraSeconds, SwipeThumbnailKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/player/ThumbnailSnapUtils.kt
+  Actions reliées : 0
+  Clés : aucune clé directe relevée
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AccountSettings.kt
+  Actions reliées : 12
+  Clés : AccountChannelHandleKey, AccountEmailKey, AccountNameKey, DataSyncIdKey, InnerTubeAuthUserKey, InnerTubeCookieKey, UseLoginForBrowse, VisitorDataKey, YtmSyncKey
+  Routes : account, login, settings, switch_channel
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AlarmSettings.kt
+  Actions reliées : 17
+  Clés : aucune clé directe relevée
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AndroidAutoSettings.kt
+  Actions reliées : 10
+  Clés : AndroidAutoSearchLocalLimitKey, AndroidAutoSectionsOrderKey, AndroidAutoTargetPlaylistKey, AndroidAutoYouTubePlaylistsKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/AppearanceSettings.kt
+  Actions reliées : 82
+  Clés : ChipSortTypeKey, CropAlbumArtKey, DefaultOpenTabKey, DensityScaleKey, DynamicThemeKey, EnableDynamicIconKey, EnableHighRefreshRateKey, EnableLandscapeScalingKey, ExperimentalLyricsKey, ForceBottomNavBarKey, GridItemsSizeKey, HidePlayerThumbnailKey, HideStatusBarOnFullscreenKey, LyricsAnimationStyleKey, LyricsClickKey, LyricsGlowEffectKey, LyricsLineSpacingKey, LyricsScrollKey, LyricsTextPositionKey, LyricsTextSizeKey, MiniPlayerBackgroundStyleKey, PlayerBackgroundStyleKey, PlayerButtonsStyleKey, PureBlackMiniPlayerKey, RespectAgentPositioningKey, SelectedThemeColorKey, ShowCachedPlaylistKey, ShowDownloadedPlaylistKey, ShowLikedPlaylistKey, ShowTopPlaylistKey, ShowUploadedPlaylistKey, SliderStyleKey, SlimNavBarKey, SquigglySliderKey, SwipeSensitivityKey, SwipeThumbnailKey, SwipeToRemoveSongKey, SwipeToSongKey, UseNewMiniPlayerDesignKey, UseNewPlayerDesignKey
+  Routes : settings/appearance/theme
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/BackupAndRestore.kt
+  Actions reliées : 7
+  Clés : aucune clé directe relevée
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ChangelogScreen.kt
+  Actions reliées : 3
+  Clés : aucune clé directe relevée
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ContentSettings.kt
+  Actions reliées : 50
+  Clés : AddToPlaylistPositionKey, AppLanguageKey, ContentCountryKey, ContentLanguageKey, EnableBetterLyricsKey, EnableKugouKey, EnableLrcLibKey, EnableLyricsPlus, EnablePaxsenixKey, EnableZemerKey, HideExplicitKey, HideVideoSongsKey, HideYoutubeShortsKey, LyricsProviderOrderKey, ProxyEnabledKey, ProxyPasswordKey, ProxyTypeKey, ProxyUrlKey, ProxyUsernameKey, QuickPicksKey, RandomizeHomeOrderKey, ShowArtistDescriptionKey, ShowArtistSubscriberCountKey, ShowMonthlyListenersKey, ShowMostStatsPlaylistsKey, ShowWrappedCardKey, TopSize
+  Routes : settings/content/romanization
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PlayerSettings.kt
+  Actions reliées : 65
+  Clés : AudioNormalizationKey, AudioOffload, AudioQualityKey, AudioTrackPlaybackParamsKey, AutoDownloadOnLikeKey, AutoLoadMoreKey, AutoRadioQueueKey, AutoSkipNextOnErrorKey, AutoplayKey, CrossfadeDurationKey, CrossfadeEnabledKey, CrossfadeGaplessKey, DisableLoadMoreWhenRepeatAllKey, EnableGoogleCastKey, HistoryDuration, KeepScreenOn, LoudnessLevelKey, PauseOnMute, PersistentQueueKey, PersistentShuffleAcrossQueuesKey, PreventDuplicateTracksInQueueKey, RememberShuffleAndRepeatKey, ResumeOnBluetoothConnectKey, SeekExtraSeconds, ShufflePlaylistFirstKey, SimilarContent, SkipSilenceInstantKey, SkipSilenceKey, SleepTimerCustomDaysKey, SleepTimerDayTimesKey, SleepTimerEnabledKey, SleepTimerEndTimeKey, SleepTimerFadeOutKey, SleepTimerRepeatKey, SleepTimerStartTimeKey, StopMusicOnTaskClearKey, VarispeedKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/PrivacySettings.kt
+  Actions reliées : 13
+  Clés : DisableScreenshotKey, PauseListenHistoryKey, PauseSearchHistoryKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/RomanizationSettings.kt
+  Actions reliées : 5
+  Clés : LyricsRomanizeAsMainKey, LyricsRomanizeCyrillicByLineKey, LyricsRomanizeList
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/SettingsScreen.kt
+  Actions reliées : 12
+  Clés : aucune clé directe relevée
+  Routes : settings/android_auto, settings/appearance, settings/backup_restore, settings/content, settings/player, settings/privacy, settings/storage, settings/updater
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/StorageSettings.kt
+  Actions reliées : 10
+  Clés : EnableSongCacheKey, MaxImageCacheSizeKey, MaxSongCacheSizeKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/ThemeScreen.kt
+  Actions reliées : 8
+  Clés : DarkModeKey, DynamicThemeKey, PureBlackKey, PureBlackMiniPlayerKey, SelectedThemeColorKey
+  Routes : aucune route littérale relevée
+
+app/src/main/kotlin/com/metrolist/music/ui/screens/settings/UpdaterSettings.kt
+  Actions reliées : 7
+  Clés : CheckForUpdatesKey, UpdateNotificationsEnabledKey
+  Routes : aucune route littérale relevée

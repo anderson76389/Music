@@ -1,9 +1,9 @@
 ## Changements de cette préversion
 
-- Nom affiché de l’application : Metrolist. Identifiant Android et mises à jour conservés sur le projet personnel.
-- Suppression complète de l’écoute partagée : client, serveur, protocole, onglet, menus, invitations, notifications et restrictions d’invité dans le lecteur.
-- Suppression de la traduction IA : services, clés et modèles proposés, écran de réglages, déclencheurs et affichage des traductions.
-- Nettoyage des ressources dans toutes les langues et suppression des dépendances Protobuf devenues inutiles.
-- Paroles originales, romanisation locale, lecture, égaliseur et deux modes de téléchargement conservés.
+- Libellés d’accessibilité ajoutés aux commandes précédent/suivant et lecture/pause du lecteur.
+- Essai Android du véritable service de lecture sur un fichier WAV dans le cache : décodage, boutons, déplacements, file d’attente, répétition, aléatoire, vitesse, favoris, bibliothèque et minuteurs.
+- Essai du lecteur lancé en mode avion pour vérifier son utilisation sans serveur externe sur ce scénario local.
+- Vérification des six catégories de paramètres, de 25 interrupteurs et des qualités LOW/AUTO/HIGH, avec contrôle des valeurs enregistrées et restauration.
+- Inventaire des 359 branchements d’actions du lecteur et des paramètres.
 
-Un seul APK universel publié. Signature temporaire de test : sauvegardez les données avant de remplacer une ancienne installation. Le téléchargement YouTube authentifié et les fonctions liées au matériel restent à vérifier sur votre appareil.
+Les tests locaux ne certifient pas le flux YouTube authentifié, les services de paroles, Cast, Bluetooth, Android Auto ou toutes les combinaisons sur tous les appareils. Les fournisseurs tiers restent nécessaires aux fonctions correspondantes. Un seul APK universel est publié après les contrôles. Signature temporaire de test : sauvegardez les données avant une désinstallation.

@@ -11,7 +11,9 @@ import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import fr.makoff.music.MainActivity
 import fr.makoff.music.R
-import fr.makoff.music.constants.CrossfadeEnabledKey
+import fr.makoff.music.constants.*
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import fr.makoff.music.utils.dataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -49,7 +51,29 @@ class SettingsNavigationTest {
         assertFalse(device.hasObject(By.textContains("Listen Together")))
     }
 
-    @Test(timeout = 180000) fun settingsRoutesPersistenceAndOwnChangelog() {
+    private fun awaitPreference(label: String, condition: suspend () -> Boolean) {
+        val deadline = SystemClock.elapsedRealtime() + 5000
+        while (!runBlocking { condition() }) {
+            check(SystemClock.elapsedRealtime() < deadline) { "Preference did not change: $label" }
+            SystemClock.sleep(50)
+        }
+    }
+
+    private fun toggleAndRestore(id: Int, key: Preferences.Key<Boolean>, default: Boolean) {
+        val original = runBlocking { context.dataStore.data.first()[key] }
+        val before = original ?: default
+        try {
+            open(id)
+            awaitPreference(label(id)) { context.dataStore.data.first()[key] == !before }
+            open(id)
+            awaitPreference(label(id) + " restored") { context.dataStore.data.first()[key] == before }
+            println("SETTINGS_TOGGLE_OK: ${label(id)} (${key.name}), stored and restored")
+        } finally {
+            runBlocking { context.dataStore.edit { prefs -> original?.let { prefs[key] = it } ?: prefs.remove(key) } }
+        }
+    }
+
+    @Test(timeout = 360000) fun settingsRoutesPersistenceAndOwnChangelog() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
@@ -72,18 +96,54 @@ class SettingsNavigationTest {
             open(screen)
             findText(marker)
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
-            if (screen == R.string.player_and_audio) {
-                val before = runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] ?: false }
-                open(R.string.crossfade)
-                val deadline = SystemClock.elapsedRealtime() + 5000
-                while (runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] ?: false } == before &&
-                    SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
-                assertEquals(!before, runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] ?: false })
-                open(R.string.crossfade)
-                println("SETTINGS_PREFERENCE_OK: crossfade stored and restored")
-                open(R.string.audio_quality)
-                findText(R.string.audio_quality_high)
-                device.pressBack()
+            when (screen) {
+                R.string.player_and_audio -> {
+                    listOf(
+                        Triple(R.string.crossfade, CrossfadeEnabledKey, false),
+                        Triple(R.string.skip_silence, SkipSilenceKey, false),
+                        Triple(R.string.audio_normalization, AudioNormalizationKey, true),
+                        Triple(R.string.seek_seconds_addup, SeekExtraSeconds, false),
+                        Triple(R.string.persistent_queue, PersistentQueueKey, true),
+                        Triple(R.string.auto_load_more, AutoLoadMoreKey, true),
+                        Triple(R.string.auto_radio_queue, AutoRadioQueueKey, true),
+                        Triple(R.string.autoplay, AutoplayKey, true),
+                        Triple(R.string.disable_load_more_when_repeat_all, DisableLoadMoreWhenRepeatAllKey, false),
+                        Triple(R.string.enable_similar_content, SimilarContent, true),
+                        Triple(R.string.persistent_shuffle_title, PersistentShuffleAcrossQueuesKey, false),
+                        Triple(R.string.remember_shuffle_and_repeat, RememberShuffleAndRepeatKey, true),
+                        Triple(R.string.shuffle_playlist_first, ShufflePlaylistFirstKey, false),
+                        Triple(R.string.prevent_duplicate_tracks_in_queue, PreventDuplicateTracksInQueueKey, false),
+                        Triple(R.string.auto_skip_next_on_error, AutoSkipNextOnErrorKey, false),
+                        Triple(R.string.stop_music_on_task_clear, StopMusicOnTaskClearKey, false),
+                        Triple(R.string.pause_music_when_media_is_muted, PauseOnMute, false),
+                        Triple(R.string.resume_on_bluetooth_connect, ResumeOnBluetoothConnectKey, false),
+                        Triple(R.string.keep_screen_on_when_player_is_expanded, KeepScreenOn, false),
+                    ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
+                    val originalQuality = runBlocking { context.dataStore.data.first()[AudioQualityKey] }
+                    try {
+                        for ((label, value) in listOf(R.string.audio_quality_low to AudioQuality.LOW,
+                            R.string.audio_quality_auto to AudioQuality.AUTO, R.string.audio_quality_high to AudioQuality.HIGH)) {
+                            open(R.string.audio_quality)
+                            open(label)
+                            awaitPreference("quality ${value.name}") { context.dataStore.data.first()[AudioQualityKey] == value.name }
+                        }
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs ->
+                            originalQuality?.let { prefs[AudioQualityKey] = it } ?: prefs.remove(AudioQualityKey)
+                        } }
+                    }
+                    println("SETTINGS_ENUM_OK: LOW/AUTO/HIGH stored, original restored")
+                }
+                R.string.content -> listOf(
+                    Triple(R.string.hide_explicit, HideExplicitKey, false),
+                    Triple(R.string.hide_video_songs, HideVideoSongsKey, false),
+                    Triple(R.string.hide_youtube_shorts, HideYoutubeShortsKey, false),
+                ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
+                R.string.privacy -> {
+                    toggleAndRestore(R.string.pause_listen_history, PauseListenHistoryKey, false)
+                    toggleAndRestore(R.string.pause_search_history, PauseSearchHistoryKey, false)
+                }
+                R.string.storage -> toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
             }
             device.pressBack()
             device.waitForIdle()

@@ -42,11 +42,12 @@ fun ResizableIconButton(
     color: Color = MaterialTheme.colorScheme.onSurface,
     enabled: Boolean = true,
     indication: Indication? = null,
+    contentDescription: String? = null,
     onClick: () -> Unit = {},
 ) {
     Image(
         painter = painterResource(icon),
-        contentDescription = null,
+        contentDescription = contentDescription,
         colorFilter = ColorFilter.tint(color),
         modifier = modifier
             .clickable(
