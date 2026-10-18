@@ -1,3 +1,7 @@
+MISE À JOUR : le réglage de traduction IA et les salons ont été retirés depuis
+ce rapport historique. La navigation actuelle comporte six catégories.
+Voir VERIFICATION-FONCTIONS.txt pour la dernière révision publiée.
+
 MAKOFF Music — vérification des paramètres
 17 octobre 2026 — résultats confirmés le 18 octobre 2026
 

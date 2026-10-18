@@ -83,13 +83,13 @@ class RecognitionForegroundService : Service() {
             }
 
             ACTION_START_WIDGET_RECOGNITION -> {
-                if (recognitionJob?.isActive != startInForeground(widgetMode = true)) {
+                if (recognitionJob?.isActive != true && startInForeground(widgetMode = true)) {
                     startWidgetRecognition()
                 }
             }
 
             else -> {
-                if (recognitionJob?.isActive != startInForeground(widgetMode = false)) {
+                if (recognitionJob?.isActive != true && startInForeground(widgetMode = false)) {
                     startRecognition()
                 }
             }

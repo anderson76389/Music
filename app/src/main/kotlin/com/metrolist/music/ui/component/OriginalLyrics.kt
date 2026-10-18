@@ -1483,7 +1483,7 @@ fun OriginalLyrics(
                                     lineHeight = (lyricsTextSize * lyricsLineSpacing).sp,
                                 )
                             }
-                            if (currentSong?.romanizeLyrics == enabledLanguages.isNotEmpty()) {
+                            if (currentSong?.romanizeLyrics == true && enabledLanguages.isNotEmpty()) {
                                 // Show secondary text (romanized or original) if available
                                 subText?.let { text ->
                                     Text(

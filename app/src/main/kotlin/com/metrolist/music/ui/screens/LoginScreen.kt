@@ -475,7 +475,7 @@ fun LoginScreen(
     }
 
     BackHandler(
-        enabled = webViewRef?.canGoBack() == loginStage == LoginStage.Authenticating && errorMessage == null,
+        enabled = webViewRef?.canGoBack() == true && loginStage == LoginStage.Authenticating && errorMessage == null,
     ) {
         webViewRef?.goBack()
     }

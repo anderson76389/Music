@@ -32,10 +32,6 @@ FONCTIONS / DÉPENDANCES / PREUVES
   corrigée pour refuser un index incomplet et fractionner les arbres tronqués.
   Import/application audibles sur votre casque non vérifiés ici.
 - Reconnaissance : dépend de Shazam et du microphone, non validée sur téléphone.
-- Traduction IA : dépend du fournisseur et de votre clé, non validée sans clé.
-- Écoute partagée : serveur complet fourni, mais aucun serveur public configuré.
-  Cette option nécessite votre hébergement et une URL wss:// ; elle ne fonctionne
-  pas spontanément. Aucun salon entre deux appareils n'a été testé.
 - Cast, Bluetooth, Android Auto, widgets, écran verrouillé et gestion batterie :
   code présent ; nécessitent des essais avec le matériel et les permissions réels.
 - Sauvegarde/restauration : code présent ; une restauration complète des données
