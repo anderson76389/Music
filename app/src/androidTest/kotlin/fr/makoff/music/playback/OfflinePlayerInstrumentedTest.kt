@@ -59,7 +59,7 @@ class OfflinePlayerInstrumentedTest {
 
     private fun clickDescription(id: Int) {
         val label = context.getString(id)
-        val button = device.wait(Until.findObject(By.desc(label)), 10000)
+        val button = device.wait(Until.findObject(By.descContains(label)), 10000)
         assertNotNull("Player control: $label", button)
         button!!.click()
     }
@@ -132,6 +132,7 @@ class OfflinePlayerInstrumentedTest {
             val miniPlayer = device.wait(Until.findObject(By.desc(context.getString(R.string.player))), 15000)
             assertNotNull("Mini-player control", miniPlayer)
             miniPlayer!!.click()
+            device.waitForIdle()
             clickDescription(R.string.play)
             await("UI Play did not render audio") { main { active.player.isPlaying && active.player.currentPosition > 200 } }
             await("No audio buffers rendered") { main { (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 } }
@@ -209,6 +210,12 @@ class OfflinePlayerInstrumentedTest {
             println("PLAYER_SETTINGS_OK: skip-silence applied, cached file kept on quality change, timer immediate/end-of-song")
             assertNull("Streaming resolution should not be used for complete cached test audio", active.currentStreamClient.value)
             assertNull(main { active.player.playerError })
+        } catch (failure: Throwable) {
+            runCatching {
+                device.dumpWindowHierarchy(java.io.File("/sdcard/offline-player-failure.xml"))
+                device.takeScreenshot(java.io.File("/sdcard/offline-player-failure.png"))
+            }
+            throw failure
         } finally {
             main { service?.sleepTimer?.clear(); connection?.pause(); connection?.dispose(); service?.takeIf { it.isPlayerReady.value }?.player?.clearMediaItems() }
             scope.cancel()
