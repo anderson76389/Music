@@ -59,6 +59,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
@@ -149,14 +151,16 @@ fun MiniPlayer(
     // Create stable progress state - doesn't cause recomposition on position changes
     val progressState = remember { ProgressState(positionState, durationState) }
 
+    val playerLabel = stringResource(R.string.player)
+    val accessibleModifier = modifier.semantics { contentDescription = playerLabel }
     if (useNewMiniPlayerDesign) {
         NewMiniPlayer(
             progressState = progressState,
-            modifier = modifier,
+            modifier = accessibleModifier,
             onClick = onClick,
         )
     } else {
-        Box(modifier = modifier.fillMaxWidth()) {
+        Box(modifier = accessibleModifier.fillMaxWidth()) {
             LegacyMiniPlayer(
                 progressState = progressState,
                 modifier = Modifier.align(Alignment.Center),

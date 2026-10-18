@@ -59,14 +59,16 @@ class SettingsNavigationTest {
         }
     }
 
-    private fun toggleAndRestore(id: Int, key: Preferences.Key<Boolean>, default: Boolean) {
+    private fun toggleAndRestore(id: Int, key: Preferences.Key<Boolean>, default: Boolean, effect: (() -> Boolean)? = null, clicker: (Int) -> Unit = { open(it) }) {
         val original = runBlocking { context.dataStore.data.first()[key] }
         val before = original ?: default
         try {
-            open(id)
+            clicker(id)
             awaitPreference(label(id)) { context.dataStore.data.first()[key] == !before }
-            open(id)
+            effect?.let { assertEquals("Consumer follows ${key.name}", !before, it()) }
+            clicker(id)
             awaitPreference(label(id) + " restored") { context.dataStore.data.first()[key] == before }
+            effect?.let { assertEquals("Consumer restored ${key.name}", before, it()) }
             println("SETTINGS_TOGGLE_OK: ${label(id)} (${key.name}), stored and restored")
         } finally {
             runBlocking { context.dataStore.edit { prefs -> original?.let { prefs[key] = it } ?: prefs.remove(key) } }
@@ -134,11 +136,27 @@ class SettingsNavigationTest {
                     }
                     println("SETTINGS_ENUM_OK: LOW/AUTO/HIGH stored, original restored")
                 }
-                R.string.content -> listOf(
+                R.string.content -> {
+                    toggleAndRestore(R.string.enable_lyricsplus, EnableLyricsPlus, true,
+                        effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
+                        clicker = { id ->
+                            val title = findText(id)
+                            val switch = device.findObjects(By.checkable(true)).minByOrNull {
+                                kotlin.math.abs(it.visibleBounds.centerY() - title.visibleBounds.centerY())
+                            }
+                            assertNotNull("LyricsPlus switch", switch)
+                            assertTrue("Switch belongs to provider row", kotlin.math.abs(switch!!.visibleBounds.centerY() - title.visibleBounds.centerY()) < 150)
+                            switch.click()
+                            device.waitForIdle()
+                        })
+                    assertEquals(runBlocking { context.dataStore.data.first()[EnableLyricsPlus] ?: true },
+                        fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context))
+                    listOf(
                     Triple(R.string.hide_explicit, HideExplicitKey, false),
                     Triple(R.string.hide_video_songs, HideVideoSongsKey, false),
                     Triple(R.string.hide_youtube_shorts, HideYoutubeShortsKey, false),
-                ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
+                    ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
+                }
                 R.string.privacy -> {
                     toggleAndRestore(R.string.pause_listen_history, PauseListenHistoryKey, false)
                     toggleAndRestore(R.string.pause_search_history, PauseSearchHistoryKey, false)

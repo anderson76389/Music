@@ -129,9 +129,9 @@ class OfflinePlayerInstrumentedTest {
             }
             assertNull(main { active.player.playerError })
             println("PLAYER_STAGE: cached audio prepared")
-            val title = device.wait(Until.findObject(By.text(tracks[0].title)), 15000)
-            assertNotNull("Mini-player title", title)
-            title!!.click()
+            val miniPlayer = device.wait(Until.findObject(By.desc(context.getString(R.string.player))), 15000)
+            assertNotNull("Mini-player control", miniPlayer)
+            miniPlayer!!.click()
             clickDescription(R.string.play)
             await("UI Play did not render audio") { main { active.player.isPlaying && active.player.currentPosition > 200 } }
             await("No audio buffers rendered") { main { (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 } }

@@ -18,3 +18,17 @@ for p in sorted((k/'ui/screens/settings').rglob('*.kt')):
     actions = len(re.findall(r'\b(?:onClick|onCheckedChange|onValueChange|onDone)\s*=', s))
     print(f'{p.name}: {actions} action bindings; static destinations valid')
 print('PASS: removed routes and clients absent; settings action wiring checked (not an end-to-end guarantee)')
+
+# A switch must not display a different default from its production consumer.
+defaults = {}
+for p in (k/'ui/screens/settings').rglob('*.kt'):
+    for key, value in re.findall(r'rememberPreference\(\s*(?:key\s*=\s*)?(\w+)\s*,\s*(?:defaultValue\s*=\s*)?(true|false)', p.read_text()):
+        defaults[key] = value
+sources = [(p, p.read_text()) for p in (r/'app/src/main/kotlin').rglob('*.kt') if '/ui/screens/settings/' not in str(p)]
+for key, expected in defaults.items():
+    for p, source in sources:
+        patterns = [r'(?:get|rememberPreference)\(\s*(?:key\s*=\s*)?' + key + r'\s*,\s*(?:defaultValue\s*=\s*)?(true|false)', r'\[' + key + r'\]\s*\?:\s*(true|false)']
+        for pattern in patterns:
+            for match in re.finditer(pattern, source):
+                assert match[1] == expected, (p, key, expected, match[1])
+print(f'PASS: {len(defaults)} directly declared boolean defaults agree with detected consumers')
