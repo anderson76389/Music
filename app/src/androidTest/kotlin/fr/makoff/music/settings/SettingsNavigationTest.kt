@@ -6,8 +6,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.UiDevice
-import androidx.test.uiautomator.UiScrollable
-import androidx.test.uiautomator.UiSelector
 import androidx.test.uiautomator.Until
 import fr.makoff.music.MainActivity
 import fr.makoff.music.R
@@ -28,17 +26,58 @@ class SettingsNavigationTest {
     private val device = UiDevice.getInstance(instrumentation)
     private fun label(id: Int) = context.getString(id)
 
-    private fun findText(id: Int): androidx.test.uiautomator.UiObject2 {
-        val text = label(id)
-        if (!device.wait(Until.hasObject(By.text(text)), 1500)) {
-            UiScrollable(UiSelector().scrollable(true)).setMaxSearchSwipes(12)
-                .scrollIntoView(UiSelector().text(text))
+    private data class VisibleControl(val text: String, val checkable: Boolean, val bounds: android.graphics.Rect)
+
+    private fun visibleControls(): List<VisibleControl> {
+        val result = mutableListOf<VisibleControl>()
+        fun visit(node: android.view.accessibility.AccessibilityNodeInfo) {
+            try {
+                if (!node.refresh()) return
+                if (node.isVisibleToUser) {
+                    val bounds = android.graphics.Rect().also(node::getBoundsInScreen)
+                    if (bounds.width() > 20 && bounds.height() > 8) {
+                        result += VisibleControl(node.text?.toString().orEmpty(), node.isCheckable, bounds)
+                    }
+                }
+                for (index in 0 until node.childCount) node.getChild(index)?.let(::visit)
+            } finally { node.recycle() }
         }
-        return requireNotNull(device.wait(Until.findObject(By.text(text)), 5000)) { "Missing control: $text" }
+        instrumentation.uiAutomation.rootInActiveWindow?.let(::visit)
+        return result
+    }
+
+    private fun findText(id: Int): android.graphics.Rect {
+        val text = label(id)
+        fun current() = visibleControls().firstOrNull { it.text == text }?.bounds
+        current()?.let { return it }
+        val x = device.displayWidth / 2
+        val top = device.displayHeight * 3 / 10
+        val bottom = device.displayHeight * 8 / 10
+        for ((forward, limit) in listOf(true to 30, false to 60)) {
+            var previous = ""
+            var unchanged = 0
+            for (attempt in 0 until limit) {
+                device.swipe(x, if (forward) bottom else top, x, if (forward) top else bottom, 20)
+                SystemClock.sleep(150)
+                current()?.let { return it }
+                val signature = visibleControls().joinToString { it.text + it.bounds.toShortString() }
+                unchanged = if (signature == previous) unchanged + 1 else 0
+                previous = signature
+                if (unchanged >= 2) break
+            }
+        }
+        runCatching {
+            device.executeShellCommand("screencap -p /data/local/tmp/settings-failure.png")
+            val xml = java.io.ByteArrayOutputStream()
+            device.dumpWindowHierarchy(xml)
+            xml.toString("UTF-8").replace("><", ">\n<").lineSequence().forEach { println("SETTINGS_FAILURE_UI: $it") }
+        }
+        error("Missing control: $text")
     }
 
     private fun open(id: Int) {
-        findText(id).click()
+        val bounds = findText(id)
+        assertTrue("Click ${label(id)}", device.click(bounds.centerX(), bounds.centerY()))
         device.waitForIdle()
     }
 
@@ -141,12 +180,12 @@ class SettingsNavigationTest {
                         effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
                         clicker = { id ->
                             val title = findText(id)
-                            val switch = device.findObjects(By.checkable(true)).minByOrNull {
-                                kotlin.math.abs(it.visibleBounds.centerY() - title.visibleBounds.centerY())
+                            val switch = visibleControls().filter { it.checkable }.minByOrNull {
+                                kotlin.math.abs(it.bounds.centerY() - title.centerY())
                             }
                             assertNotNull("LyricsPlus switch", switch)
-                            assertTrue("Switch belongs to provider row", kotlin.math.abs(switch!!.visibleBounds.centerY() - title.visibleBounds.centerY()) < 150)
-                            switch.click()
+                            assertTrue("Switch belongs to provider row", kotlin.math.abs(switch!!.bounds.centerY() - title.centerY()) < 150)
+                            device.click(switch.bounds.centerX(), switch.bounds.centerY())
                             device.waitForIdle()
                         })
                     assertEquals(runBlocking { context.dataStore.data.first()[EnableLyricsPlus] ?: true },
@@ -169,10 +208,10 @@ class SettingsNavigationTest {
         open(R.string.changelog)
         assertTrue("Changelog title", device.wait(Until.hasObject(By.text(label(R.string.changelog))), 5000))
         val deadline = SystemClock.elapsedRealtime() + 45000
-        while (!device.hasObject(By.textStartsWith("test-")) &&
+        while (!visibleControls().any { it.text.startsWith("test-") } &&
             !device.hasObject(By.text(label(R.string.makoff_changelog_error))) &&
             SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(250)
-        assertTrue("Own published test releases loaded from GitHub", device.hasObject(By.textStartsWith("test-")))
+        assertTrue("Own published test releases loaded from GitHub", visibleControls().any { it.text.startsWith("test-") })
         println("SETTINGS_CHANGELOG_OK: published test release visible in debug APK")
         assertNoRemovedEntries()
     }
