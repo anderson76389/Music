@@ -5,54 +5,48 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/anderson76389/Music/releases">📦 Télécharger les APK</a> ·
+  <a href="https://github.com/anderson76389/Music/releases">📦 Télécharger l’APK</a> ·
   <a href="https://github.com/anderson76389/Music/actions/workflows/makoff-android.yml">🧪 Vérifications</a> ·
   <a href="https://github.com/anderson76389/Music/issues">💬 Signaler un problème</a>
 </p>
 
 ## Une application pour écouter à votre façon
 
-- **Votre musique** : recherche, albums, artistes, playlists et bibliothèque ; connexion au compte YouTube Music facultative.
+- **Votre musique** : recherche, albums, artistes, listes de lecture et bibliothèque ; connexion au compte YouTube Music facultative.
 - **Lecture au quotidien** : arrière-plan, écran verrouillé, file d’attente, lecture aléatoire, répétition et minuterie.
 - **Écoute hors connexion** : téléchargements, cache et gestion des morceaux enregistrés.
 - **Fichiers audio accessibles** : mode yt-dlp 2026.08.19 embarqué pour enregistrer un morceau dans un dossier Android choisi, avec progression et annulation.
 - **Son personnalisable** : qualité élevée par défaut, égaliseur et réglages de lecture.
 - **Paroles et découverte** : paroles synchronisées, traduction et reconnaissance musicale selon les fournisseurs disponibles.
-- **Sur vos appareils** : widgets, Android Auto et Google Cast avec la variante compatible.
+- **Sur vos appareils** : widgets, Android Auto et Google Cast intégré à l’APK universel.
 - **Écoute partagée** : service inclus dans le dépôt, à héberger puis à configurer dans l’application.
 - **Interface personnalisable** : thèmes, couleurs et préférences de présentation.
 
 ## Télécharger et installer
 
-> **Nouvelle préversion disponible :** [MAKOFF Music — test 20](https://github.com/anderson76389/Music/releases/tag/test-20-85215ca), avec les intégrations Last.fm et l’écran À propos retirés, le journal de vos Releases GitHub réparé, le logo d’origine conservé et le mode de fichiers yt-dlp. Compilation FOSS/GMS, tests unitaires, contrôle d’API et tests du serveur réussis ; exécution native de yt-dlp 2026.08.19, export Android, doublons et nettoyage après échec vérifiés. Navigation dans sept catégories de réglages, enregistrement d’une préférence et affichage du journal GitHub vérifiés sur Android 11. [Rapport des vérifications et limites](VERIFICATION-PARAMETRES.txt). **L’essai YouTube anonyme depuis GitHub a demandé une connexion : le téléchargement avec compte reste à essayer sur votre téléphone.**
+> **Un seul APK pour Android :** MAKOFF Music universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt).
 
-| APK de test vérifié | Téléchargement direct |
+| Application | Téléchargement |
 | --- | --- |
-| Standard, sans Google Cast | [Télécharger l’APK standard](https://github.com/anderson76389/Music/releases/download/test-20-85215ca/MAKOFF-Music-test.apk) |
-| Avec Google Cast | [Télécharger l’APK Google Cast](https://github.com/anderson76389/Music/releases/download/test-20-85215ca/MAKOFF-Music-Google-Cast-test.apk) |
+| MAKOFF Music universel, avec Google Cast | [Télécharger l’APK depuis les versions publiées](https://github.com/anderson76389/Music/releases) |
 
-Installez directement le fichier `.apk` ; aucune décompression n’est nécessaire pour les téléchargements ci-dessus. [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39070213593) · [Captures et journaux du démarrage](https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407).
+Installez directement **`MAKOFF-Music-universal.apk`** ; aucune décompression n’est nécessaire. L’archive de code source et le fichier de sommes de contrôle ne sont pas des versions supplémentaires de l’application.
 
-**Android 8.0 minimum.** Les APK sont universels : ARM 32/64 bits et x86 32/64 bits.
+**Android 8.0 minimum.** Un seul APK prend en charge ARM 32/64 bits et x86 32/64 bits.
 
-| Variante | Fichier dans les versions stables | Pour qui ? |
-| --- | --- | --- |
-| Standard, sans Google Cast | `MAKOFF-Music.apk` | Écouter et télécharger sans intégrer Google Cast |
-| Avec Google Cast | `MAKOFF-Music-Google-Cast.apk` | Diffuser aussi vers un appareil Google Cast compatible |
+**[Ouvrir toutes les versions et leur APK →](https://github.com/anderson76389/Music/releases)**
 
-**[Ouvrir toutes les versions et leurs APK →](https://github.com/anderson76389/Music/releases)**
-
-Dans chaque version, ouvrez **« Assets » (fichiers joints)** et téléchargez le fichier `.apk` voulu. Autorisez son installation depuis votre navigateur ou votre gestionnaire de fichiers si Android le demande. Les deux variantes utilisent le même identifiant : choisissez celle qui vous convient.
+Dans chaque publication, ouvrez **« Assets » (fichiers joints)** et téléchargez l’unique fichier `.apk`. Autorisez son installation depuis votre navigateur ou votre gestionnaire de fichiers si Android le demande. Les anciennes publications restent disponibles dans l’historique.
 
 ### Versions de test
 
-Les constructions du code sur la branche principale exécutent la compilation des deux variantes, les tests unitaires, les contrôles du serveur et un test d’installation et de démarrage sur émulateur. **La publication de la préversion exige la réussite de ces contrôles et les droits GitHub nécessaires.** Le circuit a publié la préversion test 19 après réussite des contrôles. Son nom contient le numéro d’exécution et le commit ; elle fournit les deux APK, les sources et les sommes de contrôle SHA-256.
+Chaque modification du code sur la branche principale lance les contrôles et publie automatiquement une préversion si tous réussissent. La compilation conserve les deux variantes en interne pour les tests de compatibilité, mais **un seul APK universel avec Google Cast est publié**, accompagné des sources et des sommes de contrôle SHA-256. Le numéro d’exécution et l’identifiant de révision distinguent chaque publication. Les notes décrivent les changements de l’APK et sont consultables dans le journal de l’application.
 
 Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire propre à la construction. Ils peuvent cohabiter avec une version stable, mais ne garantissent pas une mise à jour directe entre deux tests. **Sauvegardez vos données avant de remplacer une installation de test.** Les mises à jour automatiques sont désactivées dans ces APK.
 
 ### Versions stables et mises à jour
 
-Le circuit de publication stable produit les deux APK signés, les sources et leurs sommes de contrôle dans les Releases de ce dépôt. Il nécessite la configuration de la clé privée du projet. Les futures versions doivent conserver cette clé et augmenter leur numéro de version pour permettre la mise à jour Android.
+Le circuit de publication stable produit l’APK universel signé, les sources et leurs sommes de contrôle dans les versions publiées de ce dépôt. Il nécessite la configuration de la clé privée du projet. Les futures versions doivent conserver cette clé et augmenter leur numéro de version pour permettre la mise à jour Android.
 
 L’application stable recherche ses mises à jour exclusivement dans **ce dépôt**. Une préversion de test n’est pas présentée comme une version stable. Aucune publication stable n’est garantie tant que la signature n’est pas configurée.
 
@@ -68,7 +62,18 @@ Les fichiers gardent le meilleur flux audio disponible dans son format d’origi
 
 ## La qualité sonore, sans promesse artificielle
 
-Le mode **Élevée** est sélectionné par défaut pour la lecture et les téléchargements. Les modes Automatique et Basse restent disponibles. L’application choisit parmi les flux réellement fournis par YouTube Music ; elle ne transforme pas un fichier compressé en audio sans perte. La disponibilité des flux dépend du morceau, du compte et des droits associés. Le casque, la sortie Android et le codec Bluetooth influencent aussi le résultat.
+Le mode **Élevée** est sélectionné par défaut pour la lecture et le téléchargement hors connexion. Il choisit le débit le plus élevé parmi les flux audio disponibles pour la piste d’origine. Le mode **Automatique** peut utiliser une qualité inférieure sur un réseau facturé ; le mode **Basse** privilégie l’économie de données.
+
+- **M4A** est un conteneur ; `mp4a.40.2` désigne généralement le codec **AAC-LC**.
+- **WebM/Opus** est un autre format audio compressé disponible selon le flux.
+- **FLAC** est un format sans perte. Convertir un flux AAC ou Opus en FLAC ne restitue pas les informations perdues : l’application ne fait pas cette conversion.
+- YouTube Music documente une qualité élevée pouvant atteindre **256 kbit/s en AAC ou Opus**. Cela dépend des flux auxquels le compte donne réellement accès ; l’application ne garantit pas ce débit pour chaque morceau. [Documentation YouTube Music](https://support.google.com/youtubemusic/answer/9076559?hl=fr).
+
+L’export en dossier utilise `bestaudio` de yt-dlp, sans réencodage. Son classement des formats peut différer du lecteur : le débit seul ne permet pas de comparer exactement deux codecs. Un débit variable n’est pas une sélection aléatoire.
+
+Un morceau déjà téléchargé conserve son format : pour obtenir une nouvelle qualité, supprimez son téléchargement puis téléchargez-le à nouveau. Le changement de réglage ne doit pas effacer automatiquement votre copie hors connexion. Les détails du morceau indiquent le type MIME, le codec, le débit annoncé et la fréquence d’échantillonnage lorsque ces informations sont disponibles. Le casque, la sortie Android et le codec Bluetooth influencent aussi le résultat.
+
+[Lire les contrôles audio et leurs limites](QUALITE-AUDIO.txt).
 
 ## Un projet géré dans ce dépôt
 
@@ -96,9 +101,11 @@ Sous Windows, utilisez `gradlew.bat`. Les APK sont générés dans `app/build/ou
 | [Guide technique](LIRE-MOI-MAKOFF.txt) | Construction, signature et essais sur téléphone |
 | [Audit d’indépendance](docs/AUDIT-INDEPENDANCE.md) | Références restantes et limites vérifiées |
 
-## Contribuer
+## Contributeur du projet MAKOFF Music
 
-Pour signaler un problème, indiquez la version, la variante de l’APK, votre version Android et les étapes permettant de le reproduire. Retirez toute information privée des journaux partagés.
+**[anderson76389](https://github.com/anderson76389)** — maintenance et développement de MAKOFF Music.
+
+Pour signaler un problème, indiquez la version de l’application, votre version Android et les étapes permettant de le reproduire. Retirez toute information privée des journaux partagés.
 
 ## Licence
 

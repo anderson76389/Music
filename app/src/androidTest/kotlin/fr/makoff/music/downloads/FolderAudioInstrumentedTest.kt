@@ -84,6 +84,56 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 90000) fun aacAndOpusKeepTheirRealCodecAndExactBytesAfterExport() = runBlocking {
+        for ((asset, mime) in listOf("aac.m4a" to "audio/mp4a-latm", "opus.webm" to "audio/opus")) {
+            val audio = android.util.Base64.decode(
+                instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() },
+                android.util.Base64.DEFAULT,
+            )
+            val server = ServerSocket(0)
+            val responder = thread(isDaemon = true) {
+                while (!server.isClosed) try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 15000
+                        val reader = socket.getInputStream().bufferedReader()
+                        val first = reader.readLine().orEmpty()
+                        while (!reader.readLine().isNullOrEmpty()) Unit
+                        socket.getOutputStream().apply {
+                            write("HTTP/1.1 200 OK\r\nContent-Type: ${audioMime(asset.substringAfterLast('.'))}\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                            if (!first.startsWith("HEAD")) write(audio)
+                            flush()
+                        }
+                    }
+                } catch (_: Exception) { if (server.isClosed) break }
+            }
+            val directory = File(context.cacheDir, "codec-test-${UUID.randomUUID()}")
+            var exported: android.net.Uri? = null
+            try {
+                val source = YtDlpAudioEngine.download(context,
+                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}") { }
+                assertArrayEquals(audio, source.readBytes())
+                val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}-$asset")
+                exported = uri
+                assertArrayEquals(audio, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                val extractor = android.media.MediaExtractor()
+                try {
+                    extractor.setDataSource(context, uri, null)
+                    val formats = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                    val format = formats.single { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+                    assertEquals(mime, format.getString(android.media.MediaFormat.KEY_MIME))
+                    assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
+                    assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
+                    println("AUDIO_CODEC_OK: $asset; $format; source and exported bytes identical")
+                } finally { extractor.release() }
+            } finally {
+                exported?.let { DocumentsContract.deleteDocument(context.contentResolver, it) }
+                directory.deleteRecursively()
+                server.close()
+                responder.join(2000)
+            }
+        }
+    }
+
     @Test(timeout = 30000) fun providerFailureDoesNotLeaveAnIncompleteFile() = runBlocking {
         val source = File(context.cacheDir, "failed-export.wav").apply { writeBytes(byteArrayOf(1, 2, 3)) }
         val before = DocumentFile.fromTreeUri(context, tree)!!.listFiles().map { it.uri }.toSet()

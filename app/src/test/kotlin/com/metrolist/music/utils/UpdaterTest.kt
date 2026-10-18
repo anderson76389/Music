@@ -17,9 +17,12 @@ class UpdaterTest {
         val assets = Updater.parseAssets(JSONArray("""[
           {"name":"MAKOFF-Music.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music.apk","size":42},
           {"name":"MAKOFF-Music-Google-Cast.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-Google-Cast.apk","size":43},
-          {"name":"MAKOFF-Music.apk","browser_download_url":"https://example.com/foreign.apk","size":44}
+          {"name":"MAKOFF-Music.apk","browser_download_url":"https://example.com/foreign.apk","size":44},
+          {"name":"MAKOFF-Music-universal.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-universal.apk","size":45}
         ]"""))
-        assertEquals(2, assets.size)
+        assertEquals(3, assets.size)
+        assertEquals("gms", assets[2].variant)
+        assertEquals("universal", assets[2].architecture)
         assertEquals("foss", assets[0].variant)
         assertEquals("gms", assets[1].variant)
         assertEquals("universal", assets[0].architecture)

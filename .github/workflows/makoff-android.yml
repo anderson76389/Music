@@ -117,7 +117,7 @@ jobs:
           if-no-files-found: warn
 
   publish-test:
-    name: Publier les APK vérifiés dans Releases
+    name: Publier l’APK universel vérifié dans Releases
     needs: [android, listening-server, apk-smoke]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
@@ -127,17 +127,12 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          name: MAKOFF-Music-test-APK
-          path: apk-foss
-      - uses: actions/download-artifact@v4
-        with:
           name: MAKOFF-Music-Google-Cast-test-APK
           path: apk-gms
       - name: Préparer les APK, les sources et les sommes de contrôle
         run: |
           mkdir -p dist
-          cp apk-foss/*.apk dist/MAKOFF-Music-test.apk
-          cp apk-gms/*.apk dist/MAKOFF-Music-Google-Cast-test.apk
+          cp apk-gms/*.apk dist/MAKOFF-Music-universal.apk
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           cd dist
           sha256sum *.apk *.zip > SHA256SUMS.txt
@@ -149,8 +144,7 @@ jobs:
           cat > notes.txt <<'NOTES'
           ## APK de test MAKOFF Music
 
-          - **MAKOFF-Music-test.apk** : variante standard sans Google Cast.
-          - **MAKOFF-Music-Google-Cast-test.apk** : variante avec Google Cast.
+          - **MAKOFF-Music-universal.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle SHA-256 jointes.
 
           Compilation des deux variantes, tests unitaires, tests du serveur et installation/démarrage des deux APK sur émulateur Android 11 réussis. La lecture YouTube réelle, la connexion, les téléchargements et la diffusion Cast restent à vérifier sur téléphone. Ces essais ne sont pas garantis par le contrôle de démarrage.

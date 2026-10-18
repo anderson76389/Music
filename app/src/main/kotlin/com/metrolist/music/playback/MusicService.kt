@@ -750,6 +750,8 @@ class MusicService :
                     Timber.tag(TAG).i("QUALITY CHANGED: $oldQuality -> $newQuality")
 
                     val mediaId = player.currentMediaItem?.mediaId ?: return@collect
+                    // Existing downloads keep their original encoding until explicitly downloaded again.
+                    if (downloadCache.getCachedSpans(mediaId).isNotEmpty()) return@collect
                     val currentPosition = player.currentPosition
                     val wasPlaying = player.isPlaying
                     val currentIndex = player.currentMediaItemIndex
@@ -762,8 +764,7 @@ class MusicService :
                     runBlocking(Dispatchers.IO) {
                         try {
                             playerCache.removeResource(mediaId)
-                            downloadCache.removeResource(mediaId)
-                            Timber.tag(TAG).d("Cleared player and download cache for $mediaId")
+                            Timber.tag(TAG).d("Cleared streaming cache for $mediaId")
                         } catch (e: Exception) {
                             Timber.tag(TAG).e(e, "Failed to clear cache for $mediaId")
                         }

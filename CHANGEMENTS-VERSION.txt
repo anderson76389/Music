@@ -1,11 +1,11 @@
 
 ## Changements de cette préversion
 
-- Retrait du bouton Intégrations, des écrans Last.fm et À propos.
-- Suppression du client Last.fm, des envois d'écoutes et des favoris vers Last.fm. Discord reste absent.
-- Journal des modifications alimenté par les Releases de anderson76389/Music, disponible aussi dans les APK de test.
-- Inclusion des préversions, classement par date de publication et bouton Réessayer en cas d'erreur GitHub.
-- Téléchargement hors connexion habituel conservé. Export de fichiers audio avec yt-dlp dans un dossier choisi conservé.
-- Logo local conservé ; notices et code source libre conservés.
+- Un seul APK universel proposé au téléchargement : MAKOFF-Music-universal.apk, avec Google Cast et les quatre architectures Android prises en charge.
+- Publication automatique dans les Releases après les contrôles de chaque construction APK sur la branche principale.
+- README en français, avec anderson76389 présenté comme mainteneur et contributeur du projet MAKOFF Music.
+- Protection des fichiers hors connexion lors d'un changement de qualité : un morceau déjà téléchargé conserve son encodage jusqu'à son téléchargement explicite à nouveau.
+- Contrôle ajouté sur de vrais fichiers AAC/M4A et Opus/WebM : codec reconnu par Android et octets identiques avant/après le moteur yt-dlp et l'export en dossier.
+- Qualité élevée par défaut ; aucun réencodage en faux FLAC, aucun débit Premium promis sans flux réellement disponible.
 
-Contrôles ajoutés : navigation dans sept catégories de réglages sur émulateur, écriture d'une préférence, ouverture du choix de qualité et chargement du journal depuis GitHub. Les fonctions nécessitant un compte YouTube, un serveur personnel, des clés IA ou du matériel Cast/Bluetooth nécessitent encore un essai dans ces conditions.
+Les tests de codec utilisent des signaux synthétiques. Le téléchargement YouTube avec un compte et les fonctions Cast/Bluetooth restent à vérifier sur le téléphone de l'utilisateur. Signature de test temporaire : sauvegardez vos données avant de remplacer une ancienne installation.

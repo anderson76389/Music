@@ -1,0 +1,8 @@
+Signaux synthétiques générés pour les tests, sans enregistrement commercial.
+Fichiers encodés en base64 pour conserver des fixtures textuelles dans le dépôt.
+Commandes reproductibles :
+ffmpeg -f lavfi -i sine=frequency=997:sample_rate=48000:duration=0.3 -ac 2 -c:a aac -b:a 256k aac.m4a
+ffmpeg -f lavfi -i sine=frequency=997:sample_rate=48000:duration=0.3 -ac 2 -c:a libopus -b:a 160k opus.webm
+La cible de débit d'un encodeur ne garantit pas un débit moyen exact pour un signal court.
+Le test Android vérifie AAC/Opus, 48 kHz, stéréo et identité octet par octet après yt-dlp et export SAF.
+Ces fixtures testent le transfert sans conversion ; elles ne prouvent pas l'accès aux flux YouTube Premium.

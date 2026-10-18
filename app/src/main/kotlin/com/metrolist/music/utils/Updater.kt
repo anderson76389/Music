@@ -101,6 +101,7 @@ object Updater {
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
+                name == "MAKOFF-Music-universal.apk" -> "universal" to "gms"
                 name == "MAKOFF-Music.apk" -> "universal" to "foss"
                 name == "MAKOFF-Music-Google-Cast.apk" -> "universal" to "gms"
                 name.startsWith("app-") && name.endsWith("-release.apk") -> {
