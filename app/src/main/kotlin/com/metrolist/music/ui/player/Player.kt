@@ -1260,7 +1260,6 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
-                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable { isFullScreen = !isFullScreen },
                             ) {
                                 Icon(
@@ -1280,7 +1279,6 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
-                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable {
                                             val intent =
                                                 Intent().apply {

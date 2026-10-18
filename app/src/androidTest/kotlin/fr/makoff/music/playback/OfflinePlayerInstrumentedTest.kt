@@ -57,11 +57,31 @@ class OfflinePlayerInstrumentedTest {
         }
     }
 
+    private fun freshControlBounds(label: String): android.graphics.Rect? {
+        fun find(node: android.view.accessibility.AccessibilityNodeInfo): android.graphics.Rect? {
+            try {
+                if (!node.refresh()) return null
+                if (node.isVisibleToUser && node.contentDescription?.toString()?.contains(label) == true) {
+                    return android.graphics.Rect().also(node::getBoundsInScreen)
+                }
+                for (index in 0 until node.childCount) {
+                    node.getChild(index)?.let { child -> find(child)?.let { return it } }
+                }
+                return null
+            } finally { node.recycle() }
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::find)
+    }
+
     private fun clickDescription(id: Int) {
         val label = context.getString(id)
-        val button = device.wait(Until.findObject(By.descContains(label)), 10000)
-        assertNotNull("Player control: $label", button)
-        button!!.click()
+        var bounds: android.graphics.Rect? = null
+        await("Player control: $label", 10000) {
+            bounds = freshControlBounds(label)
+            bounds != null
+        }
+        val target = requireNotNull(bounds)
+        assertTrue("UI click: $label", device.click(target.centerX(), target.centerY()))
     }
 
     private fun audioFixture(): ByteArray = android.util.Base64.decode(
