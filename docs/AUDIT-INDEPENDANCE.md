@@ -6,7 +6,7 @@
 - Téléchargements, mises à jour et publications sur `anderson76389/Music`.
 - Sources InnerTubeX embarquées dans `vendor/innertubex`, sans téléchargement du moteur depuis le dépôt d’origine.
 - Sources et protocole du serveur d’écoute partagée inclus dans `services/listen-together` ; aucun serveur public présélectionné.
-- Discord retiré du code, des écrans et des ressources de l’application.
+- Discord, Last.fm, Intégrations et À propos retirés à la demande du propriétaire.
 - Configuration distante du moteur désactivée : `enabled = false`, adresse vide et résolution locale EJS conservée.
 
 ## Références à Metrolist encore présentes
@@ -26,7 +26,7 @@ Il ne s’agit donc pas d’un effacement de toute occurrence du nom dans les so
 
 ## Dépendances externes qui restent nécessaires
 
-YouTube Music reste la source des flux et des données. Google Cast, les paroles, la traduction, la reconnaissance ou Last.fm dépendent des services et clés correspondants. Les outils de construction téléchargent aussi leurs dépendances Android habituelles. Aucun fork ne peut garantir qu’un changement de YouTube n’exigera jamais de maintenance.
+YouTube Music reste la source des flux et des données. Google Cast, les paroles, la traduction et la reconnaissance dépendent des services et clés correspondants. Les outils de construction téléchargent aussi leurs dépendances Android habituelles. Aucun fork ne peut garantir qu’un changement de YouTube n’exigera jamais de maintenance.
 
 ## Publication et essais
 
@@ -55,7 +55,7 @@ La vérification automatisée ne valide pas la lecture sonore réelle, le télé
 
 ## Nouvel audit et logo conservé
 
-Le [rapport du 17 octobre 2026](../AUDIT-METRO-2026-10-17.txt) détaille les corrections supplémentaires, le logo restauré, les adresses Faraday encore inactives, les noms internes et les dépendances tierces. Le contrôle local vérifie désormais aussi les 31 empreintes du logo et les coordonnées propres du moteur.
+Le [rapport du 17 octobre 2026](../AUDIT-METRO-2026-10-17.txt) détaille les corrections supplémentaires, le logo restauré, les anciennes adresses Faraday désormais supprimées, les noms internes et les dépendances tierces. Le contrôle local vérifie désormais aussi les 31 empreintes du logo et les coordonnées propres du moteur.
 
 ## Résultats du nouvel audit avec logo restauré
 
@@ -72,3 +72,13 @@ Les anciennes adresses Faraday ont ensuite été supprimées du moteur et de ses
 [Préversion test 19](https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104), [exécution 39070213593](https://github.com/anderson76389/Music/actions/runs/39070213593), sources `4bd5104db9a71b587f8941216bb9a6926666b767` : compilation des deux APK, tests unitaires, tests du moteur, contrôle d’API, tests du serveur et démarrage **réussis**. Deux tests Android ont vérifié le véritable moteur yt-dlp 2026.08.19 et l’export exact de fichiers par le protocole de documents, sans écrasement de doublon, avec nettoyage sur échec de finalisation.
 
 Le test YouTube anonyme a été **refusé avec une demande de connexion pour confirmer l’absence de robot** depuis le réseau de l’émulateur GitHub. Il ne valide donc pas le téléchargement YouTube authentifié. Le code reprend les cookies YouTube de l’application, limités au domaine YouTube et conservés seulement dans un fichier privé temporaire pour ce travail. Un essai avec compte sur appareil reste nécessaire. Voir le [rapport de téléchargement](../TELECHARGEMENTS-FICHIERS.txt) et les [preuves](https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407).
+
+## Vérification du 18 octobre 2026
+
+Le [rapport fonction par fonction](../VERIFICATION-FONCTIONS.txt) distingue les fonctions conservées, les dépendances et les scénarios réellement testés. Toutes les options ne sont pas certifiées sur le téléphone de l’utilisateur.
+
+Le miroir LyricsPlus annoté « meow » a été retiré. AutoEQ utilise le dépôt officiel `jaakkopasanen/AutoEq`, avec reconstruction des arbres tronqués et cache distincte. Un contrôle du dépôt réel a récupéré **8 850 profils en 26 requêtes**, tous avec des chemins compatibles ; une seule réponse récursive sur `results` était tronquée à 6 107 profils. Trois tests unitaires couvrent le filtrage, la reconstruction et le refus d’un arbre incomplet. Ce contrôle du catalogue ne constitue pas un essai audio sur casque.
+
+L’écran d’informations audio peut utiliser les données locales quand les métadonnées YouTube sont indisponibles. L’audit d’adresses couvre désormais les modules de production de l’application, InnerTube et InnerTubeX. Il recherche les adresses connues et ne constitue pas une capture exhaustive du réseau.
+
+[Préversion 22](https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07), [exécution 39150834233](https://github.com/anderson76389/Music/actions/runs/39150834233), sources `ead3a07b2cd70ecc973398dd83faf2a5bfd79d2d` : compilation FOSS/GMS, tests unitaires, tests/APIcheck du moteur, tests du serveur, démarrage des deux APK, trois tests Android d’export audio et test des réglages **réussis**. Un seul APK universel est publié. L’essai YouTube anonyme séparé a **échoué**, avec demande de connexion anti-robot (`YOUTUBE_AUTH_REQUIRED`) ; il est non bloquant dans la CI. Les journaux et captures sont conservés dans les [preuves](https://github.com/anderson76389/Music/actions/runs/39150834233/artifacts/12144693896). Une publication de test réussie ne prouve pas toutes les fonctions avec un compte ou du matériel réel.

@@ -19,7 +19,7 @@ indirecte chez les fournisseurs tiers, ni une capture exhaustive du trafic.
 
 FONCTIONS / DÉPENDANCES / PREUVES
 - Interface et réglages : navigation Android automatisée dans les sept catégories,
-  bascule du fondu et ouverture de la qualité testées dans la préversion 21.
+  bascule du fondu et ouverture de la qualité testées dans la préversion 22.
   Ce test ne clique pas chaque combinaison de chaque réglage.
 - Historique : chargement réel des Releases de ce GitHub testé sur émulateur.
 - Lecture, recherche, comptes, playlists et bibliothèque en ligne : code présent,
@@ -29,7 +29,7 @@ FONCTIONS / DÉPENDANCES / PREUVES
   plus le fichier déjà téléchargé. Sa qualité reste celle du téléchargement.
 - Export en dossier : moteur yt-dlp embarqué, distinct du téléchargement interne.
   Tests Android réussis sur AAC/M4A, Opus/WebM et WAV via serveur local : données
-  identiques et codecs reconnus. L'essai YouTube anonyme de CI a échoué ; aucun
+  identiques et codecs reconnus. L'essai YouTube anonyme de CI a été refusé par la vérification anti-robot ; aucun
   téléchargement YouTube authentifié de bout en bout n'est donc certifié ici.
 - Qualité : HIGH par défaut ; formats disponibles selon le morceau, le compte
   et YouTube. Aucun FLAC créé et aucun débit de 256 kbit/s garanti pour tout titre.
@@ -63,8 +63,23 @@ CORRECTIONS DE CETTE RÉVISION
 4. Audit d'adresses étendu aux fournisseurs embarqués, à InnerTube et InnerTubeX.
 5. Documentation corrigée concernant Last.fm, À propos et l'APK unique.
 
-VALIDATION
-Les résultats de la préversion 21 sont historiques :
-https://github.com/anderson76389/Music/actions/runs/39087866925
-La nouvelle révision doit passer la compilation, les tests unitaires, les tests
-Android et la publication avant d'être présentée comme APK validé.
+VALIDATION DE CETTE RÉVISION
+Sources ead3a07b2cd70ecc973398dd83faf2a5bfd79d2d :
+https://github.com/anderson76389/Music/actions/runs/39150834233
+- Compilation des APK FOSS et GMS : RÉUSSIE.
+- Tests unitaires Android et tests/APIcheck du moteur : RÉUSSIS.
+- Tests et compilation du serveur : RÉUSSIS.
+- Installation et démarrage des deux APK sur Android 11 : RÉUSSIS.
+- Trois tests Android de téléchargement/export audio : RÉUSSIS.
+- Test Android des réglages, persistance et historique GitHub : RÉUSSI.
+- Essai YouTube public anonyme : ÉCHEC YOUTUBE_AUTH_REQUIRED, YouTube demande
+  de se connecter pour confirmer l'absence de robot. Cet essai séparé est
+  non bloquant dans la CI ; une CI verte ne valide donc pas ce scénario.
+- Préversion 22 publiée : un seul APK universel, sources et SHA-256.
+https://github.com/anderson76389/Music/releases/tag/test-22-ead3a07
+Preuves, journaux et captures :
+https://github.com/anderson76389/Music/actions/runs/39150834233/artifacts/12144693896
+
+AutoEQ : contrôle du dépôt officiel réel, 8 850 profils avec chemins compatibles,
+26 requêtes pour obtenir toutes les branches ; ce contrôle du catalogue ne
+valide pas l'application audible des réglages sur le casque de l'utilisateur.
