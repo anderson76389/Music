@@ -24,12 +24,12 @@
 
 ## Télécharger et installer
 
-> **Nouvelle préversion disponible :** [MAKOFF Music — test 19](https://github.com/anderson76389/Music/releases/tag/test-19-4bd5104), avec le logo d’origine conservé et le nouveau mode de fichiers yt-dlp. Compilation FOSS/GMS, tests unitaires, contrôle d’API et tests du serveur réussis ; exécution native de yt-dlp 2026.08.19, export Android, doublons et nettoyage après échec vérifiés. **L’essai YouTube anonyme depuis GitHub a demandé une connexion : le téléchargement avec compte reste à essayer sur votre téléphone.**
+> **Nouvelle préversion disponible :** [MAKOFF Music — test 20](https://github.com/anderson76389/Music/releases/tag/test-20-85215ca), avec les intégrations Last.fm et l’écran À propos retirés, le journal de vos Releases GitHub réparé, le logo d’origine conservé et le mode de fichiers yt-dlp. Compilation FOSS/GMS, tests unitaires, contrôle d’API et tests du serveur réussis ; exécution native de yt-dlp 2026.08.19, export Android, doublons et nettoyage après échec vérifiés. Navigation dans sept catégories de réglages, enregistrement d’une préférence et affichage du journal GitHub vérifiés sur Android 11. [Rapport des vérifications et limites](VERIFICATION-PARAMETRES.txt). **L’essai YouTube anonyme depuis GitHub a demandé une connexion : le téléchargement avec compte reste à essayer sur votre téléphone.**
 
 | APK de test vérifié | Téléchargement direct |
 | --- | --- |
-| Standard, sans Google Cast | [Télécharger l’APK standard](https://github.com/anderson76389/Music/releases/download/test-19-4bd5104/MAKOFF-Music-test.apk) |
-| Avec Google Cast | [Télécharger l’APK Google Cast](https://github.com/anderson76389/Music/releases/download/test-19-4bd5104/MAKOFF-Music-Google-Cast-test.apk) |
+| Standard, sans Google Cast | [Télécharger l’APK standard](https://github.com/anderson76389/Music/releases/download/test-20-85215ca/MAKOFF-Music-test.apk) |
+| Avec Google Cast | [Télécharger l’APK Google Cast](https://github.com/anderson76389/Music/releases/download/test-20-85215ca/MAKOFF-Music-Google-Cast-test.apk) |
 
 Installez directement le fichier `.apk` ; aucune décompression n’est nécessaire pour les téléchargements ci-dessus. [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39070213593) · [Captures et journaux du démarrage](https://github.com/anderson76389/Music/actions/runs/39070213593/artifacts/12114732407).
 

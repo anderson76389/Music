@@ -1,0 +1,58 @@
+MAKOFF Music — vérification des paramètres
+17 octobre 2026 — résultats confirmés le 18 octobre 2026
+
+Modifications
+- Bouton Intégrations supprimé du panneau du compte.
+- Routes et écrans Intégrations, Last.fm et À propos supprimés.
+- Client Last.fm, chargement de session, scrobbling, envoi du morceau en cours et envoi des favoris supprimés.
+- Discord reste absent du code de l'application.
+- L'écoute partagée conserve son accès et ses réglages de serveur personnel.
+- Notices légales et licences conservées dans les sources et les fichiers embarqués.
+
+Jeton
+Le bouton du compte ouvre l'éditeur avancé de la session YouTube Music : cookies InnerTube, Visitor Data, DataSync ID, compte actif et informations de profil. Il sert à importer ou réparer une connexion manuellement. Une connexion normale réussie suffit ; ce n'est pas une clé à demander à Metrolist. Ces données permettent l'accès à la session et doivent rester privées.
+
+Journal des modifications
+Source : https://api.github.com/repos/anderson76389/Music/releases
+Le journal fonctionne indépendamment du mécanisme d'installation des mises à jour. Les APK de test peuvent donc le lire même si leurs mises à jour automatiques sont désactivées.
+Les préversions sont conservées, les brouillons exclus et les publications triées par date décroissante. Le filtre basé sur l'ancienne version 13.7.0 a été retiré. Une erreur réseau/HTTP produit un message et un bouton Réessayer ; elle n'est plus présentée comme un journal vide.
+L'historique contient au maximum 300 Releases. Les textes affichés sont les notes de chaque Release, pas tous les commits du dépôt.
+CHANGEMENTS-VERSION.txt est joint aux notes lors des prochaines publications du workflow Android ; il doit être actualisé pour chaque changement de code destiné à une nouvelle version.
+
+Contrôles statiques effectués
+- 16 fichiers de réglages, 354 branchements onClick/onCheckedChange/onValueChange/onDone recensés.
+- Toutes les destinations littérales de navigation des réglages existent. Un contrôle complémentaire des 46 appels de navigation littéraux dans l’ensemble de l’application ne trouve aucune destination non résolue (routes paramétrées prises en compte).
+- Aucun gestionnaire onClick/onCheckedChange vide détecté dans ces réglages.
+- 138 noms de clés de préférence examinés : références dans le reste de l'application, ou action locale directe (changement d'icône).
+- Recherche complémentaire dans toute l’interface : les gestionnaires de clic vides repérés correspondent à trois poignées de glisser-déposer et à une ligne Automix disposant de boutons dédiés et d’un appui long ; ce ne sont pas des actions de réglage manquantes.
+- Les alias d'icônes ciblés existent dans le manifeste et portent l'identité MAKOFF.
+- Le lecteur et les téléchargements historiques conservent leurs réglages de haute qualité.
+- Audit d'indépendance, intégrité du moteur yt-dlp et empreintes du logo conservés.
+Ces contrôles de branchement ne prouvent pas à eux seuls le comportement de chaque option.
+
+Vérifications automatisées réussies dans le workflow
+- Compilation FOSS et Google Cast, ensemble des tests unitaires Android, tests JVM et compatibilité API du moteur embarqué.
+- Compilation et tests du serveur d'écoute partagée.
+- Installation et démarrage des deux APK sur Android 11.
+- Moteur yt-dlp réel et export SAF, absence d'écrasement, nettoyage sur échec de renommage.
+- Navigation réelle : Apparence, Lecteur et audio, Contenu, Traduction IA, Confidentialité, Stockage, Sauvegarde/restauration.
+- Changement et lecture de la préférence de fondu ; ouverture du choix de qualité audio.
+- Chargement et affichage d'une préversion réelle depuis les Releases GitHub dans l'APK debug.
+
+Limites à ne pas confondre avec une validation totale
+- Une référence de code n'est pas un essai de chaque bouton et de toutes les combinaisons d'options.
+- Connexion Google, synchronisation du compte, lecture et téléchargement YouTube authentifiés : à tester avec un compte sur téléphone.
+- Traduction IA : dépend du fournisseur, de sa clé et de son service.
+- Écoute partagée : nécessite un serveur configuré ; le serveur inclus a ses propres tests.
+- Cast, Android Auto, Bluetooth, réveil en veille, réglages système et lanceurs d'icônes : nécessitent le matériel/la version Android concernés.
+- Sauvegarde/restauration avec les données personnelles, import complet et destruction des caches n'ont pas été exécutés sur les données de l'utilisateur.
+- L'essai YouTube anonyme de CI peut être refusé par YouTube ; son résultat est conservé séparément et n'est pas transformé en réussite.
+- APK de test : signature temporaire, mises à jour directes entre préversions non garanties.
+
+Résultat final
+Les quatre jobs du workflow ont réussi : compilation/tests Android, serveur, installation/tests sur émulateur et publication.
+Exécution : https://github.com/anderson76389/Music/actions/runs/39072220142
+Source des APK : 85215ca07f035bbb35285abb5468e9c935743966
+Publication : https://github.com/anderson76389/Music/releases/tag/test-20-85215ca
+Le test instrumenté de réglages a réussi (1 test regroupant les sept parcours, la préférence et le journal) ; les deux tests natifs yt-dlp/SAF ont réussi. Le démarrage des deux variantes FOSS/GMS a réussi.
+Les références aux anciennes clés LASTFM ont également été retirées des workflows actifs et archivés ; les fichiers de documentation et de workflow ne changent pas le code des APK déjà testés.

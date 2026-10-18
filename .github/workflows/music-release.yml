@@ -42,8 +42,6 @@ jobs:
           STORE_PASSWORD: ${{ secrets.MUSIC_STORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.MUSIC_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.MUSIC_KEY_PASSWORD }}
-          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
           RELEASE_TAG: ${{ inputs.tag || github.ref_name }}
         run: |
           python3 - <<'PYCODE'

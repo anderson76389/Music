@@ -75,8 +75,6 @@ jobs:
           METROLIST_APP_NAME: Metrolist PR ${{ github.event.number }}
           METROLIST_DEBUG_KEYSTORE_PATH: pr-debug.keystore
           PULL_REQUEST: "true"
-          LASTFM_API_KEY: ${{ secrets.LASTFM_API_KEY }}
-          LASTFM_SECRET: ${{ secrets.LASTFM_SECRET }}
 
       - name: Upload APK
         uses: actions/upload-artifact@v7
