@@ -1,11 +1,9 @@
-
 ## Changements de cette préversion
 
-- Un seul APK universel proposé au téléchargement : MAKOFF-Music-universal.apk, avec Google Cast et les quatre architectures Android prises en charge.
-- Publication automatique dans les Releases après les contrôles de chaque construction APK sur la branche principale.
-- README en français, avec anderson76389 présenté comme mainteneur et contributeur du projet MAKOFF Music.
-- Protection des fichiers hors connexion lors d'un changement de qualité : un morceau déjà téléchargé conserve son encodage jusqu'à son téléchargement explicite à nouveau.
-- Contrôle ajouté sur de vrais fichiers AAC/M4A et Opus/WebM : codec reconnu par Android et octets identiques avant/après le moteur yt-dlp et l'export en dossier.
-- Qualité élevée par défaut ; aucun réencodage en faux FLAC, aucun débit Premium promis sans flux réellement disponible.
+- Retrait du miroir de paroles LyricsPlus annoté « meow ».
+- AutoEQ : utilisation du dépôt officiel jaakkopasanen/AutoEq et récupération des profils corrigée quand GitHub tronque ses réponses ; cache séparée et refus des index incomplets.
+- Informations audio affichables depuis les données locales même lorsque les métadonnées YouTube ne répondent pas.
+- Audit des adresses étendu à tous les modules de production.
+- Rapport VERIFICATION-FONCTIONS.txt : fonctions conservées, dépendances externes, essais réellement effectués et limites explicites.
 
-Les tests de codec utilisent des signaux synthétiques. Le téléchargement YouTube avec un compte et les fonctions Cast/Bluetooth restent à vérifier sur le téléphone de l'utilisateur. Signature de test temporaire : sauvegardez vos données avant de remplacer une ancienne installation.
+Un seul APK universel publié. Écoute partagée : votre serveur est nécessaire. Connexion YouTube avec votre compte, Cast, Bluetooth et toutes les combinaisons de réglages ne sont pas certifiés sur votre téléphone. Signature temporaire de test : sauvegardez vos données avant de remplacer une ancienne installation.

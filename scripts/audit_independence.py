@@ -57,3 +57,11 @@ print('PASS: upstream Faraday URLs removed from engine source and tests')
 
 assert hashlib.sha256((r/'app/src/main/res/raw/ytdlp').read_bytes()).hexdigest() == '1fa6733c37ea6fb51c99ad8fe785e7b7e5f3246c9b980230329d4fb72ed8d4d6'
 print('PASS: official yt-dlp 2026.08.19 bundled and checksum verified')
+
+# Inspect every production module, including bundled providers and the engine.
+for module in ('app', 'innertube', 'vendor/innertubex'):
+    for p in (r/module/'src').rglob('*'):
+        if p.suffix not in ('.kt', '.xml', '.java') or any('test' in part.lower() for part in p.parts):
+            continue
+        assert not re.search(r'(?:https?|wss?)://[^"\s<]*(?:metrolistgroup|metrolist\.cc|meowery\.eu|lyricsplus\.atomix\.one|t\.me/metrolist)', p.read_text(), re.I), p
+print('PASS: all production modules checked for known upstream service addresses')

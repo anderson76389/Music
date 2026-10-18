@@ -1,0 +1,70 @@
+MAKOFF MUSIC — VÉRIFICATION DES FONCTIONS ET DE L'INDÉPENDANCE
+18 octobre 2026
+
+RÉPONSE HONNÊTE
+Non, toutes les fonctions historiques ne sont pas présentes et validées à 100 %.
+Discord, Last.fm, Intégrations et À propos ont été retirés à votre demande.
+Le reste du code a été conservé, mais code présent et compilation réussie ne
+prouvent pas le bon fonctionnement de chaque action avec chaque appareil/compte.
+
+INDÉPENDANCE DE METROLIST
+Les sources du moteur, le protocole, le serveur d'écoute partagée et le logo
+sont dans ce dépôt. Les mises à jour et l'historique utilisent ce GitHub.
+Aucun endpoint Metrolist actif connu n'est requis par la configuration contrôlée.
+Le miroir de paroles annoté « meow » a été retiré par précaution ; son propriétaire
+n'a pas été vérifié. AutoEQ utilise désormais le dépôt officiel de ses profils.
+Les noms internes et mentions légales n'introduisent aucun appel réseau.
+Un contrôle statique d'adresses connues ne prouve pas l'absence de toute dépendance
+indirecte chez les fournisseurs tiers, ni une capture exhaustive du trafic.
+
+FONCTIONS / DÉPENDANCES / PREUVES
+- Interface et réglages : navigation Android automatisée dans les sept catégories,
+  bascule du fondu et ouverture de la qualité testées dans la préversion 21.
+  Ce test ne clique pas chaque combinaison de chaque réglage.
+- Historique : chargement réel des Releases de ce GitHub testé sur émulateur.
+- Lecture, recherche, comptes, playlists et bibliothèque en ligne : code présent,
+  services Google/YouTube nécessaires. Connexion avec votre compte, synchronisation,
+  lecture et enchaînements sur votre téléphone non validés intégralement.
+- Téléchargement interne : fonction conservée. Changer la qualité ne supprime
+  plus le fichier déjà téléchargé. Sa qualité reste celle du téléchargement.
+- Export en dossier : moteur yt-dlp embarqué, distinct du téléchargement interne.
+  Tests Android réussis sur AAC/M4A, Opus/WebM et WAV via serveur local : données
+  identiques et codecs reconnus. L'essai YouTube anonyme de CI a échoué ; aucun
+  téléchargement YouTube authentifié de bout en bout n'est donc certifié ici.
+- Qualité : HIGH par défaut ; formats disponibles selon le morceau, le compte
+  et YouTube. Aucun FLAC créé et aucun débit de 256 kbit/s garanti pour tout titre.
+  Voir QUALITE-AUDIO.txt.
+- Paroles : fournisseurs tiers LRCLIB, KuGou, Paxsenix, BetterLyrics, Zemer,
+  LyricsPlus. Leurs pannes, contenus manquants et limites ne sont pas maîtrisés.
+- Égaliseur : code local ; AutoEQ dépend du dépôt officiel jaakkopasanen/AutoEq
+  pour rechercher/télécharger les profils. Cache locale ensuite. Récupération
+  corrigée pour refuser un index incomplet et fractionner les arbres tronqués.
+  Import/application audibles sur votre casque non vérifiés ici.
+- Reconnaissance : dépend de Shazam et du microphone, non validée sur téléphone.
+- Traduction IA : dépend du fournisseur et de votre clé, non validée sans clé.
+- Écoute partagée : serveur complet fourni, mais aucun serveur public configuré.
+  Cette option nécessite votre hébergement et une URL wss:// ; elle ne fonctionne
+  pas spontanément. Aucun salon entre deux appareils n'a été testé.
+- Cast, Bluetooth, Android Auto, widgets, écran verrouillé et gestion batterie :
+  code présent ; nécessitent des essais avec le matériel et les permissions réels.
+- Sauvegarde/restauration : code présent ; une restauration complète des données
+  de votre appareil n'a pas été testée.
+- Mise à jour automatique : désactivée dans les APK de test à signatures temporaires.
+  Une clé stable privée et durable doit être configurée pour publier des versions
+  stables pouvant se mettre à jour sans réinstallation. Ne pas désinstaller sans
+  sauvegarde des données.
+
+CORRECTIONS DE CETTE RÉVISION
+1. Retrait du miroir LyricsPlus annoté « meow ».
+2. AutoEQ : dépôt officiel, cache distincte, récupération complète des profils,
+   refus d'un index vide/incomplet ; tests des réponses tronquées et erreurs.
+3. Informations audio : affichage possible à partir du format ou morceau local
+   même quand la requête de métadonnées YouTube échoue.
+4. Audit d'adresses étendu aux fournisseurs embarqués, à InnerTube et InnerTubeX.
+5. Documentation corrigée concernant Last.fm, À propos et l'APK unique.
+
+VALIDATION
+Les résultats de la préversion 21 sont historiques :
+https://github.com/anderson76389/Music/actions/runs/39087866925
+La nouvelle révision doit passer la compilation, les tests unitaires, les tests
+Android et la publication avant d'être présentée comme APK validé.

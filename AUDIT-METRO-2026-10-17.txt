@@ -29,7 +29,7 @@ POINTS CONTRÔLÉS
 - Application / espace de noms Android : fr.makoff.music ; tests : .debug.
 - Mises à jour et historique affiché dans l’app : API anderson76389/Music.
 - Téléchargements acceptés par Updater : fichiers des Releases de ce dépôt.
-- À propos : lien vers ce dépôt ; aucune communauté ou donation Metrolist imposée.
+- À propos : écran supprimé depuis cet audit initial.
 - Connexion : comptes Google/YouTube ; pas de compte Metrolist nécessaire.
 - Moteur de lecture : sources locales, résolution EJS locale. La configuration
   distante est désactivée dans AndroidPlayerConfigRepository (enabled=false,
@@ -84,9 +84,9 @@ DÉPENDANCES À DES TIERS QUI RESTENT (PAS DES GARANTIES METROLIST)
 - YouTube / Google : recherche, connexion, contenus, flux, miniatures, jetons.
 - Google Cast dans la variante GMS ; Google/Android pour les outils système.
 - Paroles selon les fournisseurs activés : LRCLIB, KuGou, Paxsenix, BetterLyrics,
-  Zemer, LyricsPlus et ses miroirs (dont lyricsplus.atomix.one).
-- Shazam pour la reconnaissance ; Last.fm si configuré avec vos propres clés.
-- AutoEq : dépôt ndellagrotte/AutoEq pour les profils recherchés en ligne.
+  Zemer, LyricsPlus et ses miroirs. Le miroir atomix.one a été retiré le 18 octobre.
+- Shazam pour la reconnaissance ; Last.fm a été supprimé.
+- AutoEq : dépôt officiel jaakkopasanen/AutoEq depuis le 18 octobre.
 - Traduction : fournisseur et clé configurés par l’utilisateur, dont DeepL ou
   les API d’IA proposées. Ces services restent externes.
 - GitHub pour les sources et mises à jour ; Maven Central, Google Maven,

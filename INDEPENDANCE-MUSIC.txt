@@ -2,8 +2,9 @@ MAKOFF MUSIC — INDÉPENDANCE VIS-À-VIS DU PROJET D’ORIGINE
 
 Lecture, recherche, comptes YouTube, playlists, bibliothèque, téléchargements,
 cache, paroles, égaliseur, reconnaissance, widgets et Android Auto : code conservé.
-Qualité Élevée par défaut. Deux variantes prévues : FOSS et Google Cast (GMS).
-Discord reste supprimé sur demande.
+Qualité Élevée par défaut. Un seul APK universel publié, avec Google Cast (GMS).
+La variante FOSS est aussi compilée et testée en interne.
+Discord, Last.fm et la page À propos sont supprimés sur demande.
 
 Les sources du moteur de lecture InnerTubeX v0.8.4 sont embarquées dans vendor.
 Gradle remplace son artefact distant par le projet local ; aucun téléchargement
@@ -25,7 +26,6 @@ Le serveur n’est PAS déployé automatiquement et GitHub Pages ne peut pas l�
 Lire services/listen-together/INSTALLATION-MUSIC.txt. Il faut un hébergement actif
 et renseigner son URL wss:// dans les paramètres pour cette fonction seulement.
 
-Last.fm : nécessite vos propres LASTFM_API_KEY et LASTFM_SECRET si vous l’utilisez.
 Traduction IA : clé et fournisseur choisis par l’utilisateur, inchangés.
 YouTube, les fournisseurs de paroles, Shazam, AutoEQ, les dépôts Android/Maven,
 GitHub et les composants libres externes restent des dépendances tierces.
@@ -46,3 +46,11 @@ Logo d’origine volontairement conservé localement à la demande du propriéta
 Coordonnées Gradle du moteur remplacées par fr.makoff.music:innertubex.
 SCM, suivi des problèmes et documentation opérationnelle redirigés vers ce dépôt.
 Voir AUDIT-METRO-2026-10-17.txt pour l’inventaire des références restantes et les limites.
+
+MISE À JOUR DU 18 OCTOBRE 2026
+Le miroir LyricsPlus annoté « meow » a été retiré. AutoEQ consulte le dépôt
+original jaakkopasanen/AutoEq et reconstruit les réponses tronquées par GitHub.
+L'ancienne cache AutoEQ est séparée pour ne pas mélanger deux dépôts.
+Les informations de format peuvent s'afficher depuis la base locale même si
+les métadonnées YouTube ne répondent pas.
+Voir VERIFICATION-FONCTIONS.txt pour les limites et les preuves disponibles.

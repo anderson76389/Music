@@ -129,7 +129,6 @@ object LyricsPlusProvider : LyricsProvider {
 
     private val baseUrls = listOf(
         "https://lyricsplus.binimum.org", //binimum's alternate server
-        "https://lyricsplus.atomix.one/", //meow's mirror
         "https://lyricsplus.prjktla.my.id", //main server
         "https://lyricsplus-seven.vercel.app", //jigen's mirror
         //"https://lyricsplus.prjktla.workers.dev", //ibra's cf workers (disabled due it has 100000 request per day limit)

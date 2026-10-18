@@ -120,7 +120,7 @@ fun ShowMediaInfo(videoId: String) {
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
     ) {
-        if (info != null) {
+        if (info != null || song != null || currentFormat != null) {
             item(contentType = "MediaDetails") {
                 Column {
                     val baseList = listOf(

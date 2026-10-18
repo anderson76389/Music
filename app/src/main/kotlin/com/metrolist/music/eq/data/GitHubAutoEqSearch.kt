@@ -3,7 +3,7 @@ package fr.makoff.music.eq.data
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -26,7 +26,7 @@ class GitHubAutoEqSearch(private val context: Context) {
     // Cache for name_index.tsv data: Map<source, Map<headphoneName, rig>>
     private val rigLookupCache = mutableMapOf<String, Map<String, String>>()
 
-    private val cacheDir = File(context.filesDir, "autoeq_cache")
+    private val cacheDir = File(context.filesDir, "autoeq_official_cache")
     private val treeFile = File(cacheDir, "tree.json")
     private val treeTimestampFile = File(cacheDir, "tree_timestamp")
 
@@ -39,31 +39,15 @@ class GitHubAutoEqSearch(private val context: Context) {
 
     companion object {
         private const val TAG = "GitHubAutoEqSearch"
-        private const val REPO_OWNER = "ndellagrotte"
+        private const val REPO_OWNER = "jaakkopasanen"
         private const val REPO_NAME = "AutoEq"
         private const val BRANCH = "master"
-        private const val TREE_API_URL =
-            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/git/trees/$BRANCH?recursive=1"
+        private const val TREE_API_BASE =
+            "https://api.github.com/repos/$REPO_OWNER/$REPO_NAME/git/trees"
         private const val RAW_BASE_URL =
             "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/$BRANCH"
         private const val CACHE_TTL_MS = 24 * 60 * 60 * 1000L // 24 hours
     }
-
-    @Serializable
-    private data class GitHubTreeResponse(
-        val sha: String,
-        val tree: List<GitHubTreeNode>,
-        val truncated: Boolean = false
-    )
-
-    @Serializable
-    private data class GitHubTreeNode(
-        val path: String,
-        val mode: String? = null,
-        val type: String,
-        val sha: String? = null,
-        val size: Long? = null
-    )
 
     /**
      * Check whether a cached tree file exists (i.e. the database has been downloaded before).
@@ -79,11 +63,9 @@ class GitHubAutoEqSearch(private val context: Context) {
             cacheDir.mkdirs()
 
             val treeJson = getCachedOrFetchTree() ?: return@withContext false
-            val treeResponse = json.decodeFromString<GitHubTreeResponse>(treeJson)
+            val treeResponse = json.decodeFromString<AutoEqTreeResponse>(treeJson)
 
-            if (treeResponse.truncated) {
-                Timber.tag(TAG).w("GitHub tree response was truncated, some entries may be missing")
-            }
+            check(!treeResponse.truncated) { "Incomplete AutoEQ index" }
 
             // Filter to only ParametricEQ.txt blobs under results/
             val eqNodes = treeResponse.tree.filter { node ->
@@ -102,6 +84,7 @@ class GitHubAutoEqSearch(private val context: Context) {
                 }
             }
 
+            check(newEntries.isNotEmpty()) { "No AutoEQ profiles found" }
             entries.clear()
             entries.addAll(newEntries)
             isIndexed = true
@@ -161,30 +144,32 @@ class GitHubAutoEqSearch(private val context: Context) {
 
         // Fetch from GitHub
         return try {
-            val request = Request.Builder()
-                .url(TREE_API_URL)
-                .header("Accept", "application/vnd.github+json")
-                .header("X-GitHub-Api-Version", "2026-03-10")
-                .build()
-
-            client.newCall(request).execute().use { response ->
-                if (!response.isSuccessful) {
-                    Timber.tag(TAG).w("GitHub API returned ${response.code}: ${response.message}")
-                    // Fall back to stale cache if available
-                    if (treeFile.exists()) return treeFile.readText()
-                    return null
-                }
-
-                val body = response.body?.string() ?: return null
-                treeFile.writeText(body)
-                treeTimestampFile.writeText(System.currentTimeMillis().toString())
-                body
-            }
+            val root = fetchTree(BRANCH, false)
+            check(!root.truncated) { "Incomplete AutoEQ root tree" }
+            val results = root.tree.first { it.type == "tree" && it.path == "results" }
+            val nodes = collectAutoEqProfiles(requireNotNull(results.sha), ::fetchTree)
+            check(nodes.isNotEmpty()) { "No AutoEQ profiles found" }
+            val body = json.encodeToString(AutoEqTreeResponse(root.sha, nodes))
+            treeFile.writeText(body)
+            treeTimestampFile.writeText(System.currentTimeMillis().toString())
+            body
         } catch (e: Exception) {
             Timber.tag(TAG).e(e, "Failed to fetch tree from GitHub")
             // Fall back to stale cache if available
             if (treeFile.exists()) return treeFile.readText()
             null
+        }
+    }
+
+    private fun fetchTree(sha: String, recursive: Boolean): AutoEqTreeResponse {
+        val url = "$TREE_API_BASE/$sha" + if (recursive) "?recursive=1" else ""
+        val request = Request.Builder().url(url)
+            .header("Accept", "application/vnd.github+json")
+            .header("X-GitHub-Api-Version", "2022-11-28")
+            .build()
+        return client.newCall(request).execute().use { response ->
+            check(response.isSuccessful) { "GitHub tree HTTP ${response.code}" }
+            json.decodeFromString<AutoEqTreeResponse>(requireNotNull(response.body).string())
         }
     }
 
