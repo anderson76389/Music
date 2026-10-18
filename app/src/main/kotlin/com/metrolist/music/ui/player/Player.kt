@@ -103,6 +103,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
@@ -357,6 +359,7 @@ fun BottomSheetPlayer(
 
     // Use Cast state when casting, otherwise local player
     val effectiveIsPlaying = if (isCasting) castIsPlaying else isPlaying
+    val playPauseLabel = stringResource(if (effectiveIsPlaying) R.string.player_pause else R.string.play)
 
     // Use State objects for position/duration to pass to MiniPlayer without causing recomposition
     // These states persist across playback state changes to ensure continuous progress updates.
@@ -1257,6 +1260,7 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
+                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable { isFullScreen = !isFullScreen },
                             ) {
                                 Icon(
@@ -1276,6 +1280,7 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
+                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable {
                                             val intent =
                                                 Intent().apply {
@@ -1313,6 +1318,7 @@ fun BottomSheetPlayer(
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(24.dp))
                                         .background(textButtonColor)
+                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable {
                                             menuState.show {
                                                 fr.makoff.music.ui.menu.LyricsMenu(
@@ -1630,6 +1636,7 @@ fun BottomSheetPlayer(
                                     Modifier
                                         .height(68.dp)
                                         .weight(playPauseWeight)
+                                        .semantics { contentDescription = playPauseLabel }
                                         .focusRequester(focusRequester),
                             ) {
                                 Row(
@@ -1643,10 +1650,7 @@ fun BottomSheetPlayer(
                                                     if (effectiveIsPlaying) R.drawable.pause else R.drawable.play
                                                 },
                                             ),
-                                        contentDescription =
-                                            run {
-                                                if (effectiveIsPlaying) stringResource(R.string.player_pause) else stringResource(R.string.play)
-                                            },
+                                        contentDescription = null,
                                         modifier = Modifier.size(32.dp),
                                     )
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1739,6 +1743,7 @@ fun BottomSheetPlayer(
                                         .size(72.dp)
                                         .clip(RoundedCornerShape(playPauseRoundness))
                                         .background(textButtonColor)
+                                        .semantics { contentDescription = playPauseLabel }
                                         .clickable {
 
                                             if (isCasting) {
@@ -1769,7 +1774,7 @@ fun BottomSheetPlayer(
                                                 R.drawable.play
                                             },
                                         ),
-                                    contentDescription = if (effectiveIsPlaying) stringResource(R.string.player_pause) else stringResource(R.string.play),
+                                    contentDescription = null,
                                     colorFilter = ColorFilter.tint(iconButtonColor),
                                     modifier =
                                         Modifier

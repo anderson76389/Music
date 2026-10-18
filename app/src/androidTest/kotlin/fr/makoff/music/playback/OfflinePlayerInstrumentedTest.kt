@@ -136,6 +136,7 @@ class OfflinePlayerInstrumentedTest {
             clickDescription(R.string.play)
             await("UI Play did not render audio") { main { active.player.isPlaying && active.player.currentPosition > 200 } }
             await("No audio buffers rendered") { main { (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 } }
+            withTimeout(5000) { controller.isPlaying.first { it } }
             clickDescription(R.string.player_pause)
             await("UI Pause did not stop playback") { main { !active.player.playWhenReady } }
             println("PLAYER_UI_OK: cached AAC/M4A decoded; real UI play/pause and rendered audio buffers")
@@ -212,9 +213,14 @@ class OfflinePlayerInstrumentedTest {
             assertNull(main { active.player.playerError })
         } catch (failure: Throwable) {
             runCatching {
-                device.dumpWindowHierarchy(java.io.File("/sdcard/offline-player-failure.xml"))
-                device.takeScreenshot(java.io.File("/sdcard/offline-player-failure.png"))
-            }
+                val hierarchy = java.io.ByteArrayOutputStream()
+                device.dumpWindowHierarchy(hierarchy)
+                hierarchy.toString("UTF-8").replace("><", ">\n<").lineSequence()
+                    .forEach { println("PLAYER_FAILURE_UI: $it") }
+                val directory = requireNotNull(context.getExternalFilesDir(null))
+                java.io.File(directory, "offline-player-failure.xml").writeBytes(hierarchy.toByteArray())
+                device.takeScreenshot(java.io.File(directory, "offline-player-failure.png"))
+            }.onFailure { println("PLAYER_FAILURE_CAPTURE: $it") }
             throw failure
         } finally {
             main { service?.sleepTimer?.clear(); connection?.pause(); connection?.dispose(); service?.takeIf { it.isPlayerReady.value }?.player?.clearMediaItems() }
