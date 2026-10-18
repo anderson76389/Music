@@ -44,7 +44,11 @@ class OfflinePlayerInstrumentedTest {
 
     private fun <T> main(block: () -> T): T {
         val result = AtomicReference<T>()
-        instrumentation.runOnMainSync { result.set(block()) }
+        val failure = AtomicReference<Throwable?>()
+        instrumentation.runOnMainSync {
+            try { result.set(block()) } catch (error: Throwable) { failure.set(error) }
+        }
+        failure.get()?.let { throw it }
         return result.get()
     }
 
@@ -104,10 +108,12 @@ class OfflinePlayerInstrumentedTest {
             bound = context.bindService(Intent(context, MusicService::class.java), binding, Context.BIND_AUTO_CREATE)
             check(bound)
             val binder = future.get(30, TimeUnit.SECONDS)
+            println("PLAYER_STAGE: production service bound")
             val active = binder.service
             service = active
             await("Production player not ready") { active.isPlayerReady.value }
             val audio = wave()
+            println("PLAYER_STAGE: caching WAV fixtures")
             for (track in tracks) {
                 active.database.insert(track)
                 val hole = active.downloadCache.startReadWrite(track.id, 0, audio.size.toLong())
@@ -123,6 +129,7 @@ class OfflinePlayerInstrumentedTest {
             tracks.forEachIndexed { i, track ->
                 active.database.insert(RelatedSongMap(songId = track.id, relatedSongId = tracks[(i + 1) % tracks.size].id))
             }
+            println("PLAYER_STAGE: fixtures and local metadata ready")
             val controller = main { PlayerConnection(context, binder, active.database, scope) }
             connection = controller
             main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
@@ -130,6 +137,7 @@ class OfflinePlayerInstrumentedTest {
                 main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
             }
             assertNull(main { active.player.playerError })
+            println("PLAYER_STAGE: cached audio prepared")
             val title = device.wait(Until.findObject(By.text(tracks[0].title)), 15000)
             assertNotNull("Mini-player title", title)
             title!!.click()

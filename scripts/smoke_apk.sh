@@ -25,9 +25,12 @@ for variant in foss gms; do
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/yt-dlp-saf-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/yt-dlp-saf-tests.txt
     adb shell cmd connectivity airplane-mode enable
+    adb logcat -c
     adb shell settings get global airplane_mode_on | tee smoke-results/offline-network-state.txt
     grep -q '^1' smoke-results/offline-network-state.txt
     timeout 240s adb shell am instrument -w -r -e class fr.makoff.music.playback.OfflinePlayerInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/offline-player-tests.txt
+    adb logcat -d > smoke-results/offline-player-logcat.txt
+    adb exec-out screencap -p > smoke-results/offline-player.png
     adb shell cmd connectivity airplane-mode disable
     grep -Eq 'OK \(1 test\)' smoke-results/offline-player-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
