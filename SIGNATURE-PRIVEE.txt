@@ -1,0 +1,35 @@
+SIGNATURE PERMANENTE DE METROLIST
+
+Une seule configuration depuis le Codespace de anderson76389/Music :
+python3 scripts/setup_signing.py
+
+Prérequis : Java (keytool), GitHub CLI (gh), authentification du propriétaire
+avec les droits de gestion des secrets Actions sur ce dépôt. Si le jeton du
+Codespace n'a pas ces droits, authentifiez GitHub CLI avec votre compte ; ne
+partagez jamais un jeton ou un mot de passe dans une conversation.
+
+Le script demande deux fois un mot de passe sans l'afficher, crée une clé RSA
+4096 bits dans un conteneur PKCS12 chiffré et configure les quatre secrets MUSIC
+attendus par le workflow stable. La clé reste hors du dépôt, sous :
+~/.local/share/metrolist-signing/metrolist-release.p12
+
+Sauvegardez ce fichier dans un emplacement privé avant de supprimer le Codespace.
+Conservez son mot de passe séparément. Le certificat PEM voisin est public ;
+le fichier P12 est privé. Aucun des deux n'est ajouté au dépôt par le script.
+Une clé déjà présente n'est pas régénérée. Des secrets déjà présents bloquent
+l'opération. --resume-upload sert uniquement à reprendre un premier envoi
+interrompu depuis le même Codespace avec la même clé, jamais à changer de clé.
+
+Après sauvegarde, lancer la publication signée :
+gh workflow run music-release.yml --repo anderson76389/Music --ref main -f tag=v13.7.0
+
+Le workflow doit réussir avant qu'une version signée soit disponible. Les
+publications stables suivantes doivent conserver cette clé et augmenter leur
+numéro de version. Le script ne change pas la version et ne publie pas d'APK.
+
+La version stable utilise fr.makoff.music, les préversions fr.makoff.music.debug.
+Elle s'installe donc séparément. Sauvegardez vos données depuis la préversion
+avant toute suppression ; vérifiez leur restauration dans la version stable.
+Une signature permanente permet la continuité des mises à jour Android ; elle
+ne constitue pas une certification Google et ne garantit pas l'absence de
+message Play Protect demandant d'analyser une application inconnue.
