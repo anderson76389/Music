@@ -1,112 +1,294 @@
-<p align="center"><img src="assets/makoff-banner.svg" alt="Metrolist — Votre musique. Votre application." width="100%"></p>
+<div align="center">
 
-<p align="center">
-  <strong>Un client YouTube Music libre pour Android, avec votre bibliothèque, vos téléchargements et votre son.</strong>
-</p>
+<img src="fastlane/metadata/android/en-US/images/icon.png" alt="Icône de l’application Metrolist" width="200" />
 
-<p align="center">
-  <a href="https://github.com/anderson76389/Music/releases">📦 Télécharger l’APK</a> ·
-  <a href="https://github.com/anderson76389/Music/actions/workflows/makoff-android.yml">🧪 Vérifications</a> ·
-  <a href="https://github.com/anderson76389/Music/issues">💬 Signaler un problème</a>
-</p>
+# Metrolist
 
-## Une application pour écouter à votre façon
+### Client YouTube Music pour Android
 
-- **Votre musique** : recherche, albums, artistes, listes de lecture et bibliothèque ; connexion au compte YouTube Music facultative.
-- **Lecture au quotidien** : arrière-plan, écran verrouillé, file d’attente, lecture aléatoire, répétition et minuterie.
-- **Écoute hors connexion** : téléchargements, cache et gestion des morceaux enregistrés.
-- **Fichiers audio accessibles** : mode yt-dlp 2026.08.19 embarqué pour enregistrer un morceau dans un dossier Android choisi, avec progression et annulation.
-- **Son personnalisable** : qualité élevée par défaut, égaliseur et réglages de lecture.
-- **Paroles et découverte** : paroles synchronisées et reconnaissance musicale selon les fournisseurs disponibles.
-- **Sur vos appareils** : widgets, Android Auto et Google Cast intégré à l’APK universel.
-- **Interface personnalisable** : thèmes, couleurs et préférences de présentation.
+<br/>
 
-## Télécharger et installer
+[![Dernière version](https://img.shields.io/github/v/release/anderson76389/Music?include_prereleases&style=for-the-badge&labelColor=0d1117&label=version)](https://github.com/anderson76389/Music/releases)
+[![Licence](https://img.shields.io/github/license/anderson76389/Music?style=for-the-badge&labelColor=0d1117&label=licence)](LICENSE)
+[![Téléchargements](https://img.shields.io/github/downloads/anderson76389/Music/total?style=for-the-badge&labelColor=0d1117&label=t%C3%A9l%C3%A9chargements)](https://github.com/anderson76389/Music/releases)
 
-> **[Préversion test 41 vérifiée](https://github.com/anderson76389/Music/releases/tag/test-41-9844976) — un seul APK pour Android :** Metrolist universel, avec Google Cast. Le logo d’origine, le lecteur YouTube Music et les deux modes de téléchargement sont conservés. [Rapport des réglages vérifiés](VERIFICATION-PARAMETRES.txt) · [Vérification de la qualité audio](QUALITE-AUDIO.txt) · [Fonctions et limites vérifiées](VERIFICATION-FONCTIONS.txt).
+<br/>
 
-| Application | Téléchargement |
-| --- | --- |
-| Metrolist universel, avec Google Cast | [Télécharger l’APK universel — test 41](https://github.com/anderson76389/Music/releases/download/test-41-9844976/MAKOFF-Music-universal.apk) |
+[**Télécharger**](#telecharger) · [**Fonctionnalités**](#fonctionnalites) · [**Traductions**](#traductions) · [**FAQ**](#faq) · [**Soutenir le projet**](#soutenir)
 
-Installez directement **`MAKOFF-Music-universal.apk`** ; aucune décompression n’est nécessaire. L’archive de code source et le fichier de sommes de contrôle ne sont pas des versions supplémentaires de l’application.
+</div>
 
-**Android 8.0 minimum.** Un seul APK prend en charge ARM 32/64 bits et x86 32/64 bits.
+> [!NOTE]
+> **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
-**[Ouvrir toutes les versions et leur APK →](https://github.com/anderson76389/Music/releases)**
+> [!IMPORTANT]
+> **Vérifications réelles — préversion 41 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
-Dans chaque publication, ouvrez **« Assets » (fichiers joints)** et téléchargez l’unique fichier `.apk`. Autorisez son installation depuis votre navigateur ou votre gestionnaire de fichiers si Android le demande. Les anciennes publications restent disponibles dans l’historique.
+> [!WARNING]
+> **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
 
-### Versions de test
+---
 
-Chaque modification du code sur la branche principale lance les contrôles et publie automatiquement une préversion si tous réussissent. La compilation conserve les deux variantes en interne pour les tests de compatibilité, mais **un seul APK universel avec Google Cast est publié**, accompagné des sources et des sommes de contrôle SHA-256. Le numéro d’exécution et l’identifiant de révision distinguent chaque publication. Les notes décrivent les changements de l’APK et sont consultables dans le journal de l’application.
+<div align="center">
 
-Les APK de test utilisent `fr.makoff.music.debug` et une signature temporaire propre à la construction. Ils peuvent cohabiter avec une version stable, mais ne garantissent pas une mise à jour directe entre deux tests. **Sauvegardez vos données avant de remplacer une installation de test.** Les mises à jour automatiques sont désactivées dans ces APK.
+<h1><a id="captures"></a>Captures d’écran</h1>
 
-### Versions stables et mises à jour
+<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_1.png" alt="Écran d’accueil" width="30%" />
+<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Page d’un artiste" width="30%" />
+<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Reconnaissance musicale" width="30%" />
+<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Lecteur musical" width="30%" />
+<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Paroles synchronisées dans le lecteur" width="30%" />
 
-Le circuit de publication stable produit l’APK universel signé, les sources et leurs sommes de contrôle dans les versions publiées de ce dépôt. Il nécessite la configuration de la clé privée du projet. Les futures versions doivent conserver cette clé et augmenter leur numéro de version pour permettre la mise à jour Android.
+<sub>Captures de présentation héritées de l’interface d’origine, conservées dans ce dépôt. Elles illustrent l’interface et ne constituent pas une preuve de test de la préversion actuelle.</sub>
 
-L’application stable recherche ses mises à jour exclusivement dans **ce dépôt**. Une préversion de test n’est pas présentée comme une version stable. Aucune publication stable n’est garantie tant que la signature n’est pas configurée.
+</div>
 
-## Enregistrer de vrais fichiers audio
+---
 
-Dans le menu d’un morceau, d’un résultat YouTube, du lecteur ou de la file d’attente, choisissez **« Enregistrer un fichier audio (yt-dlp) »**. Android vous demande un dossier au premier usage : créez ou choisissez par exemple `Téléchargements/Metrolist`, puis autorisez son utilisation.
+<div align="center">
 
-Si YouTube exige une connexion, connectez-vous à votre compte YouTube dans l’application puis relancez le téléchargement. Les restrictions du compte et du service restent applicables.
+<h1><a id="fonctionnalites"></a>Fonctionnalités</h1>
 
-Le dossier est mémorisé. **Paramètres → Stockage → Fichiers audio — yt-dlp** permet de le changer, de suivre les tâches, de les annuler et d’ouvrir les fichiers terminés. Le mode hors connexion existant continue à utiliser son cache privé séparé.
+<table>
+  <tr>
+    <td width="50%" valign="top">
 
-Les fichiers gardent le meilleur flux audio disponible dans son format d’origine, généralement WebM/Opus ou M4A, sans réencodage. Il n’est pas nécessaire d’installer YTDLnis ou une autre application pour lancer le téléchargement. [Lire le guide et les limites](TELECHARGEMENTS-FICHIERS.txt).
+#### Lecture
 
-## La qualité sonore, sans promesse artificielle
+- Écoute des morceaux et vidéos disponibles sur YouTube Music
+- Lecture en arrière-plan
+- Téléchargements et cache pour l’écoute hors connexion
+- Suppression des silences
+- Minuterie de mise en veille
 
-Le mode **Élevée** est sélectionné par défaut pour la lecture et le téléchargement hors connexion. Il choisit le débit le plus élevé parmi les flux audio disponibles pour la piste d’origine. Le mode **Automatique** peut utiliser une qualité inférieure sur un réseau facturé ; le mode **Basse** privilégie l’économie de données.
+</td>
+    <td width="50%" valign="top">
 
-- **M4A** est un conteneur ; `mp4a.40.2` désigne généralement le codec **AAC-LC**.
-- **WebM/Opus** est un autre format audio compressé disponible selon le flux.
-- **FLAC** est un format sans perte. Convertir un flux AAC ou Opus en FLAC ne restitue pas les informations perdues : l’application ne fait pas cette conversion.
-- YouTube Music documente une qualité élevée pouvant atteindre **256 kbit/s en AAC ou Opus**. Cela dépend des flux auxquels le compte donne réellement accès ; l’application ne garantit pas ce débit pour chaque morceau. [Documentation YouTube Music](https://support.google.com/youtubemusic/answer/9076559?hl=fr).
+#### Audio
 
-L’export en dossier utilise `bestaudio` de yt-dlp, sans réencodage. Son classement des formats peut différer du lecteur : le débit seul ne permet pas de comparer exactement deux codecs. Un débit variable n’est pas une sélection aléatoire.
+- Normalisation du volume
+- Réglage du tempo et de la hauteur tonale
+- Égaliseur
+- Fondu enchaîné
+- Qualité élevée sélectionnée par défaut
 
-Un morceau déjà téléchargé conserve son format : pour obtenir une nouvelle qualité, supprimez son téléchargement puis téléchargez-le à nouveau. Le changement de réglage ne doit pas effacer automatiquement votre copie hors connexion. Les détails du morceau indiquent le type MIME, le codec, le débit annoncé et la fréquence d’échantillonnage lorsque ces informations sont disponibles. Le casque, la sortie Android et le codec Bluetooth influencent aussi le résultat.
+</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
 
-La préversion 41 a également passé le scénario du vrai lecteur hors connexion (commandes, file, favoris, bibliothèque et minuteurs), les six catégories de paramètres, la persistance de 26 interrupteurs, les trois choix de qualité et le chargement du journal GitHub. Cela ne certifie pas toutes les fonctions avec un compte YouTube ou sur du matériel externe.
+#### Paroles et découverte
 
-Les essais Android sur fichiers synthétiques AAC/M4A et Opus/WebM ont réussi : codec, 48 kHz stéréo et identité des octets après téléchargement et export. L’essai YouTube anonyme depuis le réseau GitHub a échoué ; l’accès aux flux de votre compte reste à vérifier sur votre téléphone. [Résultats des tests](https://github.com/anderson76389/Music/actions/runs/39260939174) · [Contrôles audio et limites](QUALITE-AUDIO.txt).
+- Paroles synchronisées
+- Romanisation locale des paroles
+- Suggestions rapides personnalisées
+- Recherche de morceaux, albums, artistes, vidéos et listes de lecture
+- Reconnaissance musicale
 
-## Un projet géré dans ce dépôt
+</td>
+    <td width="50%" valign="top">
 
-Le moteur de lecture est inclus dans les sources. Le nom affiché est Metrolist ; l’identifiant Android reste `fr.makoff.music` et les mises à jour utilisent uniquement ce dépôt. Les fonctions de salons et les services de traduction IA ont été retirés.
+#### Bibliothèque et compte
 
-L’application reste dépendante des services YouTube Music et des fournisseurs tiers activés. Un changement de ces services peut demander une correction du moteur. Les références techniques héritées et les notices légales sont détaillées dans le [rapport d’indépendance](docs/AUDIT-INDEPENDANCE.md).
+- Gestion de la bibliothèque
+- Listes de lecture locales
+- Importation de listes de lecture
+- Réorganisation des morceaux dans une liste ou la file d’attente
+- Connexion au compte YouTube Music
+- Synchronisation des morceaux, artistes, albums et listes de lecture
 
-## Construire depuis les sources
+</td>
+  </tr>
+  <tr>
+    <td width="50%" valign="top">
 
-Prérequis : Android Studio, JDK 21, SDK Android 37.0 et outils de compilation 36.0.0. Configurez le SDK dans Android Studio et créez une clé de débogage locale si elle n’existe pas.
+#### Fichiers audio
 
-```bash
-./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest
-python3 scripts/audit_independence.py
-```
+- Moteur yt-dlp embarqué
+- Enregistrement dans un dossier Android choisi
+- Conservation du flux d’origine, sans réencodage
+- Suivi et annulation des téléchargements
+- Mode hors connexion interne conservé séparément
 
-Sous Windows, utilisez `gradlew.bat`. Les APK sont générés dans `app/build/outputs/apk/foss/debug/` et `app/build/outputs/apk/gms/debug/`.
+</td>
+    <td width="50%" valign="top">
 
-| Dossier ou guide | Contenu |
-| --- | --- |
-| `app/` | Application Android |
-| `vendor/innertubex/` | Moteur de lecture embarqué |
-| [Guide de démarrage](DEMARRER-ICI.txt) | Installation et premiers repères |
-| [Guide technique](LIRE-MOI-MAKOFF.txt) | Construction, signature et essais sur téléphone |
-| [Audit d’indépendance](docs/AUDIT-INDEPENDANCE.md) | Références restantes et limites vérifiées |
+#### Interface
 
-## Contributeur du projet Metrolist
+- Widget sur l’écran d’accueil
+- Thèmes clair, sombre, noir et dynamique
+- Couleurs dynamiques et palettes prédéfinies
+- Interface Material 3
+- Google Cast dans l’APK universel
 
-**[anderson76389](https://github.com/anderson76389)** — maintenance et développement de Metrolist.
+</td>
+  </tr>
+</table>
 
-Pour signaler un problème, indiquez la version de l’application, votre version Android et les étapes permettant de le reproduire. Retirez toute information privée des journaux partagés.
+<sub>Fonctions présentes dans le code. Leur disponibilité peut dépendre du compte, de YouTube, des fournisseurs de paroles ou du matériel. Le périmètre effectivement testé est détaillé dans le rapport.</sub>
 
-## Licence
+</div>
 
-Projet libre sous **GPL-3.0**. La licence, les auteurs et les notices des composants d’origine sont conservés dans [LICENSE](LICENSE), [PROVENANCE.txt](PROVENANCE.txt) et les fichiers légaux embarqués. La présentation et les téléchargements de cette page concernent uniquement Metrolist.
+---
+
+<div align="center">
+
+<h1><a id="telecharger"></a>Télécharger maintenant</h1>
+
+<h2>Préversion vérifiée</h2>
+
+<table>
+  <tr>
+    <th align="center">GitHub — un seul APK universel</th>
+  </tr>
+  <tr>
+    <td align="center">
+      <a href="https://github.com/anderson76389/Music/releases/download/test-41-9844976/MAKOFF-Music-universal.apk">
+        <img src="assets/badges/github-apk-fr.svg" alt="Télécharger l’APK universel sur GitHub" height="120" />
+      </a>
+    </td>
+  </tr>
+</table>
+
+**[Télécharger Metrolist — test 41](https://github.com/anderson76389/Music/releases/download/test-41-9844976/MAKOFF-Music-universal.apk)**
+
+Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
+
+[Notes de cette version](https://github.com/anderson76389/Music/releases/tag/test-41-9844976) · [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Tests réussis](https://github.com/anderson76389/Music/actions/runs/39260939174)
+
+</div>
+
+Installez **`MAKOFF-Music-universal.apk`** directement. Les sources et les sommes de contrôle jointes ne sont pas des versions supplémentaires de l’application.
+
+Chaque modification du code sur la branche principale lance les contrôles. Une préversion avec **un seul APK** est publiée automatiquement lorsque les contrôles obligatoires réussissent. Les deux variantes sont compilées en interne pour les essais de compatibilité.
+
+> [!IMPORTANT]
+> **Signature de test :** ces APK utilisent `fr.makoff.music.debug` et une clé temporaire propre à chaque construction. La mise à jour directe entre deux préversions n’est pas garantie. Sauvegardez vos données avant de remplacer une installation. Les mises à jour automatiques sont désactivées dans les préversions.
+
+<div align="center">
+
+<h2>Version stable</h2>
+
+Une publication stable nécessite la configuration d’une clé privée de signature durable. Le circuit prévu produit lui aussi un seul APK universel et utilise exclusivement les publications de ce dépôt pour les mises à jour.
+
+</div>
+
+---
+
+<div align="center">
+
+<h1><a id="faq"></a>Questions fréquentes</h1>
+
+<h3>Une question ? Retrouvez les réponses ci-dessous et dans les guides du dépôt.</h3>
+
+</div>
+
+<details>
+<summary><strong>Toutes les fonctions sont-elles garanties ?</strong></summary>
+
+Les contrôles de la préversion 41 ont réussi dans le périmètre décrit dans [VERIFICATION-FONCTIONS.txt](VERIFICATION-FONCTIONS.txt). Un interrupteur enregistré ne prouve pas son effet dans toutes les situations. La connexion et les flux YouTube authentifiés, Cast, Bluetooth, Android Auto, le microphone et toutes les combinaisons de réglages nécessitent encore des essais en conditions réelles.
+
+</details>
+
+<details>
+<summary><strong>Comment enregistrer les fichiers dans un dossier ?</strong></summary>
+
+Dans le menu d’un morceau ou du lecteur, choisissez **« Enregistrer un fichier audio (yt-dlp) »**, sélectionnez un dossier Android et autorisez son utilisation. Le suivi des tâches et le changement de dossier se trouvent dans **Paramètres → Stockage → Fichiers audio — yt-dlp**. Le téléchargement interne pour l’écoute hors connexion reste disponible séparément. [Guide complet](TELECHARGEMENTS-FICHIERS.txt).
+
+</details>
+
+<details>
+<summary><strong>Est-ce du M4A, de l’Opus ou du FLAC ?</strong></summary>
+
+M4A est un conteneur, généralement associé au codec AAC ; WebM peut contenir de l’Opus. L’application conserve le flux disponible sans fabriquer de FLAC par conversion. Le mode Élevée ne garantit pas 256 kbit/s pour tous les titres. L’export yt-dlp demande le meilleur flux audio disponible, indépendamment du réglage de qualité du lecteur. [Contrôles audio et explications](QUALITE-AUDIO.txt).
+
+</details>
+
+<details>
+<summary><strong>L’application dépend-elle encore d’un serveur du projet d’origine ?</strong></summary>
+
+L’audit ne détecte aucun point d’accès applicatif amont actif connu dans les modules contrôlés. Le moteur et le logo sont présents localement. YouTube/Google, GitHub et les fournisseurs tiers activés restent des services extérieurs ; leur pérennité n’est pas garantie par l’archivage du code. [Audit d’indépendance](docs/AUDIT-INDEPENDANCE.md).
+
+</details>
+
+---
+
+<div align="center">
+
+<h1><a id="traductions"></a>Traductions</h1>
+
+<h3>Metrolist propose plusieurs langues, dont le français.</h3>
+
+Les ressources de traduction sont conservées dans les [sources de l’application](app/src/main/res). Pour signaler une formulation incorrecte, [ouvrez un ticket](https://github.com/anderson76389/Music/issues) en précisant l’écran concerné et le texte proposé.
+
+<h3>Merci ! Chaque traduction rend l’application plus accessible.</h3>
+
+</div>
+
+---
+
+<div align="center">
+
+<h1><a id="soutenir"></a>Soutenir le projet</h1>
+
+<h3>Metrolist est libre et open source. Vous pouvez soutenir cette version en signalant les problèmes et en partageant vos retours.</h3>
+
+[Signaler un problème](https://github.com/anderson76389/Music/issues) · [Consulter les sources](https://github.com/anderson76389/Music) · [Voir les publications](https://github.com/anderson76389/Music/releases)
+
+</div>
+
+---
+
+<div align="center">
+
+<h1>Remerciements</h1>
+
+<h3>Cette application repose sur le travail de nombreux projets open source.</h3>
+
+<table>
+  <tr><th align="center">Composant</th><th align="center">Contribution</th></tr>
+  <tr><td align="center"><strong>Moteur embarqué</strong></td><td>Accès aux données et aux flux YouTube Music ; sources conservées dans <a href="vendor/innertubex">vendor/innertubex</a>.</td></tr>
+  <tr><td align="center"><strong>yt-dlp</strong></td><td>Téléchargement des flux audio pour l’export en dossier.</td></tr>
+  <tr><td align="center"><strong>Fournisseurs de paroles</strong></td><td>Recherche des paroles et synchronisation selon les réponses disponibles.</td></tr>
+  <tr><td align="center"><strong>Reconnaissance musicale</strong></td><td>Identification musicale via les services concernés.</td></tr>
+</table>
+
+<h3>Merci à la communauté pour les bibliothèques, outils et interfaces utilisés.</h3>
+
+Les auteurs d’origine, les licences et la provenance des composants sont conservés dans [PROVENANCE.txt](PROVENANCE.txt), [LICENSE](LICENSE) et les notices des sources.
+
+</div>
+
+---
+
+<div align="center">
+
+<h1>Contributeur de cette version</h1>
+
+<h3><a href="https://github.com/anderson76389">anderson76389</a></h3>
+
+Maintenance et développement de cette version personnelle.
+
+</div>
+
+---
+
+<div align="center">
+
+<h1>Avertissement</h1>
+
+Cette version personnelle n’est **ni affiliée à, ni financée, autorisée ou approuvée par YouTube ou Google LLC**, ni par leurs sociétés affiliées ou filiales.
+
+Les marques et les droits de propriété intellectuelle mentionnés appartiennent à leurs propriétaires respectifs. Le code est distribué sous **GPL-3.0**, avec ses notices et licences.
+
+</div>
+
+---
+
+<div align="center">
+
+<br/>
+
+**Maintenu avec ❤️ par [anderson76389](https://github.com/anderson76389)**
+
+</div>
