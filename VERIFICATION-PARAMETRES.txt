@@ -1,62 +1,59 @@
-MISE À JOUR : le réglage de traduction IA et les salons ont été retirés depuis
-ce rapport historique. La navigation actuelle comporte six catégories.
-Voir VERIFICATION-FONCTIONS.txt pour la dernière révision publiée.
+METROLIST PERSONNEL — VÉRIFICATION DES PARAMÈTRES
+19 octobre 2026
 
-MAKOFF Music — vérification des paramètres
-17 octobre 2026 — résultats confirmés le 18 octobre 2026
+ÉTAT ACTUEL
+Ce rapport remplace les anciens inventaires de fonctionnalités supprimées.
+Discord, Last.fm, À propos, salons d'écoute et traduction IA sont retirés.
+Les mentions légales et licences des sources restent conservées.
+Les résultats exécutés et leur révision exacte sont dans VERIFICATION-FONCTIONS.txt.
 
-Modifications
-- Bouton Intégrations supprimé du panneau du compte.
-- Routes et écrans Intégrations, Last.fm et À propos supprimés.
-- Client Last.fm, chargement de session, scrobbling, envoi du morceau en cours et envoi des favoris supprimés.
-- Discord reste absent du code de l'application.
-- L'écoute partagée conserve son accès et ses réglages de serveur personnel.
-- Notices légales et licences conservées dans les sources et les fichiers embarqués.
+JETON DU COMPTE
+L'éditeur avancé permet de réparer/importer la session YouTube Music : cookies
+InnerTube, Visitor Data, DataSync ID et compte actif. Une connexion normale
+réussie suffit. Aucune clé fournie par Metrolist n'est nécessaire. Ces données
+permettent d'accéder à la session et doivent rester privées.
 
-Jeton
-Le bouton du compte ouvre l'éditeur avancé de la session YouTube Music : cookies InnerTube, Visitor Data, DataSync ID, compte actif et informations de profil. Il sert à importer ou réparer une connexion manuellement. Une connexion normale réussie suffit ; ce n'est pas une clé à demander à Metrolist. Ces données permettent l'accès à la session et doivent rester privées.
-
-Journal des modifications
+JOURNAL DES MODIFICATIONS
 Source : https://api.github.com/repos/anderson76389/Music/releases
-Le journal fonctionne indépendamment du mécanisme d'installation des mises à jour. Les APK de test peuvent donc le lire même si leurs mises à jour automatiques sont désactivées.
-Les préversions sont conservées, les brouillons exclus et les publications triées par date décroissante. Le filtre basé sur l'ancienne version 13.7.0 a été retiré. Une erreur réseau/HTTP produit un message et un bouton Réessayer ; elle n'est plus présentée comme un journal vide.
-L'historique contient au maximum 300 Releases. Les textes affichés sont les notes de chaque Release, pas tous les commits du dépôt.
-CHANGEMENTS-VERSION.txt est joint aux notes lors des prochaines publications du workflow Android ; il doit être actualisé pour chaque changement de code destiné à une nouvelle version.
+Le journal charge les notes de publication de ce dépôt, préversions incluses,
+brouillons exclus, triées par date. Il reste accessible dans les APK de test
+même lorsque leur installation automatique de mises à jour est désactivée.
+Une erreur réseau affiche un message et Réessayer. Limite : 300 publications.
+CHANGEMENTS-VERSION.txt est ajouté aux notes de chaque nouvelle préversion.
 
-Contrôles statiques effectués
-- 16 fichiers de réglages, 354 branchements onClick/onCheckedChange/onValueChange/onDone recensés.
-- Toutes les destinations littérales de navigation des réglages existent. Un contrôle complémentaire des 46 appels de navigation littéraux dans l’ensemble de l’application ne trouve aucune destination non résolue (routes paramétrées prises en compte).
-- Aucun gestionnaire onClick/onCheckedChange vide détecté dans ces réglages.
-- 138 noms de clés de préférence examinés : références dans le reste de l'application, ou action locale directe (changement d'icône).
-- Recherche complémentaire dans toute l’interface : les gestionnaires de clic vides repérés correspondent à trois poignées de glisser-déposer et à une ligne Automix disposant de boutons dédiés et d’un appui long ; ce ne sont pas des actions de réglage manquantes.
-- Les alias d'icônes ciblés existent dans le manifeste et portent l'identité MAKOFF.
-- Le lecteur et les téléchargements historiques conservent leurs réglages de haute qualité.
-- Audit d'indépendance, intégrité du moteur yt-dlp et empreintes du logo conservés.
-Ces contrôles de branchement ne prouvent pas à eux seuls le comportement de chaque option.
+CONTRÔLES DU CODE
+- Inventaire : 20 fichiers du lecteur et des paramètres, 359 branchements
+  nommés onClick/onCheckedChange/onValueChange/onDone. Détail dans
+  INVENTAIRE-LECTEUR-PARAMETRES.txt. Les destinations littérales sont contrôlées.
+- 130 clés directement utilisées dans les paramètres examinées : consommateur
+  ailleurs ou action locale directe, comme le changement d'icône.
+- 82 valeurs booléennes par défaut comparées aux consommateurs détectables.
+  Incohérence LyricsPlus corrigée : interface et fournisseur activés par défaut.
+- La poignée de réorganisation et le champ de sélection de proxy en lecture
+  seule ont des callbacks vides intentionnels ; leurs actions passent par le
+  glisser-déposer ou le menu. La ligne Automix, elle, déclenche désormais la lecture.
+Ces contrôles statiques ne valident pas chaque combinaison en exécution.
 
-Vérifications automatisées réussies dans le workflow
-- Compilation FOSS et Google Cast, ensemble des tests unitaires Android, tests JVM et compatibilité API du moteur embarqué.
-- Compilation et tests du serveur d'écoute partagée.
-- Installation et démarrage des deux APK sur Android 11.
-- Moteur yt-dlp réel et export SAF, absence d'écrasement, nettoyage sur échec de renommage.
-- Navigation réelle : Apparence, Lecteur et audio, Contenu, Traduction IA, Confidentialité, Stockage, Sauvegarde/restauration.
-- Changement et lecture de la préférence de fondu ; ouverture du choix de qualité audio.
-- Chargement et affichage d'une préversion réelle depuis les Releases GitHub dans l'APK debug.
+PÉRIMÈTRE DES TESTS ANDROID AJOUTÉS
+Six catégories : Apparence, Lecteur et audio, Contenu, Confidentialité,
+Stockage, Sauvegarde/restauration. Nom installé et absence des entrées retirées.
+26 interrupteurs : 19 du lecteur, 4 du contenu, 2 de confidentialité et le cache.
+Le test active deux fois chaque interrupteur par son action d’accessibilité,
+contrôle sa valeur enregistrée,
+puis restaure la préférence initiale. Le fournisseur LyricsPlus est aussi vérifié.
+Les trois valeurs de qualité LOW/AUTO/HIGH sont sélectionnées et contrôlées.
+Le journal doit afficher une véritable préversion chargée depuis ce GitHub.
+Un test séparé utilise le véritable service de lecture et un fichier AAC local
+complet, en mode avion ; ses résultats sont distincts des tests de paramètres.
+Le bilan des tests réellement réussis figure dans VERIFICATION-FONCTIONS.txt.
 
-Limites à ne pas confondre avec une validation totale
-- Une référence de code n'est pas un essai de chaque bouton et de toutes les combinaisons d'options.
-- Connexion Google, synchronisation du compte, lecture et téléchargement YouTube authentifiés : à tester avec un compte sur téléphone.
-- Traduction IA : dépend du fournisseur, de sa clé et de son service.
-- Écoute partagée : nécessite un serveur configuré ; le serveur inclus a ses propres tests.
-- Cast, Android Auto, Bluetooth, réveil en veille, réglages système et lanceurs d'icônes : nécessitent le matériel/la version Android concernés.
-- Sauvegarde/restauration avec les données personnelles, import complet et destruction des caches n'ont pas été exécutés sur les données de l'utilisateur.
-- L'essai YouTube anonyme de CI peut être refusé par YouTube ; son résultat est conservé séparément et n'est pas transformé en réussite.
-- APK de test : signature temporaire, mises à jour directes entre préversions non garanties.
-
-Résultat final
-Les quatre jobs du workflow ont réussi : compilation/tests Android, serveur, installation/tests sur émulateur et publication.
-Exécution : https://github.com/anderson76389/Music/actions/runs/39072220142
-Source des APK : 85215ca07f035bbb35285abb5468e9c935743966
-Publication : https://github.com/anderson76389/Music/releases/tag/test-20-85215ca
-Le test instrumenté de réglages a réussi (1 test regroupant les sept parcours, la préférence et le journal) ; les deux tests natifs yt-dlp/SAF ont réussi. Le démarrage des deux variantes FOSS/GMS a réussi.
-Les références aux anciennes clés LASTFM ont également été retirées des workflows actifs et archivés ; les fichiers de documentation et de workflow ne changent pas le code des APK déjà testés.
+LIMITES
+La persistance d'un interrupteur ne prouve pas son effet sonore, matériel ou
+réseau dans toutes les conditions. Cast, Bluetooth, Android Auto, microphone,
+réveil et gestion de batterie requièrent les appareils concernés. La connexion,
+la synchronisation et les téléchargements YouTube authentifiés n'ont pas été
+certifiés avec le compte de l'utilisateur. La restauration complète de ses
+données et toutes les combinaisons de préférences ne sont pas testées ici.
+Paroles, Shazam, AutoEQ et autres services recensés dans INDEPENDANCE-MUSIC.txt
+restent externes. Les signatures temporaires des préversions ne garantissent
+pas leur mise à jour directe ; sauvegarder avant une désinstallation.

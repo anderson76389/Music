@@ -1,72 +1,103 @@
-METROLIST PERSONNEL — VÉRIFICATION DES FONCTIONS, 18 OCTOBRE 2026
+METROLIST PERSONNEL — VÉRIFICATION DES FONCTIONS
+19 octobre 2026
 
-Nom affiché rétabli à Metrolist ; identifiant et mises à jour du projet personnel
-conservés. Les fonctions de salons et de traduction IA sont supprimées, ainsi
-que leurs ressources et services. Le lecteur, les paroles originales et la
-romanisation locale restent présents.
+Le nom affiché est Metrolist, avec l'identifiant fr.makoff.music et les mises à
+jour de anderson76389/Music. Le logo reste embarqué localement. Salons d'écoute,
+Discord, Last.fm, À propos et traduction IA sont retirés. Les paroles originales
+et la romanisation locale restent présentes. Les colonnes historiques de la
+base sont conservées pour la compatibilité, sans service de traduction actif.
 
-Les champs historiques de la base sont conservés pour la compatibilité des
-données, sans service IA actif. Aucun schéma de base n'a été modifié.
+CORRECTIONS DE CETTE CAMPAGNE
+- Bibliothèque/favoris : lecture et écriture atomiques de la ligne courante pour
+  éviter les états périmés lors d’appuis rapprochés ; synchronisation ensuite.
+- Accueil : les suggestions tolèrent qu'un morceau soit supprimé de la base
+  pendant qu'il est encore affiché ; retrait d'une source de plantage.
+- Automix : toucher une suggestion lance sa lecture. La consommation est faite
+  par identifiant si la position a changé, sans réutiliser une suggestion retirée.
+- LyricsPlus : le fournisseur et son interrupteur ont maintenant la même valeur
+  par défaut. Avant, l'interface pouvait indiquer activé avec le fournisseur arrêté.
+- Accessibilité : libellés du mini-lecteur et des commandes précédent/suivant,
+  lecture/pause. Les essais Android utilisent la variante Google Cast publiée.
 
-FONCTIONS / DÉPENDANCES / PREUVES
-- Interface et réglages : navigation Android automatisée dans les six catégories,
-  bascule du fondu et ouverture de la qualité testées dans la dernière préversion.
-  Ce test ne clique pas chaque combinaison de chaque réglage.
-- Historique : chargement réel des Releases de ce GitHub testé sur émulateur.
-- Lecture, recherche, comptes, playlists et bibliothèque en ligne : code présent,
-  services Google/YouTube nécessaires. Connexion avec votre compte, synchronisation,
-  lecture et enchaînements sur votre téléphone non validés intégralement.
-- Téléchargement interne : fonction conservée. Changer la qualité ne supprime
-  plus le fichier déjà téléchargé. Sa qualité reste celle du téléchargement.
-- Export en dossier : moteur yt-dlp embarqué, distinct du téléchargement interne.
-  Tests Android réussis sur AAC/M4A, Opus/WebM et WAV via serveur local : données
-  identiques et codecs reconnus. L'essai YouTube anonyme de CI a été refusé par la vérification anti-robot ; aucun
-  téléchargement YouTube authentifié de bout en bout n'est donc certifié ici.
-- Qualité : HIGH par défaut ; formats disponibles selon le morceau, le compte
-  et YouTube. Aucun FLAC créé et aucun débit de 256 kbit/s garanti pour tout titre.
-  Voir QUALITE-AUDIO.txt.
-- Paroles : fournisseurs tiers LRCLIB, KuGou, Paxsenix, BetterLyrics, Zemer,
-  LyricsPlus. Leurs pannes, contenus manquants et limites ne sont pas maîtrisés.
-- Égaliseur : code local ; AutoEQ dépend du dépôt officiel jaakkopasanen/AutoEq
-  pour rechercher/télécharger les profils. Cache locale ensuite. Récupération
-  corrigée pour refuser un index incomplet et fractionner les arbres tronqués.
-  Import/application audibles sur votre casque non vérifiés ici.
-- Reconnaissance : dépend de Shazam et du microphone, non validée sur téléphone.
-- Cast, Bluetooth, Android Auto, widgets, écran verrouillé et gestion batterie :
-  code présent ; nécessitent des essais avec le matériel et les permissions réels.
-- Sauvegarde/restauration : code présent ; une restauration complète des données
-  de votre appareil n'a pas été testée.
-- Mise à jour automatique : désactivée dans les APK de test à signatures temporaires.
-  Une clé stable privée et durable doit être configurée pour publier des versions
-  stables pouvant se mettre à jour sans réinstallation. Ne pas désinstaller sans
-  sauvegarde des données.
+LECTURE DES RÉSULTATS
+Un inventaire de code ne prouve pas le fonctionnement de chaque bouton.
+Un réglage enregistré ne prouve pas son effet sonore, réseau ou matériel.
+Un fichier synthétique décodé ne prouve pas l'accès aux titres d'un compte YouTube.
+Le test du lecteur ne simule pas ExoPlayer : il lie le vrai MusicService, utilise
+sa base et son cache, prépare un fichier AAC/M4A complet et fonctionne en mode
+avion. Il doit observer des buffers audio rendus et les effets des commandes.
 
-VALIDATION DE CETTE RÉVISION
-Sources : 20506acd66637a59b557ff80a76d085199fde51e.
-https://github.com/anderson76389/Music/actions/runs/39153858475
-- Compilation des variantes FOSS et Google Cast : RÉUSSIE.
-- Tests unitaires, tests du moteur et contrôle API : RÉUSSIS.
-- Installation et démarrage des deux variantes sur Android 11 : RÉUSSIS.
-- Trois tests Android d'export audio : RÉUSSIS.
-- Test Android des six catégories de réglages, de leur persistance et de
-  l'historique GitHub : RÉUSSI. Le test vérifie aussi le nom installé « Metrolist »
-  et l'absence des anciennes entrées de salons et traduction IA.
-- Essai YouTube anonyme : NON RÉUSSI depuis le réseau de l'émulateur ; cet essai
-  séparé est non bloquant. Les tests verts ne valident pas ce scénario ni le
-  téléchargement authentifié avec le compte de l'utilisateur.
-- Publication : un seul APK universel dans la préversion 25.
-https://github.com/anderson76389/Music/releases/tag/test-25-20506ac
-Preuves et journaux :
-https://github.com/anderson76389/Music/actions/runs/39153858475/artifacts/12146381610
+RÉSULTATS CONFIRMÉS — PRÉVERSION 41
+Source : 98449763b417196acb91400953036684f3494aa4.
+Exécution : https://github.com/anderson76389/Music/actions/runs/39260939174
+Preuves : https://github.com/anderson76389/Music/actions/runs/39260939174/artifacts/12191296860
+Compilation, essais Android obligatoires et publication : RÉUSSIS.
+Les tests des paramètres utilisent les actions d’accessibilité des vrais contrôles,
+attendent l’affichage des écrans et ouvrent le dialogue des fournisseurs de paroles.
+Les assertions de persistance restent obligatoires et ne sont pas contournées.
 
-CONTRÔLE DU FICHIER APK GOOGLE CAST PUBLIÉ
-110 797 972 octets ; SHA-256 :
-99d4493f79ea64f37741f04ab094323eeb4fa1a4406d4c9ffa3201cf2e470c7e
-32 fichiers DEX, 491 475 chaînes examinées : aucune correspondance pour les
-classes et identifiants recherchés ListenTogether/listentogether/listen_together,
-LyricsTranslationHelper, OpenRouterService, OpenRouterStreamingService,
-DeepLService, AiSettings, ai_lyrics_translation et les anciennes adresses
-OpenRouter, OpenAI et DeepL testées. Les identifiants et libellés correspondants
-recherchés sont absents de resources.arsc. Ce contrôle ciblé ne constitue pas
-une preuve universelle d'absence de tout appel extérieur.
-Le digest de l'asset publié correspond au fichier contrôlé.
+PÉRIMÈTRE VALIDÉ SUR ANDROID 11
+- Compilation FOSS et Google Cast, tests unitaires, moteur embarqué et APIcheck.
+- Installation et démarrage des deux APK sur Android 11.
+- Trois tests Android yt-dlp/export SAF : AAC/M4A, Opus/WebM, conservation des
+  octets, protection contre l'écrasement et nettoyage après un échec.
+- Lecteur : lecture/pause/précédent/suivant via l'interface ; recherche de position,
+  file d'attente, déplacement/retrait, aléatoire, répétition, vitesse, Automix,
+  bibliothèque/favoris locaux et minuteurs via le véritable contrôleur/service.
+- Effet du réglage de suppression des silences sur le lecteur et conservation
+  du cache téléchargé lors d'un changement de qualité.
+- Six catégories de paramètres, 26 interrupteurs et LOW/AUTO/HIGH : actions de l’interface par accessibilité,
+  vérification des valeurs enregistrées et restauration. Contrôle du consommateur
+  LyricsPlus. Chargement réel des notes de publication de ce GitHub.
+
+INDÉPENDANCE ET SERVICES EXTÉRIEURS
+L'audit ne trouve aucun point d'accès applicatif Metrolist amont actif connu
+dans les modules de production contrôlés. Le moteur InnerTubeX est embarqué ;
+sa configuration distante est désactivée. Logo local vérifié par 31 empreintes,
+yt-dlp embarqué et vérifié par SHA-256, GPL et provenance conservées.
+Les 359 branchements nommés du lecteur et des paramètres sont inventoriés dans
+INVENTAIRE-LECTEUR-PARAMETRES.txt. Les destinations littérales sont contrôlées,
+130 clés des paramètres ont été examinées et 82 valeurs booléennes par défaut
+comparées aux consommateurs détectables. Ce n'est pas une capture exhaustive
+réseau ni un test de toutes les combinaisons.
+Les dépendances restantes comprennent YouTube/Google, GitHub, LRCLIB, KuGou,
+Paxsenix, BetterLyrics, Zemer, LyricsPlus, Shazam, AutoEQ officiel et Return YouTube
+Dislike. Google Cast utilise le SDK propriétaire Google dans l'APK universel.
+Les outils et bibliothèques de construction Android/Gradle/Maven/JitPack restent
+extérieurs et ne sont pas tous archivés dans le dépôt. La disparition du dépôt
+d'origine ne retire pas le code embarqué ; elle ne rend pas tous ces tiers pérennes.
+
+LIMITES RÉELLES
+- Recherche, connexion, lecture, enchaînements, playlists, synchronisation et
+  téléchargements avec le compte de l'utilisateur : non certifiés de bout en bout.
+- L’essai YouTube anonyme de cette exécution a été refusé par l’anti-robot
+  (YOUTUBE_AUTH_REQUIRED).
+  Ce test séparé est non bloquant ; une CI verte ne certifie pas ce scénario.
+- Export en dossier : vrai moteur yt-dlp embarqué, distinct du téléchargement
+  interne. Les tests locaux ne garantissent pas chaque URL YouTube actuelle.
+- Qualité HIGH par défaut. Format/débit selon le titre, le compte et YouTube.
+  M4A est un conteneur, AAC/Opus des codecs ; aucun FLAC artificiel ni 256 kbit/s
+  garanti pour tous les titres. Voir QUALITE-AUDIO.txt.
+- Paroles et reconnaissance : fournisseurs tiers et microphone nécessaires,
+  réponses réseau et reconnaissance réelle non certifiées ici.
+- AutoEQ : catalogue du dépôt officiel contrôlé ; application audible sur le
+  casque de l'utilisateur non testée. Égaliseur local conservé.
+- Cast, Bluetooth, Android Auto, widgets, écran verrouillé, alarmes, gestion de
+  batterie et permissions : validation matérielle complète non effectuée.
+- Paramètres avancés de compte/proxy, toutes les langues, combinaisons de thèmes,
+  sauvegarde/restauration complète et données personnelles : non testés exhaustivement.
+- Les APK de test ont une signature temporaire par construction et leurs mises
+  à jour automatiques sont désactivées. Une clé privée stable est nécessaire
+  pour des mises à jour durables. Sauvegarder avant toute désinstallation.
+
+APK PUBLIÉ ET CONTRÔLÉ
+https://github.com/anderson76389/Music/releases/tag/test-41-9844976
+Un seul APK : MAKOFF-Music-universal.apk, 110 800 548 octets.
+SHA-256 : c1502bc78d2b409443a27ecc55ab13b85b5739e411d5f33ea8028f5527462c51
+L’empreinte de l’APK issu de la compilation correspond à celle du fichier publié.
+Les deux autres pièces jointes sont les sources et les sommes de contrôle.
+Contrôle ciblé de 32 DEX (491 514 chaînes) et des ressources : aucune occurrence
+des classes/services supprimés ListenTogether, LyricsTranslationHelper,
+OpenRouterService, OpenRouterStreamingService, DeepLService, AiSettings,
+ni des adresses openrouter.ai, api.openai.com et api.deepl.com recherchées.
+Cette recherche ciblée ne remplace pas une capture de tous les échanges réseau.

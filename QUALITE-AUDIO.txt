@@ -1,5 +1,5 @@
-MAKOFF Music — qualité audio vérifiée dans le code
-18 octobre 2026
+METROLIST PERSONNEL — qualité audio vérifiée dans le code
+19 octobre 2026
 
 1. Lecture et téléchargement hors connexion
 Réglage par défaut : HIGH (Élevée).
@@ -42,11 +42,12 @@ https://github.com/yt-dlp/yt-dlp#format-selection
 https://github.com/yt-dlp/yt-dlp#sorting-formats
 
 6. Résultats Android confirmés
-Exécution réussie : https://github.com/anderson76389/Music/actions/runs/39087866925
-Sources testées : 96f05ce133f92a53d942e9743870c760d95628b6
+Exécution réussie : https://github.com/anderson76389/Music/actions/runs/39260939174
+Sources testées : 98449763b417196acb91400953036684f3494aa4
 Trois tests instrumentés audio réussis, dont AAC/M4A et Opus/WebM, conservation des octets, non-écrasement et nettoyage après échec.
-Le test des sept parcours de réglages et du journal a également réussi.
-Preuves : https://github.com/anderson76389/Music/actions/runs/39087866925/artifacts/12121956286
-L'essai YouTube réel anonyme est resté en échec ; aucun résultat avec compte Premium n'est affirmé.
-Publication contrôlée : https://github.com/anderson76389/Music/releases/tag/test-21-96f05ce
+Le véritable lecteur ExoPlayer a aussi décodé un fichier synthétique AAC/M4A de 20 secondes, 48 kHz mono, cible 32 kbit/s, en mode avion. Cette fixture sert aux commandes du lecteur ; elle n’indique pas la qualité des morceaux YouTube. Les buffers rendus, commandes, file, favoris/bibliothèque et minuteurs ont été vérifiés. Le cache complet est conservé lors du passage au réglage LOW.
+Les six catégories de paramètres, 26 interrupteurs, LOW/AUTO/HIGH et le journal GitHub ont passé leurs assertions.
+Preuves : https://github.com/anderson76389/Music/actions/runs/39260939174/artifacts/12191296860
+L’essai YouTube anonyme séparé a échoué : YOUTUBE_AUTH_REQUIRED, demande de connexion anti-robot. Il est non bloquant et aucun résultat avec compte Premium n’est affirmé.
+Publication contrôlée : https://github.com/anderson76389/Music/releases/tag/test-41-9844976
 Un seul fichier APK : MAKOFF-Music-universal.apk. Les deux autres fichiers joints sont les sources et les sommes de contrôle.
