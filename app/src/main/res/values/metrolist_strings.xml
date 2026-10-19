@@ -850,4 +850,11 @@
     <string name="folder_audio_cancel">Annuler</string>
     <string name="makoff_changelog_error">Impossible de charger les changements depuis GitHub. Vérifiez votre connexion, puis réessayez.</string>
     <string name="makoff_retry">Réessayer</string>
+    <string name="liquid_glass_title">Liquid Glass</string>
+    <string name="liquid_glass_description">Fond lumineux personnalisé et panneaux translucides. Ce mode remplace les couleurs dynamiques et le noir pur tant qu’il est activé. Les fonds de pochette du lecteur restent prioritaires.</string>
+    <string name="liquid_glass_preview">Votre ambiance musicale</string>
+    <string name="liquid_glass_hue">Couleur du fond</string>
+    <string name="liquid_glass_intensity">Intensité des reflets</string>
+    <string name="liquid_glass_opacity">Opacité du verre</string>
+    <string name="liquid_glass_reset">Rétablir le verre violet</string>
 </resources>

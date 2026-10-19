@@ -45,6 +45,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import fr.makoff.music.ui.theme.LocalGlassStyle
+import fr.makoff.music.ui.theme.liquidPanel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableLongState
 import androidx.compose.runtime.Stable
@@ -285,6 +287,7 @@ private fun NewMiniPlayer(
     }
 
     // Memoize colors
+    val glass = LocalGlassStyle.current.let { it.copy(enabled = it.enabled && miniPlayerBackground == MiniPlayerBackgroundStyle.DEFAULT) }
     val backgroundColor = when (miniPlayerBackground) {
         MiniPlayerBackgroundStyle.DEFAULT    -> MaterialTheme.colorScheme.surfaceContainer
         MiniPlayerBackgroundStyle.TRANSPARENT -> Color.Black.copy(alpha = 0.25f)
@@ -379,7 +382,8 @@ private fun NewMiniPlayer(
                     .height(64.dp)
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                     .clip(RoundedCornerShape(32.dp))
-                    .background(color = backgroundColor)
+                    .background(color = if (glass.enabled) Color.Transparent else backgroundColor)
+                    .liquidPanel(glass)
                     .border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
                     .clickable(
                         interactionSource = interactionSource,

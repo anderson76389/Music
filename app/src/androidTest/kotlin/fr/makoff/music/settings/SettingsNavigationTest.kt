@@ -184,6 +184,13 @@ class SettingsNavigationTest {
             findText(marker)
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
             when (screen) {
+                R.string.appearance -> {
+                    open(R.string.theme)
+                    toggleAndRestore(R.string.liquid_glass_title, LiquidGlassKey, false,
+                        clicker = { id -> open(id, switchOnly = true) })
+                    device.pressBack()
+                    device.waitForIdle()
+                }
                 R.string.player_and_audio -> {
                     listOf(
                         Triple(R.string.crossfade, CrossfadeEnabledKey, false),

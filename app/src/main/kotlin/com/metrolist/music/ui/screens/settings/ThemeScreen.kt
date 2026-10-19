@@ -194,10 +194,12 @@ fun PortraitThemeLayout(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(innerPadding),
+            .padding(innerPadding)
+            .verticalScroll(rememberScrollState())
+            .padding(top = 72.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(20.dp))
 
         Box(
             modifier = Modifier
@@ -212,7 +214,7 @@ fun PortraitThemeLayout(
             )
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(20.dp))
 
         ThemeControls(
             darkMode = darkMode,
@@ -378,6 +380,8 @@ fun ThemeControls(
                     )
                 }
             }
+
+            GlassControls()
 
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(

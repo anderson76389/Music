@@ -1,3 +1,5 @@
+- Nouveau thème Liquid Glass : fond coloré, reflets, panneaux translucides, couleur/intensité/opacité réglables et enregistrées. Disponible dans Apparence > Thème, désactivé par défaut. Fond du lecteur et mini-lecteur compatibles avec leur style par défaut.
+
 ## Changements de cette préversion
 
 - Le fichier proposé dans Releases se nomme maintenant Metrolist.apk. Un seul APK universel est publié ; le système de mise à jour reconnaît ce nom ainsi que les anciens fichiers.

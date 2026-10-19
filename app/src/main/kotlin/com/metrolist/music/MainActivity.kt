@@ -195,6 +195,9 @@ import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.ui.screens.settings.NavigationTab
 import fr.makoff.music.ui.theme.ColorSaver
 import fr.makoff.music.ui.theme.DefaultThemeColor
+import fr.makoff.music.ui.theme.LocalGlassStyle
+import fr.makoff.music.ui.theme.liquidBackdrop
+import fr.makoff.music.ui.theme.liquidPanel
 import fr.makoff.music.ui.theme.MetrolistTheme
 import fr.makoff.music.ui.theme.extractThemeColor
 import fr.makoff.music.ui.utils.appBarScrollBehavior
@@ -661,6 +664,7 @@ class MainActivity : FragmentActivity() {
             pureBlack = pureBlack,
             themeColor = themeColor,
         ) {
+            val glass = LocalGlassStyle.current
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current
             val containerSize = windowInfo.containerDpSize
@@ -691,7 +695,8 @@ class MainActivity : FragmentActivity() {
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface),
+                        .background(if (pureBlack) Color.Black else MaterialTheme.colorScheme.surface)
+                        .liquidBackdrop(glass),
             ) {
                 val density = LocalDensity.current
                 val configuration = LocalWindowInfo.current
@@ -998,7 +1003,7 @@ class MainActivity : FragmentActivity() {
                 CompositionLocalProvider(
                     LocalDatabase provides database,
                     LocalNavController provides navController,
-                    LocalContentColor provides if (pureBlack) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
+                    LocalContentColor provides if (pureBlack && !glass.enabled) Color.White else contentColorFor(MaterialTheme.colorScheme.surface),
                     LocalPlayerConnection provides playerConnection,
                     LocalPlayerAwareWindowInsets provides playerAwareWindowInsets,
                     LocalDownloadUtil provides downloadUtil,
@@ -1012,6 +1017,7 @@ class MainActivity : FragmentActivity() {
                     }
 
                     Scaffold(
+                        containerColor = if (glass.enabled) Color.Transparent else MaterialTheme.colorScheme.background,
                         snackbarHost = { SnackbarHost(snackbarHostState) },
                         topBar = {
                             AnimatedVisibility(
@@ -1071,7 +1077,7 @@ class MainActivity : FragmentActivity() {
                                         scrollBehavior = topAppBarScrollBehavior,
                                         colors =
                                             TopAppBarDefaults.topAppBarColors(
-                                                containerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
+                                                containerColor = if (glass.enabled) glass.base.copy(alpha = glass.opacity) else if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
                                                 scrolledContainerColor = if (pureBlack) Color.Black else MaterialTheme.colorScheme.surfaceContainer,
                                                 titleContentColor = MaterialTheme.colorScheme.onSurface,
                                                 actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1214,7 +1220,7 @@ class MainActivity : FragmentActivity() {
                                                         } else {
                                                             1f
                                                         }
-                                                }.background(baseBg),
+                                                }.background(if (glass.enabled) Color.Transparent else baseBg).liquidPanel(glass),
                                     )
                                 }
                             } else {
@@ -1239,7 +1245,7 @@ class MainActivity : FragmentActivity() {
                                                 val progress = playerBottomSheetState.progress
                                                 alpha =
                                                     if (progress > 0f || (useNewMiniPlayerDesign && !shouldShowNavigationBar)) 0f else 1f
-                                            }.background(baseBg),
+                                            }.background(if (glass.enabled) Color.Transparent else baseBg).liquidPanel(glass),
                                 )
                             }
                         },
