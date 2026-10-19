@@ -1,6 +1,21 @@
 METROLIST PERSONNEL — VÉRIFICATION DES FONCTIONS
 19 octobre 2026
 
+DERNIÈRE PUBLICATION — PRÉVERSION 42
+Source : f86536929ed6d4ad3c1a816f2932f1d5f5fd5e91.
+https://github.com/anderson76389/Music/releases/tag/test-42-f865369
+https://github.com/anderson76389/Music/actions/runs/39266799148
+Compilation, tests unitaires, trois exports, scénario du lecteur et parcours
+complet des paramètres : réussis à nouveau. Publication automatique réussie.
+Un seul APK : Metrolist.apk. Le système de mise à jour reconnaît ce nom et
+reste compatible avec les anciens noms. Les deux circuits de publication
+(préversion et stable) utilisent ce nom. Les notes accompagnent chaque APK.
+SHA-256 publié : 9b3f39672eed42c715d11077771c8b29c53de503b10b4be4608263ad294c2d85
+L’essai YouTube anonyme séparé reste non réussi depuis le réseau de CI.
+Les limites de compte, de matériel et de signature temporaire restent celles
+expliquées ci-dessous. Le contrôle détaillé des chaînes DEX ci-dessous concerne
+la préversion 41 ; il n’a pas été réexécuté pour le seul changement de nom.
+
 Le nom affiché est Metrolist, avec l'identifiant fr.makoff.music et les mises à
 jour de anderson76389/Music. Le logo reste embarqué localement. Salons d'écoute,
 Discord, Last.fm, À propos et traduction IA sont retirés. Les paroles originales

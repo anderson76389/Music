@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — préversion 41 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — préversion 42 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
@@ -143,18 +143,18 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/anderson76389/Music/releases/download/test-41-9844976/Metrolist.apk">
+      <a href="https://github.com/anderson76389/Music/releases/download/test-42-f865369/Metrolist.apk">
         <img src="assets/badges/github-apk-fr.svg" alt="Télécharger l’APK universel sur GitHub" height="120" />
       </a>
     </td>
   </tr>
 </table>
 
-**[Télécharger Metrolist — test 41](https://github.com/anderson76389/Music/releases/download/test-41-9844976/Metrolist.apk)**
+**[Télécharger Metrolist — test 42](https://github.com/anderson76389/Music/releases/download/test-42-f865369/Metrolist.apk)**
 
 Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
-[Notes de cette version](https://github.com/anderson76389/Music/releases/tag/test-41-9844976) · [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Tests réussis](https://github.com/anderson76389/Music/actions/runs/39260939174)
+[Notes de cette version](https://github.com/anderson76389/Music/releases/tag/test-42-f865369) · [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Tests réussis](https://github.com/anderson76389/Music/actions/runs/39266799148)
 
 </div>
 
@@ -186,7 +186,7 @@ Une publication stable nécessite la configuration d’une clé privée de signa
 <details>
 <summary><strong>Toutes les fonctions sont-elles garanties ?</strong></summary>
 
-Les contrôles de la préversion 41 ont réussi dans le périmètre décrit dans [VERIFICATION-FONCTIONS.txt](VERIFICATION-FONCTIONS.txt). Un interrupteur enregistré ne prouve pas son effet dans toutes les situations. La connexion et les flux YouTube authentifiés, Cast, Bluetooth, Android Auto, le microphone et toutes les combinaisons de réglages nécessitent encore des essais en conditions réelles.
+Les contrôles de la préversion 42 ont réussi dans le périmètre décrit dans [VERIFICATION-FONCTIONS.txt](VERIFICATION-FONCTIONS.txt). Un interrupteur enregistré ne prouve pas son effet dans toutes les situations. La connexion et les flux YouTube authentifiés, Cast, Bluetooth, Android Auto, le microphone et toutes les combinaisons de réglages nécessitent encore des essais en conditions réelles.
 
 </details>
 
