@@ -143,14 +143,14 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/anderson76389/Music/releases/download/test-41-9844976/MAKOFF-Music-universal.apk">
+      <a href="https://github.com/anderson76389/Music/releases/download/test-41-9844976/Metrolist.apk">
         <img src="assets/badges/github-apk-fr.svg" alt="Télécharger l’APK universel sur GitHub" height="120" />
       </a>
     </td>
   </tr>
 </table>
 
-**[Télécharger Metrolist — test 41](https://github.com/anderson76389/Music/releases/download/test-41-9844976/MAKOFF-Music-universal.apk)**
+**[Télécharger Metrolist — test 41](https://github.com/anderson76389/Music/releases/download/test-41-9844976/Metrolist.apk)**
 
 Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
@@ -158,7 +158,7 @@ Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
 </div>
 
-Installez **`MAKOFF-Music-universal.apk`** directement. Les sources et les sommes de contrôle jointes ne sont pas des versions supplémentaires de l’application.
+Installez **`Metrolist.apk`** directement. Les sources et les sommes de contrôle jointes ne sont pas des versions supplémentaires de l’application.
 
 Chaque modification du code sur la branche principale lance les contrôles. Une préversion avec **un seul APK** est publiée automatiquement lorsque les contrôles obligatoires réussissent. Les deux variantes sont compilées en interne pour les essais de compatibilité.
 

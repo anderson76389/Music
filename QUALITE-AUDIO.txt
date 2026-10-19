@@ -50,4 +50,4 @@ Les six catégories de paramètres, 26 interrupteurs, LOW/AUTO/HIGH et le journa
 Preuves : https://github.com/anderson76389/Music/actions/runs/39260939174/artifacts/12191296860
 L’essai YouTube anonyme séparé a échoué : YOUTUBE_AUTH_REQUIRED, demande de connexion anti-robot. Il est non bloquant et aucun résultat avec compte Premium n’est affirmé.
 Publication contrôlée : https://github.com/anderson76389/Music/releases/tag/test-41-9844976
-Un seul fichier APK : MAKOFF-Music-universal.apk. Les deux autres fichiers joints sont les sources et les sommes de contrôle.
+Un seul fichier APK : Metrolist.apk. Les deux autres fichiers joints sont les sources et les sommes de contrôle.

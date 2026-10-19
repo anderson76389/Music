@@ -1,0 +1,36 @@
+name: Renommer l’APK publié en Metrolist.apk
+on:
+  push:
+    branches: [main]
+    paths: ['.github/workflows/rename-published-apk.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  rename:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mettre à jour le fichier, les notes et les sommes de contrôle de la préversion 41
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag='test-41-9844976'
+          gh release view "$tag" --json assets,body > release.json
+          gh release download "$tag" --pattern SHA256SUMS.txt --dir .
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          release = json.loads(Path('release.json').read_text())
+          apk = [a for a in release['assets'] if a['name'].endswith('.apk')]
+          assert len(apk) == 1, 'Expected exactly one published APK'
+          assert apk[0]['name'] in ('MAKOFF-Music-universal.apk', 'Metrolist.apk')
+          Path('SHA256SUMS.txt').write_text(Path('SHA256SUMS.txt').read_text().replace('MAKOFF-Music-universal.apk', 'Metrolist.apk'))
+          Path('notes.txt').write_text(release['body'].replace('MAKOFF-Music-universal.apk', 'Metrolist.apk'))
+          PY
+          asset_id=$(gh api "repos/$GH_REPO/releases/tags/$tag" --jq '.assets[] | select(.name == "MAKOFF-Music-universal.apk" or .name == "Metrolist.apk") | .id')
+          gh api --method PATCH "repos/$GH_REPO/releases/assets/$asset_id" -f name=Metrolist.apk --silent
+          gh release upload "$tag" SHA256SUMS.txt --clobber
+          gh release edit "$tag" --notes-file notes.txt
+          gh release view "$tag" --json url,assets

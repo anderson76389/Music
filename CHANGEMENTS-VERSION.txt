@@ -1,5 +1,7 @@
 ## Changements de cette préversion
 
+- Le fichier proposé dans Releases se nomme maintenant Metrolist.apk. Un seul APK universel est publié ; le système de mise à jour reconnaît ce nom ainsi que les anciens fichiers.
+
 - Bibliothèque et favoris : lecture puis écriture atomiques de l’état courant pour que des appuis rapprochés ne réutilisent pas un état périmé. La synchronisation réseau suit la sauvegarde locale.
 
 - LyricsPlus : valeur par défaut du fournisseur alignée sur son interrupteur ; contrôle ajouté entre le réglage et son consommateur.

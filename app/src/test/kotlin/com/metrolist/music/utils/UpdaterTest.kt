@@ -18,9 +18,12 @@ class UpdaterTest {
           {"name":"MAKOFF-Music.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music.apk","size":42},
           {"name":"MAKOFF-Music-Google-Cast.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-Google-Cast.apk","size":43},
           {"name":"MAKOFF-Music.apk","browser_download_url":"https://example.com/foreign.apk","size":44},
-          {"name":"MAKOFF-Music-universal.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-universal.apk","size":45}
+          {"name":"MAKOFF-Music-universal.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music-universal.apk","size":45},
+          {"name":"Metrolist.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/Metrolist.apk","size":46}
         ]"""))
-        assertEquals(3, assets.size)
+        assertEquals(4, assets.size)
+        assertEquals("gms", assets[3].variant)
+        assertEquals("universal", assets[3].architecture)
         assertEquals("gms", assets[2].variant)
         assertEquals("universal", assets[2].architecture)
         assertEquals("foss", assets[0].variant)

@@ -92,7 +92,7 @@ LIMITES RÉELLES
 
 APK PUBLIÉ ET CONTRÔLÉ
 https://github.com/anderson76389/Music/releases/tag/test-41-9844976
-Un seul APK : MAKOFF-Music-universal.apk, 110 800 548 octets.
+Un seul APK : Metrolist.apk, 110 800 548 octets.
 SHA-256 : c1502bc78d2b409443a27ecc55ab13b85b5739e411d5f33ea8028f5527462c51
 L’empreinte de l’APK issu de la compilation correspond à celle du fichier publié.
 Les deux autres pièces jointes sont les sources et les sommes de contrôle.

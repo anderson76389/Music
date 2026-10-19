@@ -110,7 +110,7 @@ jobs:
       - name: Préparer les APK, les sources et les sommes de contrôle
         run: |
           mkdir -p dist
-          cp apk-gms/*.apk dist/MAKOFF-Music-universal.apk
+          cp apk-gms/*.apk dist/Metrolist.apk
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           cd dist
           sha256sum *.apk *.zip > SHA256SUMS.txt
@@ -122,7 +122,7 @@ jobs:
           cat > notes.txt <<'NOTES'
           ## APK de test Metrolist
 
-          - **MAKOFF-Music-universal.apk** : un seul APK universel, avec Google Cast.
+          - **Metrolist.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle SHA-256 jointes.
 
           Compilation des deux variantes, tests unitaires, tests du moteur et installation/démarrage des deux APK sur émulateur Android 11 réussis. La lecture YouTube réelle, la connexion, les téléchargements et la diffusion Cast restent à vérifier sur téléphone. Ces essais ne sont pas garantis par le contrôle de démarrage.
