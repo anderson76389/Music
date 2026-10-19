@@ -86,29 +86,29 @@ class SettingsNavigationTest {
     }
 
     private fun open(id: Int, switchOnly: Boolean = false) {
-        findText(id)
+        val title = findText(id)
         val text = label(id)
-        fun clickSwitch(node: android.view.accessibility.AccessibilityNodeInfo): Boolean {
-            if (!node.refresh()) return false
-            if (node.isCheckable && node.isEnabled && node.isVisibleToUser) {
-                return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+        val switchBounds = if (switchOnly) {
+            val control = visibleControls().filter { it.checkable }.minByOrNull {
+                kotlin.math.abs(it.bounds.centerY() - title.centerY())
             }
-            for (index in 0 until node.childCount) {
-                val child = node.getChild(index) ?: continue
-                try { if (clickSwitch(child)) return true } finally { child.recycle() }
-            }
-            return false
-        }
+            assertNotNull("Switch for $text", control)
+            assertTrue("Switch belongs to $text row",
+                kotlin.math.abs(control!!.bounds.centerY() - title.centerY()) < 150)
+            control.bounds
+        } else null
         fun visit(node: android.view.accessibility.AccessibilityNodeInfo,
                   parentAction: android.view.accessibility.AccessibilityNodeInfo?): Boolean {
             try {
                 if (!node.refresh()) return false
                 val action = if (node.isClickable && node.isEnabled) node else parentAction
-                if (node.isVisibleToUser && node.text?.toString() == text && action != null) {
-                    // Activate the same UI callback as accessibility users. A physical tap
-                    // immediately after a fling can merely stop scrolling instead of clicking.
-                    return if (switchOnly) clickSwitch(action)
-                    else action.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                val bounds = android.graphics.Rect().also(node::getBoundsInScreen)
+                if (switchOnly && node.isCheckable && node.isEnabled && node.isVisibleToUser && bounds == switchBounds) {
+                    return node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
+                }
+                if (!switchOnly && node.isVisibleToUser && node.text?.toString() == text && action != null) {
+                    // Invoke the actual UI callback without a fling consuming a physical tap.
+                    return action.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK)
                 }
                 for (index in 0 until node.childCount) {
                     val child = node.getChild(index) ?: continue
@@ -222,11 +222,13 @@ class SettingsNavigationTest {
                     println("SETTINGS_ENUM_OK: LOW/AUTO/HIGH stored, original restored")
                 }
                 R.string.content -> {
+                    open(R.string.lyrics_provider_selection)
                     toggleAndRestore(R.string.enable_lyricsplus, EnableLyricsPlus, true,
                         effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
                         clicker = { id -> open(id, switchOnly = true) })
                     assertEquals(runBlocking { context.dataStore.data.first()[EnableLyricsPlus] ?: true },
                         fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context))
+                    open(R.string.close)
                     listOf(
                     Triple(R.string.hide_explicit, HideExplicitKey, false),
                     Triple(R.string.hide_video_songs, HideVideoSongsKey, false),
