@@ -18,6 +18,30 @@ def run(args, **kwargs):
     return subprocess.run(args, check=True, **kwargs)
 
 
+def github_access():
+    candidates = [dict(os.environ)]
+    if os.environ.get('GH_TOKEN') or os.environ.get('GITHUB_TOKEN'):
+        # Codespaces tokens take precedence over credentials saved by gh auth login.
+        saved_login = dict(os.environ)
+        saved_login.pop('GH_TOKEN', None)
+        saved_login.pop('GITHUB_TOKEN', None)
+        candidates.append(saved_login)
+    for index, environment in enumerate(candidates):
+        try:
+            result = run(['gh', 'secret', 'list', '--repo', REPO, '--json', 'name'],
+                         env=environment, capture_output=True, text=True)
+        except subprocess.CalledProcessError:
+            continue
+        print('Accès aux secrets GitHub vérifié' +
+              (' avec la connexion personnelle enregistrée.' if index else '.'))
+        return environment, {item['name'] for item in json.loads(result.stdout)} & NAMES
+    raise RuntimeError(
+        'Accès à la liste des secrets GitHub impossible. Aucune clé créée ni aucun secret envoyé.\n'
+        'Le jeton du Codespace peut ne pas avoir les droits nécessaires. Connectez votre compte :\n'
+        'env -u GH_TOKEN -u GITHUB_TOKEN gh auth login --hostname github.com --git-protocol https --web --scopes repo,workflow\n'
+        'Puis relancez : python3 scripts/setup_signing.py')
+
+
 def main():
     parser = argparse.ArgumentParser(description='Configurer la signature permanente de Metrolist dans les secrets GitHub.')
     parser.add_argument('--resume-upload', action='store_true', help='Reprendre un envoi interrompu avec la même clé locale ; ne jamais utiliser pour changer de clé.')
@@ -25,9 +49,7 @@ def main():
     for tool in ('keytool', 'gh'):
         if not shutil.which(tool):
             raise RuntimeError(f'{tool} manque. Utilisez un Codespace avec Java et GitHub CLI.')
-    run(['gh', 'auth', 'status'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-    result = run(['gh', 'secret', 'list', '--repo', REPO, '--json', 'name'], capture_output=True, text=True)
-    existing = {item['name'] for item in json.loads(result.stdout)} & NAMES
+    gh_env, existing = github_access()
     directory = Path.home() / '.local' / 'share' / 'metrolist-signing'
     keystore = directory / 'metrolist-release.p12'
     if existing and not args.resume_upload:
@@ -69,15 +91,20 @@ def main():
               'MUSIC_KEY_PASSWORD': password.encode()}
     for name, value in values.items():
         # Send via stdin: no password/key in command arguments, shell history or output.
-        run(['gh', 'secret', 'set', name, '--repo', REPO], input=value,
-            stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            run(['gh', 'secret', 'set', name, '--repo', REPO], input=value, env=gh_env,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except subprocess.CalledProcessError:
+            raise RuntimeError(f'Envoi de {name} refusé ou interrompu. La clé locale est conservée. '
+                               'Vérifiez les droits de gestion des secrets Actions, puis relancez '
+                               'avec --resume-upload depuis ce même Codespace.') from None
         print(name + ' : enregistré')
     print('\nSignature permanente configurée. Ne régénérez pas cette clé.')
     print('Téléchargez une sauvegarde privée de', keystore)
     print('Gardez son mot de passe séparément. GitHub ne permet pas de relire les secrets.')
     print('Ne placez jamais cette clé dans le dépôt, une Release ou un message.')
     print('Pour lancer la publication signée :')
-    print('gh workflow run music-release.yml --repo ' + REPO + ' --ref main -f tag=v13.7.0')
+    print('env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo ' + REPO + ' --ref main -f tag=v13.7.0')
 
 
 if __name__ == '__main__':
