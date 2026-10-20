@@ -185,8 +185,13 @@ class SettingsNavigationTest {
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
             when (screen) {
                 R.string.appearance -> {
-                    open(R.string.theme)
+                    open(R.string.theme_colors)
                     toggleAndRestore(R.string.liquid_glass_title, LiquidGlassKey, false,
+                        effect = {
+                            val enabled = runBlocking { context.dataStore.data.first()[LiquidGlassKey] ?: false }
+                            if (enabled) device.executeShellCommand("screencap -p /data/local/tmp/liquid-glass.png")
+                            enabled
+                        },
                         clicker = { id -> open(id, switchOnly = true) })
                     device.pressBack()
                     device.waitForIdle()

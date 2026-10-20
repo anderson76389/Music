@@ -25,7 +25,7 @@ l'opération. --resume-upload sert uniquement à reprendre un premier envoi
 interrompu depuis le même Codespace avec la même clé, jamais à changer de clé.
 
 Après sauvegarde, lancer la publication signée :
-env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo anderson76389/Music --ref main -f tag=v13.7.0
+env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo anderson76389/Music --ref main
 
 Le workflow doit réussir avant qu'une version signée soit disponible. Les
 publications stables suivantes doivent conserver cette clé et augmenter leur

@@ -104,7 +104,7 @@ def main():
     print('Gardez son mot de passe séparément. GitHub ne permet pas de relire les secrets.')
     print('Ne placez jamais cette clé dans le dépôt, une Release ou un message.')
     print('Pour lancer la publication signée :')
-    print('env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo ' + REPO + ' --ref main -f tag=v13.7.0')
+    print('env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo ' + REPO + ' --ref main')
 
 
 if __name__ == '__main__':

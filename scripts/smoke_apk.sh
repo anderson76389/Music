@@ -14,7 +14,7 @@ for variant in foss gms; do
   adb shell dumpsys activity activities > "smoke-results/$variant-activities.txt"
   adb exec-out screencap -p > "smoke-results/$variant.png"
   adb shell pidof "$package"
-  grep -E '(mResumedActivity|topResumedActivity).*fr.makoff.music.MainActivity' "smoke-results/$variant-activities.txt"
+  python3 scripts/check_resumed_activity.py "$package" "smoke-results/$variant-activities.txt"
   if grep -Fq "Process: $package," "smoke-results/$variant-logcat.txt"; then
     echo "Échec : plantage du processus détecté ($variant)."
     exit 1
@@ -37,6 +37,7 @@ for variant in foss gms; do
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
     timeout 420s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
     adb pull /data/local/tmp/settings-failure.png smoke-results/ || true
+    adb pull /data/local/tmp/liquid-glass.png smoke-results/ || true
     adb logcat -d > smoke-results/settings-navigation-logcat.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/settings-navigation-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/settings-navigation-tests.txt
