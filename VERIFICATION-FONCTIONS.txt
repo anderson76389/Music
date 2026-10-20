@@ -116,3 +116,30 @@ des classes/services supprimés ListenTogether, LyricsTranslationHelper,
 OpenRouterService, OpenRouterStreamingService, DeepLService, AiSettings,
 ni des adresses openrouter.ai, api.openai.com et api.deepl.com recherchées.
 Cette recherche ciblée ne remplace pas une capture de tous les échanges réseau.
+
+
+VÉRIFICATION DU 20 OCTOBRE 2026 — LIQUID GLASS ET PUBLICATION
+Code : 0c488d6e432df57726a948bc210173ef7fd748e1
+CI : https://github.com/anderson76389/Music/actions/runs/39346281661
+Compilation FOSS/GMS, tests unitaires et moteur : réussite.
+Android 11 : démarrage des deux APK, 3 tests SAF, lecteur hors connexion,
+paramètres et journal GitHub : réussite. Liquid Glass activé puis désactivé
+depuis l’interface, préférence enregistrée et restaurée ; capture conservée
+dans l’artefact MAKOFF-tests-demarrage/liquid-glass.png.
+La capture confirme le fond coloré et l’écran du thème. Les trois curseurs
+sont reliés aux préférences consommées par le rendu ; leur manipulation
+individuelle n’a pas fait l’objet d’un essai automatisé sur appareil.
+Le test YouTube anonyme reste refusé avec YOUTUBE_AUTH_REQUIRED / anti-robot.
+Aucune affirmation de lecture authentifiée, Cast ou Bluetooth sur téléphone.
+
+Nettoyage : 4 anciens workflows désactivés, ancien script de changelog,
+workflow ponctuel de renommage terminé et 6 configurations GitHub imbriquées
+dans la bibliothèque embarquée retirés. Sources et licences conservées.
+
+Publication signée v13.7.0.2 :
+https://github.com/anderson76389/Music/actions/runs/39347583644
+Les deux variantes signées ont compilé et démarré sur Android 11.
+Vérification apksigner réussie. Un seul Metrolist.apk publié ; certificat
+public et SHA-256 joints. VersionCode 10002, versionName 13.7.0.2.
+Les tests instrumentés détaillés ont été exécutés sur la variante de test
+du même code ; la version optimisée signée a subi le contrôle de démarrage.

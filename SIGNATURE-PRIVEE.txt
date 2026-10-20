@@ -9,8 +9,7 @@ Codespace n'a pas ces droits, authentifiez GitHub CLI avec votre compte :
 env -u GH_TOKEN -u GITHUB_TOKEN gh auth login --hostname github.com --git-protocol https --web --scopes repo,workflow
 
 Le script essaie la connexion enregistrée si le jeton du Codespace est refusé.
-Ne
-partagez jamais un jeton ou un mot de passe dans une conversation.
+Ne partagez jamais un jeton ou un mot de passe dans une conversation.
 
 Le script demande deux fois un mot de passe sans l'afficher, crée une clé RSA
 4096 bits dans un conteneur PKCS12 chiffré et configure les quatre secrets MUSIC
@@ -28,8 +27,8 @@ Après sauvegarde, lancer la publication signée :
 env -u GH_TOKEN -u GITHUB_TOKEN gh workflow run music-release.yml --repo anderson76389/Music --ref main
 
 Le workflow doit réussir avant qu'une version signée soit disponible. Les
-publications stables suivantes doivent conserver cette clé et augmenter leur
-numéro de version. Le script ne change pas la version et ne publie pas d'APK.
+publications suivantes conservent cette clé. Après les contrôles de main, le
+workflow publie automatiquement un APK signé avec un numéro croissant. Le script ne change pas la version et ne publie pas d'APK.
 
 La version stable utilise fr.makoff.music, les préversions fr.makoff.music.debug.
 Elle s'installe donc séparément. Sauvegardez vos données depuis la préversion

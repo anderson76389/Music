@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — préversion 42 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — 20 octobre 2026 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 27 interrupteurs (dont Liquid Glass), trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
@@ -143,33 +143,35 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/anderson76389/Music/releases/download/test-42-f865369/Metrolist.apk">
+      <a href="https://github.com/anderson76389/Music/releases/latest/download/Metrolist.apk">
         <img src="assets/badges/github-apk-fr.svg" alt="Télécharger l’APK universel sur GitHub" height="120" />
       </a>
     </td>
   </tr>
 </table>
 
-**[Télécharger Metrolist — test 42](https://github.com/anderson76389/Music/releases/download/test-42-f865369/Metrolist.apk)**
+**[Télécharger Metrolist — dernière version signée](https://github.com/anderson76389/Music/releases/latest/download/Metrolist.apk)**
 
 Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
-[Notes de cette version](https://github.com/anderson76389/Music/releases/tag/test-42-f865369) · [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Tests réussis](https://github.com/anderson76389/Music/actions/runs/39266799148)
+[Notes de cette version](https://github.com/anderson76389/Music/releases/latest) · [Toutes les versions](https://github.com/anderson76389/Music/releases) · [Tests réussis](https://github.com/anderson76389/Music/actions/runs/39346281661)
 
 </div>
 
 Installez **`Metrolist.apk`** directement. Les sources et les sommes de contrôle jointes ne sont pas des versions supplémentaires de l’application.
 
-Chaque modification du code sur la branche principale lance les contrôles. Une préversion avec **un seul APK** est publiée automatiquement lorsque les contrôles obligatoires réussissent. Les deux variantes sont compilées en interne pour les essais de compatibilité.
+Chaque modification du code sur `main` lance les contrôles. Après leur réussite, une seconde étape construit et vérifie les APK signés, puis publie **un seul Metrolist.apk universel** dans Releases. Les numéros de version augmentent automatiquement. Les deux variantes sont compilées en interne pour les essais de compatibilité.
 
 > [!IMPORTANT]
-> **Signature de test :** ces APK utilisent `fr.makoff.music.debug` et une clé temporaire propre à chaque construction. La mise à jour directe entre deux préversions n’est pas garantie. Sauvegardez vos données avant de remplacer une installation. Les mises à jour automatiques sont désactivées dans les préversions.
+> **Passage des anciennes préversions à la version signée :** la version publique utilise `fr.makoff.music`, tandis que les anciens tests utilisent `fr.makoff.music.debug`. Les deux peuvent coexister. Sauvegardez vos données dans l’ancienne application, restaurez-les et vérifiez-les dans la nouvelle avant toute suppression. Les publications signées suivantes conservent la même clé.
 
 <div align="center">
 
 <h2>Version stable</h2>
 
-Une publication stable nécessite la configuration d’une clé privée de signature durable. Le circuit prévu produit lui aussi un seul APK universel et utilise exclusivement les publications de ce dépôt pour les mises à jour.
+La publication utilise la clé privée du projet, conservée dans les secrets GitHub Actions. Le certificat public, les informations de construction, les sources et les sommes SHA-256 accompagnent l’APK. Les mises à jour utilisent exclusivement les Releases de ce dépôt.
+
+**Liquid Glass :** dans Paramètres → Apparence → Thèmes et couleurs, activez le fond coloré et les panneaux translucides. Réglez la couleur, l’intensité des reflets et l’opacité. Le lecteur et le mini-lecteur suivent ce thème lorsque leur fond est réglé sur le style par défaut. Le mode est désactivé par défaut et ne dépend d’aucun service externe.
 
 </div>
 
@@ -186,7 +188,7 @@ Une publication stable nécessite la configuration d’une clé privée de signa
 <details>
 <summary><strong>Toutes les fonctions sont-elles garanties ?</strong></summary>
 
-Les contrôles de la préversion 42 ont réussi dans le périmètre décrit dans [VERIFICATION-FONCTIONS.txt](VERIFICATION-FONCTIONS.txt). Un interrupteur enregistré ne prouve pas son effet dans toutes les situations. La connexion et les flux YouTube authentifiés, Cast, Bluetooth, Android Auto, le microphone et toutes les combinaisons de réglages nécessitent encore des essais en conditions réelles.
+Les contrôles Android du 20 octobre 2026 ont réussi dans le périmètre décrit dans [VERIFICATION-FONCTIONS.txt](VERIFICATION-FONCTIONS.txt). Un interrupteur enregistré ne prouve pas son effet dans toutes les situations. La connexion et les flux YouTube authentifiés, Cast, Bluetooth, Android Auto, le microphone et toutes les combinaisons de réglages nécessitent encore des essais en conditions réelles.
 
 </details>
 
