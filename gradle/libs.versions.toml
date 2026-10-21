@@ -36,6 +36,7 @@ tinypinyin = "2.0.3"
 
 [libraries]
 ytdlp = { module = "io.github.junkfood02.youtubedl-android:library", version = "0.18.1" }
+audio-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version = "0.18.1" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version = "2.10.1" }
 documentfile = { module = "androidx.documentfile:documentfile", version = "1.0.1" }
 

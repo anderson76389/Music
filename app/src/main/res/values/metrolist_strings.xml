@@ -854,4 +854,10 @@
     <string name="folder_collection_description">Fichiers audio dans %1$s / %2$s, avec pistes numérotées. Ces fichiers servent aussi à la lecture hors connexion dans Metrolist.</string>
     <string name="folder_collection_queued">%1$d pistes ajoutées à la file d’export</string>
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
+    <string name="download_format_internal">Format des téléchargements internes</string>
+    <string name="download_format_external">Format des fichiers exportés</string>
+    <string name="download_format_best">Meilleure qualité disponible — format original</string>
+    <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
+    <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
+    <string name="download_format_help">Ces choix sont indépendants de la qualité de lecture. La qualité disponible dépend du morceau et de votre compte. Le FLAC est un vrai fichier sans perte après décodage, mais ne restaure pas les détails perdus dans une source compressée et occupe plus de place. M4A exige un flux M4A disponible, sans conversion depuis Opus. Les téléchargements existants sont conservés : supprimez le téléchargement puis relancez-le pour rechercher une meilleure source. Un export réutilise le fichier présent quand son format convient, ou le convertit en FLAC sans nouveau transfert.</string>
 </resources>

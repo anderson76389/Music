@@ -104,6 +104,7 @@ fun FolderAudioSettings() {
             }
         }
     }
+    DownloadFormatSettings()
     Material3SettingsGroup(
         title = stringResource(R.string.folder_audio_settings),
         items = listOf(

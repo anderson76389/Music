@@ -50,6 +50,7 @@ object FolderAudioDownloads {
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
             .setInputData(workDataOf(
                 "videoId" to media.id,
+                "format" to context.dataStore.get(fr.makoff.music.constants.ExternalDownloadFormatKey, DownloadAudioFormat.BEST.name),
                 "title" to media.title.take(200),
                 "artist" to media.artists.joinToString { it.name }.take(200),
                 "artistNames" to media.artists.take(20).map { it.name.take(100) }.toTypedArray(),
@@ -107,9 +108,10 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             initialize(context)
+            if (format == DownloadAudioFormat.FLAC) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
             check(directory.isDirectory || directory.mkdirs())
             val request = YoutubeDLRequest(url)
                 .addOption("--ignore-config")
@@ -119,18 +121,38 @@ internal object YtDlpAudioEngine {
                 .addOption("--socket-timeout", 30)
                 .addOption("--retries", 3)
                 .addOption("--fixup", "never")
-                .addOption("-f", if (lowQuality) "worstaudio" else "bestaudio")
+                .addOption("-f", if (lowQuality && format == DownloadAudioFormat.BEST) "worstaudio" else format.selector)
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
+            if (format == DownloadAudioFormat.FLAC) {
+                request.addOption("--extract-audio").addOption("--audio-format", "flac")
+            }
+            // Only our staged private files use file URLs; public download entry points accept video IDs.
+            if (url.startsWith("file:")) request.addOption("--enable-file-urls")
             if (cookie.isNotBlank()) {
                 val jar = File(directory, "youtube-cookies.txt")
                 jar.writeText(youtubeCookieJar(cookie))
                 request.addOption("--cookies", jar.absolutePath)
             }
             YoutubeDL.getInstance().execute(request, processId) { percent, _, _ -> progress(percent) }
-            directory.listFiles().orEmpty().singleOrNull {
+            val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
+            check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "FLAC conversion failed" }
+            check(format != DownloadAudioFormat.M4A || output.extension == "m4a") { "M4A unavailable" }
+            output
         }
+
+    suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
+        source ?: return null
+        return when {
+            format == DownloadAudioFormat.BEST -> source
+            format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
+            format == DownloadAudioFormat.M4A -> { source.delete(); null }
+            source.extension == "flac" -> source
+            else -> download(context, source.toURI().toString(), File(directory, "converted"), processId,
+                format = DownloadAudioFormat.FLAC) { }
+        }
+    }
 }
 
 internal fun youtubeCookieJar(cookie: String): String = buildString {
@@ -223,8 +245,9 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 setForeground(notification(title, 0))
                 var lastUpdate = 0L
                 if (downloads.downloads.value[videoId]?.isTerminalState == false) return@withPermit Result.failure(workDataOf("error" to "active"))
-                val source = downloads.stageExistingAudio(videoId, directory) ?: YtDlpAudioEngine.download(
-                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""),
+                val format = DownloadAudioFormat.parse(inputData.getString("format"))
+                val source = YtDlpAudioEngine.reuse(applicationContext, downloads.stageExistingAudio(videoId, directory), format, directory, id.toString()) ?: YtDlpAudioEngine.download(
+                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format,
                 ) { progress ->
                     val now = android.os.SystemClock.elapsedRealtime()
                     if (now - lastUpdate > 800) {

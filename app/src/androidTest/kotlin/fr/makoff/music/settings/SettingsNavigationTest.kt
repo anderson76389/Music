@@ -244,7 +244,25 @@ class SettingsNavigationTest {
                     toggleAndRestore(R.string.pause_listen_history, PauseListenHistoryKey, false)
                     toggleAndRestore(R.string.pause_search_history, PauseSearchHistoryKey, false)
                 }
-                R.string.storage -> toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
+                R.string.storage -> {
+                    toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
+                    for ((title, key) in listOf(R.string.download_format_internal to InternalDownloadFormatKey,
+                        R.string.download_format_external to ExternalDownloadFormatKey)) {
+                        val original = runBlocking { context.dataStore.data.first()[key] }
+                        try {
+                            for (format in fr.makoff.music.downloads.DownloadAudioFormat.entries) {
+                                open(title)
+                                open(format.label)
+                                awaitPreference("download format ${format.name}") { context.dataStore.data.first()[key] == format.name }
+                            }
+                        } finally {
+                            runBlocking { context.dataStore.edit { prefs ->
+                                original?.let { prefs[key] = it } ?: prefs.remove(key)
+                            } }
+                        }
+                    }
+                    println("DOWNLOAD_FORMAT_SETTINGS_OK: internal and external BEST/M4A/FLAC persisted")
+                }
             }
             device.pressBack()
             device.waitForIdle()

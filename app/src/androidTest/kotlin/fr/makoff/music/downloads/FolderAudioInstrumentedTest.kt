@@ -189,7 +189,7 @@ class FolderAudioInstrumentedTest {
             var exported: android.net.Uri? = null
             try {
                 val source = YtDlpAudioEngine.download(context,
-                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", lowQuality = asset == "aac.m4a") { }
+                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", format = if (asset == "aac.m4a") DownloadAudioFormat.M4A else DownloadAudioFormat.BEST) { }
                 assertArrayEquals(audio, source.readBytes())
                 val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}-$asset")
                 exported = uri
@@ -211,6 +211,29 @@ class FolderAudioInstrumentedTest {
                 responder.join(2000)
             }
         }
+    }
+
+    @Test(timeout = 90000) fun flacIsConvertedAndReusableWithoutNetwork() = runBlocking {
+        val directory = File(context.cacheDir, "flac-test-${UUID.randomUUID()}").apply { mkdirs() }
+        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+        val source = File(directory, "existing.m4a").apply { writeBytes(bytes) }
+        try {
+            val output = YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.FLAC, directory, "flac-${UUID.randomUUID()}")!!
+            assertEquals("flac", output.extension)
+            assertEquals("fLaC", output.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
+            val extractor = android.media.MediaExtractor()
+            try {
+                extractor.setDataSource(output.absolutePath)
+                val format = extractor.getTrackFormat(0)
+                assertEquals("audio/flac", format.getString(android.media.MediaFormat.KEY_MIME))
+                assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
+                assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
+            } finally { extractor.release() }
+            assertEquals(output, YtDlpAudioEngine.reuse(context, output, DownloadAudioFormat.FLAC, directory, "same-flac"))
+            assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.M4A, directory, "same-m4a"))
+            assertArrayEquals(bytes, source.readBytes())
+            println("FLAC_REAL_OK: native conversion, fLaC header, 48000 Hz stereo, no upsampling")
+        } finally { directory.deleteRecursively() }
     }
 
     @Test(timeout = 30000) fun providerFailureDoesNotLeaveAnIncompleteFile() = runBlocking {

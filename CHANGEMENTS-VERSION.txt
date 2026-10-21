@@ -1,3 +1,11 @@
+## Formats et qualité des téléchargements
+
+- Deux réglages indépendants dans Paramètres > Stockage : format interne et format externe.
+- Meilleure qualité disponible : flux original, sans réencodage. La qualité de lecture Basse/Automatique ne réduit plus les nouveaux téléchargements internes.
+- M4A : meilleur flux M4A disponible, sans conversion depuis Opus ; échec explicite si ce format est inaccessible.
+- FLAC : conversion réelle avec FFmpeg embarqué, sans suréchantillonnage. Une source YouTube compressée ne devient pas une source sans perte originale.
+- Le réglage est mémorisé lors de la mise en file. Les téléchargements existants sont conservés ; l’export les réutilise si le format convient ou les convertit localement en FLAC. Pour rechercher une meilleure source, retirer le téléchargement existant puis le relancer.
+
 ## Fichier partagé et téléchargements authentifiés
 
 - Un fichier audio exporté sert désormais de téléchargement hors connexion dans Metrolist, sans deuxième copie dans le cache du lecteur.

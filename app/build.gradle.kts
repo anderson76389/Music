@@ -225,6 +225,7 @@ configurations.configureEach {
 
 dependencies {
     implementation(libs.ytdlp)
+    implementation(libs.audio.ffmpeg)
     implementation(libs.work.runtime)
     implementation(libs.documentfile)
     androidTestImplementation("androidx.test:runner:1.6.2")

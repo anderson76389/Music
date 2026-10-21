@@ -27,7 +27,8 @@ import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.SongItem
 import com.metrolist.innertubex.extraction.ContentHints
 import fr.makoff.music.constants.AudioQuality
-import fr.makoff.music.constants.AudioQualityKey
+import fr.makoff.music.constants.InternalDownloadFormatKey
+import fr.makoff.music.downloads.DownloadAudioFormat
 import fr.makoff.music.db.MusicDatabase
 import fr.makoff.music.db.entities.AlbumEntity
 import fr.makoff.music.db.entities.FormatEntity
@@ -76,7 +77,7 @@ constructor(
 ) {
     private val TAG = "DownloadUtil"
     private val connectivityManager = context.getSystemService<ConnectivityManager>()!!
-    private val audioQuality by enumPreference(context, AudioQualityKey, AudioQuality.HIGH)
+    private val downloadFormat by enumPreference(context, InternalDownloadFormatKey, DownloadAudioFormat.BEST)
     private val songUrlCache = StreamUrlCache()
     private val streamHttpClient =
         OkHttpClient.Builder()
@@ -97,19 +98,13 @@ constructor(
 
     private val dataSourceFactory =
         ResolvingDataSource.Factory(
-            CacheDataSource
-                .Factory()
-                .setCache(playerCache)
-                .setCacheWriteDataSinkFactory(null)
-                .setUpstreamDataSourceFactory(
-                    androidx.media3.datasource.DefaultDataSource.Factory(context, OkHttpDataSource.Factory(streamHttpClient)),
-                ),
+            androidx.media3.datasource.DefaultDataSource.Factory(context, OkHttpDataSource.Factory(streamHttpClient)),
         ) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
-            val length = if (dataSpec.length >= 0) dataSpec.length else 1
-
-            if (playerCache.isCached(mediaId, dataSpec.position, length)) {
-                return@Factory dataSpec
+            val formatChoice = DownloadAudioFormat.parse(
+                downloadManager.downloadIndex.getDownload(mediaId)?.request?.uri?.getQueryParameter("downloadFormat"))
+            if (formatChoice != DownloadAudioFormat.BEST) {
+                return@Factory dataSpec.withUri(android.net.Uri.fromFile(prepareFormattedAudio(mediaId, formatChoice)))
             }
 
             songUrlCache[mediaId]?.let { cachedStream ->
@@ -121,7 +116,7 @@ constructor(
                 val song = database.songEntity(mediaId)
                 InnerTubeXPlayer.playerResponseForPlayback(
                     mediaId,
-                    audioQuality = audioQuality,
+                    audioQuality = AudioQuality.HIGH,
                     connectivityManager = connectivityManager,
                     contentHints = ContentHints(
                         isExplicit = song?.explicit,
@@ -132,31 +127,7 @@ constructor(
             }.getOrElse { error ->
                 val cookie = context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, "")
                 if (!mediaId.matches(Regex("[A-Za-z0-9_-]{11}")) || !canUseAuthenticatedDownloadFallback(error, cookie)) throw error
-                val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId")
-                val file = runBlocking(Dispatchers.IO) {
-                    directory.listFiles()?.firstOrNull { it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0 }
-                        ?: try {
-                            fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
-                                "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie,
-                                lowQuality = audioQuality == AudioQuality.LOW ||
-                                    (audioQuality == AudioQuality.AUTO && connectivityManager.isActiveNetworkMetered)) { }
-                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
-                            throw cancelled
-                        } catch (_: Exception) {
-                            // DownloadManager can log failures. Never propagate yt-dlp stderr or signed URLs.
-                            throw IOException("Authenticated audio download unavailable; reconnect to YouTube and retry")
-                        }
-                }
-                val extractor = android.media.MediaExtractor()
-                try {
-                    extractor.setDataSource(file.absolutePath)
-                    val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
-                        .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-                    database.upsert(FormatEntity(mediaId, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
-                        "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
-                        file.length(), null, playbackUrl = null))
-                } finally { extractor.release() }
-                return@Factory dataSpec.withUri(android.net.Uri.fromFile(file))
+                return@Factory dataSpec.withUri(android.net.Uri.fromFile(prepareFormattedAudio(mediaId, DownloadAudioFormat.BEST)))
             }
             val format = playbackData.format
 
@@ -429,6 +400,38 @@ constructor(
         } catch (error: Exception) { staging.delete(); throw error }
     }
 
+    private fun prepareFormattedAudio(mediaId: String, format: DownloadAudioFormat): java.io.File {
+        require(mediaId.matches(Regex("[A-Za-z0-9_-]{11}")))
+        val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId/${format.name}")
+        val marker = java.io.File(directory, "complete.txt")
+        val file = runBlocking(Dispatchers.IO) {
+            val saved = marker.takeIf { it.exists() }?.readText()?.takeIf { it.matches(Regex("audio\\.[a-z0-9]{1,8}")) }
+                ?.let { java.io.File(directory, it) }?.takeIf { it.isFile && it.length() > 0 }
+            saved ?: try {
+                directory.deleteRecursively()
+                val result = fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
+                    "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId",
+                    context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format) { }
+                marker.writeText(result.name)
+                result
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                throw IOException("Requested audio format unavailable; check your YouTube session and retry")
+            }
+        }
+        val extractor = android.media.MediaExtractor()
+        try {
+            extractor.setDataSource(file.absolutePath)
+            val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+            database.upsert(FormatEntity(mediaId, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
+                "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
+                file.length(), null, playbackUrl = null))
+        } finally { extractor.release() }
+        return file
+    }
+
     fun getDownload(songId: String): Flow<Download?> = downloads.map { it[songId] }
 
     fun download(song: Song) = download(song.toMediaMetadata())
@@ -472,9 +475,14 @@ constructor(
                     return@withPermit
                 }
 
+                // New/retried downloads must not mix bytes from a previous quality or container.
+                downloadCache.removeResource(mediaMetadata.id)
+                songUrlCache.invalidate(mediaMetadata.id)
+                val selectedFormat = downloadFormat
                 val request =
                     DownloadRequest
-                        .Builder(mediaMetadata.id, mediaMetadata.id.toUri())
+                        .Builder(mediaMetadata.id, mediaMetadata.id.toUri().buildUpon()
+                            .appendQueryParameter("downloadFormat", selectedFormat.name).build())
                         .setCustomCacheKey(mediaMetadata.id)
                         .setData(mediaMetadata.title.toByteArray())
                         .build()

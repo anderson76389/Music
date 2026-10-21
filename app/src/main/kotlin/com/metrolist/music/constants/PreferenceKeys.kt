@@ -107,6 +107,9 @@ val DismissedStandaloneUpdateKey = stringPreferencesKey("dismissedStandaloneUpda
 val DismissedKmpUpdateKey = stringPreferencesKey("dismissedKmpUpdate")
 val UpdateNotificationsEnabledKey = booleanPreferencesKey("updateNotifications")
 
+val InternalDownloadFormatKey = stringPreferencesKey("internalDownloadFormat")
+val ExternalDownloadFormatKey = stringPreferencesKey("externalDownloadFormat")
+
 val AudioQualityKey = stringPreferencesKey("audioQuality")
 
 enum class AudioQuality {

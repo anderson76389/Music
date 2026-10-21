@@ -153,9 +153,11 @@ class OfflinePlayerInstrumentedTest {
             await("Document permission missing") {
                 context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED
             }
-            val external = fr.makoff.music.downloads.saveAudioToTree(context, tree, staged, "${first.id}.m4a")
+            val flac = fr.makoff.music.downloads.YtDlpAudioEngine.reuse(context, staged,
+                fr.makoff.music.downloads.DownloadAudioFormat.FLAC, directory, "offline-flac")!!
+            val external = fr.makoff.music.downloads.saveAudioToTree(context, tree, flac, "${first.id}.flac")
             sharedUri = external
-            active.downloadUtil.registerExternalAudio(first, external, audio.size.toLong())
+            active.downloadUtil.registerExternalAudio(first, external, flac.length())
             directory.deleteRecursively()
             assertTrue("Private copy was not removed", active.downloadCache.getCachedSpans(first.id).isEmpty())
             assertEquals(external, active.downloadUtil.externalAudioUri(first.id))
