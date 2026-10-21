@@ -107,7 +107,7 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             initialize(context)
             check(directory.isDirectory || directory.mkdirs())
@@ -119,7 +119,7 @@ internal object YtDlpAudioEngine {
                 .addOption("--socket-timeout", 30)
                 .addOption("--retries", 3)
                 .addOption("--fixup", "never")
-                .addOption("-f", "bestaudio")
+                .addOption("-f", if (lowQuality) "worstaudio" else "bestaudio")
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
             if (cookie.isNotBlank()) {
                 val jar = File(directory, "youtube-cookies.txt")

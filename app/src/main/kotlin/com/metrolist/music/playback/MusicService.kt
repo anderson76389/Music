@@ -3277,7 +3277,7 @@ class MusicService :
             downloadUtil.externalAudioUri(mediaId)?.let { uri ->
                 applyAudioNormalizationBeforePlayback(processor = normalizationProcessor, playerProvider = playerProvider,
                     mediaId = mediaId, loudnessDb = null, perceptualLoudnessDb = null, preserveCachedIfMissing = false)
-                currentStreamClient.value = "Local document"
+                currentStreamClient.value = null
                 return@Factory dataSpec.withUri(uri)
             }
             val storedFormat = runBlocking(Dispatchers.IO) { database.format(mediaId).first() }

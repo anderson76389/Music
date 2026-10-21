@@ -131,13 +131,15 @@ constructor(
                 )
             }.getOrElse { error ->
                 val cookie = context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, "")
-                if (!canUseAuthenticatedDownloadFallback(error, cookie)) throw error
+                if (!mediaId.matches(Regex("[A-Za-z0-9_-]{11}")) || !canUseAuthenticatedDownloadFallback(error, cookie)) throw error
                 val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId")
                 val file = runBlocking(Dispatchers.IO) {
                     directory.listFiles()?.firstOrNull { it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0 }
                         ?: try {
                             fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
-                                "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie) { }
+                                "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie,
+                                lowQuality = audioQuality == AudioQuality.LOW ||
+                                    (audioQuality == AudioQuality.AUTO && connectivityManager.isActiveNetworkMetered)) { }
                         } catch (cancelled: kotlinx.coroutines.CancellationException) {
                             throw cancelled
                         } catch (_: Exception) {

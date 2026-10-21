@@ -189,7 +189,7 @@ class FolderAudioInstrumentedTest {
             var exported: android.net.Uri? = null
             try {
                 val source = YtDlpAudioEngine.download(context,
-                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}") { }
+                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", lowQuality = asset == "aac.m4a") { }
                 assertArrayEquals(audio, source.readBytes())
                 val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}-$asset")
                 exported = uri
