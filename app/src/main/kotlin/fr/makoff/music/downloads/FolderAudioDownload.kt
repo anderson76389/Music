@@ -121,7 +121,7 @@ internal object YtDlpAudioEngine {
                 .addOption("--socket-timeout", 30)
                 .addOption("--retries", 3)
                 .addOption("--fixup", "never")
-                .addOption("-f", if (lowQuality && format == DownloadAudioFormat.BEST) "worstaudio" else format.selector)
+                .addOption("-f", if (url.startsWith("file:")) "best" else if (lowQuality && format == DownloadAudioFormat.BEST) "worstaudio" else format.selector)
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
             if (format == DownloadAudioFormat.FLAC) {
                 request.addOption("--extract-audio").addOption("--audio-format", "flac")
