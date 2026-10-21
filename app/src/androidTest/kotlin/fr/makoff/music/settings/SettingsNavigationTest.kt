@@ -249,14 +249,19 @@ class SettingsNavigationTest {
             device.pressBack()
             device.waitForIdle()
         }
+        val latestTag = runBlocking {
+            kotlinx.coroutines.withTimeout(45000) {
+                fr.makoff.music.utils.Updater.getAllReleases().getOrThrow().first().tagName
+            }
+        }
         open(R.string.changelog)
         assertTrue("Changelog title", device.wait(Until.hasObject(By.text(label(R.string.changelog))), 5000))
         val deadline = SystemClock.elapsedRealtime() + 45000
-        while (!visibleControls().any { it.text.startsWith("test-") } &&
+        while (!visibleControls().any { it.text == latestTag } &&
             !device.hasObject(By.text(label(R.string.makoff_changelog_error))) &&
             SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(250)
-        assertTrue("Own published test releases loaded from GitHub", visibleControls().any { it.text.startsWith("test-") })
-        println("SETTINGS_CHANGELOG_OK: published test release visible in debug APK")
+        assertTrue("Latest release from our GitHub is visible", visibleControls().any { it.text == latestTag })
+        println("SETTINGS_CHANGELOG_OK: latest repository release visible: $latestTag")
         assertNoRemovedEntries()
     }
 }
