@@ -25,8 +25,13 @@ public final class TestAudioDocuments extends ContentProvider {
         return name;
     }
     private File file(Uri uri) {
-        String id = validName(DocumentsContract.getDocumentId(uri));
-        return id.equals("root") ? root() : new File(root(), id);
+        String id = DocumentsContract.getDocumentId(uri);
+        if (id.equals("root")) return root();
+        for (String part : id.split("/")) validName(part);
+        return new File(root(), id);
+    }
+    private String documentId(File file) {
+        return file.equals(root()) ? "root" : root().toPath().relativize(file.toPath()).toString();
     }
     @Override public boolean onCreate() { return true; }
     @Override public String getType(Uri uri) {
@@ -35,13 +40,13 @@ public final class TestAudioDocuments extends ContentProvider {
     @Override public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) {
         String[] columns = projection != null ? projection : new String[]{"document_id", "_display_name", "mime_type", "flags", "_size"};
         MatrixCursor cursor = new MatrixCursor(columns);
-        File[] files = "children".equals(uri.getLastPathSegment()) ? root().listFiles() : new File[]{file(uri)};
+        File[] files = "children".equals(uri.getLastPathSegment()) ? file(uri).listFiles() : new File[]{file(uri)};
         if (files == null) files = new File[0];
         for (File f : files) {
             Object[] values = new Object[columns.length];
             for (int i = 0; i < columns.length; i++) {
                 switch (columns[i]) {
-                    case "document_id": values[i] = f.equals(root()) ? "root" : f.getName(); break;
+                    case "document_id": values[i] = documentId(f); break;
                     case "_display_name": values[i] = f.getName(); break;
                     case "mime_type": values[i] = f.isDirectory() ? DocumentsContract.Document.MIME_TYPE_DIR : "audio/wav"; break;
                     case "flags": values[i] = DocumentsContract.Document.FLAG_SUPPORTS_WRITE | DocumentsContract.Document.FLAG_SUPPORTS_DELETE | DocumentsContract.Document.FLAG_SUPPORTS_RENAME | DocumentsContract.Document.FLAG_DIR_SUPPORTS_CREATE; break;
@@ -64,17 +69,19 @@ public final class TestAudioDocuments extends ContentProvider {
             case "android:createDocument": {
                 String name = validName(input.getString("_display_name"));
                 try {
-                    if (!new File(root(), name).createNewFile()) throw new IllegalStateException("Document exists");
+                    File target = new File(source, name);
+                    boolean created = DocumentsContract.Document.MIME_TYPE_DIR.equals(input.getString("mime_type")) ? target.mkdir() : target.createNewFile();
+                    if (!created) throw new IllegalStateException("Document exists");
                 } catch (IOException error) { throw new IllegalStateException(error); }
-                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, name));
+                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, documentId(new File(source, name))));
                 break;
             }
             case "android:renameDocument": {
                 String name = validName(input.getString("_display_name"));
                 if (name.startsWith("reject")) throw new UnsupportedOperationException("Test provider refuses rename");
-                File target = new File(root(), name);
+                File target = new File(source.getParentFile(), name);
                 if (source.equals(root()) || target.exists() || !source.renameTo(target)) throw new IllegalStateException("Cannot rename document");
-                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, name));
+                result.putParcelable("uri", DocumentsContract.buildDocumentUriUsingTree(tree, documentId(target)));
                 break;
             }
             case "android:deleteDocument":

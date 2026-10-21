@@ -151,3 +151,53 @@ fun FolderAudioSettings() {
         }
     }
 }
+
+/** Collection selection is resolved before queueing; normal in-app downloads stay separate. */
+@Composable
+fun rememberFolderCollectionItem(kind: String, title: String, id: String,
+    load: suspend () -> List<MediaMetadata>): Material3MenuItemData {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val (tree) = rememberPreference(FolderAudioTreeKey, "")
+    var loading by remember { mutableStateOf(false) }
+    fun enqueue(uri: Uri) {
+        if (loading) return
+        loading = true
+        scope.launch {
+            try {
+                val tracks = withContext(Dispatchers.IO) { load() }
+                check(tracks.isNotEmpty())
+                require(tracks.all { it.id.matches(Regex("[A-Za-z0-9_-]{11}")) })
+                val folders = listOf(kind, collectionFolder(title, id))
+                withContext(Dispatchers.IO) {
+                    tracks.forEachIndexed { index, media -> FolderAudioDownloads.enqueue(context, media, uri, folders, index + 1) }
+                }
+                Toast.makeText(context, context.getString(R.string.folder_collection_queued, tracks.size), Toast.LENGTH_LONG).show()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                Toast.makeText(context, R.string.folder_audio_failed, Toast.LENGTH_LONG).show()
+            } finally { loading = false }
+        }
+    }
+    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) scope.launch {
+            try {
+                withContext(Dispatchers.IO) { persistFolder(context, uri) }
+                if (context.safeDataStoreEdit { it[FolderAudioTreeKey] = uri.toString() }) enqueue(uri)
+            } catch (_: Exception) { Toast.makeText(context, R.string.folder_audio_access_error, Toast.LENGTH_LONG).show() }
+        }
+    }
+    return Material3MenuItemData(
+        title = { Text(stringResource(if (loading) R.string.folder_audio_waiting else R.string.folder_collection_action)) },
+        description = { Text(stringResource(R.string.folder_collection_description, kind, title)) },
+        icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
+        onClick = {
+            if (!loading) {
+                val uri = tree.takeIf(String::isNotBlank)?.let(Uri::parse)
+                if (uri != null && runCatching { DocumentFile.fromTreeUri(context, uri)?.canWrite() == true }.getOrDefault(false)) enqueue(uri)
+                else picker.launch(uri)
+            }
+        },
+    )
+}

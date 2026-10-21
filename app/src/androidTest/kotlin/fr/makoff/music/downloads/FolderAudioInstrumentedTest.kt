@@ -34,6 +34,33 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test fun collectionsCreateSeparateNestedFoldersAndPreserveAudio() = runBlocking {
+        val source = File(context.cacheDir, "collection-${UUID.randomUUID()}.m4a")
+        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+        source.writeBytes(bytes)
+        val exported = mutableListOf<android.net.Uri>()
+        try {
+            val title = "Mix / été : \"2026\""
+            val folder = collectionFolder(title, UUID.randomUUID().toString())
+            assertFalse(folder.contains('/'))
+            assertFalse(folder.contains(':'))
+            for (kind in listOf("Albums", "Playlists")) {
+                val uri = saveAudioToTree(context, tree, source, "001 - Piste.m4a", listOf(kind, folder))
+                exported += uri
+                assertArrayEquals(bytes, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                val root = DocumentFile.fromTreeUri(context, tree)!!
+                val collection = root.findFile(kind)!!.findFile(folder)!!
+                assertTrue(collection.isDirectory)
+                assertNotNull(collection.findFile("001 - Piste.m4a"))
+            }
+            assertNotEquals(exported[0], exported[1])
+            assertTrue(runCatching { saveAudioToTree(context, tree, source, "bad.m4a", listOf("..")) }.isFailure)
+        } finally {
+            exported.forEach { DocumentsContract.deleteDocument(context.contentResolver, it) }
+            source.delete()
+        }
+    }
+
     @Test(timeout = 90000) fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
         println("Starting native yt-dlp fixture download")
         val bytes = ByteArray(4096) { (it % 127).toByte() }

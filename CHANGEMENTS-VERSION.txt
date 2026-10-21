@@ -1,6 +1,11 @@
-- Nouveau thème Liquid Glass : fond coloré, reflets, panneaux translucides, couleur/intensité/opacité réglables et enregistrées. Disponible dans Apparence > Thème, désactivé par défaut. Fond du lecteur et mini-lecteur compatibles avec leur style par défaut.
+## Téléchargements et retour au thème classique
 
-## Changements de cette préversion
+- Suppression du thème Liquid Glass et de ses réglages.
+- Export des albums et playlists en fichiers audio dans des sous-dossiers Albums/Nom et Playlists/Nom, avec numéros de piste.
+- Le téléchargement interne pour la lecture hors connexion est conservé séparément.
+- Test Android ajouté pour vérifier les sous-dossiers et la conservation exacte des octets audio.
+
+## Changements précédents
 
 - Le fichier proposé dans Releases se nomme maintenant Metrolist.apk. Un seul APK universel est publié ; le système de mise à jour reconnaît ce nom ainsi que les anciens fichiers.
 
@@ -16,4 +21,4 @@
 - Vérification des six catégories de paramètres, de 26 interrupteurs et des qualités LOW/AUTO/HIGH, avec contrôle des valeurs enregistrées et restauration.
 - Inventaire des 359 branchements d’actions du lecteur et des paramètres.
 
-Les tests locaux ne certifient pas le flux YouTube authentifié, les services de paroles, Cast, Bluetooth, Android Auto ou toutes les combinaisons sur tous les appareils. Les fournisseurs tiers restent nécessaires aux fonctions correspondantes. Un seul APK universel est publié après les contrôles. Signature temporaire de test : sauvegardez les données avant une désinstallation.
+Les tests locaux ne certifient pas le flux YouTube authentifié, les services de paroles, Cast, Bluetooth, Android Auto ou toutes les combinaisons sur tous les appareils. Les fournisseurs tiers restent nécessaires aux fonctions correspondantes. Un seul APK universel est publié après les contrôles. Les APK des Releases utilisent la signature permanente du propriétaire du dépôt.

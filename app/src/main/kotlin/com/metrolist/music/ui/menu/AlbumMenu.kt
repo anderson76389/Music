@@ -5,6 +5,9 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderCollectionItem
+import fr.makoff.music.models.toMediaMetadata
+
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -282,6 +285,8 @@ fun AlbumMenu(
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
+    val folderCollection = rememberFolderCollectionItem("Albums", album.title, album.id) { songs.map { it.toMediaMetadata() } }
+
     LazyColumn(
         contentPadding =
             PaddingValues(
@@ -291,6 +296,8 @@ fun AlbumMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        item { Material3MenuGroup(items = listOf(folderCollection)) }
+
         item {
             NewActionGrid(
                 actions =

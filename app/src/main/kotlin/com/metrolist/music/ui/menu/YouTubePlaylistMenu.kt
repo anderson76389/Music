@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderCollectionItem
+
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.res.Configuration
@@ -392,6 +394,8 @@ fun YouTubePlaylistMenu(
     val configuration = LocalConfiguration.current
     val isPortrait = configuration.orientation == Configuration.ORIENTATION_PORTRAIT
 
+    val folderCollection = rememberFolderCollectionItem("Playlists", playlist.title, playlist.id) { YouTube.playlist(playlist.id).completed().getOrThrow().songs.map { it.toMediaMetadata() } }
+
     LazyColumn(
         contentPadding =
             PaddingValues(
@@ -401,6 +405,8 @@ fun YouTubePlaylistMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        item { Material3MenuGroup(items = listOf(folderCollection)) }
+
         item {
             NewActionGrid(
                 actions =

@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — 20 octobre 2026 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, 27 interrupteurs (dont Liquid Glass), trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — 20 octobre 2026 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, les interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
@@ -171,7 +171,6 @@ Chaque modification du code sur `main` lance les contrôles. Après leur réussi
 
 La publication utilise la clé privée du projet, conservée dans les secrets GitHub Actions. Le certificat public, les informations de construction, les sources et les sommes SHA-256 accompagnent l’APK. Les mises à jour utilisent exclusivement les Releases de ce dépôt.
 
-**Liquid Glass :** dans Paramètres → Apparence → Thèmes et couleurs, activez le fond coloré et les panneaux translucides. Réglez la couleur, l’intensité des reflets et l’opacité. Le lecteur et le mini-lecteur suivent ce thème lorsque leur fond est réglé sur le style par défaut. Le mode est désactivé par défaut et ne dépend d’aucun service externe.
 
 </div>
 
@@ -294,3 +293,9 @@ Les marques et les droits de propriété intellectuelle mentionnés appartiennen
 **Maintenu avec ❤️ par [anderson76389](https://github.com/anderson76389)**
 
 </div>
+
+### Télécharger dans un dossier
+
+Le bouton de téléchargement habituel conserve les titres dans le stockage privé de Metrolist pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Télécharger dans un dossier**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
+
+Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Les deux modes sont indépendants : déclenchez chacun si vous voulez les deux copies. Les fichiers audio conservent le format fourni par la source, sans conversion artificielle en FLAC. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.

@@ -40,7 +40,7 @@ object FolderAudioDownloads {
     const val TITLE_TAG = "audio-title:"
     private val videoId = Regex("[A-Za-z0-9_-]{11}")
 
-    fun enqueue(context: Context, media: MediaMetadata, tree: Uri) {
+    fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
         require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
             .setInputData(workDataOf(
@@ -48,13 +48,15 @@ object FolderAudioDownloads {
                 "title" to media.title.take(200),
                 "artist" to media.artists.joinToString { it.name }.take(200),
                 "tree" to tree.toString(),
+                "folders" to folders.toTypedArray(),
+                "track" to track,
             ))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
             .addTag(TAG)
             .addTag("audio-created:${System.currentTimeMillis()}")
             .addTag(TITLE_TAG + media.title.take(100))
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("folder-audio-${media.id}", ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork("folder-audio-${media.id}-${destinationId(tree.toString() + folders.joinToString("/") + track)}", ExistingWorkPolicy.KEEP, request)
     }
 }
 
@@ -147,9 +149,16 @@ internal fun audioMime(extension: String): String = when (extension.lowercase())
     else -> "application/octet-stream"
 }
 
-internal suspend fun saveAudioToTree(context: Context, tree: Uri, source: File, name: String): Uri = withContext(Dispatchers.IO) {
-    val parent = DocumentFile.fromTreeUri(context, tree) ?: throw IOException("Invalid document tree")
+internal suspend fun saveAudioToTree(context: Context, tree: Uri, source: File, name: String, folders: List<String> = emptyList()): Uri = withContext(Dispatchers.IO) {
+    var parent = DocumentFile.fromTreeUri(context, tree) ?: throw IOException("Invalid document tree")
     if (!parent.canWrite()) throw IOException("Document tree is not writable")
+    require(folders.size <= 3)
+    for (segment in folders) {
+        require(segment.isNotBlank() && segment != "." && segment != ".." && segment.none { it == '/' || it == '\\' || it.isISOControl() })
+        val child = parent.findFile(segment) ?: parent.createDirectory(segment) ?: throw IOException("Cannot create folder")
+        if (!child.isDirectory || !child.canWrite()) throw IOException("Destination is not a writable folder")
+        parent = child
+    }
     // Let the provider choose a unique name rather than overwrite an existing file.
     val finalName = if (parent.findFile(name) == null) name else
         name.substringBeforeLast('.') + " (" + java.util.UUID.randomUUID().toString().take(8) + ")." + source.extension
@@ -206,8 +215,9 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 }
                 exporting = true
                 setProgress(workDataOf("copying" to true))
-                val name = audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
-                val uri = saveAudioToTree(applicationContext, tree, source, name)
+                val track = inputData.getInt("track", 0)
+                val name = (if (track > 0) "%03d - ".format(java.util.Locale.ROOT, track) else "") + audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
+                val uri = saveAudioToTree(applicationContext, tree, source, name, inputData.getStringArray("folders")?.toList().orEmpty())
                 val mime = audioMime(source.extension)
                 notifyCompleted(title, uri, mime)
                 Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name))
@@ -261,4 +271,13 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
         const val CHANNEL = "folder-audio-downloads"
         val slots = Semaphore(1)
     }
+}
+
+internal fun destinationId(value: String): String = java.security.MessageDigest.getInstance("SHA-256")
+    .digest(value.toByteArray()).take(8).joinToString("") { "%02x".format(it) }
+
+internal fun collectionFolder(title: String, id: String): String {
+    val safe = title.replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), "_").trim(' ', '.')
+    val stem = safe.codePoints().limit(40).toArray().let { String(it, 0, it.size) }.ifBlank { "Collection" }
+    return "$stem [${destinationId(id)}]"
 }

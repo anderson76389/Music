@@ -12,7 +12,6 @@ import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
@@ -36,9 +35,8 @@ fun MetrolistTheme(
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
-    val glass = rememberGlassStyle(darkTheme)
     // Determine if system dynamic colors should be used (Android S+ and default theme color)
-    val useSystemDynamicColor = (!glass.enabled && themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+    val useSystemDynamicColor = (themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
 
     // Select the appropriate color scheme generation method
     val baseColorScheme = if (useSystemDynamicColor) {
@@ -47,7 +45,7 @@ fun MetrolistTheme(
     } else {
         // Use materialKolor only when a specific seed color is provided
         rememberDynamicColorScheme(
-            seedColor = if (glass.enabled) glass.tint else themeColor, // themeColor is guaranteed non-default here
+            seedColor = themeColor, // themeColor is guaranteed non-default here
             isDark = darkTheme,
             specVersion = ColorSpec.SpecVersion.SPEC_2025,
             style = PaletteStyle.TonalSpot // Keep existing style
@@ -55,10 +53,8 @@ fun MetrolistTheme(
     }
 
     // Apply pureBlack modification if needed, similar to original logic
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, glass) {
-        if (glass.enabled) {
-            baseColorScheme.copy(background = glass.base, surface = glass.base)
-        } else if (darkTheme && pureBlack) {
+    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
+        if (darkTheme && pureBlack) {
             baseColorScheme.pureBlack(true)
         } else {
             baseColorScheme
@@ -66,9 +62,10 @@ fun MetrolistTheme(
     }
 
     // Use standard MaterialTheme instead of MaterialExpressiveTheme
-    CompositionLocalProvider(LocalGlassStyle provides glass) {
-        MaterialTheme(colorScheme = colorScheme, content = content)
-    }
+    MaterialTheme(
+        colorScheme = colorScheme,
+        content = content,
+    )
 }
 
 fun Bitmap.extractThemeColor(): Color = Color(

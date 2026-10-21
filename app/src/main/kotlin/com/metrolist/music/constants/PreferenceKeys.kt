@@ -658,8 +658,3 @@ val CountryCodeToName =
     )
 
 val FolderAudioTreeKey = stringPreferencesKey("folder_audio_tree")
-
-val LiquidGlassKey = booleanPreferencesKey("liquidGlass")
-val GlassHueKey = floatPreferencesKey("glassHue")
-val GlassIntensityKey = floatPreferencesKey("glassIntensity")
-val GlassOpacityKey = floatPreferencesKey("glassOpacity")

@@ -70,8 +70,6 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import fr.makoff.music.ui.theme.LocalGlassStyle
-import fr.makoff.music.ui.theme.liquidBackdrop
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -832,8 +830,7 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .background(bottomSheetBackgroundColor)
-                        .liquidBackdrop(LocalGlassStyle.current.let { it.copy(enabled = it.enabled && playerBackground == PlayerBackgroundStyle.DEFAULT) }),
+                        .background(bottomSheetBackgroundColor),
             ) {
                 when (playerBackground) {
                     PlayerBackgroundStyle.BLUR -> {
