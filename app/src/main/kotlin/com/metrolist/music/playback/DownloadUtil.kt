@@ -39,6 +39,8 @@ import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.models.toMediaMetadata
 import fr.makoff.music.utils.InnerTubeXPlayer
 import fr.makoff.music.utils.enumPreference
+import fr.makoff.music.utils.dataStore
+import fr.makoff.music.utils.get
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -100,7 +102,7 @@ constructor(
                 .setCache(playerCache)
                 .setCacheWriteDataSinkFactory(null)
                 .setUpstreamDataSourceFactory(
-                    OkHttpDataSource.Factory(streamHttpClient),
+                    androidx.media3.datasource.DefaultDataSource.Factory(context, OkHttpDataSource.Factory(streamHttpClient)),
                 ),
         ) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
@@ -127,7 +129,26 @@ constructor(
                     ),
                     allowBoundedRange = false,
                 )
-            }.getOrThrow()
+            }.getOrElse { error ->
+                val cookie = context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, "")
+                if (!canUseAuthenticatedDownloadFallback(error, cookie)) throw error
+                val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId")
+                val file = runBlocking(Dispatchers.IO) {
+                    directory.listFiles()?.firstOrNull { it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0 }
+                        ?: fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
+                            "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie) { }
+                }
+                val extractor = android.media.MediaExtractor()
+                try {
+                    extractor.setDataSource(file.absolutePath)
+                    val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                        .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+                    database.upsert(FormatEntity(mediaId, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
+                        "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
+                        file.length(), null, playbackUrl = null))
+                } finally { extractor.release() }
+                return@Factory dataSpec.withUri(android.net.Uri.fromFile(file))
+            }
             val format = playbackData.format
 
             val actualContentLength =
@@ -263,12 +284,14 @@ constructor(
                         scope.launch {
                             when (download.state) {
                                 Download.STATE_COMPLETED -> {
+                                    java.io.File(context.cacheDir, "authenticated-download/${download.request.id}").deleteRecursively()
                                     removeFromPlayerCache(download.request.id)
                                     database.updateDownloadedInfo(download.request.id, true, LocalDateTime.now())
                                 }
                                 Download.STATE_FAILED,
                                 Download.STATE_STOPPED,
                                 Download.STATE_REMOVING -> {
+                                    java.io.File(context.cacheDir, "authenticated-download/${download.request.id}").deleteRecursively()
                                     database.updateDownloadedInfo(download.request.id, false, null)
                                 }
                                 else -> {
@@ -316,6 +339,84 @@ constructor(
         }
     }
 
+    /** Returns only a still-readable completed document. Lost files can be downloaded again. */
+    fun externalAudioUri(songId: String): android.net.Uri? {
+        val download = downloads.value[songId] ?: return null
+        if (download.state != Download.STATE_COMPLETED || download.request.uri.scheme != "content") return null
+        val uri = download.request.uri
+        val readable = runCatching { context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length != 0L } == true }.getOrDefault(false)
+        if (readable) return uri
+        (downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(songId)
+        downloads.update { it - songId }
+        database.updateDownloadedInfo(songId, false, null)
+        return null
+    }
+
+    /** Commit the document reference before removing private bytes; never delete the public document. */
+    fun registerExternalAudio(media: MediaMetadata, uri: android.net.Uri, size: Long) {
+        require(uri.scheme == "content" && size > 0)
+        check(context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { it.length != 0L } == true)
+        val previous = downloadManager.downloadIndex.getDownload(media.id)
+        check(previous == null || previous.isTerminalState) { "An internal download is still active" }
+        if (database.getSongByIdBlocking(media.id) == null) database.insert(media)
+        val extractor = android.media.MediaExtractor()
+        try {
+            extractor.setDataSource(context, uri, null)
+            val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+            database.upsert(FormatEntity(media.id, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
+                "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
+                size, null, playbackUrl = null))
+        } finally { extractor.release() }
+        val request = DownloadRequest.Builder(media.id, uri).setCustomCacheKey(media.id).setData(media.title.toByteArray()).build()
+        val now = System.currentTimeMillis()
+        val progress = androidx.media3.exoplayer.offline.DownloadProgress().apply { bytesDownloaded = size; percentDownloaded = 100f }
+        val completed = Download(request, Download.STATE_COMPLETED, now, now, size, 0, 0, progress)
+        (downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(completed)
+        downloads.update { it + (media.id to completed) }
+        database.updateDownloadedInfo(media.id, true, LocalDateTime.now())
+        songUrlCache.invalidate(media.id)
+        downloadCache.removeResource(media.id)
+        removeFromPlayerCache(media.id)
+    }
+
+    /** Copy a completed local source to temporary staging without accessing YouTube. */
+    fun stageExistingAudio(songId: String, directory: java.io.File): java.io.File? {
+        val download = downloads.value[songId] ?: return null
+        if (download.state != Download.STATE_COMPLETED) return null
+        val uri = externalAudioUri(songId)
+        val size = download.contentLength
+        if (uri == null && (size <= 0 || !downloadCache.isCached(songId, 0, size))) return null
+        directory.mkdirs()
+        val staging = java.io.File(directory, "existing.audio")
+        try {
+            if (uri != null) {
+                requireNotNull(context.contentResolver.openInputStream(uri)).use { input -> staging.outputStream().use { input.copyTo(it) } }
+            } else {
+                val source = CacheDataSource.Factory().setCache(downloadCache).setUpstreamDataSourceFactory(null).createDataSource()
+                val spec = androidx.media3.datasource.DataSpec.Builder().setUri(songId).setKey(songId).setLength(size).build()
+                androidx.media3.datasource.DataSourceInputStream(source, spec).use { input -> staging.outputStream().use { input.copyTo(it) } }
+            }
+            check(staging.length() > 0 && (size <= 0 || staging.length() == size))
+            val extractor = android.media.MediaExtractor()
+            val extension = try {
+                extractor.setDataSource(staging.absolutePath)
+                val mime = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                    .mapNotNull { it.getString(android.media.MediaFormat.KEY_MIME) }.first { it.startsWith("audio/") }
+                val header = ByteArray(12).also { bytes -> staging.inputStream().use { it.read(bytes) } }
+                when {
+                    header.take(4) == listOf(0x1a.toByte(), 0x45.toByte(), 0xdf.toByte(), 0xa3.toByte()) -> "webm"
+                    header.take(4).toByteArray().toString(Charsets.US_ASCII) == "OggS" -> "ogg"
+                    header.drop(4).take(4).toByteArray().toString(Charsets.US_ASCII) == "ftyp" -> "m4a"
+                    mime == "audio/mpeg" -> "mp3"
+                    mime == "audio/flac" -> "flac"
+                    else -> error("Unsupported cached audio container")
+                }
+            } finally { extractor.release() }
+            return java.io.File(directory, "existing.$extension").also { check(staging.renameTo(it)) }
+        } catch (error: Exception) { staging.delete(); throw error }
+    }
+
     fun getDownload(songId: String): Flow<Download?> = downloads.map { it[songId] }
 
     fun download(song: Song) = download(song.toMediaMetadata())
@@ -325,6 +426,8 @@ constructor(
     fun download(mediaMetadata: MediaMetadata) {
         scope.launch {
             downloadPreparations.withPermit {
+                // Revalidate document permission/existence before treating an external copy as complete.
+                externalAudioUri(mediaMetadata.id)
                 if (!shouldPrepareDownload(downloads.value[mediaMetadata.id]?.state)) return@withPermit
 
                 mediaMetadata.album?.let { album ->
@@ -451,3 +554,10 @@ internal fun downloadContentLength(
 
 private val PARTIAL_CONTENT_RANGE = Regex("""bytes\s+0-0/(\d+)""", RegexOption.IGNORE_CASE)
 private val UNSATISFIED_CONTENT_RANGE = Regex("""bytes\s+\*/(\d+)""", RegexOption.IGNORE_CASE)
+
+internal fun canUseAuthenticatedDownloadFallback(error: Throwable, cookie: String): Boolean {
+    val authenticated = cookie.split(';').any { it.trim().substringBefore('=') in setOf("SAPISID", "__Secure-3PAPISID", "__Secure-1PAPISID") && it.substringAfter('=', "").isNotBlank() }
+    return authenticated && error is com.metrolist.innertubex.extraction.StreamResolveException &&
+        error.reason in setOf(com.metrolist.innertubex.extraction.StreamResolveException.Reason.AGE_RESTRICTED,
+            com.metrolist.innertubex.extraction.StreamResolveException.Reason.EXPLICIT_UNSUPPORTED)
+}

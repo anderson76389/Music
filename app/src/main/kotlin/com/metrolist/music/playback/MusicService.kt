@@ -3270,8 +3270,16 @@ class MusicService :
         normalizationProcessor: VolumeNormalizationAudioProcessor,
         playerProvider: () -> ExoPlayer?,
     ): DataSource.Factory {
-        return ResolvingDataSource.Factory(createCacheDataSource()) { dataSpec ->
+        val cachedFactory = createCacheDataSource()
+        val sourceFactory = DataSource.Factory { fr.makoff.music.downloads.LocalAudioDataSource(this, cachedFactory) }
+        return ResolvingDataSource.Factory(sourceFactory) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
+            downloadUtil.externalAudioUri(mediaId)?.let { uri ->
+                applyAudioNormalizationBeforePlayback(processor = normalizationProcessor, playerProvider = playerProvider,
+                    mediaId = mediaId, loudnessDb = null, perceptualLoudnessDb = null, preserveCachedIfMissing = false)
+                currentStreamClient.value = "Local document"
+                return@Factory dataSpec.withUri(uri)
+            }
             val storedFormat = runBlocking(Dispatchers.IO) { database.format(mediaId).first() }
             applyAudioNormalizationBeforePlayback(
                 processor = normalizationProcessor,

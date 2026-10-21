@@ -113,6 +113,7 @@ class OfflinePlayerInstrumentedTest {
             MediaMetadata(UUID.randomUUID().toString().replace("-", "").take(11),
                 "Validation lecteur ${'A' + index}", listOf(MediaMetadata.Artist("test-local-artist", "Audio de test")), 20)
         }
+        var sharedUri: android.net.Uri? = null
         var bound = false
         try {
             context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -137,6 +138,28 @@ class OfflinePlayerInstrumentedTest {
                 ContentMetadataMutations.setContentLength(mutations, audio.size.toLong())
                 active.downloadCache.applyContentMetadataMutations(track.id, mutations)
             }
+            // Migrate one real private download into a shared SAF file while offline.
+            val first = tracks[0]
+            val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(first.id, android.net.Uri.parse(first.id)).setCustomCacheKey(first.id).build()
+            val completed = androidx.media3.exoplayer.offline.Download(request, androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, audio.size.toLong(), 0, 0)
+            (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(completed)
+            active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (first.id to completed)
+            val directory = java.io.File(context.cacheDir, "offline-export-${first.id}")
+            val staged = active.downloadUtil.stageExistingAudio(first.id, directory)!!
+            assertArrayEquals(audio, staged.readBytes())
+            val testPackage = instrumentation.context.packageName
+            device.executeShellCommand("am start -n $testPackage/fr.makoff.music.downloads.GrantAudioTreeActivity")
+            val tree = android.provider.DocumentsContract.buildTreeDocumentUri("$testPackage.foldertest", "root")
+            await("Document permission missing") {
+                context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+            }
+            val external = fr.makoff.music.downloads.saveAudioToTree(context, tree, staged, "${first.id}.m4a")
+            sharedUri = external
+            active.downloadUtil.registerExternalAudio(first, external, audio.size.toLong())
+            directory.deleteRecursively()
+            assertTrue("Private copy was not removed", active.downloadCache.getCachedSpans(first.id).isEmpty())
+            assertEquals(external, active.downloadUtil.externalAudioUri(first.id))
+            println("PLAYER_STAGE: private cache exported and replaced by shared document without network")
             tracks.forEachIndexed { i, track ->
                 active.database.insert(RelatedSongMap(songId = track.id, relatedSongId = tracks[(i + 1) % tracks.size].id))
             }
@@ -221,7 +244,10 @@ class OfflinePlayerInstrumentedTest {
             await("Skip-silence preference did not reach actual player") { main { active.player.skipSilenceEnabled } }
             context.dataStore.edit { it[SkipSilenceKey] = false; it[AudioQualityKey] = AudioQuality.LOW.name }
             SystemClock.sleep(500)
-            assertTrue("Changing quality erased cached download", active.downloadCache.isCached(tracks[0].id, 0, audio.size.toLong()))
+            assertEquals("Changing quality lost shared download", sharedUri, active.downloadUtil.externalAudioUri(tracks[0].id))
+            assertTrue("Playback recreated private download bytes", active.downloadCache.getCachedSpans(tracks[0].id).isEmpty())
+            assertTrue("Playback recreated streaming cache bytes", active.playerCache.getCachedSpans(tracks[0].id).isEmpty())
+            assertTrue("Changing quality erased another private download", active.downloadCache.isCached(tracks[1].id, 0, audio.size.toLong()))
             main { controller.play() }
             await("Playback after quality change failed") { main { active.player.isPlaying } }
             main { active.sleepTimer!!.start(0) }
@@ -244,9 +270,12 @@ class OfflinePlayerInstrumentedTest {
             main { service?.sleepTimer?.clear(); connection?.pause(); connection?.dispose(); service?.takeIf { it.isPlayerReady.value }?.player?.clearMediaItems() }
             scope.cancel()
             service?.let { active -> tracks.forEach { track ->
+                (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(track.id)
+                active.downloadUtil.downloads.value = active.downloadUtil.downloads.value - track.id
                 active.downloadCache.removeResource(track.id)
                 active.database.song(track.id).first()?.let { active.database.delete(it.song) }
             } }
+            sharedUri?.let { runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, it) } }
             if (bound) context.unbindService(binding)
             device.pressBack()
             device.waitForIdle()

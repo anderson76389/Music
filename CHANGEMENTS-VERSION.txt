@@ -1,3 +1,11 @@
+## Fichier partagé et téléchargements authentifiés
+
+- Un fichier audio exporté sert désormais de téléchargement hors connexion dans Metrolist, sans deuxième copie dans le cache du lecteur.
+- Un téléchargement interne terminé peut être exporté sans nouveau transfert YouTube. La copie privée est retirée après validation et enregistrement du fichier externe.
+- Retirer le téléchargement dans Metrolist conserve le fichier personnel. Si le fichier est déplacé, supprimé ou inaccessible, le téléchargement peut être relancé.
+- Recours à yt-dlp avec la session enregistrée lorsque le moteur interne signale une restriction d’âge ou de contenu explicite. Aucune garantie d’accès si YouTube refuse la session ou demande une vérification supplémentaire.
+- Tests Android ajoutés : lecture du fichier partagé en mode avion, absence de nouveau cache, conservation du fichier lors du retrait et gestion d’un fichier manquant.
+
 ## Téléchargements et retour au thème classique
 
 - Suppression du thème Liquid Glass et de ses réglages.

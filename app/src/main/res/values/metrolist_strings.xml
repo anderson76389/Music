@@ -845,12 +845,13 @@
     <string name="folder_audio_recent">Téléchargements de fichiers récents</string>
     <string name="folder_audio_open">Ouvrir le fichier</string>
     <string name="folder_audio_open_error">Aucune application ne peut ouvrir ce fichier.</string>
-    <string name="folder_audio_native">Format audio d’origine (Opus/WebM ou M4A), sans réencodage. Ces fichiers restent distincts du cache hors connexion et sont conservés si vous videz le cache ou désinstallez Music.</string>
+    <string name="folder_audio_native">Format audio d’origine (Opus/WebM ou M4A), sans réencodage. Le même fichier est utilisé hors connexion dans Metrolist, sans copie privée supplémentaire. Si vous le déplacez, le supprimez ou retirez l’accès au dossier, il faudra le télécharger à nouveau. Retirer un téléchargement dans Metrolist ne supprime pas votre fichier personnel.</string>
     <string name="folder_audio_invalid">Ce morceau ne possède pas de lien YouTube téléchargeable.</string>
     <string name="folder_audio_cancel">Annuler</string>
     <string name="makoff_changelog_error">Impossible de charger les changements depuis GitHub. Vérifiez votre connexion, puis réessayez.</string>
     <string name="makoff_retry">Réessayer</string>
     <string name="folder_collection_action">Télécharger la collection dans un dossier</string>
-    <string name="folder_collection_description">Fichiers audio dans %1$s / %2$s, avec pistes numérotées. Le téléchargement hors connexion dans l’application reste séparé.</string>
+    <string name="folder_collection_description">Fichiers audio dans %1$s / %2$s, avec pistes numérotées. Ces fichiers servent aussi à la lecture hors connexion dans Metrolist.</string>
     <string name="folder_collection_queued">%1$d pistes ajoutées à la file d’export</string>
+    <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
 </resources>

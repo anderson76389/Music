@@ -8,6 +8,18 @@ import org.junit.Test
 
 class DownloadUtilTest {
     @Test
+    fun `restricted fallback requires a real saved session and a relevant failure`() {
+        val age = com.metrolist.innertubex.extraction.StreamResolveException(
+            com.metrolist.innertubex.extraction.StreamResolveException.Reason.AGE_RESTRICTED, "restricted")
+        assertFalse(canUseAuthenticatedDownloadFallback(age, ""))
+        assertFalse(canUseAuthenticatedDownloadFallback(age, "SAPISID="))
+        assertFalse(canUseAuthenticatedDownloadFallback(age, "VISITOR_INFO1_LIVE=visitor"))
+        assertTrue(canUseAuthenticatedDownloadFallback(age, "SAPISID=test-session"))
+        assertTrue(canUseAuthenticatedDownloadFallback(age, "__Secure-3PAPISID=test-session"))
+        assertFalse(canUseAuthenticatedDownloadFallback(java.io.IOException("offline"), "SAPISID=test-session"))
+    }
+
+    @Test
     fun `completed downloads are not prepared again`() {
         assertFalse(shouldPrepareDownload(Download.STATE_COMPLETED))
         assertTrue(shouldPrepareDownload(Download.STATE_FAILED))

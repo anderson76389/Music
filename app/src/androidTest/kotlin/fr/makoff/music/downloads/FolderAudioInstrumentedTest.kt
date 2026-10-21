@@ -34,6 +34,57 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test fun sharedDocumentIsOfflineDownloadAndMissingDocumentCanBeRetried() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val media = fr.makoff.music.models.MediaMetadata(id, "Shared audio test", emptyList(), 1)
+        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+        val directory = File(context.cacheDir, "shared-test-$id").apply { mkdirs() }
+        val source = File(directory, "source.m4a").apply { writeBytes(bytes) }
+        val uri = saveAudioToTree(context, tree, source, "$id.m4a")
+        try {
+            downloads.registerExternalAudio(media, uri, bytes.size.toLong())
+            assertEquals(uri, downloads.externalAudioUri(id))
+            assertEquals(androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, downloads.downloads.value[id]?.state)
+            assertTrue(downloads.database.getSongByIdBlocking(id)!!.song.isDownloaded)
+            assertTrue(downloads.downloadCache.getCachedSpans(id).isEmpty())
+            val staged = downloads.stageExistingAudio(id, File(directory, "staging"))!!
+            assertArrayEquals(bytes, staged.readBytes())
+            assertEquals("m4a", staged.extension)
+            assertTrue(DocumentsContract.deleteDocument(context.contentResolver, uri))
+            assertNull(downloads.externalAudioUri(id))
+            assertNull(downloads.downloadManager.downloadIndex.getDownload(id))
+            assertFalse(downloads.database.getSongByIdBlocking(id)!!.song.isDownloaded)
+        } finally {
+            runCatching { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+            downloads.database.getSongByIdBlocking(id)?.let { downloads.database.delete(it.song) }
+            directory.deleteRecursively()
+        }
+    }
+
+    @Test fun removingSharedDownloadKeepsPersonalFile() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+        val source = File(context.cacheDir, "$id.m4a").apply { writeBytes(bytes) }
+        val uri = saveAudioToTree(context, tree, source, "$id.m4a")
+        try {
+            downloads.registerExternalAudio(fr.makoff.music.models.MediaMetadata(id, "Removal test", emptyList(), 1), uri, bytes.size.toLong())
+            instrumentation.runOnMainSync { downloads.downloadManager.removeDownload(id) }
+            val deadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (downloads.downloads.value.containsKey(id)) {
+                check(android.os.SystemClock.elapsedRealtime() < deadline)
+                kotlinx.coroutines.delay(50)
+            }
+            assertArrayEquals(bytes, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+            assertFalse(downloads.database.getSongByIdBlocking(id)!!.song.isDownloaded)
+        } finally {
+            DocumentsContract.deleteDocument(context.contentResolver, uri)
+            downloads.database.getSongByIdBlocking(id)?.let { downloads.database.delete(it.song) }
+            source.delete()
+        }
+    }
+
     @Test fun collectionsCreateSeparateNestedFoldersAndPreserveAudio() = runBlocking {
         val source = File(context.cacheDir, "collection-${UUID.randomUUID()}.m4a")
         val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)

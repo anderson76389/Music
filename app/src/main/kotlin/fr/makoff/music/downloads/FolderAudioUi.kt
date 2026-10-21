@@ -122,7 +122,11 @@ fun FolderAudioSettings() {
             Text(work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.TITLE_TAG) }?.removePrefix(FolderAudioDownloads.TITLE_TAG).orEmpty())
             val status = when (work.state) {
                 WorkInfo.State.SUCCEEDED -> R.string.folder_audio_completed
-                WorkInfo.State.FAILED -> if (work.outputData.getString("error") == "storage") R.string.folder_audio_write_error else R.string.folder_audio_failed
+                WorkInfo.State.FAILED -> when (work.outputData.getString("error")) {
+                    "storage" -> R.string.folder_audio_write_error
+                    "active" -> R.string.folder_audio_internal_busy
+                    else -> R.string.folder_audio_failed
+                }
                 WorkInfo.State.CANCELLED -> R.string.folder_audio_cancelled
                 WorkInfo.State.RUNNING -> when {
                     work.progress.getBoolean("waiting", false) -> R.string.folder_audio_waiting

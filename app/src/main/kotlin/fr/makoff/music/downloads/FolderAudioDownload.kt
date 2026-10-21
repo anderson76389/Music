@@ -24,6 +24,9 @@ import com.yausername.youtubedl_android.YoutubeDL
 import com.yausername.youtubedl_android.YoutubeDLRequest
 import fr.makoff.music.R
 import fr.makoff.music.models.MediaMetadata
+import fr.makoff.music.models.toMediaMetadata
+import fr.makoff.music.utils.dataStore
+import fr.makoff.music.utils.get
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.currentCoroutineContext
@@ -38,6 +41,8 @@ import java.io.IOException
 object FolderAudioDownloads {
     const val TAG = "folder-audio"
     const val TITLE_TAG = "audio-title:"
+    internal fun downloadUtil(context: Context) = dagger.hilt.android.EntryPointAccessors.fromApplication(context.applicationContext,
+        FolderDownloadDependencies::class.java).downloadUtil()
     private val videoId = Regex("[A-Za-z0-9_-]{11}")
 
     fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
@@ -47,11 +52,18 @@ object FolderAudioDownloads {
                 "videoId" to media.id,
                 "title" to media.title.take(200),
                 "artist" to media.artists.joinToString { it.name }.take(200),
+                "artistNames" to media.artists.take(20).map { it.name.take(100) }.toTypedArray(),
+                "artistIds" to media.artists.take(20).map { it.id.orEmpty().take(100) }.toTypedArray(),
+                "duration" to media.duration,
+                "thumbnail" to media.thumbnailUrl.orEmpty().take(1500),
+                "albumId" to media.album?.id.orEmpty().take(100),
+                "albumTitle" to media.album?.title.orEmpty().take(200),
+                "explicit" to media.explicit,
                 "tree" to tree.toString(),
                 "folders" to folders.toTypedArray(),
                 "track" to track,
             ))
-            .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+            .setConstraints(Constraints.Builder().setRequiredNetworkType(if (downloadUtil(context).downloads.value[media.id]?.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED) NetworkType.NOT_REQUIRED else NetworkType.CONNECTED).build())
             .addTag(TAG)
             .addTag("audio-created:${System.currentTimeMillis()}")
             .addTag(TITLE_TAG + media.title.take(100))
@@ -195,6 +207,14 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
         val title = inputData.getString("title").orEmpty()
         val directory = File(applicationContext.cacheDir, "folder-audio/$id")
         var exporting = false
+        val downloads = FolderAudioDownloads.downloadUtil(applicationContext)
+        val media = downloads.database.getSongByIdBlocking(videoId)?.let { it.toMediaMetadata() }
+            ?: MediaMetadata(videoId, title,
+                inputData.getStringArray("artistNames").orEmpty().mapIndexed { index, name ->
+                    MediaMetadata.Artist(inputData.getStringArray("artistIds")?.getOrNull(index)?.ifBlank { null }, name)
+                }, inputData.getInt("duration", -1), inputData.getString("thumbnail")?.ifBlank { null },
+                inputData.getString("albumId")?.takeIf { it.isNotBlank() }?.let { MediaMetadata.Album(it, inputData.getString("albumTitle").orEmpty()) },
+                explicit = inputData.getBoolean("explicit", false))
         try {
             setProgress(workDataOf("waiting" to true))
             setForeground(notification(title, -1))
@@ -202,8 +222,9 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 setProgress(workDataOf("percent" to 0))
                 setForeground(notification(title, 0))
                 var lastUpdate = 0L
-                val source = YtDlpAudioEngine.download(
-                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), com.metrolist.innertube.YouTube.cookie.orEmpty(),
+                if (downloads.downloads.value[videoId]?.isTerminalState == false) return@withPermit Result.failure(workDataOf("error" to "active"))
+                val source = downloads.stageExistingAudio(videoId, directory) ?: YtDlpAudioEngine.download(
+                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""),
                 ) { progress ->
                     val now = android.os.SystemClock.elapsedRealtime()
                     if (now - lastUpdate > 800) {
@@ -218,6 +239,7 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val track = inputData.getInt("track", 0)
                 val name = (if (track > 0) "%03d - ".format(java.util.Locale.ROOT, track) else "") + audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
                 val uri = saveAudioToTree(applicationContext, tree, source, name, inputData.getStringArray("folders")?.toList().orEmpty())
+                downloads.registerExternalAudio(media, uri, source.length())
                 val mime = audioMime(source.extension)
                 notifyCompleted(title, uri, mime)
                 Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name))
