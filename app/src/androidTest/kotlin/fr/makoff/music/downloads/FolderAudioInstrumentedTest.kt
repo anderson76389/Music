@@ -45,6 +45,7 @@ class FolderAudioInstrumentedTest {
         try {
             downloads.registerExternalAudio(media, uri, bytes.size.toLong())
             assertEquals(uri, downloads.externalAudioUri(id))
+            assertEquals(uri, androidx.media3.exoplayer.offline.DefaultDownloadIndex(downloads.databaseProvider).getDownload(id)?.request?.uri)
             assertEquals(androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, downloads.downloads.value[id]?.state)
             assertTrue(downloads.database.getSongByIdBlocking(id)!!.song.isDownloaded)
             assertTrue(downloads.downloadCache.getCachedSpans(id).isEmpty())
@@ -73,7 +74,7 @@ class FolderAudioInstrumentedTest {
             instrumentation.runOnMainSync { downloads.downloadManager.removeDownload(id) }
             val deadline = android.os.SystemClock.elapsedRealtime() + 15000
             while (downloads.downloads.value.containsKey(id)) {
-                check(android.os.SystemClock.elapsedRealtime() < deadline)
+                check(android.os.SystemClock.elapsedRealtime() < deadline) { "Removal did not finish: memory=${downloads.downloads.value[id]?.state}; index=${downloads.downloadManager.downloadIndex.getDownload(id)?.state}" }
                 kotlinx.coroutines.delay(50)
             }
             assertArrayEquals(bytes, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })

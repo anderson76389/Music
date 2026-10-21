@@ -135,8 +135,15 @@ constructor(
                 val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId")
                 val file = runBlocking(Dispatchers.IO) {
                     directory.listFiles()?.firstOrNull { it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0 }
-                        ?: fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
-                            "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie) { }
+                        ?: try {
+                            fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
+                                "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId", cookie) { }
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (_: Exception) {
+                            // DownloadManager can log failures. Never propagate yt-dlp stderr or signed URLs.
+                            throw IOException("Authenticated audio download unavailable; reconnect to YouTube and retry")
+                        }
                 }
                 val extractor = android.media.MediaExtractor()
                 try {
@@ -307,17 +314,19 @@ constructor(
                         val downloadId = download.request.id
                         songUrlCache.invalidate(downloadId)
 
-                        runCatching {
-                            database.updateDownloadedInfo(downloadId, false, null)
-                        }.onSuccess {
-                            downloads.update { map ->
-                                map.toMutableMap().apply {
-                                    remove(downloadId)
+                        scope.launch {
+                            runCatching {
+                                database.updateDownloadedInfo(downloadId, false, null)
+                            }.onSuccess {
+                                downloads.update { map ->
+                                    map.toMutableMap().apply {
+                                        remove(downloadId)
+                                    }
                                 }
+                                Timber.tag(TAG).d("Successfully removed download $downloadId from in-memory map")
+                            }.onFailure { error ->
+                                Timber.tag(TAG).e(error, "Failed to update database for removed download $downloadId, keeping in-memory entry")
                             }
-                            Timber.tag(TAG).d("Successfully removed download $downloadId from in-memory map")
-                        }.onFailure { error ->
-                            Timber.tag(TAG).e(error, "Failed to update database for removed download $downloadId, keeping in-memory entry")
                         }
                     }
                 }
@@ -385,7 +394,8 @@ constructor(
         val download = downloads.value[songId] ?: return null
         if (download.state != Download.STATE_COMPLETED) return null
         val uri = externalAudioUri(songId)
-        val size = download.contentLength
+        val size = download.contentLength.takeIf { it > 0 }
+            ?: androidx.media3.datasource.cache.ContentMetadata.getContentLength(downloadCache.getContentMetadata(songId))
         if (uri == null && (size <= 0 || !downloadCache.isCached(songId, 0, size))) return null
         directory.mkdirs()
         val staging = java.io.File(directory, "existing.audio")
