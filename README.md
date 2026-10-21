@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — 20 octobre 2026 :** compilation, démarrage Android, lecteur hors connexion, trois tests d’export audio, six catégories de paramètres, les interrupteurs, trois choix de qualité et journal GitHub validés. L’essai YouTube anonyme a été refusé par l’anti-robot ; les fonctions avec compte et les appareils externes ne sont pas certifiés par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — 21 octobre 2026 :** compilation, démarrage Android, lecture hors connexion, quatre tests d’export audio (dont les sous-dossiers Albums/Playlists), six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. Liquid Glass retiré. L’essai YouTube anonyme a été refusé par l’anti-robot ; le téléchargement avec compte n’est pas certifié par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
@@ -296,6 +296,6 @@ Les marques et les droits de propriété intellectuelle mentionnés appartiennen
 
 ### Télécharger dans un dossier
 
-Le bouton de téléchargement habituel conserve les titres dans le stockage privé de Metrolist pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Télécharger dans un dossier**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
+Le bouton de téléchargement habituel conserve les titres dans le stockage privé de Metrolist pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Enregistrer un fichier audio (yt-dlp)**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
 
 Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Les deux modes sont indépendants : déclenchez chacun si vous voulez les deux copies. Les fichiers audio conservent le format fourni par la source, sans conversion artificielle en FLAC. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.

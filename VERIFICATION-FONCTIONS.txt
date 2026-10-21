@@ -1,3 +1,47 @@
+MISE À JOUR DU 21 OCTOBRE 2026 — TÉLÉCHARGEMENTS
+
+Liquid Glass supprimé des écrans, des préférences et du rendu.
+Les boutons de téléchargement interne (DownloadUtil/ExoDownloadService) sont
+conservés. L’export externe est une action distincte, avec son moteur yt-dlp.
+Albums et playlists : menu « Télécharger la collection dans un dossier » ;
+sous-dossiers Albums/Nom [identifiant] ou Playlists/Nom [identifiant], pistes
+numérotées. La pagination des playlists YouTube est résolue avant la mise en file.
+Les fichiers existants ne sont pas écrasés.
+
+Exécution initiale :
+https://github.com/anderson76389/Music/actions/runs/39527236944
+- Compilation et tests unitaires réussis.
+- Quatre tests Android d’export réussis : AAC/Opus et octets inchangés,
+  sous-dossiers séparés, absence d’écrasement, nettoyage après un échec.
+- Lecture réelle du fichier AAC placé dans le cache réussie en mode avion.
+- Publication bloquée par un ancien test du journal qui exigeait un tag test-.
+  Test corrigé pour attendre le dernier tag effectivement reçu du dépôt.
+
+Limites : le test des sous-dossiers utilise un fournisseur de documents Android
+de test. Il ne certifie pas tous les gestionnaires de fichiers ni les dossiers
+cloud. Le scénario hors connexion prépare un fichier de test dans le cache ;
+il ne prouve pas un téléchargement complet depuis YouTube avec un compte réel.
+Les deux copies (interne et externe) nécessitent deux actions distinctes.
+
+Nouvelle validation après correction du test du journal : RÉUSSIE.
+Source : f3924d9c2e95a6f61972502926bf27e53c17d20d
+https://github.com/anderson76389/Music/actions/runs/39528598599
+https://github.com/anderson76389/Music/actions/runs/39528598599/artifacts/12313997970
+Quatre tests d’export, un scénario du lecteur, six catégories de paramètres,
+26 interrupteurs, trois qualités et affichage du dernier tag GitHub : réussis.
+Essai YouTube anonyme : ÉCHEC YOUTUBE_AUTH_REQUIRED (contrôle anti-robot).
+L’accès YouTube authentifié n’a pas été testé et n’est pas certifié.
+
+PUBLICATION SIGNÉE : RÉUSSIE — v13.7.0.4
+https://github.com/anderson76389/Music/releases/tag/v13.7.0.4
+https://github.com/anderson76389/Music/actions/runs/39529441260
+Les deux variantes signées démarrent sur Android 11. Un seul APK universel
+Google Cast publié : Metrolist.apk (85 959 007 octets).
+SHA-256 : aebe2be475e4d65679b97dc44f4de363fa927627226ed0cbc3e4dcb98e19efb4
+VersionCode 10004. Sources, certificat public et sommes SHA-256 joints.
+
+--- HISTORIQUE DES VÉRIFICATIONS ---
+
 METROLIST PERSONNEL — VÉRIFICATION DES FONCTIONS
 19 octobre 2026
 
