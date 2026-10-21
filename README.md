@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — 21 octobre 2026 :** compilation, démarrage Android, lecture hors connexion, quatre tests d’export audio (dont les sous-dossiers Albums/Playlists), six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. Liquid Glass retiré. L’essai YouTube anonyme a été refusé par l’anti-robot ; le téléchargement avec compte n’est pas certifié par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — [v13.7.0.7](https://github.com/anderson76389/Music/releases/tag/v13.7.0.7), 21 octobre 2026 :** compilation, démarrage Android, lecture hors connexion, six tests d’export et de gestion des fichiers (dont les sous-dossiers Albums/Playlists et le fichier partagé), six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. Lecture du fichier externe en mode avion sans seconde copie privée validée. Liquid Glass retiré. L’essai YouTube anonyme a été refusé par l’anti-robot ; le téléchargement avec compte n’est pas certifié par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.

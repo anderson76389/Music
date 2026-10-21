@@ -1,3 +1,56 @@
+MISE À JOUR DU 21 OCTOBRE 2026 — FICHIER PARTAGÉ ET SESSION YOUTUBE
+
+Source vérifiée : d2cfcce0be7a74a44fbc4076d4f7d840e58e4258
+https://github.com/anderson76389/Music/actions/runs/39660340064
+Preuves Android :
+https://github.com/anderson76389/Music/actions/runs/39660340064/artifacts/12375560306
+
+RÉSULTATS RÉUSSIS
+- Compilation FOSS/Google Cast, tests unitaires, tests et API du moteur local.
+- Six tests Android de fichiers : moteur yt-dlp natif, octets AAC/M4A et
+  Opus/WebM conservés, sous-dossiers de collections, absence d’écrasement,
+  nettoyage d’un échec, référence persistante et relance après fichier absent.
+- Retirer un téléchargement partagé conserve le fichier personnel et retire
+  correctement son état hors connexion dans l’application.
+- En mode avion, export d’un téléchargement privé existant sans réseau,
+  enregistrement du fichier externe, retrait du cache privé et lecture réelle
+  par le service de Metrolist. Commandes du lecteur, file, minuteurs, favoris
+  et changement de qualité : réussis. Pas de copie du fichier partagé dans
+  le cache de téléchargement ni dans le cache du lecteur.
+- Six catégories de paramètres, 26 interrupteurs, trois qualités et journal
+  des modifications du dépôt : réussis.
+
+SESSION YOUTUBE ET LIMITES
+Le téléchargement interne peut recourir à yt-dlp avec la session enregistrée
+si le moteur signale une restriction d’âge ou de contenu explicite. Les tests
+unitaires vérifient les conditions d’activation. Les préférences Basse et
+Automatique sur réseau limité sont conservées dans ce recours.
+Aucun compte personnel n’a été utilisé : l’accès à un morceau effectivement
+restreint par l’âge avec le compte du propriétaire n’est PAS certifié.
+L’essai public anonyme a échoué avec YOUTUBE_AUTH_REQUIRED (anti-robot).
+
+Le bouton interne conserve son fonctionnement privé habituel. Lors d’un
+export réussi, le fichier externe devient sa source hors connexion ; la
+copie privée est retirée après validation. Un transfert interne encore actif
+doit finir avant l’export. Les anciens fichiers externes ne sont pas repérés
+ou fusionnés automatiquement. Exporter dans plusieurs dossiers peut créer
+plusieurs fichiers publics ; aucun ancien fichier personnel n’est supprimé.
+Déplacer le fichier ou révoquer l’accès au dossier retire sa disponibilité.
+Les tests utilisent Android 11 et un fournisseur de documents de test, pas
+tous les téléphones ou fournisseurs cloud. Ils ne certifient pas Cast,
+Bluetooth, Android Auto ou tous les accès YouTube authentifiés.
+
+PUBLICATION SIGNÉE : RÉUSSIE — v13.7.0.7
+https://github.com/anderson76389/Music/releases/tag/v13.7.0.7
+https://github.com/anderson76389/Music/actions/runs/39661829625
+Installation et démarrage des deux variantes signées sur Android 11 : réussis.
+Un seul APK universel Google Cast : Metrolist.apk (85 967 383 octets).
+VersionCode 10007. Signature permanente conservée ; SIGNATURE.txt est identique
+à celui de v13.7.0.4. Sources et sommes SHA-256 jointes.
+SHA-256 APK : e02be9112e4c5cd7b4d2f788b86c0dc4ccfab7a8bd373d09e5b5e5eb637c3b28
+
+--- HISTORIQUE : ÉTAT PRÉCÉDENT AVANT LE FICHIER PARTAGÉ ---
+
 MISE À JOUR DU 21 OCTOBRE 2026 — TÉLÉCHARGEMENTS
 
 Liquid Glass supprimé des écrans, des préférences et du rendu.
