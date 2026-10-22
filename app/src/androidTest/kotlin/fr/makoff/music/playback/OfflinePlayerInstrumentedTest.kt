@@ -169,7 +169,7 @@ class OfflinePlayerInstrumentedTest {
             val controller = main { PlayerConnection(context, binder, active.database, scope) }
             connection = controller
             main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
-            await("Cached AAC/M4A did not decode: ${main { active.player.playerError }}") {
+            await("Shared FLAC did not decode: ${main { active.player.playerError }}") {
                 main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
             }
             assertNull(main { active.player.playerError })
