@@ -22,9 +22,14 @@ io.github.junkfood02.youtubedl-android:library:0.18.1. YTDLnis n’est pas requi
 Aucune redirection vers une application externe n’est utilisée pour télécharger.
 La version officielle yt-dlp 2026.08.19 est embarquée dans app/src/main/res/raw/ytdlp
 et remplace la version ancienne fournie par défaut par le composant Android.
-Le meilleur flux audio disponible est conservé dans son conteneur d’origine,
-généralement WebM/Opus ou M4A. Pas de conversion MP3 ni de promesse de qualité
-supérieure à celle fournie par YouTube. FFmpeg n’est pas ajouté pour ce mode.
+Paramètres > Stockage propose le format interne et externe : original de meilleure
+qualité, meilleur M4A disponible, ou FLAC converti réellement par FFmpeg embarqué.
+Le FLAC ne restaure pas les détails perdus d’une source compressée. M4A exige
+un flux M4A natif disponible. Les fichiers déjà téléchargés ne changent pas
+avec le réglage ; ils sont réutilisés à l’export quand leur format convient,
+ou convertis localement en FLAC. Voir QUALITE-AUDIO.txt pour les limites.
+Le fichier exporté sert aussi au mode hors connexion, sans seconde copie privée.
+Retirer le téléchargement de Metrolist conserve le fichier personnel.
 
 La session YouTube de Music, si elle existe, est fournie à yt-dlp par un fichier
 de cookies privé limité au domaine youtube.com, puis supprimé avec les fichiers

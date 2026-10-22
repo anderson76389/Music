@@ -1,3 +1,48 @@
+MISE À JOUR DU 22 OCTOBRE 2026 — CHOIX DES FORMATS AUDIO
+
+Source : ad796a54f8a4af3fa7ebf513edd40504bbee8029
+Exécution : https://github.com/anderson76389/Music/actions/runs/39792592780
+
+VALIDATION ANDROID RÉUSSIE
+Preuves : https://github.com/anderson76389/Music/actions/runs/39792592780/artifacts/12432576941
+Compilation FOSS/Google Cast, tests unitaires et contrôles du moteur : réussis.
+Sept tests de fichiers : réussis, dont AAC/M4A et Opus/WebM conservés, vrai
+FLAC 48 kHz stéréo, export/réutilisation exacts et retrait sans perte du fichier.
+Lecteur réel : fichier privé exporté/converti en FLAC et lu en mode avion ;
+commandes, recherche dans le morceau, file, minuteurs, qualité et absence de
+seconde copie privée vérifiés. Scénario réussi.
+Paramètres : six catégories, 26 interrupteurs, qualité de lecture LOW/AUTO/HIGH,
+BEST/M4A/FLAC pour chacun des deux sélecteurs et journal GitHub : réussis.
+Essai public YouTube anonyme : échec séparé, non compté comme réussite.
+
+Deux sélecteurs persistants et indépendants dans Paramètres > Stockage :
+format interne et format externe. Choix : meilleur format original, meilleur
+M4A disponible, ou conversion réelle en FLAC. Le téléchargement interne
+n’hérite plus de Basse/Automatique ; la lecture garde ses propres réglages.
+Les fichiers existants restent inchangés. Un export les réutilise si possible
+ou convertit localement en FLAC ; cela ne restaure aucune qualité déjà perdue.
+
+Trois défauts repérés par les essais ont été corrigés : sélection du fichier
+local pour la conversion et identification FLAC quand MediaExtractor Android
+expose une piste PCM déjà décodée, et ajout de FlacExtractor à la liste limitée
+aux conteneurs WebM/MP4 du lecteur principal. L’identification utilise l’en-tête fLaC du fichier. Le test conserve cette assertion et ajoute
+l’enregistrement/réexport du FLAC avec comparaison exacte des octets.
+
+Limites : conversion d’une source compressée, pas d’accès à un catalogue FLAC
+original garanti. La disponibilité et le débit dépendent du morceau et de la
+session YouTube. Aucun essai avec un compte personnel n’est affirmé.
+
+PUBLICATION SIGNÉE : RÉUSSIE — v13.7.0.11
+https://github.com/anderson76389/Music/releases/tag/v13.7.0.11
+https://github.com/anderson76389/Music/actions/runs/39795765210
+Installation et démarrage des deux variantes signées sur Android 11 : réussis.
+Un seul APK universel Google Cast : Metrolist.apk (225 342 450 octets).
+VersionCode 10011. Signature permanente conservée (SIGNATURE.txt identique
+à v13.7.0.7). FFmpeg embarqué augmente la taille de l’APK universel.
+SHA-256 : 0510e40f38d92e6090b56f11de7f8d7e83403402de257c778cc2ee7c7b73a6fe
+
+--- HISTORIQUE AVANT LES CHOIX DE FORMATS ---
+
 MISE À JOUR DU 21 OCTOBRE 2026 — FICHIER PARTAGÉ ET SESSION YOUTUBE
 
 Source vérifiée : d2cfcce0be7a74a44fbc4076d4f7d840e58e4258

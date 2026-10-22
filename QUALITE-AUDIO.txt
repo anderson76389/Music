@@ -1,45 +1,55 @@
-METROLIST PERSONNEL — qualité audio vérifiée dans le code
-19 octobre 2026
+METROLIST PERSONNEL — FORMATS ET QUALITÉ AUDIO
+22 octobre 2026
 
-1. Lecture et téléchargement hors connexion
-Réglage par défaut : HIGH (Élevée).
-HIGH est transmis au moteur embarqué, sans abaissement lié au réseau.
-AUTO est converti en LOW sur un réseau Android signalé comme facturé.
-Le sélecteur HIGH trie les flux candidats par débit décroissant, puis canaux, fréquence et conteneur en cas d'égalité. Il conserve en priorité la piste originale, ou la piste par défaut quand l'information originale manque.
-Cela ne mesure pas la fidélité acoustique et ne garantit pas que tous les clients YouTube exposent tous les formats. AAC et Opus n'ont pas le même rapport qualité/débit.
-La lecture et le mode hors connexion utilisent le même moteur et le même réglage de qualité.
+Paramètres > Stockage propose deux sélecteurs indépendants : téléchargements
+internes et fichiers exportés. Leur valeur est figée lors de la mise en file.
+La lecture en ligne garde ses propres choix Basse/Automatique/Élevée.
 
-2. Export en dossier
-Moteur embarqué yt-dlp 2026.08.19, option -f bestaudio, sans extraction/transcodage FFmpeg.
-La sélection suit le classement de yt-dlp et peut donc différer de celui du lecteur. Les octets du flux choisi sont copiés dans le dossier Android. Le mode en dossier est indépendant du choix Basse/Automatique/Élevée du lecteur : il demande toujours bestaudio.
-M4A est le conteneur, AAC est le codec. mp4a.40.2 désigne AAC-LC. WebM peut contenir Opus.
-Le support d'une extension .flac dans un utilitaire MIME ne signifie pas que YouTube fournit un flux FLAC.
-Aucun convertisseur en FLAC n'est activé. Un FLAC créé à partir d'un flux compressé n'améliorerait pas sa qualité originale.
+MEILLEURE QUALITÉ DISPONIBLE
+Interne : HIGH, sans réduction sur réseau facturé. Le moteur embarqué conserve
+la piste originale/par défaut et classe les candidats par débit, puis canaux,
+fréquence et conteneur. En cas de restriction explicite/âge avec session, recours
+yt-dlp bestaudio. Externe : classement bestaudio de yt-dlp. Ces deux moteurs
+peuvent choisir des formats différents ; ils ne mesurent pas la fidélité perçue.
+Aucun réencodage. La disponibilité dépend du titre, du compte et de YouTube.
 
-3. Explications des variations
-- AUTO peut sélectionner une qualité moindre sur réseau facturé.
-- Disponibilité variable selon le morceau, le compte, le client utilisé et les réponses de YouTube.
-- Un flux Opus peut avoir un débit variable : les chiffres différents ne signifient pas à eux seuls une panne.
-- Les fichiers déjà enregistrés ne sont pas réencodés par un changement de réglage.
-- La normalisation, l'égaliseur, le périphérique audio et le Bluetooth modifient le résultat entendu.
-- L'ancienne logique effaçait les caches du morceau courant lors d'un changement de qualité. La nouvelle logique préserve les données hors connexion et laisse leur remplacement à une action explicite de téléchargement.
+M4A — MEILLEUR FLUX DISPONIBLE
+Interne et externe : yt-dlp bestaudio[ext=m4a]. Il conserve les octets du flux
+M4A sélectionné, généralement AAC, et échoue si aucun n’est accessible.
+Aucun fichier Opus simplement renommé en .m4a, aucune conversion avec perte.
+M4A est un conteneur ; mp4a.40.2 désigne le codec AAC-LC.
 
-4. Contrôles
-Les tests AudioFormatSelectorTest du moteur couvrent HIGH/LOW/AUTO/MP4, piste originale, débit, canaux, fréquence et formats indisponibles.
-Deux fixtures synthétiques sont incluses uniquement dans l'APK de test instrumenté : AAC-LC/M4A et Opus/WebM, 48 kHz stéréo. Elles ne contiennent aucune musique commerciale.
-Contrôle indépendant avec ffprobe : AAC-LC, 48 000 Hz, 2 canaux, débit moyen 232 929 bit/s pour une cible d'encodage de 256 kbit/s sur ce signal court ; Opus, 48 000 Hz, 2 canaux (débit variable, pas de valeur constante fournie).
-Le test Android télécharge chaque fixture avec le vrai moteur yt-dlp, l'exporte par SAF, compare tous les octets et utilise MediaExtractor pour lire le codec et la fréquence réels du fichier final.
-Ce test valide la conservation des fichiers, pas l'accès à YouTube Premium ni la qualité perceptuelle d'un morceau réel.
+FLAC — CONVERSION RÉELLE
+Interne et externe : bestaudio, puis extraction/conversion FLAC avec FFmpeg
+embarqué. Fréquence et canaux ne sont pas artificiellement augmentés. Le fichier
+est réellement encodé en FLAC ; une source compressée ne redevient pas une
+source sans perte originale. Le poids peut augmenter sans améliorer l’écoute.
 
-5. Limite réelle
-Le dernier essai YouTube anonyme de CI a échoué. Aucun test avec le compte personnel de l'utilisateur n'a été effectué. Il serait donc faux de promettre 256 kbit/s pour chaque téléchargement ou un catalogue FLAC.
-Pour contrôler un morceau réel, le lire puis ouvrir ses détails (codec, débit et fréquence). Pour le fichier exporté, l'inspecter avec MediaInfo ou ffprobe ; l'extension seule n'est pas une preuve du codec.
-Ne partagez jamais vos cookies ou votre jeton de connexion.
+FICHIERS EXISTANTS
+Changer le réglage ne remplace pas automatiquement les téléchargements.
+L’export réutilise le fichier existant en mode original ou si le M4A convient.
+Le FLAC peut être produit localement à partir du fichier existant. Dans ce cas,
+sa qualité reste celle de cette source, même si elle avait été téléchargée en
+qualité basse. Pour rechercher une meilleure source, retirer le téléchargement
+puis le relancer. Les fichiers personnels ne sont jamais supprimés par ce retrait.
+Un export réussi devient la source hors connexion de Metrolist sans copie privée.
 
-Références officielles
-https://support.google.com/youtubemusic/answer/9076559?hl=fr
+LIMITES DES CONTRÔLES
+Les fixtures synthétiques AAC/M4A et Opus/WebM sont vérifiées sur Android avec
+le moteur natif. Le nouveau scénario contrôle aussi le vrai en-tête fLaC, le
+codec, la fréquence, les canaux et la lecture FLAC en mode avion. Consulter
+VERIFICATION-FONCTIONS.txt pour le résultat de chaque exécution.
+Aucun compte personnel n’est utilisé en CI. Les refus anti-robot de l’essai
+YouTube anonyme ne sont pas présentés comme une réussite authentifiée.
+Il n’est pas possible de promettre 256 kbit/s ou du FLAC original pour chaque son.
+
+Références et provenance
 https://github.com/yt-dlp/yt-dlp#format-selection
 https://github.com/yt-dlp/yt-dlp#sorting-formats
+https://github.com/yausername/youtubedl-android
+PROVENANCE.txt
+
+--- HISTORIQUE AVANT LES SÉLECTEURS DE FORMATS ---
 
 6. Résultats Android confirmés
 Exécution réussie : https://github.com/anderson76389/Music/actions/runs/39260939174

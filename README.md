@@ -22,7 +22,7 @@
 > **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
 
 > [!IMPORTANT]
-> **Vérifications réelles — [v13.7.0.7](https://github.com/anderson76389/Music/releases/tag/v13.7.0.7), 21 octobre 2026 :** compilation, démarrage Android, lecture hors connexion, six tests d’export et de gestion des fichiers (dont les sous-dossiers Albums/Playlists et le fichier partagé), six catégories de paramètres, 26 interrupteurs, trois choix de qualité et journal GitHub validés. Lecture du fichier externe en mode avion sans seconde copie privée validée. Liquid Glass retiré. L’essai YouTube anonyme a été refusé par l’anti-robot ; le téléchargement avec compte n’est pas certifié par ces tests. [Consulter les résultats et leurs limites](VERIFICATION-FONCTIONS.txt).
+> **Vérifications réelles — [v13.7.0.11](https://github.com/anderson76389/Music/releases/tag/v13.7.0.11), 22 octobre 2026 :** compilation et démarrage des APK signés, sept tests de fichiers, conversion et lecture FLAC en mode avion, six catégories de paramètres, 26 interrupteurs, qualités de lecture et sélecteurs de format interne/externe validés. Le fichier externe reste partagé avec Metrolist sans seconde copie privée. L’essai YouTube anonyme est refusé par l’anti-robot ; l’accès avec votre compte n’est pas certifié par ces tests. [Résultats et limites](VERIFICATION-FONCTIONS.txt).
 
 > [!WARNING]
 > **Disponibilité régionale** — L’accès au catalogue dépend de la disponibilité de YouTube Music dans votre région et des restrictions du service.
@@ -201,7 +201,7 @@ Dans le menu d’un morceau ou du lecteur, choisissez **« Enregistrer un fichie
 <details>
 <summary><strong>Est-ce du M4A, de l’Opus ou du FLAC ?</strong></summary>
 
-M4A est un conteneur, généralement associé au codec AAC ; WebM peut contenir de l’Opus. L’application conserve le flux disponible sans fabriquer de FLAC par conversion. Le mode Élevée ne garantit pas 256 kbit/s pour tous les titres. L’export yt-dlp demande le meilleur flux audio disponible, indépendamment du réglage de qualité du lecteur. [Contrôles audio et explications](QUALITE-AUDIO.txt).
+M4A est un conteneur, généralement associé au codec AAC ; WebM peut contenir de l’Opus. Dans **Paramètres → Stockage**, choisissez séparément le format interne et externe : **Meilleure qualité disponible** (format original), **M4A** (meilleur flux M4A accessible) ou **FLAC** (conversion réelle de la meilleure source). Le FLAC ne restaure pas les détails perdus dans une source compressée. Aucun débit fixe ni source sans perte originale n’est garanti pour tous les titres. Ces choix sont indépendants de la qualité de lecture. [Contrôles audio et explications](QUALITE-AUDIO.txt).
 
 </details>
 
@@ -249,7 +249,7 @@ Les ressources de traduction sont conservées dans les [sources de l’applicati
 <table>
   <tr><th align="center">Composant</th><th align="center">Contribution</th></tr>
   <tr><td align="center"><strong>Moteur embarqué</strong></td><td>Accès aux données et aux flux YouTube Music ; sources conservées dans <a href="vendor/innertubex">vendor/innertubex</a>.</td></tr>
-  <tr><td align="center"><strong>yt-dlp</strong></td><td>Téléchargement des flux audio pour l’export en dossier.</td></tr>
+  <tr><td align="center"><strong>yt-dlp et FFmpeg</strong></td><td>Téléchargement des flux audio et conversion FLAC locale.</td></tr>
   <tr><td align="center"><strong>Fournisseurs de paroles</strong></td><td>Recherche des paroles et synchronisation selon les réponses disponibles.</td></tr>
   <tr><td align="center"><strong>Reconnaissance musicale</strong></td><td>Identification musicale via les services concernés.</td></tr>
 </table>
@@ -298,4 +298,4 @@ Les marques et les droits de propriété intellectuelle mentionnés appartiennen
 
 Le bouton de téléchargement habituel conserve les titres dans le stockage privé de Metrolist pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Enregistrer un fichier audio (yt-dlp)**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
 
-Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Le fichier exporté sert aussi à la lecture hors connexion dans Metrolist, sans seconde copie privée. Un téléchargement interne déjà terminé est réutilisé pour l’export, puis remplacé par une référence au fichier externe. Retirer le téléchargement dans Metrolist conserve votre fichier personnel ; le déplacer ou supprimer peut rendre le titre indisponible hors connexion. Les fichiers audio conservent le format fourni par la source, sans conversion artificielle en FLAC. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.
+Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Le fichier exporté sert aussi à la lecture hors connexion dans Metrolist, sans seconde copie privée. Un téléchargement interne déjà terminé est réutilisé pour l’export, puis remplacé par une référence au fichier externe. Retirer le téléchargement dans Metrolist conserve votre fichier personnel ; le déplacer ou supprimer peut rendre le titre indisponible hors connexion. Le format dépend du choix dans Paramètres → Stockage : original, M4A natif ou conversion FLAC. Un fichier existant est réutilisé si son format convient ; une conversion FLAC peut être effectuée localement, sans second transfert. Pour rechercher une meilleure source que celle déjà téléchargée, retirez ce téléchargement puis relancez-le. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.
