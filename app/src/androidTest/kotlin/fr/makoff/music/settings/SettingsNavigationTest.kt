@@ -86,7 +86,6 @@ class SettingsNavigationTest {
     }
 
     private fun open(id: Int, switchOnly: Boolean = false) {
-        device.executeShellCommand("screencap -p /data/local/tmp/settings-glass.png")
         val title = findText(id)
         val text = label(id)
         val switchBounds = if (switchOnly) {
@@ -171,6 +170,8 @@ class SettingsNavigationTest {
         assertNoRemovedEntries()
         open(R.string.settings)
         assertNoRemovedEntries()
+        device.waitForIdle()
+        device.executeShellCommand("screencap -p /data/local/tmp/settings-glass.png")
 
         val screens = listOf(
             R.string.appearance to R.string.theme,
@@ -183,6 +184,7 @@ class SettingsNavigationTest {
         for ((screen, marker) in screens) {
             open(screen)
             findText(marker)
+            device.executeShellCommand("screencap -p /data/local/tmp/settings-glass-${screen}.png")
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
             when (screen) {
                 R.string.appearance -> {

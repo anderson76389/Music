@@ -176,7 +176,10 @@ class OfflinePlayerInstrumentedTest {
             println("PLAYER_STAGE: cached audio prepared")
             val miniPlayer = device.wait(Until.findObject(By.desc(context.getString(R.string.player))), 15000)
             assertNotNull("Mini-player control", miniPlayer)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-mini-player.png")
             miniPlayer!!.click()
+            device.waitForIdle()
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()
             clickDescription(R.string.play)
             await("UI Play did not render audio") { main { active.player.isPlaying && active.player.currentPosition > 200 } }

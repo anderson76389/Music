@@ -663,6 +663,7 @@ class MainActivity : FragmentActivity() {
             darkTheme = useDarkTheme,
             pureBlack = pureBlack,
             themeColor = themeColor,
+            glassCanvas = true,
         ) {
             val currentDensity = LocalDensity.current
             val windowInfo = LocalWindowInfo.current
@@ -1311,9 +1312,9 @@ class MainActivity : FragmentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 8 } + fadeIn(tween(200))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it / 8 } + fadeIn(tween(200))
                                         }
                                     },
                                     exitTransition = {
@@ -1321,9 +1322,9 @@ class MainActivity : FragmentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it / 8 } + fadeOut(tween(200))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 8 } + fadeOut(tween(200))
                                         }
                                     },
                                     popEnterTransition = {
@@ -1331,9 +1332,9 @@ class MainActivity : FragmentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally { it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 8 } + fadeIn(tween(200))
                                         } else {
-                                            slideInHorizontally { -it / 8 } + fadeIn(tween(200))
+                                            slideInHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it / 8 } + fadeIn(tween(200))
                                         }
                                     },
                                     popExitTransition = {
@@ -1341,9 +1342,9 @@ class MainActivity : FragmentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally { -it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { -it / 8 } + fadeOut(tween(200))
                                         } else {
-                                            slideOutHorizontally { it / 8 } + fadeOut(tween(200))
+                                            slideOutHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 8 } + fadeOut(tween(200))
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
