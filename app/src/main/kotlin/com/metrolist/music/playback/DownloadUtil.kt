@@ -346,7 +346,10 @@ constructor(
             extractor.setDataSource(context, uri, null)
             val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
                 .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-            database.upsert(FormatEntity(media.id, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
+            val sourceMime = requireNotNull(context.contentResolver.openInputStream(uri)).use {
+                fr.makoff.music.downloads.sourceAudioMime(it, audio.getString(android.media.MediaFormat.KEY_MIME)!!)
+            }
+            database.upsert(FormatEntity(media.id, -1, sourceMime,
                 "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
                 size, null, playbackUrl = null))
         } finally { extractor.release() }
@@ -392,7 +395,7 @@ constructor(
                     header.take(4).toByteArray().toString(Charsets.US_ASCII) == "OggS" -> "ogg"
                     header.drop(4).take(4).toByteArray().toString(Charsets.US_ASCII) == "ftyp" -> "m4a"
                     mime == "audio/mpeg" -> "mp3"
-                    mime == "audio/flac" -> "flac"
+                    header.take(4).toByteArray().toString(Charsets.US_ASCII) == "fLaC" || mime == "audio/flac" -> "flac"
                     else -> error("Unsupported cached audio container")
                 }
             } finally { extractor.release() }
@@ -425,7 +428,10 @@ constructor(
             extractor.setDataSource(file.absolutePath)
             val audio = (0 until extractor.trackCount).map(extractor::getTrackFormat)
                 .first { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-            database.upsert(FormatEntity(mediaId, -1, audio.getString(android.media.MediaFormat.KEY_MIME)!!,
+            val sourceMime = file.inputStream().use {
+                fr.makoff.music.downloads.sourceAudioMime(it, audio.getString(android.media.MediaFormat.KEY_MIME)!!)
+            }
+            database.upsert(FormatEntity(mediaId, -1, sourceMime,
                 "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
                 file.length(), null, playbackUrl = null))
         } finally { extractor.release() }

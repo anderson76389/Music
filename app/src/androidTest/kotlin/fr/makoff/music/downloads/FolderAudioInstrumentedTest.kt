@@ -225,13 +225,29 @@ class FolderAudioInstrumentedTest {
             try {
                 extractor.setDataSource(output.absolutePath)
                 val format = extractor.getTrackFormat(0)
-                assertEquals("audio/flac", format.getString(android.media.MediaFormat.KEY_MIME))
+                val trackMime = format.getString(android.media.MediaFormat.KEY_MIME)!!
+                assertTrue(trackMime in setOf("audio/flac", "audio/raw"))
+                assertEquals("audio/flac", output.inputStream().use { sourceAudioMime(it, trackMime) })
                 assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
                 assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
             } finally { extractor.release() }
             assertEquals(output, YtDlpAudioEngine.reuse(context, output, DownloadAudioFormat.FLAC, directory, "same-flac"))
             assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.M4A, directory, "same-m4a"))
             assertArrayEquals(bytes, source.readBytes())
+            val downloads = FolderAudioDownloads.downloadUtil(context)
+            val songId = UUID.randomUUID().toString().replace("-", "").take(11)
+            val uri = saveAudioToTree(context, tree, output, "$songId.flac")
+            try {
+                downloads.registerExternalAudio(fr.makoff.music.models.MediaMetadata(songId, "FLAC round trip", emptyList(), 1), uri, output.length())
+                val staged = downloads.stageExistingAudio(songId, File(directory, "roundtrip"))!!
+                assertEquals("flac", staged.extension)
+                assertArrayEquals(output.readBytes(), staged.readBytes())
+            } finally {
+                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(songId)
+                downloads.downloads.value = downloads.downloads.value - songId
+                downloads.database.getSongByIdBlocking(songId)?.let { downloads.database.delete(it.song) }
+                DocumentsContract.deleteDocument(context.contentResolver, uri)
+            }
             println("FLAC_REAL_OK: native conversion, fLaC header, 48000 Hz stereo, no upsampling")
         } finally { directory.deleteRecursively() }
     }
