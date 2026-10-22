@@ -35,6 +35,8 @@ innertubex = "v0.8.4"
 tinypinyin = "2.0.3"
 
 [libraries]
+haze = { module = "dev.chrisbanes.haze:haze", version = "2.0.1" }
+haze-glass = { module = "dev.chrisbanes.haze:haze-glass", version = "2.0.1" }
 ytdlp = { module = "io.github.junkfood02.youtubedl-android:library", version = "0.18.1" }
 audio-ffmpeg = { module = "io.github.junkfood02.youtubedl-android:ffmpeg", version = "0.18.1" }
 work-runtime = { module = "androidx.work:work-runtime-ktx", version = "2.10.1" }

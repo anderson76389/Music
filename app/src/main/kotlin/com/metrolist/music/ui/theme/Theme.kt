@@ -57,14 +57,19 @@ fun MetrolistTheme(
         if (darkTheme && pureBlack) {
             baseColorScheme.pureBlack(true)
         } else {
-            baseColorScheme
+            baseColorScheme.copy(
+                surface = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
+                background = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
+                surfaceContainer = if (darkTheme) Color(0xFF242426) else Color(0xFFF0F0F4),
+                surfaceContainerLow = if (darkTheme) Color(0xFF1C1C1E) else Color(0xFFEAEAF0),
+            )
         }
     }
 
     // Use standard MaterialTheme instead of MaterialExpressiveTheme
     MaterialTheme(
         colorScheme = colorScheme,
-        content = content,
+        content = { GlassCanvas(content) },
     )
 }
 

@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -101,11 +102,11 @@ fun AnimatedBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
+        modifier = modifier.liquidGlass(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), chrome = true),
         sheetState = sheetState,
         sheetMaxWidth = sheetMaxWidth,
         shape = shape,
-        containerColor = containerColor,
+        containerColor = Color.Transparent,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
         scrimColor = scrimColor,

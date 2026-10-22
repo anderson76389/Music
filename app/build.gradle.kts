@@ -250,6 +250,8 @@ dependencies {
     implementation(libs.lifecycle.process)
 
     implementation(libs.material3)
+    implementation(libs.haze)
+    implementation(libs.haze.glass)
     implementation(libs.palette)
     implementation(libs.materialKolor)
 

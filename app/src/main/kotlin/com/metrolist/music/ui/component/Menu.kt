@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.liquidGlass
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,10 +47,11 @@ fun Material3MenuGroup(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .animateContentSize(),
+                    .animateContentSize()
+                    .liquidGlass(shape),
                 shape = shape,
                 colors = item.cardColors ?: CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    containerColor = Color.Transparent
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {

@@ -86,6 +86,7 @@ class SettingsNavigationTest {
     }
 
     private fun open(id: Int, switchOnly: Boolean = false) {
+        device.executeShellCommand("screencap -p /data/local/tmp/settings-glass.png")
         val title = findText(id)
         val text = label(id)
         val switchBounds = if (switchOnly) {

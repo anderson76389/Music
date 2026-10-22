@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.liquidGlass
+import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -77,9 +79,9 @@ fun DefaultDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
             shape = AlertDialogDefaults.shape,
-            color = AlertDialogDefaults.containerColor,
+            color = Color.Transparent,
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
@@ -166,9 +168,9 @@ fun AccountSettingsDialog(
                     Modifier
                         .fillMaxWidth()
                         .padding(top = 72.dp, start = 16.dp, end = 16.dp)
-                        .clip(RoundedCornerShape(28.dp)),
+                        .liquidGlass(RoundedCornerShape(28.dp), chrome = true),
                 shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surface,
+                color = Color.Transparent,
                 tonalElevation = 8.dp,
             ) {
                 AccountSettings(
@@ -250,9 +252,9 @@ fun ListDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp),
+            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
             shape = AlertDialogDefaults.shape,
-            color = AlertDialogDefaults.containerColor,
+            color = Color.Transparent,
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
