@@ -353,12 +353,17 @@ fun Thumbnail(
                 ) {
                     // Calculate dimensions once per size change, considering landscape mode
                     val dimensions = remember(maxWidth, maxHeight, isLandscape, glass) {
-                        calculateThumbnailDimensions(
+                        val calculated = calculateThumbnailDimensions(
                             containerWidth = maxWidth,
                             containerHeight = maxHeight,
                             isLandscape = isLandscape,
                             cornerRadius = if (glass) 6.dp else ThumbnailCornerRadius,
                         )
+                        if (glass) {
+                            calculated.copy(thumbnailSize = minOf(calculated.thumbnailSize, maxHeight).coerceAtLeast(1.dp))
+                        } else {
+                            calculated
+                        }
                     }
 
                     // Remember the onSeek callback to prevent recomposition
