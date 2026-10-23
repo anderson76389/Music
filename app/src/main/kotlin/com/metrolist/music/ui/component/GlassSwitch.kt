@@ -53,8 +53,8 @@ fun Switch(
     val track by animateColorAsState(if (checked) Color(0xFF34C759) else Color(0xFF787880).copy(alpha = 0.3f), label = "glassSwitchColor")
     Box(modifier.minimumInteractiveComponentSize().wrapContentSize().requiredSize(52.dp, 32.dp)
         .alpha(if (enabled) 1f else 0.45f)
-        .toggleable(checked, source, indication = null, enabled = enabled && onCheckedChange != null,
-            role = Role.Switch, onValueChange = { onCheckedChange?.invoke(it) })
+        .then(if (onCheckedChange != null) Modifier.toggleable(checked, source, indication = null, enabled = enabled,
+            role = Role.Switch, onValueChange = onCheckedChange) else Modifier)
         .background(track, RoundedCornerShape(16.dp)), contentAlignment = Alignment.CenterStart) {
         Box(Modifier.offset(x = position).requiredSize(thumbWidth, 28.dp)
             .shadow(3.dp, CircleShape).background(Color.White, CircleShape)
