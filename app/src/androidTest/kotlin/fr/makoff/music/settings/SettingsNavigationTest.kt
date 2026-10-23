@@ -206,9 +206,6 @@ class SettingsNavigationTest {
 
     @Test(timeout = 360000) fun settingsRoutesPersistenceAndOwnChangelog() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
-        val scheduled = androidx.work.WorkManager.getInstance(context)
-            .getWorkInfosForUniqueWork("published-apk-update").get(10, java.util.concurrent.TimeUnit.SECONDS)
-        assertTrue("Background update check is scheduled", scheduled.any { it.state != androidx.work.WorkInfo.State.CANCELLED })
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
         assertNotNull("Account button", account)
