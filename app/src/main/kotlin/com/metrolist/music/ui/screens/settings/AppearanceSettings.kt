@@ -6,6 +6,8 @@
 package fr.makoff.music.ui.screens.settings
 
 import fr.makoff.music.constants.LiquidGlassEnabledKey
+import androidx.activity.compose.LocalActivity
+import fr.makoff.music.utils.safeDataStoreEdit
 import android.os.Build
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -136,8 +138,28 @@ fun AppearanceSettings(
             EnableDynamicIconKey,
             defaultValue = true,
         )
-    val (liquidGlassEnabled, onLiquidGlassEnabledChange) = rememberPreference(LiquidGlassEnabledKey, false)
+    val liquidGlassEnabled by rememberPreference(LiquidGlassEnabledKey, false)
     val iconContext = LocalContext.current
+    val activity = LocalActivity.current
+    val themeScope = rememberCoroutineScope()
+    var changingTheme by remember { mutableStateOf(false) }
+    val onLiquidGlassEnabledChange: (Boolean) -> Unit = { enabled ->
+        if (!changingTheme) {
+            changingTheme = true
+            themeScope.launch {
+                try {
+                    // Persist before recreation so the new activity reads the selected theme.
+                    if (iconContext.safeDataStoreEdit { it[LiquidGlassEnabledKey] = enabled }) {
+                        activity?.recreate()
+                    } else {
+                        snackbarHostState.showSnackbar(iconContext.getString(R.string.theme_save_failed))
+                    }
+                } finally {
+                    changingTheme = false
+                }
+            }
+        }
+    }
     val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
         onEnableDynamicIconPrefChange(newValue)
         IconUtils.setIcon(iconContext, newValue)
@@ -907,7 +929,7 @@ fun AppearanceSettings(
                     add(Material3SettingsItem(
                         title = { Text(stringResource(R.string.liquid_glass_theme)) },
                         description = { Text(stringResource(R.string.liquid_glass_theme_description)) },
-                        trailingContent = { Switch(checked = liquidGlassEnabled, onCheckedChange = onLiquidGlassEnabledChange) },
+                        trailingContent = { Switch(checked = liquidGlassEnabled, enabled = !changingTheme, onCheckedChange = onLiquidGlassEnabledChange) },
                         onClick = { onLiquidGlassEnabledChange(!liquidGlassEnabled) },
                     ))
                     add(

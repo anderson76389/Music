@@ -95,6 +95,14 @@ class App :
             cachedCoilCacheSize = dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
         }
 
+        applicationScope.launch {
+            dataStore.data.map {
+                (it[CheckForUpdatesKey] ?: true) && (it[UpdateNotificationsEnabledKey] ?: true)
+            }.distinctUntilChanged().collect { enabled ->
+                fr.makoff.music.utils.UpdateNotifications.schedule(this@App, enabled)
+            }
+        }
+
         // تهيئة إعدادات التطبيق عند الإقلاع
         applicationScope.launch {
             // Apply settings, including proxy configuration, before building extraction transport.

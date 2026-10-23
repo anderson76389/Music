@@ -1,6 +1,9 @@
 package fr.makoff.music.settings
 
+import android.app.Activity
 import android.content.Intent
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import android.os.SystemClock
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -144,12 +147,39 @@ class SettingsNavigationTest {
         }
     }
 
+    private fun resumedMainActivity(): Activity? {
+        var activity: Activity? = null
+        instrumentation.runOnMainSync {
+            activity = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .firstOrNull { it is MainActivity }
+        }
+        return activity
+    }
+
+    private fun awaitThemeRestart(previous: Activity?) {
+        assertNotNull("Activity before theme change", previous)
+        val deadline = SystemClock.elapsedRealtime() + 15000
+        while (SystemClock.elapsedRealtime() < deadline) {
+            val current = resumedMainActivity()
+            if (current != null && current !== previous) {
+                device.waitForIdle()
+                findText(R.string.liquid_glass_theme)
+                println("GLASS_RESTART_OK: activity recreated and appearance route restored")
+                return
+            }
+            SystemClock.sleep(100)
+        }
+        error("Theme change did not recreate the activity")
+    }
+
     private fun toggleAndRestore(id: Int, key: Preferences.Key<Boolean>, default: Boolean, effect: (() -> Boolean)? = null, clicker: (Int) -> Unit = { open(it) }) {
         val original = runBlocking { context.dataStore.data.first()[key] }
         val before = original ?: default
         try {
+            val initialActivity = if (key == LiquidGlassEnabledKey) resumedMainActivity() else null
             clicker(id)
             awaitPreference(label(id)) { context.dataStore.data.first()[key] == !before }
+            if (key == LiquidGlassEnabledKey) awaitThemeRestart(initialActivity)
             effect?.let { assertEquals("Consumer follows ${key.name}", !before, it()) }
             if (key == LiquidGlassEnabledKey && !before) {
                 device.executeShellCommand("screencap -p /data/local/tmp/glass-settings-enabled.png")
@@ -163,8 +193,10 @@ class SettingsNavigationTest {
                 open(R.string.settings)
                 open(R.string.appearance)
             }
+            val themedActivity = if (key == LiquidGlassEnabledKey) resumedMainActivity() else null
             clicker(id)
             awaitPreference(label(id) + " restored") { context.dataStore.data.first()[key] == before }
+            if (key == LiquidGlassEnabledKey) awaitThemeRestart(themedActivity)
             effect?.let { assertEquals("Consumer restored ${key.name}", before, it()) }
             println("SETTINGS_TOGGLE_OK: ${label(id)} (${key.name}), stored and restored")
         } finally {
@@ -174,6 +206,9 @@ class SettingsNavigationTest {
 
     @Test(timeout = 360000) fun settingsRoutesPersistenceAndOwnChangelog() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
+        val scheduled = androidx.work.WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWork("published-apk-update").get(10, java.util.concurrent.TimeUnit.SECONDS)
+        assertTrue("Background update check is scheduled", scheduled.any { it.state != androidx.work.WorkInfo.State.CANCELLED })
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
         assertNotNull("Account button", account)

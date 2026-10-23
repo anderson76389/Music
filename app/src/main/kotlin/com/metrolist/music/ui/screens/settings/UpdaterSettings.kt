@@ -46,6 +46,7 @@ import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.ui.utils.backToMain
 import fr.makoff.music.utils.Updater
+import fr.makoff.music.utils.UpdateNotifications
 import fr.makoff.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -84,6 +85,8 @@ fun UpdaterScreen(
                             latestVersion = releaseInfo.versionName
                             updateAvailable = hasUpdate
                             changelogContent = releaseInfo.description
+                            if (hasUpdate && updateNotifications) UpdateNotifications.show(context, releaseInfo)
+                            else UpdateNotifications.cancel(context)
                         }
                     }.onFailure {
                         checkError = String.format(failedToCheckUpdatesTemplate, it.message ?: "Unknown error")

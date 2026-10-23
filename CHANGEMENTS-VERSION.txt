@@ -1,5 +1,4 @@
-- Ajout du thème Liquid Glass optionnel dans Apparence ; désactivation globale avec retour aux couleurs, formes et transitions d’origine.
-- Ajout du téléchargement de mise à jour dans l’application et ouverture de l’installateur Android après contrôle du paquet, de la signature et du numéro de version.
-- Bouton d’installation ajouté aux paramètres de mise à jour ; nouvelle vérification au retour dans l’application.
-- APK universel commun aux anciennes variantes. Version de publication toujours supérieure à celle du dernier APK publié.
-- Essai automatisé de remplacement de la version précédente avant publication du nouvel APK signé.
+- Le changement du thème Liquid Glass sauvegarde le choix puis redémarre l’interface pour appliquer tout le rendu.
+- Vérification des nouvelles versions en arrière-plan avec notification ouvrant l’installateur intégré.
+- Le bouton de vérification manuelle et les notifications utilisent le même APK universel signé du dépôt.
+- Conservation de la numérotation automatique et du contrôle de remplacement de l’APK précédent avant chaque publication.

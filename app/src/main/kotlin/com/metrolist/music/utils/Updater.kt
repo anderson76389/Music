@@ -245,12 +245,12 @@ object Updater {
             ?: assets.firstOrNull { it.architecture == "universal" && it.variant == variant }
 
     /**
-     * Check if update is needed (respects 2-hour cache)
+     * Check if update is needed (respects the automatic check interval)
      */
     suspend fun checkForUpdate(forceRefresh: Boolean = false): Result<Pair<ReleaseInfo?, Boolean>> =
         withContext(Dispatchers.IO) {
             runCatching {
-                // Check if we should fetch (2 hour interval)
+                // A manual check always bypasses the automatic cache.
                 val shouldFetch = forceRefresh || 
                     (System.currentTimeMillis() - lastCheckTime) > CHECK_INTERVAL_MILLIS
                 

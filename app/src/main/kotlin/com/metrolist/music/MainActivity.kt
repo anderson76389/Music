@@ -12,7 +12,6 @@ import dev.chrisbanes.haze.hazeSource
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.ForegroundServiceStartNotAllowedException
-import android.app.PendingIntent
 import android.content.ComponentName
 import android.content.Intent
 import android.content.ServiceConnection
@@ -110,8 +109,6 @@ import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.core.util.Consumer
@@ -479,6 +476,7 @@ class MainActivity : FragmentActivity() {
         syncUtils: SyncUtils,
     ) {
         val checkForUpdates by rememberPreference(CheckForUpdatesKey, defaultValue = true)
+        val updateNotificationsEnabled by rememberPreference(UpdateNotificationsEnabledKey, defaultValue = true)
         var availableUpdate by remember { mutableStateOf<AvailableUpdate?>(null) }
         var updateResumeGeneration by remember { androidx.compose.runtime.mutableIntStateOf(0) }
         androidx.lifecycle.compose.LifecycleEventEffect(androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
@@ -486,7 +484,7 @@ class MainActivity : FragmentActivity() {
         }
 
         if (BuildConfig.UPDATER_AVAILABLE) {
-            LaunchedEffect(checkForUpdates, updateResumeGeneration) {
+            LaunchedEffect(checkForUpdates, updateNotificationsEnabled, updateResumeGeneration) {
                 if (checkForUpdates) {
                     val preferences = dataStore.data.first()
                     val notificationsEnabled = preferences[UpdateNotificationsEnabledKey] ?: true
@@ -507,47 +505,14 @@ class MainActivity : FragmentActivity() {
                     }
 
                     if (update != null && notificationsEnabled && availableUpdate != null) {
-                        val intent = fr.makoff.music.ui.screens.settings.ApkUpdateActivity.intent(this@MainActivity, update.downloadUrl)
-                        val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                        val pending = PendingIntent.getActivity(this@MainActivity, 1001, intent, flags)
-                        val notificationText =
-                            if (update.isKmp) {
-                                getString(R.string.kmp_upgrade_warning)
-                            } else {
-                                update.release.versionName
-                            }
-                        val notification =
-                            NotificationCompat
-                                .Builder(this@MainActivity, "updates")
-                                .setSmallIcon(R.drawable.update)
-                                .setContentTitle(
-                                    if (update.isKmp) {
-                                        getString(R.string.kmp_upgrade_title, update.release.versionName)
-                                    } else {
-                                        getString(R.string.update_available_title)
-                                    },
-                                )
-                                .setContentText(notificationText)
-                                .apply {
-                                    if (update.isKmp) {
-                                        setStyle(NotificationCompat.BigTextStyle().bigText(notificationText))
-                                    }
-                                }
-                                .setContentIntent(pending)
-                                .setAutoCancel(true)
-                                .setOnlyAlertOnce(true)
-                                .build()
-
-                        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
-                            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) ==
-                            PackageManager.PERMISSION_GRANTED
-                        ) {
-                            NotificationManagerCompat.from(this@MainActivity).notify(1001, notification)
-                        }
+                        fr.makoff.music.utils.UpdateNotifications.show(this@MainActivity, update.release)
+                    } else {
+                        fr.makoff.music.utils.UpdateNotifications.cancel(this@MainActivity)
                     }
                 } else {
                     onLatestVersionNameChange(BuildConfig.BASE_VERSION_NAME)
                     availableUpdate = null
+                    fr.makoff.music.utils.UpdateNotifications.cancel(this@MainActivity)
                 }
             }
         }
@@ -1425,6 +1390,7 @@ class MainActivity : FragmentActivity() {
                         availableUpdate?.let { update ->
                             val dismissUpdate: () -> Unit = {
                                 availableUpdate = null
+                                fr.makoff.music.utils.UpdateNotifications.cancel(this@MainActivity)
                                 lifecycleScope.launch {
                                     safeDataStoreEdit {
                                         it[update.dismissalKey] = update.release.tagName
