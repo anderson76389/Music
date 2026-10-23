@@ -518,6 +518,7 @@ class MainActivity : FragmentActivity() {
         }
 
         val enableDynamicTheme by rememberPreference(DynamicThemeKey, defaultValue = true)
+        val liquidGlassEnabled by rememberPreference(fr.makoff.music.constants.LiquidGlassEnabledKey, defaultValue = false)
         val enableHighRefreshRate by rememberPreference(EnableHighRefreshRateKey, defaultValue = true)
 
         LaunchedEffect(enableHighRefreshRate) {
@@ -584,9 +585,9 @@ class MainActivity : FragmentActivity() {
             }
         }
 
-        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor) {
+        LaunchedEffect(playerConnection, enableDynamicTheme, selectedThemeColor, liquidGlassEnabled) {
             val playerConnection = playerConnection
-            if (!enableDynamicTheme || playerConnection == null) {
+            if (liquidGlassEnabled || !enableDynamicTheme || playerConnection == null) {
                 themeColor = selectedThemeColor
                 return@LaunchedEffect
             }

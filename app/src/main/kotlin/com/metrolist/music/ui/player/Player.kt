@@ -1362,7 +1362,7 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(24.dp))
 
-            when (sliderStyle) {
+            when (if (LocalLiquidGlassEnabled.current) SliderStyle.SLIM else sliderStyle) {
                 SliderStyle.DEFAULT -> {
                     Slider(
                         value = (sliderPosition ?: effectivePosition).toFloat(),
@@ -1471,11 +1471,15 @@ fun BottomSheetPlayer(
                             }
                         },
                         enabled = true,
-                        thumb = { Spacer(modifier = Modifier.size(0.dp)) },
+                        thumb = {
+                            if (LocalLiquidGlassEnabled.current) Box(Modifier.size(8.dp).background(Color.White, RoundedCornerShape(50)))
+                            else Spacer(modifier = Modifier.size(0.dp))
+                        },
                         track = { sliderState ->
                             PlayerSliderTrack(
                                 sliderState = sliderState,
                                 colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                                trackHeight = if (LocalLiquidGlassEnabled.current) 4.dp else 10.dp,
                             )
                         },
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),

@@ -62,7 +62,7 @@ fun MetrolistTheme(
     }
 
     // Apply pureBlack modification if needed, similar to original logic
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, liquidGlassEnabled) {
+    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, liquidGlassEnabled, themeColor) {
         if (!liquidGlassEnabled) {
             baseColorScheme.pureBlack(darkTheme && pureBlack)
         } else {
