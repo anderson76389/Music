@@ -1,4 +1,5 @@
-- Le changement du thème Liquid Glass sauvegarde le choix puis redémarre l’interface pour appliquer tout le rendu.
-- Vérification des nouvelles versions en arrière-plan avec notification ouvrant l’installateur intégré.
-- Le bouton de vérification manuelle et les notifications utilisent le même APK universel signé du dépôt.
-- Conservation de la numérotation automatique et du contrôle de remplacement de l’APK précédent avant chaque publication.
+- Refonte du thème de verre à partir des références visuelles : navigation flottante, reflets, transparence et sélection animée.
+- Interrupteurs avec curseur blanc de taille constante et animation à ressort ; groupes de paramètres continus avec séparateurs.
+- Couleurs neutres, accent rose rouge et hiérarchie typographique propres au thème, indépendants du fond d’écran Android.
+- Fond du lecteur assorti à la pochette lorsque le thème est actif ; conservation des préférences et de l’apparence originale lorsque le thème est désactivé.
+- Maintien du redémarrage de l’interface au changement de thème et du système de mises à jour signées.

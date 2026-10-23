@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -56,19 +57,21 @@ fun Material3SettingsGroup(
         title?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                style = if (LocalLiquidGlassEnabled.current) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                color = if (LocalLiquidGlassEnabled.current) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
             )
         }
 
         // Settings items
         Column(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier.fillMaxWidth().then(if (LocalLiquidGlassEnabled.current)
+                Modifier.liquidGlass(RoundedCornerShape(24.dp)) else Modifier),
+            verticalArrangement = Arrangement.spacedBy(if (LocalLiquidGlassEnabled.current) 0.dp else 4.dp)
         ) {
             items.forEachIndexed { index, item ->
                 val shape = when {
+                    LocalLiquidGlassEnabled.current -> RoundedCornerShape(0.dp)
                     items.size == 1 -> RoundedCornerShape(24.dp)
                     index == 0 -> RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 6.dp, bottomEnd = 6.dp)
                     index == items.size - 1 -> RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp, bottomStart = 24.dp, bottomEnd = 24.dp)
@@ -79,7 +82,7 @@ fun Material3SettingsGroup(
                     modifier = Modifier
                         .fillMaxWidth()
                         .animateContentSize()
-                        .liquidGlass(shape),
+                        .then(if (!LocalLiquidGlassEnabled.current) Modifier.liquidGlass(shape) else Modifier),
                     shape = shape,
                     colors = CardDefaults.cardColors(
                         containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else if (!useLowContrast) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerLow
@@ -87,6 +90,10 @@ fun Material3SettingsGroup(
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {
                     Material3SettingsItemRow(item = item)
+                }
+                if (LocalLiquidGlassEnabled.current && index < items.lastIndex) {
+                    HorizontalDivider(modifier = Modifier.padding(start = if (item.icon != null) 80.dp else 20.dp, end = 20.dp),
+                        thickness = 0.5.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
                 }
             }
         }

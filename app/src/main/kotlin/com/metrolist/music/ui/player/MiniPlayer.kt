@@ -380,8 +380,7 @@ private fun NewMiniPlayer(
                     .then(if (isTabletLandscape) Modifier.width(500.dp).align(Alignment.Center) else Modifier.fillMaxWidth())
                     .height(64.dp)
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
-                    .clip(RoundedCornerShape(32.dp))
-                    .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(backgroundColor).border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp)) else Modifier)
+                    .then(if (!LocalLiquidGlassEnabled.current) Modifier.clip(RoundedCornerShape(32.dp)).background(backgroundColor).border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp)) else Modifier)
                     .liquidGlass(RoundedCornerShape(32.dp), chrome = true)
                     .clickable(
                         interactionSource = interactionSource,
@@ -389,7 +388,7 @@ private fun NewMiniPlayer(
                         onClick = onClick
                     ),
         ) {
-            when (miniPlayerBackground) {
+            when (if (LocalLiquidGlassEnabled.current) MiniPlayerBackgroundStyle.DEFAULT else miniPlayerBackground) {
                 MiniPlayerBackgroundStyle.BLUR -> {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         mediaMetadata?.thumbnailUrl?.let { url ->

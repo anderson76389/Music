@@ -11,14 +11,15 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInput
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
 
@@ -55,15 +56,32 @@ fun Modifier.liquidGlass(
         val highlight = remember(surface) {
             Brush.linearGradient(listOf(Color.White.copy(alpha = 0.42f), Color.White.copy(alpha = 0.06f), Color.Black.copy(alpha = 0.08f)))
         }
-        return clip(shape).background(surface.copy(alpha = 0.78f)).border(0.5.dp, highlight, shape)
+        val card = if (surface.luminance() < 0.5f) Color(0xFF242426) else Color.White
+        return clip(shape).background(card.copy(alpha = 0.9f)).border(0.5.dp, highlight, shape)
     }
     val state = LocalChromeGlass.current ?: return background(surface, shape)
-    val style = remember(shape, surface) {
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    val flat = shape == RoundedCornerShape(0.dp)
+    val style = remember(shape, surface, dark, flat) {
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
-            tint(surface.copy(alpha = 0.62f))
+            tint(surface.copy(alpha = if (dark) 0.22f else 0.16f))
+            optics(blurRadius = 18.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
+                refractionHeightFraction = 0.28f, depth = 0.45f)
+            specularIntensity(if (dark) 0.52f else 0.72f)
+            edgeSoftness(1.dp)
+            whitePoint(if (dark) -0.18f else 0.12f)
+            contrast(if (dark) 0.12f else 0.08f)
+            chromaticAberrationStrength(0.025f)
         }
     }
-    return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
+    if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
+    val rim = remember(dark) {
+        Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
+            Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = if (dark) 0.28f else 0.6f)))
+    }
+    return shadow(8.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.12f),
+        spotColor = Color.Black.copy(alpha = 0.16f))
+        .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).border(0.8.dp, rim, shape)
 }

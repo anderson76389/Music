@@ -62,24 +62,34 @@ fun MetrolistTheme(
     }
 
     // Apply pureBlack modification if needed, similar to original logic
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, liquidGlassEnabled) {
-        if (darkTheme && pureBlack) {
-            baseColorScheme.pureBlack(true)
-        } else if (!liquidGlassEnabled) {
-            baseColorScheme
+    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, liquidGlassEnabled, themeColor) {
+        if (!liquidGlassEnabled) {
+            baseColorScheme.pureBlack(darkTheme && pureBlack)
         } else {
+            val accent = if (themeColor == DefaultThemeColor) Color(0xFFFA2D55) else themeColor
             baseColorScheme.copy(
+                primary = accent, onPrimary = Color.White,
+                primaryContainer = accent.copy(alpha = 0.12f), onPrimaryContainer = accent,
+                secondary = accent, onSecondary = Color.White,
+                secondaryContainer = accent.copy(alpha = 0.1f), onSecondaryContainer = accent,
+                onSurface = if (darkTheme) Color(0xFFF5F5F7) else Color(0xFF1C1C1E),
+                onBackground = if (darkTheme) Color(0xFFF5F5F7) else Color(0xFF1C1C1E),
+                onSurfaceVariant = if (darkTheme) Color(0xFFAEAEB2) else Color(0xFF6C6C70),
+                outline = if (darkTheme) Color(0xFF636366) else Color(0xFF8E8E93),
+                outlineVariant = if (darkTheme) Color(0xFF38383A) else Color(0xFFD1D1D6),
+                surfaceVariant = if (darkTheme) Color(0xFF2C2C2E) else Color(0xFFF2F2F7),
                 surface = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
                 background = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
                 surfaceContainer = if (darkTheme) Color(0xFF242426) else Color(0xFFF0F0F4),
                 surfaceContainerLow = if (darkTheme) Color(0xFF1C1C1E) else Color(0xFFEAEAF0),
-            )
+            ).pureBlack(darkTheme && pureBlack)
         }
     }
 
     // Use standard MaterialTheme instead of MaterialExpressiveTheme
     MaterialTheme(
         colorScheme = colorScheme,
+        typography = if (liquidGlassEnabled) GlassTypography else androidx.compose.material3.Typography(),
         shapes = if (!liquidGlassEnabled) Shapes() else Shapes(
             extraSmall = RoundedCornerShape(8.dp),
             small = RoundedCornerShape(12.dp),

@@ -236,10 +236,11 @@ fun BottomSheetPlayer(
         mutableStateOf(false)
     }
 
-    val playerBackground by rememberEnumPreference(
+    val selectedPlayerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT,
     )
+    val playerBackground = if (LocalLiquidGlassEnabled.current) PlayerBackgroundStyle.GRADIENT else selectedPlayerBackground
     val playerButtonsStyle by rememberEnumPreference(
         key = PlayerButtonsStyleKey,
         defaultValue = PlayerButtonsStyle.DEFAULT,
@@ -308,7 +309,7 @@ fun BottomSheetPlayer(
     }
 
     val onBackgroundColor =
-        when (playerBackground) {
+        if (LocalLiquidGlassEnabled.current) Color.White else when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
             else -> MaterialTheme.colorScheme.onSurface
         }
@@ -405,14 +406,16 @@ fun BottomSheetPlayer(
         playerConnection.service.addToQueueAutomix(automix[0], 0)
     }
 
-    val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
-    val fallbackColor = MaterialTheme.colorScheme.surface.toArgb()
+    val glassMode = LocalLiquidGlassEnabled.current
+    val defaultGradientColors = if (glassMode) listOf(Color(0xFF242426), Color(0xFF1C1C1E))
+        else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
+    val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground) {
+    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode) {
         if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
-                val cachedColors = gradientColorsCache[currentMetadata.id]
+                val cachedColors = gradientColorsCache["${currentMetadata.id}_$glassMode"]
                 if (cachedColors != null) {
                     gradientColors = cachedColors
                     return@LaunchedEffect
@@ -443,8 +446,9 @@ fun BottomSheetPlayer(
                                 PlayerColorExtractor.extractGradientColors(
                                     palette = palette,
                                     fallbackColor = fallbackColor,
+                                    glass = glassMode,
                                 )
-                            gradientColorsCache[currentMetadata.id] = extractedColors
+                            gradientColorsCache["${currentMetadata.id}_$glassMode"] = extractedColors
                             withContext(Dispatchers.Main) { gradientColors = extractedColors }
                         }
                     }
@@ -477,6 +481,7 @@ fun BottomSheetPlayer(
 
     val (textButtonColor, iconButtonColor) =
         when {
+            LocalLiquidGlassEnabled.current -> Pair(Color.White.copy(alpha = 0.16f), Color.White)
             playerBackground == PlayerBackgroundStyle.BLUR ||
                 playerBackground == PlayerBackgroundStyle.GRADIENT -> {
                 when (playerButtonsStyle) {
@@ -808,7 +813,7 @@ fun BottomSheetPlayer(
         )
 
     val bottomSheetBackgroundColor =
-        when (playerBackground) {
+        if (glassMode) Color(0xFF242426) else when (playerBackground) {
             PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
                 MaterialTheme.colorScheme.surfaceContainer
             }
@@ -832,8 +837,7 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(bottomSheetBackgroundColor) else Modifier)
-                        .then(if (backgroundAlpha > 0f) Modifier.liquidGlass(RoundedCornerShape(28.dp), chrome = true) else Modifier),
+                        .background(if (LocalLiquidGlassEnabled.current) bottomSheetBackgroundColor.copy(alpha = backgroundAlpha) else bottomSheetBackgroundColor),
             ) {
                 when (playerBackground) {
                     PlayerBackgroundStyle.BLUR -> {
@@ -954,7 +958,7 @@ fun BottomSheetPlayer(
                                     modifier =
                                         Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius))
                                             .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -975,7 +979,7 @@ fun BottomSheetPlayer(
                                     modifier =
                                         Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius)),
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
@@ -1119,7 +1123,7 @@ fun BottomSheetPlayer(
 
                 if (useNewPlayerDesign) {
                     val shareShape =
-                        RoundedCornerShape(
+                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
                             topStart = 50.dp,
                             bottomStart = 50.dp,
                             topEnd = 3.dp,
@@ -1127,14 +1131,14 @@ fun BottomSheetPlayer(
                         )
 
                     val favShape =
-                        RoundedCornerShape(
+                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
                             topStart = 3.dp,
                             bottomStart = 3.dp,
                             topEnd = 50.dp,
                             bottomEnd = 50.dp,
                         )
 
-                    val middleShape = RoundedCornerShape(3.dp)
+                    val middleShape = if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(3.dp)
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1361,7 +1365,7 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(24.dp))
 
-            when (sliderStyle) {
+            when (if (LocalLiquidGlassEnabled.current) SliderStyle.SLIM else sliderStyle) {
                 SliderStyle.DEFAULT -> {
                     Slider(
                         value = (sliderPosition ?: effectivePosition).toFloat(),
@@ -1470,11 +1474,15 @@ fun BottomSheetPlayer(
                             }
                         },
                         enabled = true,
-                        thumb = { Spacer(modifier = Modifier.size(0.dp)) },
+                        thumb = {
+                            if (LocalLiquidGlassEnabled.current) Box(Modifier.size(8.dp).background(Color.White, RoundedCornerShape(50)))
+                            else Spacer(modifier = Modifier.size(0.dp))
+                        },
                         track = { sliderState ->
                             PlayerSliderTrack(
                                 sliderState = sliderState,
                                 colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                                trackHeight = if (LocalLiquidGlassEnabled.current) 4.dp else 10.dp,
                             )
                         },
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
@@ -1592,8 +1600,8 @@ fun BottomSheetPlayer(
                                 interactionSource = backInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = sideButtonContainerColor,
-                                        contentColor = sideButtonContentColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else sideButtonContainerColor,
+                                        contentColor = if (LocalLiquidGlassEnabled.current) Color.White else sideButtonContentColor,
                                     ),
                                 modifier =
                                     Modifier
@@ -1601,7 +1609,7 @@ fun BottomSheetPlayer(
                                         .weight(backButtonWeight),
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.skip_previous),
+                                    painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous),
                                     contentDescription = stringResource(R.string.previous),
                                     modifier = Modifier.size(32.dp),
                                 )
@@ -1629,7 +1637,7 @@ fun BottomSheetPlayer(
                                 interactionSource = playPauseInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = textButtonColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else textButtonColor,
                                         contentColor = iconButtonColor,
                                     ),
                                 modifier =
@@ -1653,6 +1661,7 @@ fun BottomSheetPlayer(
                                         contentDescription = null,
                                         modifier = Modifier.size(32.dp),
                                     )
+                                    if (!LocalLiquidGlassEnabled.current) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text =
@@ -1661,6 +1670,7 @@ fun BottomSheetPlayer(
                                             },
                                         style = MaterialTheme.typography.titleMedium,
                                     )
+                                    }
                                 }
                             }
 
@@ -1673,8 +1683,8 @@ fun BottomSheetPlayer(
                                 interactionSource = nextInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = sideButtonContainerColor,
-                                        contentColor = sideButtonContentColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else sideButtonContainerColor,
+                                        contentColor = if (LocalLiquidGlassEnabled.current) Color.White else sideButtonContentColor,
                                     ),
                                 modifier =
                                     Modifier
@@ -1682,7 +1692,7 @@ fun BottomSheetPlayer(
                                         .weight(nextButtonWeight),
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.skip_next),
+                                    painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next),
                                     contentDescription = stringResource(R.string.next),
                                     modifier = Modifier.size(32.dp),
                                 )
@@ -1722,7 +1732,7 @@ fun BottomSheetPlayer(
 
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
-                                    icon = R.drawable.skip_previous,
+                                    icon = if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous,
                                     contentDescription = stringResource(R.string.previous),
                                     enabled = canSkipPrevious,
                                     color = TextBackgroundColor,
@@ -1787,7 +1797,7 @@ fun BottomSheetPlayer(
 
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
-                                    icon = R.drawable.skip_next,
+                                    icon = if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next,
                                     contentDescription = stringResource(R.string.next),
                                     enabled = canSkipNext,
                                     color = TextBackgroundColor,
@@ -1949,6 +1959,7 @@ fun BottomSheetPlayer(
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.Top) + slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         ) {
+            val queueContent: @Composable () -> Unit = {
             Queue(
                 state = queueSheetState,
                 playerBottomSheetState = state,
@@ -1969,6 +1980,10 @@ fun BottomSheetPlayer(
                     showInlineLyrics = !showInlineLyrics
                 },
             )
+            }
+            if (LocalLiquidGlassEnabled.current) {
+                fr.makoff.music.ui.theme.MetrolistTheme(darkTheme = true, themeColor = MaterialTheme.colorScheme.primary, content = queueContent)
+            } else queueContent()
         }
     }
 }

@@ -34,7 +34,8 @@ object PlayerSliderColors {
         playerBackground: PlayerBackgroundStyle,
         useDarkTheme: Boolean
     ): SliderColors {
-        val inactiveTrackColor = when (playerBackground) {
+        val resolvedActive = if (LocalLiquidGlassEnabled.current) Color.White.copy(alpha = 0.92f) else activeColor
+        val inactiveTrackColor = if (LocalLiquidGlassEnabled.current) Color.White.copy(alpha = 0.25f) else when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> {
                 if (useDarkTheme) {
                     MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
@@ -48,13 +49,13 @@ object PlayerSliderColors {
         }
         
         return SliderDefaults.colors(
-            activeTrackColor = activeColor,
-            activeTickColor = activeColor,
-            thumbColor = activeColor,
+            activeTrackColor = resolvedActive,
+            activeTickColor = resolvedActive,
+            thumbColor = resolvedActive,
             inactiveTrackColor = inactiveTrackColor,
-            disabledActiveTrackColor = activeColor,
+            disabledActiveTrackColor = resolvedActive,
             disabledInactiveTrackColor = inactiveTrackColor,
-            disabledThumbColor = activeColor
+            disabledThumbColor = resolvedActive
         )
     }
 }

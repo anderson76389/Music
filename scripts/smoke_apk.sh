@@ -48,6 +48,9 @@ for variant in foss gms; do
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
     adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true
     adb pull /data/local/tmp/glass-home-enabled.png smoke-results/ || true
+    for capture in glass-home-light glass-home-dark glass-settings-light glass-settings-dark; do
+      adb pull "/data/local/tmp/$capture.png" smoke-results/ || true
+    done
     adb logcat -d > smoke-results/settings-navigation-logcat.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/settings-navigation-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/settings-navigation-tests.txt
