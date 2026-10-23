@@ -309,7 +309,7 @@ fun BottomSheetPlayer(
     }
 
     val onBackgroundColor =
-        when (playerBackground) {
+        if (LocalLiquidGlassEnabled.current) Color.White else when (playerBackground) {
             PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
             else -> MaterialTheme.colorScheme.onSurface
         }
@@ -406,14 +406,16 @@ fun BottomSheetPlayer(
         playerConnection.service.addToQueueAutomix(automix[0], 0)
     }
 
-    val defaultGradientColors = listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
-    val fallbackColor = MaterialTheme.colorScheme.surface.toArgb()
+    val glassMode = LocalLiquidGlassEnabled.current
+    val defaultGradientColors = if (glassMode) listOf(Color(0xFF242426), Color(0xFF1C1C1E))
+        else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
+    val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground) {
+    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode) {
         if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
-                val cachedColors = gradientColorsCache[currentMetadata.id]
+                val cachedColors = gradientColorsCache["${currentMetadata.id}_$glassMode"]
                 if (cachedColors != null) {
                     gradientColors = cachedColors
                     return@LaunchedEffect
@@ -444,8 +446,9 @@ fun BottomSheetPlayer(
                                 PlayerColorExtractor.extractGradientColors(
                                     palette = palette,
                                     fallbackColor = fallbackColor,
+                                    glass = glassMode,
                                 )
-                            gradientColorsCache[currentMetadata.id] = extractedColors
+                            gradientColorsCache["${currentMetadata.id}_$glassMode"] = extractedColors
                             withContext(Dispatchers.Main) { gradientColors = extractedColors }
                         }
                     }
@@ -810,7 +813,7 @@ fun BottomSheetPlayer(
         )
 
     val bottomSheetBackgroundColor =
-        when (playerBackground) {
+        if (glassMode) Color(0xFF242426) else when (playerBackground) {
             PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
                 MaterialTheme.colorScheme.surfaceContainer
             }
@@ -1658,6 +1661,7 @@ fun BottomSheetPlayer(
                                         contentDescription = null,
                                         modifier = Modifier.size(32.dp),
                                     )
+                                    if (!LocalLiquidGlassEnabled.current) {
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Text(
                                         text =
@@ -1666,6 +1670,7 @@ fun BottomSheetPlayer(
                                             },
                                         style = MaterialTheme.typography.titleMedium,
                                     )
+                                    }
                                 }
                             }
 
@@ -1954,6 +1959,7 @@ fun BottomSheetPlayer(
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.Top) + slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         ) {
+            val queueContent: @Composable () -> Unit = {
             Queue(
                 state = queueSheetState,
                 playerBottomSheetState = state,
@@ -1974,6 +1980,10 @@ fun BottomSheetPlayer(
                     showInlineLyrics = !showInlineLyrics
                 },
             )
+            }
+            if (LocalLiquidGlassEnabled.current) {
+                fr.makoff.music.ui.theme.MetrolistTheme(darkTheme = true, themeColor = MaterialTheme.colorScheme.primary, content = queueContent)
+            } else queueContent()
         }
     }
 }

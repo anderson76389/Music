@@ -57,8 +57,8 @@ fun Material3SettingsGroup(
         title?.let {
             Text(
                 text = it,
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.primary,
+                style = if (LocalLiquidGlassEnabled.current) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                color = if (LocalLiquidGlassEnabled.current) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(bottom = 8.dp, top = 8.dp)
             )
         }

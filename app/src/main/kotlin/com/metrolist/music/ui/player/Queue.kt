@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.player
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+
 import android.annotation.SuppressLint
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -1283,13 +1285,15 @@ private fun PlayerQueueButton(
 ) {
     val buttonModifier =
         Modifier
-            .clip(shape)
+            .clip(if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else shape)
             .clickable(enabled = enabled, onClick = onClick)
 
     val alphaFactor = if (enabled) 1f else 0.35f
 
     val appliedModifier =
-        if (isActive) {
+        if (LocalLiquidGlassEnabled.current) {
+            modifier.then(buttonModifier.background(if (isActive) Color.White.copy(alpha = 0.16f) else Color.Transparent)).alpha(alphaFactor)
+        } else if (isActive) {
             modifier.then(buttonModifier.background(textButtonColor)).alpha(alphaFactor)
         } else {
             modifier

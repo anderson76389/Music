@@ -77,6 +77,7 @@ import fr.makoff.music.constants.HidePlayerThumbnailKey
 import fr.makoff.music.constants.PlayerBackgroundStyle
 import fr.makoff.music.constants.PlayerBackgroundStyleKey
 import fr.makoff.music.constants.PlayerHorizontalPadding
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.constants.SeekExtraSeconds
 import fr.makoff.music.constants.SwipeThumbnailKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
@@ -216,10 +217,13 @@ fun Thumbnail(
     val swipeThumbnail = swipeThumbnailPref
     val hidePlayerThumbnail by rememberPreference(HidePlayerThumbnailKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
-    val playerBackground by rememberEnumPreference(
+    val selectedPlayerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT
     )
+
+    val glass = LocalLiquidGlassEnabled.current
+    val playerBackground = if (glass) PlayerBackgroundStyle.GRADIENT else selectedPlayerBackground
 
     // Pre-calculate text color based on background style
     val textBackgroundColor = getTextColor(playerBackground)
@@ -348,11 +352,12 @@ fun Thumbnail(
                     }
                 ) {
                     // Calculate dimensions once per size change, considering landscape mode
-                    val dimensions = remember(maxWidth, maxHeight, isLandscape) {
+                    val dimensions = remember(maxWidth, maxHeight, isLandscape, glass) {
                         calculateThumbnailDimensions(
                             containerWidth = maxWidth,
                             containerHeight = maxHeight,
-                            isLandscape = isLandscape
+                            isLandscape = isLandscape,
+                            cornerRadius = if (glass) 6.dp else ThumbnailCornerRadius,
                         )
                     }
 
@@ -580,7 +585,7 @@ private fun HiddenThumbnailPlaceholder(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surfaceVariant),
+            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center
     ) {
         Icon(
@@ -608,7 +613,7 @@ private fun ThumbnailImage(
                 // Use offscreen compositing for hardware acceleration during animations
                 compositingStrategy = CompositingStrategy.Offscreen
             }
-            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant)
     ) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
