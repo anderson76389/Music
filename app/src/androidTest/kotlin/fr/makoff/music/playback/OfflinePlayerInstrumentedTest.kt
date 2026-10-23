@@ -95,9 +95,9 @@ class OfflinePlayerInstrumentedTest {
             context.getSystemService(android.net.ConnectivityManager::class.java).activeNetwork == null
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
-            ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, AutoDownloadOnLikeKey)
+            ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey)
         val before = context.dataStore.data.first()
-        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false } }
+        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -109,9 +109,21 @@ class OfflinePlayerInstrumentedTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
         var connection: PlayerConnection? = null
         var service: MusicService? = null
+        val artwork = java.io.File(context.cacheDir, "glass-validation-art.png")
+        val bitmap = android.graphics.Bitmap.createBitmap(400, 400, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bitmap)
+        val paint = android.graphics.Paint().apply {
+            shader = android.graphics.LinearGradient(0f, 0f, 400f, 400f,
+                intArrayOf(0xFF12657F.toInt(), 0xFFD37B35.toInt(), 0xFF653C25.toInt()), null,
+                android.graphics.Shader.TileMode.CLAMP)
+        }
+        canvas.drawRect(0f, 0f, 400f, 400f, paint)
+        artwork.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
+        bitmap.recycle()
         val tracks = (0..3).map { index ->
             MediaMetadata(UUID.randomUUID().toString().replace("-", "").take(11),
-                "Validation lecteur ${'A' + index}", listOf(MediaMetadata.Artist("test-local-artist", "Audio de test")), 20)
+                "Validation lecteur ${'A' + index}", listOf(MediaMetadata.Artist("test-local-artist", "Audio de test")), 20,
+                thumbnailUrl = android.net.Uri.fromFile(artwork).toString())
         }
         var sharedUri: android.net.Uri? = null
         var bound = false
@@ -176,12 +188,14 @@ class OfflinePlayerInstrumentedTest {
             println("PLAYER_STAGE: cached audio prepared")
             val miniPlayer = device.wait(Until.findObject(By.desc(context.getString(R.string.player))), 15000)
             assertNotNull("Mini-player control", miniPlayer)
+            delay(1200)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-mini-player.png")
             miniPlayer!!.click()
             await("Expanded player is visible", 10000) {
                 freshControlBounds(context.getString(R.string.next)) != null
             }
             instrumentation.waitForIdleSync()
+            delay(1200)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()
             clickDescription(R.string.play)
@@ -284,6 +298,7 @@ class OfflinePlayerInstrumentedTest {
                 active.database.song(track.id).first()?.let { active.database.delete(it.song) }
             } }
             sharedUri?.let { runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            artwork.delete()
             if (bound) context.unbindService(binding)
             device.pressBack()
             device.waitForIdle()

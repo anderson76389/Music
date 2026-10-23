@@ -11,6 +11,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -148,11 +164,8 @@ fun AppNavigationBar(
     val haptics = LocalHapticFeedback.current
     val viewConfiguration = LocalViewConfiguration.current
 
-    NavigationBar(
-        modifier = modifier.liquidGlass(RoundedCornerShape(32.dp), chrome = true),
-        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor,
-        contentColor = contentColor
-    ) {
+    val glass = LocalLiquidGlassEnabled.current
+    val items: @Composable RowScope.() -> Unit = {
         navigationItems.forEach { screen ->
             val isSelected = remember(currentRoute, screen.route) {
                 isRouteSelected(currentRoute, screen.route, navigationItems)
@@ -192,6 +205,31 @@ fun AppNavigationBar(
                 }
             }
 
+            if (glass) {
+                val pressed by interactionSource.collectIsPressedAsState()
+                val scale by animateFloatAsState(if (pressed) 0.95f else 1f,
+                    spring(dampingRatio = 0.85f, stiffness = 600f), label = "glassTabPress")
+                val selection by animateColorAsState(
+                    if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f) else Color.Transparent,
+                    label = "glassTabSelection")
+                Column(
+                    modifier = Modifier.weight(1f).fillMaxHeight().padding(3.dp)
+                        .graphicsLayer { scaleX = scale; scaleY = scale }
+                        .clip(RoundedCornerShape(28.dp)).background(selection)
+                        .semantics { selected = isSelected; role = Role.Tab }
+                        .clickable(interactionSource = interactionSource, indication = null) {
+                            if (!isSearchItem && !isHomeHoldItem) onItemClick(screen, currentIsSelected)
+                        },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    val tint = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                    Icon(painterResource(iconRes), stringResource(screen.titleId), modifier = Modifier.size(25.dp), tint = tint)
+                    if (!slimNav) Text(stringResource(screen.titleId), color = tint,
+                        style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Medium,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            } else {
             NavigationBarItem(
                 selected = isSelected,
                 onClick = {
@@ -217,6 +255,15 @@ fun AppNavigationBar(
                     }
                 } else null
             )
+            }
         }
+    }
+    if (glass) {
+        Row(modifier = modifier.fillMaxWidth()
+            .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
+            .padding(horizontal = 12.dp, vertical = 8.dp)
+            .liquidGlass(RoundedCornerShape(32.dp), chrome = true).selectableGroup(), content = items)
+    } else {
+        NavigationBar(modifier = modifier, containerColor = containerColor, contentColor = contentColor, content = items)
     }
 }

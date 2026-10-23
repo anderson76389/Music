@@ -213,6 +213,40 @@ class SettingsNavigationTest {
         }
     }
 
+    @Test(timeout = 90000) fun glassReferenceInLightAndDark() {
+        val original = runBlocking { context.dataStore.data.first() }
+        try {
+            runBlocking { context.dataStore.edit { it[LiquidGlassEnabledKey] = true; it[DarkModeKey] = DarkMode.OFF.name } }
+            context.startActivity(Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 15000)
+            assertNotNull("Glass home remains accessible", account)
+            device.waitForIdle()
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-home-light.png")
+            account!!.click()
+            open(R.string.settings)
+            open(R.string.appearance)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-settings-light.png")
+            runBlocking { context.dataStore.edit { it[DarkModeKey] = DarkMode.ON.name } }
+            SystemClock.sleep(1200)
+            device.waitForIdle()
+            findText(R.string.liquid_glass_theme)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-settings-dark.png")
+            device.pressBack()
+            device.pressBack()
+            assertTrue("Dark glass home remains accessible", device.wait(Until.hasObject(By.desc(label(R.string.account))), 10000))
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-home-dark.png")
+            println("GLASS_APPEARANCES_OK: light and dark glass home/settings captured")
+        } finally {
+            runBlocking { context.dataStore.edit { prefs ->
+                original[LiquidGlassEnabledKey]?.let { prefs[LiquidGlassEnabledKey] = it } ?: prefs.remove(LiquidGlassEnabledKey)
+                original[DarkModeKey]?.let { prefs[DarkModeKey] = it } ?: prefs.remove(DarkModeKey)
+            } }
+            val activity = resumedMainActivity()
+            instrumentation.runOnMainSync { activity?.finish() }
+        }
+    }
+
     @Test(timeout = 45000) fun updateNotificationOpensIntegratedInstaller() {
         val url = "https://github.com/anderson76389/Music/releases/download/test-notification-no-apk/Metrolist.apk"
         val release = fr.makoff.music.utils.ReleaseInfo("test-notification", "test-notification", "", "",

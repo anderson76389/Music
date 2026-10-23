@@ -236,10 +236,11 @@ fun BottomSheetPlayer(
         mutableStateOf(false)
     }
 
-    val playerBackground by rememberEnumPreference(
+    val selectedPlayerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
         defaultValue = PlayerBackgroundStyle.DEFAULT,
     )
+    val playerBackground = if (LocalLiquidGlassEnabled.current) PlayerBackgroundStyle.GRADIENT else selectedPlayerBackground
     val playerButtonsStyle by rememberEnumPreference(
         key = PlayerButtonsStyleKey,
         defaultValue = PlayerButtonsStyle.DEFAULT,
@@ -477,6 +478,7 @@ fun BottomSheetPlayer(
 
     val (textButtonColor, iconButtonColor) =
         when {
+            LocalLiquidGlassEnabled.current -> Pair(Color.White.copy(alpha = 0.16f), Color.White)
             playerBackground == PlayerBackgroundStyle.BLUR ||
                 playerBackground == PlayerBackgroundStyle.GRADIENT -> {
                 when (playerButtonsStyle) {
@@ -832,8 +834,7 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
-                        .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(bottomSheetBackgroundColor) else Modifier)
-                        .then(if (backgroundAlpha > 0f) Modifier.liquidGlass(RoundedCornerShape(28.dp), chrome = true) else Modifier),
+                        .background(if (LocalLiquidGlassEnabled.current) bottomSheetBackgroundColor.copy(alpha = backgroundAlpha) else bottomSheetBackgroundColor),
             ) {
                 when (playerBackground) {
                     PlayerBackgroundStyle.BLUR -> {
