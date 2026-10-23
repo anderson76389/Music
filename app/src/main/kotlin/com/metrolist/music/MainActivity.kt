@@ -506,7 +506,7 @@ class MainActivity : FragmentActivity() {
                         it.release.tagName == preferences[it.dismissalKey]
                     }
 
-                    if (update != null && notificationsEnabled) {
+                    if (update != null && notificationsEnabled && availableUpdate != null) {
                         val intent = fr.makoff.music.ui.screens.settings.ApkUpdateActivity.intent(this@MainActivity, update.downloadUrl)
                         val flags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
                         val pending = PendingIntent.getActivity(this@MainActivity, 1001, intent, flags)
@@ -535,6 +535,7 @@ class MainActivity : FragmentActivity() {
                                 }
                                 .setContentIntent(pending)
                                 .setAutoCancel(true)
+                                .setOnlyAlertOnce(true)
                                 .build()
 
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
@@ -1304,6 +1305,14 @@ class MainActivity : FragmentActivity() {
                             }
                             Box(Modifier.weight(1f).then(if (LocalLiquidGlassEnabled.current) Modifier.hazeSource(checkNotNull(LocalChromeGlass.current)) else Modifier)) {
                                 val glassTransitions = LocalLiquidGlassEnabled.current
+                                val enterSlide = { forward: Boolean ->
+                                    if (glassTransitions) slideInHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { if (forward) it / 8 else -it / 8 }
+                                    else slideInHorizontally { if (forward) it / 8 else -it / 8 }
+                                }
+                                val exitSlide = { forward: Boolean ->
+                                    if (glassTransitions) slideOutHorizontally(animationSpec = tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { if (forward) it / 8 else -it / 8 }
+                                    else slideOutHorizontally { if (forward) it / 8 else -it / 8 }
+                                }
                                 // NavHost with animations (Material 3 Expressive style)
                                 NavHost(
                                     navController = navController,
@@ -1318,9 +1327,9 @@ class MainActivity : FragmentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (currentRouteIndex == -1 || currentRouteIndex > previousRouteIndex) {
-                                            slideInHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { it / 8 } + fadeIn(tween(200))
+                                            enterSlide(true) + fadeIn(tween(200))
                                         } else {
-                                            slideInHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { -it / 8 } + fadeIn(tween(200))
+                                            enterSlide(false) + fadeIn(tween(200))
                                         }
                                     },
                                     exitTransition = {
@@ -1328,9 +1337,9 @@ class MainActivity : FragmentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (targetRouteIndex == -1 || targetRouteIndex > currentRouteIndex) {
-                                            slideOutHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { -it / 8 } + fadeOut(tween(200))
+                                            exitSlide(false) + fadeOut(tween(200))
                                         } else {
-                                            slideOutHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { it / 8 } + fadeOut(tween(200))
+                                            exitSlide(true) + fadeOut(tween(200))
                                         }
                                     },
                                     popEnterTransition = {
@@ -1338,9 +1347,9 @@ class MainActivity : FragmentActivity() {
                                         val previousRouteIndex = routeIndexMap[initialState.destination.route] ?: -1
 
                                         if (previousRouteIndex != -1 && previousRouteIndex < currentRouteIndex) {
-                                            slideInHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { it / 8 } + fadeIn(tween(200))
+                                            enterSlide(true) + fadeIn(tween(200))
                                         } else {
-                                            slideInHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { -it / 8 } + fadeIn(tween(200))
+                                            enterSlide(false) + fadeIn(tween(200))
                                         }
                                     },
                                     popExitTransition = {
@@ -1348,9 +1357,9 @@ class MainActivity : FragmentActivity() {
                                         val targetRouteIndex = routeIndexMap[targetState.destination.route] ?: -1
 
                                         if (currentRouteIndex != -1 && currentRouteIndex < targetRouteIndex) {
-                                            slideOutHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { -it / 8 } + fadeOut(tween(200))
+                                            exitSlide(false) + fadeOut(tween(200))
                                         } else {
-                                            slideOutHorizontally(animationSpec = if (glassTransitions) tween(320, easing = androidx.compose.animation.core.FastOutSlowInEasing) else androidx.compose.animation.core.spring()) { it / 8 } + fadeOut(tween(200))
+                                            exitSlide(true) + fadeOut(tween(200))
                                         }
                                     },
                                     modifier = Modifier.nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),

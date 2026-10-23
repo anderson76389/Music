@@ -39,7 +39,7 @@ jobs:
         run: |
           mkdir -p previous-apk
           gh release download --repo "$GITHUB_REPOSITORY" --pattern Metrolist.apk --dir previous-apk
-          python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk previous-apk/Metrolist.apk --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" --github-env "$GITHUB_ENV"
+          python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk previous-apk/Metrolist.apk --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - name: Restore private publication key
         env:
@@ -109,8 +109,10 @@ jobs:
           cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --target "$SOURCE_SHA" --title "Metrolist $RELEASE_TAG" --latest --notes-file notes.txt dist/*
+            gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Metrolist $RELEASE_TAG" --notes-file notes.txt
           fi
+          gh release upload "$RELEASE_TAG" dist/* --clobber
+          gh release edit "$RELEASE_TAG" --draft=false --latest --notes-file notes.txt
       - name: Delete private key
         if: always()
         run: rm -f app/keystore/release.keystore
