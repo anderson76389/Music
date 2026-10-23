@@ -4316,14 +4316,14 @@ class MusicService :
      * Initialize Google Cast support
      */
     private fun initializeCast() {
-        if (dataStore.get(fr.makoff.music.constants.EnableGoogleCastKey, true)) {
-            try {
-                castConnectionHandler = CastConnectionHandler(this, scope, this)
+        try {
+            // Keep the same handler/flows when Cast starts disabled and is enabled later.
+            castConnectionHandler = CastConnectionHandler(this, scope, this)
+            if (dataStore.get(fr.makoff.music.constants.EnableGoogleCastKey, true)) {
                 castConnectionHandler?.initialize()
-                timber.log.Timber.d("Google Cast initialized")
-            } catch (e: Exception) {
-                timber.log.Timber.e(e, "Failed to initialize Google Cast")
             }
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "Failed to initialize Google Cast")
         }
     }
 

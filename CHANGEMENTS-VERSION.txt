@@ -5,3 +5,4 @@
 - Le minuteur automatique dépend du service audio et fonctionne aussi lorsque l’interface est fermée.
 - Le fondu enchaîné est reprogrammé dès qu’un de ses réglages change ; sa durée se règle par secondes entières.
 - Contrôles étendus des réglages du lecteur, de la lecture hors ligne, du changement de moteur audio et des minuteurs.
+- Google Cast peut être réactivé après un démarrage avec cette option désactivée, sans recréer le service.

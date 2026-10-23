@@ -96,7 +96,7 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, SleepTimerEnabledKey, SleepTimerStopAfterCurrentSongKey, SleepTimerFadeOutKey)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, SleepTimerEnabledKey, SleepTimerStopAfterCurrentSongKey, SleepTimerFadeOutKey)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true }
         val future = CompletableFuture<MusicService.MusicBinder>()
@@ -135,6 +135,7 @@ class OfflinePlayerInstrumentedTest {
             val binder = future.get(30, TimeUnit.SECONDS)
             println("PLAYER_STAGE: production service bound")
             val active = binder.service
+            assertNotNull("Cast handler must exist even when Cast starts disabled", active.castConnectionHandler)
             service = active
             await("Production player not ready") { active.isPlayerReady.value }
             val audio = audioFixture()
