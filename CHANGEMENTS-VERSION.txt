@@ -1,5 +1,7 @@
-- Refonte du thème de verre à partir des références visuelles : navigation flottante, reflets, transparence et sélection animée.
-- Interrupteurs avec curseur blanc de taille constante et animation à ressort ; groupes de paramètres continus avec séparateurs.
-- Couleurs neutres, accent rose rouge et hiérarchie typographique propres au thème, indépendants du fond d’écran Android.
-- Fond du lecteur assorti à la pochette lorsque le thème est actif ; conservation des préférences et de l’apparence originale lorsque le thème est désactivé.
-- Maintien du redémarrage de l’interface au changement de thème et du système de mises à jour signées.
+- Suppression de l’entrée « Journal de modifications » des paramètres.
+- Déplacement d’Android Auto dans « Contenu », accessible aussi avant de brancher la voiture.
+- Suppression du blocage des captures d’écran, y compris pour les anciennes préférences activées.
+- Minuteur automatique : horaires par défaut cohérents, respect du morceau en cours et du fondu de sortie, prise en charge des nuits passant au lendemain.
+- Le minuteur automatique dépend du service audio et fonctionne aussi lorsque l’interface est fermée.
+- Le fondu enchaîné est reprogrammé dès qu’un de ses réglages change ; sa durée se règle par secondes entières.
+- Contrôles étendus des réglages du lecteur, de la lecture hors ligne, du changement de moteur audio et des minuteurs.

@@ -20,7 +20,6 @@ import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.View
-import android.view.WindowManager
 import android.widget.Toast
 import androidx.fragment.app.FragmentActivity
 import androidx.activity.compose.setContent
@@ -142,7 +141,6 @@ import fr.makoff.music.constants.DefaultOpenTabKey
 import fr.makoff.music.constants.DismissedKmpUpdateKey
 import fr.makoff.music.constants.DismissedStandaloneUpdateKey
 import fr.makoff.music.constants.DensityScaleKey
-import fr.makoff.music.constants.DisableScreenshotKey
 import fr.makoff.music.constants.DynamicThemeKey
 import fr.makoff.music.constants.EnableHighRefreshRateKey
 import fr.makoff.music.constants.EnableLandscapeScalingKey
@@ -390,22 +388,6 @@ class MainActivity : FragmentActivity() {
                     ?.let { Locale.forLanguageTag(it) }
                     ?: Locale.getDefault()
             setAppLocale(this, locale)
-        }
-
-        lifecycleScope.launch {
-            dataStore.data
-                .map { it[DisableScreenshotKey] ?: false }
-                .distinctUntilChanged()
-                .collectLatest {
-                    if (it) {
-                        window.setFlags(
-                            WindowManager.LayoutParams.FLAG_SECURE,
-                            WindowManager.LayoutParams.FLAG_SECURE,
-                        )
-                    } else {
-                        window.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
-                    }
-                }
         }
 
         // Defer migration and version tracking to avoid blocking first frame
