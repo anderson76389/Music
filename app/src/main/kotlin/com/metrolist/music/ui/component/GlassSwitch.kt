@@ -5,6 +5,7 @@ import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.offset
@@ -44,7 +45,10 @@ fun Switch(
         return
     }
     val source = interactionSource ?: remember { MutableInteractionSource() }
-    val position by animateDpAsState(if (checked) 22.dp else 2.dp,
+    val pressed by source.collectIsPressedAsState()
+    val thumbWidth by animateDpAsState(if (pressed) 32.dp else 28.dp,
+        spring(dampingRatio = 0.86f, stiffness = 700f), label = "glassSwitchPress")
+    val position by animateDpAsState(if (checked) 50.dp - thumbWidth else 2.dp,
         spring(dampingRatio = 0.86f, stiffness = 700f), label = "glassSwitchPosition")
     val track by animateColorAsState(if (checked) Color(0xFF34C759) else Color(0xFF787880).copy(alpha = 0.3f), label = "glassSwitchColor")
     Box(modifier.minimumInteractiveComponentSize().wrapContentSize().requiredSize(52.dp, 32.dp)
@@ -52,7 +56,7 @@ fun Switch(
         .toggleable(checked, source, indication = null, enabled = enabled && onCheckedChange != null,
             role = Role.Switch, onValueChange = { onCheckedChange?.invoke(it) })
         .background(track, RoundedCornerShape(16.dp)), contentAlignment = Alignment.CenterStart) {
-        Box(Modifier.offset(x = position).size(28.dp)
+        Box(Modifier.offset(x = position).requiredSize(thumbWidth, 28.dp)
             .shadow(3.dp, CircleShape).background(Color.White, CircleShape)
             .border(0.5.dp, Color.White.copy(alpha = 0.7f), CircleShape))
     }

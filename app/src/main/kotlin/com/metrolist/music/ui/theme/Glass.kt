@@ -61,12 +61,13 @@ fun Modifier.liquidGlass(
     }
     val state = LocalChromeGlass.current ?: return background(surface, shape)
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val style = remember(shape, surface, dark) {
+    val flat = shape == RoundedCornerShape(0.dp)
+    val style = remember(shape, surface, dark, flat) {
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
             tint(surface.copy(alpha = if (dark) 0.22f else 0.16f))
-            optics(blurRadius = 18.dp, refractionStrength = 0.65f, refractionDisplacement = 12.dp,
+            optics(blurRadius = 18.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
                 refractionHeightFraction = 0.28f, depth = 0.45f)
             specularIntensity(if (dark) 0.52f else 0.72f)
             edgeSoftness(1.dp)
@@ -75,6 +76,7 @@ fun Modifier.liquidGlass(
             chromaticAberrationStrength(0.025f)
         }
     }
+    if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
             Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = if (dark) 0.28f else 0.6f)))
