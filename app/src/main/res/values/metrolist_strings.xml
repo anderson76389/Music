@@ -860,4 +860,19 @@
     <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
     <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
     <string name="download_format_help">Ces choix sont indépendants de la qualité de lecture. La qualité disponible dépend du morceau et de votre compte. Le FLAC est un vrai fichier sans perte après décodage, mais ne restaure pas les détails perdus dans une source compressée et occupe plus de place. M4A exige un flux M4A disponible, sans conversion depuis Opus. Les téléchargements existants sont conservés : supprimez le téléchargement puis relancez-le pour rechercher une meilleure source. Un export réutilise le fichier présent quand son format convient, ou le convertit en FLAC sans nouveau transfert.</string>
+    <string name="liquid_glass_theme">Thème Liquid Glass</string>
+    <string name="liquid_glass_theme_description">Active le thème de verre dans toute l’application. Désactivez pour retrouver l’apparence et les animations d’origine.</string>
+    <string name="apk_update_downloading">Téléchargement de la mise à jour…</string>
+    <string name="apk_update_install">Installer la mise à jour</string>
+    <string name="apk_update_retry">Réessayer le téléchargement</string>
+    <string name="apk_update_ready">APK vérifié : version plus récente et même signature. Vous pouvez installer la mise à jour en conservant vos données.</string>
+    <string name="apk_update_install_result">Si l’installation a été annulée, vous pouvez la relancer avec le bouton ci-dessous.</string>
+    <string name="apk_update_permission_needed">Autorisez Metrolist à installer ses mises à jour dans les paramètres Android, puis revenez ici.</string>
+    <string name="apk_update_invalid_source">Cette adresse ne correspond pas aux APK du dépôt Music.</string>
+    <string name="apk_update_download_failed">Le téléchargement a échoué. Vérifiez votre connexion et réessayez.</string>
+    <string name="apk_update_invalid_apk">Le fichier reçu n’est pas un APK valide.</string>
+    <string name="apk_update_package_mismatch">Cet APK ne correspond pas à cette application. Une version de test ne peut pas remplacer la version stable.</string>
+    <string name="apk_update_not_newer">L’APK téléchargé n’est pas plus récent que la version installée.</string>
+    <string name="apk_update_signature_mismatch">La signature de cet APK diffère de celle de l’application installée. Installation bloquée ; ne désinstallez pas l’application pour forcer cette mise à jour.</string>
+    <string name="apk_update_install_failed">Impossible d’ouvrir l’installateur Android. Vérifiez l’autorisation d’installer des applications.</string>
 </resources>

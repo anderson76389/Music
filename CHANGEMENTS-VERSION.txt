@@ -1,40 +1,5 @@
-## Formats et qualité des téléchargements
-
-- Deux réglages indépendants dans Paramètres > Stockage : format interne et format externe.
-- Meilleure qualité disponible : flux original, sans réencodage. La qualité de lecture Basse/Automatique ne réduit plus les nouveaux téléchargements internes.
-- M4A : meilleur flux M4A disponible, sans conversion depuis Opus ; échec explicite si ce format est inaccessible.
-- FLAC : conversion réelle avec FFmpeg embarqué, sans suréchantillonnage. Une source YouTube compressée ne devient pas une source sans perte originale.
-- Le réglage est mémorisé lors de la mise en file. Les téléchargements existants sont conservés ; l’export les réutilise si le format convient ou les convertit localement en FLAC. Pour rechercher une meilleure source, retirer le téléchargement existant puis le relancer.
-
-## Fichier partagé et téléchargements authentifiés
-
-- Un fichier audio exporté sert désormais de téléchargement hors connexion dans Metrolist, sans deuxième copie dans le cache du lecteur.
-- Un téléchargement interne terminé peut être exporté sans nouveau transfert YouTube. La copie privée est retirée après validation et enregistrement du fichier externe.
-- Retirer le téléchargement dans Metrolist conserve le fichier personnel. Si le fichier est déplacé, supprimé ou inaccessible, le téléchargement peut être relancé.
-- Recours à yt-dlp avec la session enregistrée lorsque le moteur interne signale une restriction d’âge ou de contenu explicite. Aucune garantie d’accès si YouTube refuse la session ou demande une vérification supplémentaire.
-- Tests Android ajoutés : lecture du fichier partagé en mode avion, absence de nouveau cache, conservation du fichier lors du retrait et gestion d’un fichier manquant.
-
-## Téléchargements et retour au thème classique
-
-- Suppression du thème Liquid Glass et de ses réglages.
-- Export des albums et playlists en fichiers audio dans des sous-dossiers Albums/Nom et Playlists/Nom, avec numéros de piste.
-- Le téléchargement interne pour la lecture hors connexion est conservé séparément.
-- Test Android ajouté pour vérifier les sous-dossiers et la conservation exacte des octets audio.
-
-## Changements précédents
-
-- Le fichier proposé dans Releases se nomme maintenant Metrolist.apk. Un seul APK universel est publié ; le système de mise à jour reconnaît ce nom ainsi que les anciens fichiers.
-
-- Bibliothèque et favoris : lecture puis écriture atomiques de l’état courant pour que des appuis rapprochés ne réutilisent pas un état périmé. La synchronisation réseau suit la sauvegarde locale.
-
-- LyricsPlus : valeur par défaut du fournisseur alignée sur son interrupteur ; contrôle ajouté entre le réglage et son consommateur.
-- Accueil : correction d’un plantage lorsque la base retire un morceau encore affiché dans les suggestions.
-- Essais instrumentés exécutés sur la variante Google Cast qui est réellement publiée.
-- Suggestions Automix : toucher un morceau lance sa lecture ; sélection par identifiant pour éviter les erreurs de position et les doubles ajouts.
-- Libellés d’accessibilité ajoutés aux commandes précédent/suivant et lecture/pause du lecteur.
-- Essai Android du véritable service de lecture sur un fichier AAC/M4A dans le cache : décodage, boutons, déplacements, file d’attente, répétition, aléatoire, vitesse, favoris, bibliothèque et minuteurs.
-- Essai du lecteur lancé en mode avion pour vérifier son utilisation sans serveur externe sur ce scénario local.
-- Vérification des six catégories de paramètres, de 26 interrupteurs et des qualités LOW/AUTO/HIGH, avec contrôle des valeurs enregistrées et restauration.
-- Inventaire des 359 branchements d’actions du lecteur et des paramètres.
-
-Les tests locaux ne certifient pas le flux YouTube authentifié, les services de paroles, Cast, Bluetooth, Android Auto ou toutes les combinaisons sur tous les appareils. Les fournisseurs tiers restent nécessaires aux fonctions correspondantes. Un seul APK universel est publié après les contrôles. Les APK des Releases utilisent la signature permanente du propriétaire du dépôt.
+- Ajout du thème Liquid Glass optionnel dans Apparence ; désactivation globale avec retour aux couleurs, formes et transitions d’origine.
+- Ajout du téléchargement de mise à jour dans l’application et ouverture de l’installateur Android après contrôle du paquet, de la signature et du numéro de version.
+- Bouton d’installation ajouté aux paramètres de mise à jour ; nouvelle vérification au retour dans l’application.
+- APK universel commun aux anciennes variantes. Version de publication toujours supérieure à celle du dernier APK publié.
+- Essai automatisé de remplacement de la version précédente avant publication du nouvel APK signé.

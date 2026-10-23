@@ -19,3 +19,5 @@ Conversion FLAC embarquée : io.github.junkfood02.youtubedl-android:ffmpeg:0.18.
 Wrapper et instructions de construction : https://github.com/yausername/youtubedl-android
 Sources FFmpeg : https://ffmpeg.org/download.html
 Licences et notices des composants conservées ; conversion locale sans service distant.
+
+Rendu de verre : Haze et Haze Glass 2.0.1, Chris Banes et contributeurs, Apache-2.0. https://github.com/chrisbanes/haze/tree/2.0.1 . Bibliothèque embarquée, aucun service distant de rendu.

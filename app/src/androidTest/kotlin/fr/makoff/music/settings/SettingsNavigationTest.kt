@@ -151,6 +151,18 @@ class SettingsNavigationTest {
             clicker(id)
             awaitPreference(label(id)) { context.dataStore.data.first()[key] == !before }
             effect?.let { assertEquals("Consumer follows ${key.name}", !before, it()) }
+            if (key == LiquidGlassEnabledKey && !before) {
+                device.executeShellCommand("screencap -p /data/local/tmp/glass-settings-enabled.png")
+                device.pressBack()
+                device.pressBack()
+                val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
+                assertNotNull("Home remains usable with glass enabled", account)
+                device.waitForIdle()
+                device.executeShellCommand("screencap -p /data/local/tmp/glass-home-enabled.png")
+                account!!.click()
+                open(R.string.settings)
+                open(R.string.appearance)
+            }
             clicker(id)
             awaitPreference(label(id) + " restored") { context.dataStore.data.first()[key] == before }
             effect?.let { assertEquals("Consumer restored ${key.name}", before, it()) }
@@ -170,6 +182,8 @@ class SettingsNavigationTest {
         assertNoRemovedEntries()
         open(R.string.settings)
         assertNoRemovedEntries()
+        device.waitForIdle()
+        device.executeShellCommand("screencap -p /data/local/tmp/settings-glass.png")
 
         val screens = listOf(
             R.string.appearance to R.string.theme,
@@ -182,9 +196,12 @@ class SettingsNavigationTest {
         for ((screen, marker) in screens) {
             open(screen)
             findText(marker)
+            device.executeShellCommand("screencap -p /data/local/tmp/settings-glass-${screen}.png")
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
             when (screen) {
                 R.string.appearance -> {
+                    toggleAndRestore(R.string.liquid_glass_theme, LiquidGlassEnabledKey, false)
+                    println("GLASS_SWITCH_OK: enabled and disabled from settings, preference persisted")
                     open(R.string.theme_colors)
                     device.pressBack()
                     device.waitForIdle()

@@ -5,6 +5,9 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+import fr.makoff.music.ui.theme.liquidGlass
+import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -75,14 +78,11 @@ fun Material3SettingsGroup(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .animateContentSize(),
+                        .animateContentSize()
+                        .liquidGlass(shape),
                     shape = shape,
                     colors = CardDefaults.cardColors(
-                        containerColor = if (!useLowContrast) {
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
-                        } else {
-                            MaterialTheme.colorScheme.surfaceContainerLow
-                        }
+                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else if (!useLowContrast) MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f) else MaterialTheme.colorScheme.surfaceContainerLow
                     ),
                     elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
                 ) {

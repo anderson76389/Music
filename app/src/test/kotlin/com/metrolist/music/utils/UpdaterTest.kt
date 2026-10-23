@@ -13,6 +13,44 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class UpdaterTest {
+    @Test fun androidVersionCodeWinsOverManuallyChangedVersionNames() {
+        val newer = ReleaseInfo("v13.7.0.12", "13.7.0.12", "", "", emptyList(), 10012)
+        assertTrue(Updater.isNewerRelease(10011, "99.0.0", newer))
+        assertFalse(Updater.isNewerRelease(10012, "1.0", newer))
+        assertFalse(Updater.isNewerRelease(10013, "1.0", newer))
+        assertEquals(10012L, Updater.parsePublishedVersionCode("MUSIC_VERSION_CODE=10012\nMUSIC_VERSION_NAME=13.7.0.12\n"))
+        assertTrue(runCatching { Updater.parsePublishedVersionCode("MUSIC_VERSION_CODE=bad") }.isFailure)
+    }
+
+    @Test fun latestReleaseReadsPublishedAndroidCodeAndApk() = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            if (request.url.encodedPath.endsWith("/releases/latest")) respond("""{
+              "tag_name":"v13.7.0.12","published_at":"2026-10-23T00:00:00Z","body":"Mise à jour",
+              "assets":[
+                {"name":"Metrolist.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0.12/Metrolist.apk","size":100},
+                {"name":"BUILD.txt","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0.12/BUILD.txt","size":80}
+              ]} """, HttpStatusCode.OK)
+            else respond("MUSIC_VERSION_CODE=10012\n", HttpStatusCode.OK)
+        })
+        try {
+            val release = Updater.fetchLatestRelease(client)
+            assertEquals(10012L, release.versionCode)
+            assertEquals("Metrolist.apk", Updater.selectUpdateAsset(release.assets, "universal", "foss")?.name)
+        } finally { client.close() }
+    }
+
+    @Test fun ownUniversalApkUpdatesBothPreviouslyPublishedVariants() {
+        val url = "https://github.com/anderson76389/Music/releases/download/v13.7.0.12/Metrolist.apk"
+        val assets = Updater.parseAssets(JSONArray("""[{"name":"Metrolist.apk","browser_download_url":"$url","size":100}]"""))
+        assertEquals(url, Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.downloadUrl)
+        assertEquals(url, Updater.selectUpdateAsset(assets, "universal", "gms")?.downloadUrl)
+        assertFalse(Updater.isOwnApkUrl("https://github.com.evil.test/anderson76389/Music/releases/download/v1/Metrolist.apk"))
+        assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Music/releases/download/v1/Metrolist.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/other/project/releases/download/v1/Metrolist.apk"))
+        assertTrue(Updater.isUpdateAvailable("13.7.0.11", "13.7.0.12"))
+        assertFalse(Updater.isUpdateAvailable("13.7.0.12", "13.7.0.11"))
+    }
+
     @Test fun selectsOwnVariantAndRejectsForeignDownloads() {
         val assets = Updater.parseAssets(JSONArray("""[
           {"name":"MAKOFF-Music.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music.apk","size":42},

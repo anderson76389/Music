@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.screens.settings
 
+import fr.makoff.music.constants.LiquidGlassEnabledKey
 import android.os.Build
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -135,6 +136,7 @@ fun AppearanceSettings(
             EnableDynamicIconKey,
             defaultValue = true,
         )
+    val (liquidGlassEnabled, onLiquidGlassEnabledChange) = rememberPreference(LiquidGlassEnabledKey, false)
     val iconContext = LocalContext.current
     val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
         onEnableDynamicIconPrefChange(newValue)
@@ -902,6 +904,12 @@ fun AppearanceSettings(
             title = stringResource(R.string.theme),
             items =
                 buildList {
+                    add(Material3SettingsItem(
+                        title = { Text(stringResource(R.string.liquid_glass_theme)) },
+                        description = { Text(stringResource(R.string.liquid_glass_theme_description)) },
+                        trailingContent = { Switch(checked = liquidGlassEnabled, onCheckedChange = onLiquidGlassEnabledChange) },
+                        onClick = { onLiquidGlassEnabledChange(!liquidGlassEnabled) },
+                    ))
                     add(
                         Material3SettingsItem(
                             icon = painterResource(R.drawable.speed),

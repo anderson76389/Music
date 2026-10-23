@@ -21,7 +21,8 @@ data class ReleaseInfo(
     val versionName: String,
     val description: String,
     val releaseDate: String,
-    val assets: List<ReleaseAsset>
+    val assets: List<ReleaseAsset>,
+    val versionCode: Long? = null,
 )
 
 data class ReleaseAsset(
@@ -42,7 +43,7 @@ object Updater {
     private var cachedReleaseInfo: ReleaseInfo? = null
     private var cachedAllReleases: List<ReleaseInfo> = emptyList()
     
-    private const val CHECK_INTERVAL_MILLIS = 2 * 60 * 60 * 1000L // 2 hours
+    private const val CHECK_INTERVAL_MILLIS = 5 * 60 * 1000L // Automatic checks also run when returning to the app.
     internal const val GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"
 
     /**
@@ -82,6 +83,12 @@ object Updater {
         return architecture to variant
     }
 
+    internal fun isOwnApkUrl(url: String): Boolean = runCatching {
+        val uri = java.net.URI(url)
+        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
+            uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith(".apk")
+    }.getOrDefault(false)
+
     /**
      * Parse release assets from GitHub API response
      */
@@ -97,7 +104,7 @@ object Updater {
             
             val downloadUrl = asset.getString("browser_download_url")
             val size = asset.getLong("size")
-            if (!downloadUrl.startsWith("https://github.com/anderson76389/Music/releases/download/")) continue
+            if (!isOwnApkUrl(downloadUrl) || size <= 0) continue
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
@@ -135,23 +142,51 @@ object Updater {
                 }
                 
                 check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour Metrolist" }
-                val response = client.get("$GITHUB_API_BASE/releases/latest")
-                    .bodyAsText()
-                val json = JSONObject(response)
-                
-                val releaseInfo = ReleaseInfo(
-                    tagName = json.getString("tag_name"),
-                    versionName = json.getString("tag_name").removePrefix("v"),
-                    description = json.optString("body").takeUnless { json.isNull("body") }.orEmpty(),
-                    releaseDate = json.getString("published_at"),
-                    assets = parseAssets(json.getJSONArray("assets"))
-                )
-                
+                val releaseInfo = fetchLatestRelease(client)
+
                 cachedReleaseInfo = releaseInfo
                 lastCheckTime = System.currentTimeMillis()
                 releaseInfo
             }
         }
+
+    internal suspend fun fetchLatestRelease(httpClient: HttpClient): ReleaseInfo {
+        val response = httpClient.get("$GITHUB_API_BASE/releases/latest")
+        check(response.status.value in 200..299) { "GitHub HTTP ${response.status.value}" }
+        val json = JSONObject(response.bodyAsText())
+        val rawAssets = json.getJSONArray("assets")
+        var versionCode: Long? = null
+        for (index in 0 until rawAssets.length()) {
+            val asset = rawAssets.getJSONObject(index)
+            if (asset.optString("name") != "BUILD.txt") continue
+            val url = asset.getString("browser_download_url")
+            val uri = java.net.URI(url)
+            check(uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
+                uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith("/BUILD.txt"))
+            val metadata = httpClient.get(url)
+            check(metadata.status.value in 200..299) { "GitHub HTTP ${metadata.status.value}" }
+            versionCode = parsePublishedVersionCode(metadata.bodyAsText())
+            break
+        }
+        return ReleaseInfo(
+            tagName = json.getString("tag_name"),
+            versionName = json.getString("tag_name").removePrefix("v"),
+            description = json.optString("body").takeUnless { json.isNull("body") }.orEmpty(),
+            releaseDate = json.getString("published_at"),
+            assets = parseAssets(rawAssets),
+            versionCode = versionCode,
+        )
+    }
+
+    internal fun parsePublishedVersionCode(metadata: String): Long {
+        val code = metadata.lineSequence().firstOrNull { it.startsWith("MUSIC_VERSION_CODE=") }
+            ?.substringAfter('=')?.trim()?.toLongOrNull()
+        check(code != null && code in 1..2100000000L) { "Numéro de version publié invalide" }
+        return code
+    }
+
+    internal fun isNewerRelease(currentCode: Long, currentName: String, release: ReleaseInfo): Boolean =
+        release.versionCode?.let { it > currentCode } ?: isUpdateAvailable(currentName, release.versionName)
 
     /**
      * Fetch all releases from GitHub API (paginated)
@@ -201,10 +236,13 @@ object Updater {
     fun getDownloadUrlForCurrentVariant(releaseInfo: ReleaseInfo): String? {
         val (currentArch, currentVariant) = getCurrentAppVariant()
         
-        return releaseInfo.assets
-            .find { it.architecture == currentArch && it.variant == currentVariant }
-            ?.downloadUrl
+        return selectUpdateAsset(releaseInfo.assets, currentArch, currentVariant)?.downloadUrl
     }
+
+    internal fun selectUpdateAsset(assets: List<ReleaseAsset>, architecture: String, variant: String): ReleaseAsset? =
+        assets.firstOrNull { it.name == "Metrolist.apk" && it.architecture == "universal" }
+            ?: assets.firstOrNull { it.architecture == architecture && it.variant == variant }
+            ?: assets.firstOrNull { it.architecture == "universal" && it.variant == variant }
 
     /**
      * Check if update is needed (respects 2-hour cache)
@@ -217,20 +255,14 @@ object Updater {
                     (System.currentTimeMillis() - lastCheckTime) > CHECK_INTERVAL_MILLIS
                 
                 if (!shouldFetch && cachedReleaseInfo != null) {
-                    val hasUpdate = isUpdateAvailable(
-                        BuildConfig.BASE_VERSION_NAME,
-                        cachedReleaseInfo!!.versionName
-                    )
+                    val hasUpdate = isNewerRelease(BuildConfig.VERSION_CODE.toLong(), BuildConfig.BASE_VERSION_NAME, cachedReleaseInfo!!)
                     return@runCatching cachedReleaseInfo!! to hasUpdate
                 }
                 
                 val result = getLatestRelease(forceRefresh = true)
                 if (result.isSuccess) {
                     val releaseInfo = result.getOrThrow()
-                    val hasUpdate = isUpdateAvailable(
-                        BuildConfig.BASE_VERSION_NAME,
-                        releaseInfo.versionName
-                    )
+                    val hasUpdate = isNewerRelease(BuildConfig.VERSION_CODE.toLong(), BuildConfig.BASE_VERSION_NAME, releaseInfo)
                     releaseInfo to hasUpdate
                 } else {
                     throw result.exceptionOrNull() ?: Exception("Unknown error")

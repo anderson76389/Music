@@ -5,6 +5,10 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+import fr.makoff.music.ui.theme.liquidGlass
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Spacer
@@ -62,8 +66,8 @@ fun AppNavigationRail(
     val viewConfiguration = LocalViewConfiguration.current
 
     NavigationRail(
-        modifier = modifier,
-        containerColor = containerColor
+        modifier = modifier.liquidGlass(RoundedCornerShape(28.dp)),
+        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor
     ) {
         Spacer(modifier = Modifier.weight(1f))
 
@@ -145,8 +149,8 @@ fun AppNavigationBar(
     val viewConfiguration = LocalViewConfiguration.current
 
     NavigationBar(
-        modifier = modifier,
-        containerColor = containerColor,
+        modifier = modifier.liquidGlass(RoundedCornerShape(32.dp), chrome = true),
+        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor,
         contentColor = contentColor
     ) {
         navigationItems.forEach { screen ->

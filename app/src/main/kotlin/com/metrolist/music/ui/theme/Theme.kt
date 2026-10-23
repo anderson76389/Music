@@ -5,9 +5,16 @@
 
 package fr.makoff.music.ui.theme
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import fr.makoff.music.constants.LiquidGlassEnabledKey
+import fr.makoff.music.utils.rememberPreference
 import android.graphics.Bitmap
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Shapes
+import androidx.compose.ui.unit.dp
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -32,8 +39,10 @@ fun MetrolistTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     pureBlack: Boolean = false,
     themeColor: Color = DefaultThemeColor,
+    glassCanvas: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val liquidGlassEnabled by rememberPreference(LiquidGlassEnabledKey, false)
     val context = LocalContext.current
     // Determine if system dynamic colors should be used (Android S+ and default theme color)
     val useSystemDynamicColor = (themeColor == DefaultThemeColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
@@ -53,18 +62,36 @@ fun MetrolistTheme(
     }
 
     // Apply pureBlack modification if needed, similar to original logic
-    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme) {
+    val colorScheme = remember(baseColorScheme, pureBlack, darkTheme, liquidGlassEnabled) {
         if (darkTheme && pureBlack) {
             baseColorScheme.pureBlack(true)
-        } else {
+        } else if (!liquidGlassEnabled) {
             baseColorScheme
+        } else {
+            baseColorScheme.copy(
+                surface = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
+                background = if (darkTheme) Color(0xFF151517) else Color(0xFFF7F7FA),
+                surfaceContainer = if (darkTheme) Color(0xFF242426) else Color(0xFFF0F0F4),
+                surfaceContainerLow = if (darkTheme) Color(0xFF1C1C1E) else Color(0xFFEAEAF0),
+            )
         }
     }
 
     // Use standard MaterialTheme instead of MaterialExpressiveTheme
     MaterialTheme(
         colorScheme = colorScheme,
-        content = content,
+        shapes = if (!liquidGlassEnabled) Shapes() else Shapes(
+            extraSmall = RoundedCornerShape(8.dp),
+            small = RoundedCornerShape(12.dp),
+            medium = RoundedCornerShape(20.dp),
+            large = RoundedCornerShape(28.dp),
+            extraLarge = RoundedCornerShape(32.dp),
+        ),
+        content = {
+            CompositionLocalProvider(LocalLiquidGlassEnabled provides liquidGlassEnabled) {
+                if (glassCanvas) GlassCanvas(content) else content()
+            }
+        },
     )
 }
 
