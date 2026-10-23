@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.player
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.activity.compose.BackHandler
 import android.content.ClipData
@@ -831,6 +832,7 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
+                        .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(bottomSheetBackgroundColor) else Modifier)
                         .liquidGlass(RoundedCornerShape(28.dp), chrome = true),
             ) {
                 when (playerBackground) {

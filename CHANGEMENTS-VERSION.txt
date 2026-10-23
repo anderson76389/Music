@@ -1,1 +1,5 @@
-Thème verre : surfaces avec flou, réfraction et éclairage via Haze 2.0.1 ; disposition et actions conservées. Navigation, mini-lecteur, lecteur, menus, dialogues et groupes de paramètres. Vérification Android 11 et 15. La fluidité sur appareil physique reste à mesurer.
+- Ajout du thème Liquid Glass optionnel dans Apparence ; désactivation globale avec retour aux couleurs, formes et transitions d’origine.
+- Ajout du téléchargement de mise à jour dans l’application et ouverture de l’installateur Android après contrôle du paquet, de la signature et du numéro de version.
+- Bouton d’installation ajouté aux paramètres de mise à jour ; nouvelle vérification au retour dans l’application.
+- APK universel commun aux anciennes variantes. Version de publication toujours supérieure à celle du dernier APK publié.
+- Essai automatisé de remplacement de la version précédente avant publication du nouvel APK signé.

@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.ui.graphics.Color
 import androidx.compose.animation.animateContentSize
@@ -51,7 +52,7 @@ fun Material3MenuGroup(
                     .liquidGlass(shape),
                 shape = shape,
                 colors = item.cardColors ?: CardDefaults.cardColors(
-                    containerColor = Color.Transparent
+                    containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
                 ),
                 elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
             ) {

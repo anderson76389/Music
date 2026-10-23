@@ -12,4 +12,5 @@
     <external-files-path
         name="external_files_documents"
         path="Documents/MAKOFFMusicExports/" />
+    <external-files-path name="app_updates" path="Download/updates/" />
 </paths>

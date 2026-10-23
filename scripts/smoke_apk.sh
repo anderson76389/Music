@@ -2,6 +2,8 @@
 set -euo pipefail
 package=${SMOKE_PACKAGE:-fr.makoff.music.debug}
 mkdir -p smoke-results
+# A disconnected emulator must fail with diagnostics instead of waiting indefinitely.
+adb() { command timeout --kill-after=5s 90s adb "$@"; }
 for variant in foss gms; do
   apk=$(find "apk-$variant" -name '*.apk' -print -quit)
   test -n "$apk"
@@ -51,6 +53,30 @@ for variant in foss gms; do
     if ! grep -Eq 'OK \(1 test\)' smoke-results/youtube-live-test.txt; then
       echo "::warning::Le téléchargement YouTube réel n’a pas réussi depuis le réseau de l’émulateur ; voir youtube-live-test.txt."
     fi
+  fi
+  if [ "$variant" = gms ] && [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
+    # Inspect both appearances with animation enabled after deterministic functional tests.
+    adb shell settings put global window_animation_scale 1
+    adb shell settings put global transition_animation_scale 1
+    adb shell settings put global animator_duration_scale 1
+    for appearance in yes no; do
+      adb shell am force-stop "$package"
+      adb shell cmd uimode night "$appearance"
+      adb shell am start -W -n "$package/fr.makoff.music.MainActivity"
+      sleep 3
+      adb shell dumpsys gfxinfo "$package" reset >/dev/null
+      adb shell input swipe 160 500 160 230 350
+      sleep 2
+      adb exec-out screencap -p > "smoke-results/glass-appearance-$appearance.png"
+      adb shell dumpsys gfxinfo "$package" framestats > "smoke-results/glass-frames-$appearance.txt"
+      adb shell dumpsys activity activities > "smoke-results/glass-activity-$appearance.txt"
+      python3 scripts/check_resumed_activity.py "$package" "smoke-results/glass-activity-$appearance.txt"
+      adb logcat -d > "smoke-results/glass-logcat-$appearance.txt"
+      if grep -Fq "Process: $package," "smoke-results/glass-logcat-$appearance.txt"; then
+        echo "Échec : plantage pendant la vérification du thème."
+        exit 1
+      fi
+    done
   fi
   adb shell am force-stop "$package"
 done

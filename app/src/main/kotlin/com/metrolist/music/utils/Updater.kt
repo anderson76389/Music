@@ -42,7 +42,7 @@ object Updater {
     private var cachedReleaseInfo: ReleaseInfo? = null
     private var cachedAllReleases: List<ReleaseInfo> = emptyList()
     
-    private const val CHECK_INTERVAL_MILLIS = 2 * 60 * 60 * 1000L // 2 hours
+    private const val CHECK_INTERVAL_MILLIS = 5 * 60 * 1000L // Automatic checks also run when returning to the app.
     internal const val GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"
 
     /**
@@ -82,6 +82,12 @@ object Updater {
         return architecture to variant
     }
 
+    internal fun isOwnApkUrl(url: String): Boolean = runCatching {
+        val uri = java.net.URI(url)
+        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
+            uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith(".apk")
+    }.getOrDefault(false)
+
     /**
      * Parse release assets from GitHub API response
      */
@@ -97,7 +103,7 @@ object Updater {
             
             val downloadUrl = asset.getString("browser_download_url")
             val size = asset.getLong("size")
-            if (!downloadUrl.startsWith("https://github.com/anderson76389/Music/releases/download/")) continue
+            if (!isOwnApkUrl(downloadUrl) || size <= 0) continue
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
@@ -136,8 +142,8 @@ object Updater {
                 
                 check(BuildConfig.UPDATER_AVAILABLE) { "Mises à jour non configurées pour Metrolist" }
                 val response = client.get("$GITHUB_API_BASE/releases/latest")
-                    .bodyAsText()
-                val json = JSONObject(response)
+                check(response.status.value in 200..299) { "GitHub HTTP ${response.status.value}" }
+                val json = JSONObject(response.bodyAsText())
                 
                 val releaseInfo = ReleaseInfo(
                     tagName = json.getString("tag_name"),
@@ -201,10 +207,13 @@ object Updater {
     fun getDownloadUrlForCurrentVariant(releaseInfo: ReleaseInfo): String? {
         val (currentArch, currentVariant) = getCurrentAppVariant()
         
-        return releaseInfo.assets
-            .find { it.architecture == currentArch && it.variant == currentVariant }
-            ?.downloadUrl
+        return selectUpdateAsset(releaseInfo.assets, currentArch, currentVariant)?.downloadUrl
     }
+
+    internal fun selectUpdateAsset(assets: List<ReleaseAsset>, architecture: String, variant: String): ReleaseAsset? =
+        assets.firstOrNull { it.name == "Metrolist.apk" && it.architecture == "universal" }
+            ?: assets.firstOrNull { it.architecture == architecture && it.variant == variant }
+            ?: assets.firstOrNull { it.architecture == "universal" && it.variant == variant }
 
     /**
      * Check if update is needed (respects 2-hour cache)

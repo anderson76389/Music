@@ -188,6 +188,8 @@ class SettingsNavigationTest {
             println("SETTINGS_ROUTE_OK: ${label(screen)} -> ${label(marker)}")
             when (screen) {
                 R.string.appearance -> {
+                    toggleAndRestore(R.string.liquid_glass_theme, LiquidGlassEnabledKey, false)
+                    println("GLASS_SWITCH_OK: enabled and disabled from settings, preference persisted")
                     open(R.string.theme_colors)
                     device.pressBack()
                     device.waitForIdle()

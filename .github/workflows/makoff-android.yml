@@ -28,6 +28,7 @@ jobs:
         run: |
           python3 scripts/audit_independence.py
           python3 scripts/audit_settings.py
+          python3 scripts/test_release_version.py
       - name: Create test signing key
         run: |
           mkdir -p "$HOME/.android"
@@ -89,6 +90,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 4096 -feature -Vulkan
           script: bash scripts/smoke_apk.sh
       - name: Conserver les preuves et journaux de démarrage
         if: always()

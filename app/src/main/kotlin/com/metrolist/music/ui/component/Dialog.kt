@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.ui.graphics.Color
 import androidx.compose.foundation.clickable
@@ -81,7 +82,7 @@ fun DefaultDialog(
         Surface(
             modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
             shape = AlertDialogDefaults.shape,
-            color = Color.Transparent,
+            color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
@@ -168,9 +169,10 @@ fun AccountSettingsDialog(
                     Modifier
                         .fillMaxWidth()
                         .padding(top = 72.dp, start = 16.dp, end = 16.dp)
+                        .clip(RoundedCornerShape(28.dp))
                         .liquidGlass(RoundedCornerShape(28.dp), chrome = true),
                 shape = MaterialTheme.shapes.large,
-                color = Color.Transparent,
+                color = if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
             ) {
                 AccountSettings(
@@ -254,7 +256,7 @@ fun ListDialog(
         Surface(
             modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
             shape = AlertDialogDefaults.shape,
-            color = Color.Transparent,
+            color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(

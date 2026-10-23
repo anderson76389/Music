@@ -22,12 +22,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
-      - name: Définir une version de mise à jour unique
-        run: |
-          echo "MUSIC_VERSION_CODE=$((10000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_ENV"
-          echo "MUSIC_VERSION_NAME=13.7.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=v13.7.0.${GITHUB_RUN_NUMBER}" >> "$GITHUB_ENV"
-          echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -39,6 +33,14 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - name: Install SDK
         run: sdkmanager "platforms;android-37.0" "build-tools;36.0.0"
+      - name: Lire l’APK publié et attribuer une version supérieure
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previous-apk
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern Metrolist.apk --dir previous-apk
+          python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk previous-apk/Metrolist.apk --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt" --github-env "$GITHUB_ENV"
+          echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - name: Restore private publication key
         env:
           KEYSTORE_BASE64: ${{ secrets.MUSIC_KEYSTORE_BASE64 }}
@@ -81,7 +83,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          script: bash scripts/smoke_apk.sh
+          script: bash scripts/smoke_apk.sh && bash scripts/check_apk_upgrade.sh
       - name: Conserver les preuves des essais
         if: always()
         uses: actions/upload-artifact@v4
@@ -102,7 +104,7 @@ jobs:
           - **Metrolist.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle des APK jointes.
 
-          APK signés avec la clé privée du projet. Tests unitaires et contrôle d'installation/démarrage des deux APK sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
+          APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
           NOTES
           cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt

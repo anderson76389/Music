@@ -7,6 +7,7 @@
 
 package fr.makoff.music.ui.player
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
@@ -380,6 +381,7 @@ private fun NewMiniPlayer(
                     .height(64.dp)
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                     .clip(RoundedCornerShape(32.dp))
+                    .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(backgroundColor).border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp)) else Modifier)
                     .liquidGlass(RoundedCornerShape(32.dp), chrome = true)
                     .clickable(
                         interactionSource = interactionSource,
@@ -734,6 +736,7 @@ private fun LegacyMiniPlayer(
                 .height(MiniPlayerHeight)
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
+                .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(if (pureBlack && isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.surfaceContainer) else Modifier)
                 .liquidGlass(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), chrome = true).clickable(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,

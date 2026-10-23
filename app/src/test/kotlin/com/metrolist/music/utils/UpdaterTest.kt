@@ -13,6 +13,18 @@ import org.robolectric.RobolectricTestRunner
 
 @RunWith(RobolectricTestRunner::class)
 class UpdaterTest {
+    @Test fun ownUniversalApkUpdatesBothPreviouslyPublishedVariants() {
+        val url = "https://github.com/anderson76389/Music/releases/download/v13.7.0.12/Metrolist.apk"
+        val assets = Updater.parseAssets(JSONArray("""[{"name":"Metrolist.apk","browser_download_url":"$url","size":100}]"""))
+        assertEquals(url, Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.downloadUrl)
+        assertEquals(url, Updater.selectUpdateAsset(assets, "universal", "gms")?.downloadUrl)
+        assertFalse(Updater.isOwnApkUrl("https://github.com.evil.test/anderson76389/Music/releases/download/v1/Metrolist.apk"))
+        assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Music/releases/download/v1/Metrolist.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/other/project/releases/download/v1/Metrolist.apk"))
+        assertTrue(Updater.isUpdateAvailable("13.7.0.11", "13.7.0.12"))
+        assertFalse(Updater.isUpdateAvailable("13.7.0.12", "13.7.0.11"))
+    }
+
     @Test fun selectsOwnVariantAndRejectsForeignDownloads() {
         val assets = Updater.parseAssets(JSONArray("""[
           {"name":"MAKOFF-Music.apk","browser_download_url":"https://github.com/anderson76389/Music/releases/download/v13.7.0/MAKOFF-Music.apk","size":42},

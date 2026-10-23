@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.component
 
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -106,7 +107,7 @@ fun AnimatedBottomSheet(
         sheetState = sheetState,
         sheetMaxWidth = sheetMaxWidth,
         shape = shape,
-        containerColor = Color.Transparent,
+        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
         scrimColor = scrimColor,

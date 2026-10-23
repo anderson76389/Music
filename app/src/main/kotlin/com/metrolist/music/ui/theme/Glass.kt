@@ -21,11 +21,13 @@ import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
 
 // Separate captures prevent a surface from sampling its own glass recursively.
+val LocalLiquidGlassEnabled = staticCompositionLocalOf { false }
 val LocalChromeGlass = staticCompositionLocalOf<HazeState?> { null }
 private val LocalCanvasGlass = staticCompositionLocalOf<HazeState?> { null }
 
 @Composable
 fun GlassCanvas(content: @Composable () -> Unit) {
+    val enabled = LocalLiquidGlassEnabled.current
     val canvas = remember { HazeState() }
     val chrome = remember { HazeState() }
     val colors = MaterialTheme.colorScheme
@@ -34,7 +36,7 @@ fun GlassCanvas(content: @Composable () -> Unit) {
     }
     CompositionLocalProvider(LocalCanvasGlass provides canvas, LocalChromeGlass provides chrome) {
         Box(Modifier.fillMaxSize()) {
-            Box(Modifier.fillMaxSize().hazeSource(canvas).background(backdrop))
+            Box(Modifier.fillMaxSize().then(if (enabled) Modifier.hazeSource(canvas).background(backdrop) else Modifier))
             content()
         }
     }
@@ -46,6 +48,7 @@ fun Modifier.liquidGlass(
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     chrome: Boolean = false,
 ): Modifier {
+    if (!LocalLiquidGlassEnabled.current) return this
     val state = (if (chrome) LocalChromeGlass.current else LocalCanvasGlass.current)
         ?: return background(MaterialTheme.colorScheme.surface, shape)
     val surface = MaterialTheme.colorScheme.surface
