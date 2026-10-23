@@ -120,8 +120,17 @@ class SettingsNavigationTest {
                 return false
             } finally { node.recycle() }
         }
-        val root = instrumentation.uiAutomation.rootInActiveWindow
-        assertTrue("Activate $text", root != null && visit(root, null))
+        // Scrolling/recreation can replace accessibility nodes between lookup and action.
+        var activated = false
+        repeat(3) {
+            if (!activated) {
+                val root = instrumentation.uiAutomation.rootInActiveWindow
+                activated = root != null && visit(root, null)
+                if (!activated) SystemClock.sleep(300)
+            }
+        }
+        if (!activated) captureFailure()
+        assertTrue("Activate $text", activated)
         instrumentation.waitForIdleSync()
         SystemClock.sleep(500)
         device.waitForIdle()
