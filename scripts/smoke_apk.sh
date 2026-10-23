@@ -8,6 +8,9 @@ for variant in foss gms; do
   adb uninstall "$package" >/dev/null 2>&1 || true
   adb logcat -c
   adb install "$apk"
+  if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
+    adb shell pm grant "$package" android.permission.POST_NOTIFICATIONS
+  fi
   adb shell am start -W -n "$package/fr.makoff.music.MainActivity" | tee "smoke-results/$variant-launch.txt"
   sleep 15
   adb logcat -d > "smoke-results/$variant-logcat.txt"

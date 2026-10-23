@@ -178,7 +178,10 @@ class OfflinePlayerInstrumentedTest {
             assertNotNull("Mini-player control", miniPlayer)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-mini-player.png")
             miniPlayer!!.click()
-            device.waitForIdle()
+            await("Expanded player is visible", 10000) {
+                freshControlBounds(context.getString(R.string.next)) != null
+            }
+            instrumentation.waitForIdleSync()
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()
             clickDescription(R.string.play)

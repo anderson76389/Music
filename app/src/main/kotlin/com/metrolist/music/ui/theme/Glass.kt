@@ -54,7 +54,6 @@ fun Modifier.liquidGlass(
             shape(shape)
             backgroundColor(surface)
             tint(surface.copy(alpha = 0.62f))
-            pressed { lightingIntensity(0.16f) }
         }
     }
     return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
