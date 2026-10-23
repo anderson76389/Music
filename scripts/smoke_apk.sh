@@ -46,6 +46,8 @@ for variant in foss gms; do
     timeout 420s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
     adb pull /data/local/tmp/settings-failure.png smoke-results/ || true
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
+    adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true
+    adb pull /data/local/tmp/glass-home-enabled.png smoke-results/ || true
     adb logcat -d > smoke-results/settings-navigation-logcat.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/settings-navigation-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/settings-navigation-tests.txt

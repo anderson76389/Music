@@ -833,7 +833,7 @@ fun BottomSheetPlayer(
                     Modifier
                         .fillMaxSize()
                         .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(bottomSheetBackgroundColor) else Modifier)
-                        .liquidGlass(RoundedCornerShape(28.dp), chrome = true),
+                        .then(if (backgroundAlpha > 0f) Modifier.liquidGlass(RoundedCornerShape(28.dp), chrome = true) else Modifier),
             ) {
                 when (playerBackground) {
                     PlayerBackgroundStyle.BLUR -> {

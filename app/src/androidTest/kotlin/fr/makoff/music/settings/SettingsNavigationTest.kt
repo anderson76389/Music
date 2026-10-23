@@ -151,6 +151,18 @@ class SettingsNavigationTest {
             clicker(id)
             awaitPreference(label(id)) { context.dataStore.data.first()[key] == !before }
             effect?.let { assertEquals("Consumer follows ${key.name}", !before, it()) }
+            if (key == LiquidGlassEnabledKey && !before) {
+                device.executeShellCommand("screencap -p /data/local/tmp/glass-settings-enabled.png")
+                device.pressBack()
+                device.pressBack()
+                val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
+                assertNotNull("Home remains usable with glass enabled", account)
+                device.waitForIdle()
+                device.executeShellCommand("screencap -p /data/local/tmp/glass-home-enabled.png")
+                account!!.click()
+                open(R.string.settings)
+                open(R.string.appearance)
+            }
             clicker(id)
             awaitPreference(label(id) + " restored") { context.dataStore.data.first()[key] == before }
             effect?.let { assertEquals("Consumer restored ${key.name}", before, it()) }
