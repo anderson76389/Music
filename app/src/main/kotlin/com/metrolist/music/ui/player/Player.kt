@@ -955,7 +955,7 @@ fun BottomSheetPlayer(
                                     modifier =
                                         Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius))
+                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius))
                                             .background(MaterialTheme.colorScheme.surfaceVariant),
                                     contentAlignment = Alignment.Center,
                                 ) {
@@ -976,7 +976,7 @@ fun BottomSheetPlayer(
                                     modifier =
                                         Modifier
                                             .size(56.dp)
-                                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius)),
                                 )
                             }
                             Spacer(modifier = Modifier.width(12.dp))
@@ -1120,7 +1120,7 @@ fun BottomSheetPlayer(
 
                 if (useNewPlayerDesign) {
                     val shareShape =
-                        RoundedCornerShape(
+                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
                             topStart = 50.dp,
                             bottomStart = 50.dp,
                             topEnd = 3.dp,
@@ -1128,14 +1128,14 @@ fun BottomSheetPlayer(
                         )
 
                     val favShape =
-                        RoundedCornerShape(
+                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
                             topStart = 3.dp,
                             bottomStart = 3.dp,
                             topEnd = 50.dp,
                             bottomEnd = 50.dp,
                         )
 
-                    val middleShape = RoundedCornerShape(3.dp)
+                    val middleShape = if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(3.dp)
 
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -1606,7 +1606,7 @@ fun BottomSheetPlayer(
                                         .weight(backButtonWeight),
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.skip_previous),
+                                    painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous),
                                     contentDescription = stringResource(R.string.previous),
                                     modifier = Modifier.size(32.dp),
                                 )
@@ -1687,7 +1687,7 @@ fun BottomSheetPlayer(
                                         .weight(nextButtonWeight),
                             ) {
                                 Icon(
-                                    painter = painterResource(R.drawable.skip_next),
+                                    painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next),
                                     contentDescription = stringResource(R.string.next),
                                     modifier = Modifier.size(32.dp),
                                 )
@@ -1727,7 +1727,7 @@ fun BottomSheetPlayer(
 
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
-                                    icon = R.drawable.skip_previous,
+                                    icon = if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous,
                                     contentDescription = stringResource(R.string.previous),
                                     enabled = canSkipPrevious,
                                     color = TextBackgroundColor,
@@ -1792,7 +1792,7 @@ fun BottomSheetPlayer(
 
                             Box(modifier = Modifier.weight(1f)) {
                                 ResizableIconButton(
-                                    icon = R.drawable.skip_next,
+                                    icon = if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next,
                                     contentDescription = stringResource(R.string.next),
                                     enabled = canSkipNext,
                                     color = TextBackgroundColor,
