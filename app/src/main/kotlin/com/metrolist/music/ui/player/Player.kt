@@ -1593,8 +1593,8 @@ fun BottomSheetPlayer(
                                 interactionSource = backInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = sideButtonContainerColor,
-                                        contentColor = sideButtonContentColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else sideButtonContainerColor,
+                                        contentColor = if (LocalLiquidGlassEnabled.current) Color.White else sideButtonContentColor,
                                     ),
                                 modifier =
                                     Modifier
@@ -1630,7 +1630,7 @@ fun BottomSheetPlayer(
                                 interactionSource = playPauseInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = textButtonColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else textButtonColor,
                                         contentColor = iconButtonColor,
                                     ),
                                 modifier =
@@ -1674,8 +1674,8 @@ fun BottomSheetPlayer(
                                 interactionSource = nextInteractionSource,
                                 colors =
                                     IconButtonDefaults.filledIconButtonColors(
-                                        containerColor = sideButtonContainerColor,
-                                        contentColor = sideButtonContentColor,
+                                        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else sideButtonContainerColor,
+                                        contentColor = if (LocalLiquidGlassEnabled.current) Color.White else sideButtonContentColor,
                                     ),
                                 modifier =
                                     Modifier
