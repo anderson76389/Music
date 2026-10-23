@@ -204,6 +204,35 @@ class SettingsNavigationTest {
         }
     }
 
+    @Test(timeout = 45000) fun updateNotificationOpensIntegratedInstaller() {
+        val url = "https://github.com/anderson76389/Music/releases/download/test-notification-no-apk/Metrolist.apk"
+        val release = fr.makoff.music.utils.ReleaseInfo("test-notification", "test-notification", "", "",
+            listOf(fr.makoff.music.utils.ReleaseAsset("Metrolist.apk", url, 100, "universal", "gms")))
+        var opened: Activity? = null
+        try {
+            fr.makoff.music.utils.UpdateNotifications.show(context, release)
+            device.openNotification()
+            val notification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 10000)
+            assertNotNull("Update notification is visible", notification)
+            notification!!.click()
+            val deadline = SystemClock.elapsedRealtime() + 15000
+            while (SystemClock.elapsedRealtime() < deadline && opened == null) {
+                instrumentation.runOnMainSync {
+                    opened = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                        .firstOrNull { it is fr.makoff.music.ui.screens.settings.ApkUpdateActivity }
+                }
+                if (opened == null) SystemClock.sleep(100)
+            }
+            assertNotNull("Notification opens integrated APK update activity", opened)
+            assertEquals(url, opened!!.intent.getStringExtra("apk-url"))
+            println("UPDATE_NOTIFICATION_OK: tap opens integrated installer with own APK URL")
+        } finally {
+            instrumentation.runOnMainSync { opened?.finish() }
+            fr.makoff.music.utils.UpdateNotifications.cancel(context)
+            device.pressBack()
+        }
+    }
+
     @Test(timeout = 360000) fun settingsRoutesPersistenceAndOwnChangelog() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
