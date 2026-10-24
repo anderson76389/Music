@@ -16,10 +16,10 @@ internal object RemovedPlaybackFeatures {
         val done = booleanPreferencesKey("removedPlaybackFeaturesV1")
         val prefs = context.dataStore.data.first()
         if (prefs[done] == true) return
-        val protected = context.createDeviceProtectedStorageContext()
+        val legacyAlarmPrefs = context.createDeviceProtectedStorageContext()
             .getSharedPreferences("alarm_store", Context.MODE_PRIVATE)
         val ids = mutableSetOf("legacy-main-alarm")
-        val rawEntries = listOf(protected.getString("alarm_entries", "").orEmpty(),
+        val rawEntries = listOf(legacyAlarmPrefs.getString("alarm_entries", "").orEmpty(),
             prefs.asMap().entries.firstOrNull { it.key.name == "alarmEntries" }?.value as? String ?: "")
         for (raw in rawEntries) {
             if (raw.isBlank()) continue
@@ -39,7 +39,7 @@ internal object RemovedPlaybackFeatures {
                 PendingIntent.getBroadcast(context, code, receiver, flags))
             pending.filterNotNull().forEach { manager?.cancel(it); it.cancel() }
         }
-        check(protected.edit().clear().commit())
+        check(legacyAlarmPrefs.edit().clear().commit())
         context.safeDataStoreEdit { settings ->
             settings.asMap().keys.filter { key -> key.name.startsWith("alarm") || key.name.startsWith("sleepTimer") ||
                 key.name.contains("lyrics", ignoreCase = true) }.forEach { key -> settings.remove(key) }
