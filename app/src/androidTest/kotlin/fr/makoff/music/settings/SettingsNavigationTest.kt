@@ -354,6 +354,11 @@ class SettingsNavigationTest {
         assertNotNull("Search back button", searchBack)
         val backBounds = searchBack!!.visibleBounds
         device.click(backBounds.centerX(), backBounds.centerY())
+        device.waitForIdle()
+        // Refresh cached virtual nodes after Compose removes and restores the app bar.
+        // Reapplying the same service info clears UiAutomation's cache on Android 11 too.
+        val automation = instrumentation.uiAutomation
+        automation.serviceInfo = automation.serviceInfo
         val homeAccount = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
         if (homeAccount == null) captureFailure()
         assertNotNull("Return from search to home", homeAccount)
