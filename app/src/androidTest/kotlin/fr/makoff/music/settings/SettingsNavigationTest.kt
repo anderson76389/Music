@@ -348,11 +348,9 @@ class SettingsNavigationTest {
         assertNotNull("Search shortcut next to history", headerSearch)
         headerSearch!!.click()
         assertTrue("Search input opened", device.wait(Until.hasObject(By.clazz("android.widget.EditText")), 10000))
-        for (attempt in 0 until 3) {
-            if (device.hasObject(By.desc(label(R.string.account)))) break
-            device.pressBack()
-            device.waitForIdle()
-        }
+        val searchBack = device.wait(Until.findObject(By.desc(label(R.string.dismiss))), 5000)
+        assertNotNull("Search back button", searchBack)
+        searchBack!!.click()
         val homeAccount = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
         assertNotNull("Return from search to home", homeAccount)
         homeAccount!!.click()
