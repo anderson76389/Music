@@ -90,7 +90,18 @@ class SettingsNavigationTest {
     }
 
     private fun open(id: Int, switchOnly: Boolean = false) {
-        val title = findText(id)
+        var title = findText(id)
+        // A scrolled row may remain in the accessibility tree underneath the fixed app bar.
+        val safeTop = (96 * context.resources.displayMetrics.density).toInt()
+        repeat(3) {
+            if (title.top < safeTop) {
+                device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 10,
+                    device.displayWidth / 2, device.displayHeight * 8 / 10, 40)
+                device.waitForIdle()
+                title = findText(id)
+            }
+        }
+        assertTrue("Control is below the app bar: ${label(id)}", title.top >= safeTop)
         val text = label(id)
         val switchBounds = if (switchOnly) {
             val control = visibleControls().filter { it.checkable }.minByOrNull {
