@@ -102,6 +102,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
@@ -960,25 +962,41 @@ class MainActivity : FragmentActivity() {
                                             )
                                         },
                                         actions = {
+                                            val searchLabel = stringResource(R.string.search)
+                                            val historyLabel = stringResource(R.string.history)
+                                            val statsLabel = stringResource(R.string.stats)
+                                            val accountLabel = stringResource(R.string.account)
                                             if (showHistoryButton) {
-                                                IconButton(onClick = { navController.navigate(Screens.Search.route) }) {
-                                                    Icon(painterResource(R.drawable.search), contentDescription = stringResource(R.string.search))
+                                                IconButton(
+                                                    modifier = Modifier.semantics { contentDescription = searchLabel },
+                                                    onClick = { navController.navigate(Screens.Search.route) },
+                                                ) {
+                                                    Icon(painterResource(R.drawable.search), contentDescription = null)
                                                 }
-                                                IconButton(onClick = { navController.navigate("history") }) {
+                                                IconButton(
+                                                    modifier = Modifier.semantics { contentDescription = historyLabel },
+                                                    onClick = { navController.navigate("history") },
+                                                ) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.history),
-                                                        contentDescription = stringResource(R.string.history),
+                                                        contentDescription = null,
                                                     )
                                                 }
                                             }
-                                            IconButton(onClick = { navController.navigate("stats") }) {
+                                            IconButton(
+                                                modifier = Modifier.semantics { contentDescription = statsLabel },
+                                                onClick = { navController.navigate("stats") },
+                                            ) {
                                                 Icon(
                                                     painter = painterResource(R.drawable.stats),
-                                                    contentDescription = stringResource(R.string.stats),
+                                                    contentDescription = null,
                                                 )
                                             }
 
-                                            IconButton(onClick = { showAccountDialog = true }) {
+                                            IconButton(
+                                                modifier = Modifier.semantics { contentDescription = accountLabel },
+                                                onClick = { showAccountDialog = true },
+                                            ) {
                                                 BadgedBox(badge = {
                                                     if (latestVersionName != BuildConfig.BASE_VERSION_NAME) {
                                                         Badge()
@@ -987,7 +1005,7 @@ class MainActivity : FragmentActivity() {
                                                     if (accountImageUrl != null) {
                                                         AsyncImage(
                                                             model = accountImageUrl,
-                                                            contentDescription = stringResource(R.string.account),
+                                                            contentDescription = null,
                                                             modifier =
                                                                 Modifier
                                                                     .size(24.dp)
@@ -996,7 +1014,7 @@ class MainActivity : FragmentActivity() {
                                                     } else {
                                                         Icon(
                                                             painter = painterResource(R.drawable.account),
-                                                            contentDescription = stringResource(R.string.account),
+                                                            contentDescription = null,
                                                             modifier = Modifier.size(24.dp),
                                                         )
                                                     }
