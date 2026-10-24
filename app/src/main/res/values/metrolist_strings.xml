@@ -876,4 +876,5 @@
     <string name="apk_update_not_newer">L’APK téléchargé n’est pas plus récent que la version installée.</string>
     <string name="apk_update_signature_mismatch">La signature de cet APK diffère de celle de l’application installée. Installation bloquée ; ne désinstallez pas l’application pour forcer cette mise à jour.</string>
     <string name="apk_update_install_failed">Impossible d’ouvrir l’installateur Android. Vérifiez l’autorisation d’installer des applications.</string>
+    <string name="player_volume">Volume</string>
 </resources>

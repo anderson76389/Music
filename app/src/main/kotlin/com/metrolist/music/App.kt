@@ -64,6 +64,9 @@ class App :
     @ApplicationScope
     lateinit var applicationScope: CoroutineScope
 
+    @Inject
+    lateinit var automaticDownloads: dagger.Lazy<fr.makoff.music.playback.DownloadUtil>
+
     override fun onCreate() {
         super.onCreate()
 
@@ -88,6 +91,9 @@ class App :
         // Plant logging before extraction services initialize.
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
+        applicationScope.launch(Dispatchers.IO) {
+            fr.makoff.music.downloads.AutoLikedDownloads.observe(this@App, automaticDownloads.get())
+        }
         applicationScope.launch(Dispatchers.IO) {
             runCatching { fr.makoff.music.utils.RemovedPlaybackFeatures.clean(this@App) }
                 .onFailure { Timber.e(it, "Could not clean removed playback features") }

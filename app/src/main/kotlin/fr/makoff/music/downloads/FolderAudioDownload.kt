@@ -1,5 +1,6 @@
 package fr.makoff.music.downloads
 
+import androidx.datastore.preferences.core.edit
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -263,6 +264,11 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val name = (if (track > 0) "%03d - ".format(java.util.Locale.ROOT, track) else "") + audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
                 val uri = saveAudioToTree(applicationContext, tree, source, name, inputData.getStringArray("folders")?.toList().orEmpty())
                 downloads.registerExternalAudio(media, uri, source.length())
+                if (inputData.getStringArray("folders")?.toList() == listOf(AutoLikedDownloads.FOLDER)) {
+                    applicationContext.dataStore.edit {
+                        it[AutoLikedDownloads.documentKey(tree.toString(), videoId)] = uri.toString()
+                    }
+                }
                 val mime = audioMime(source.extension)
                 notifyCompleted(title, uri, mime)
                 Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name))

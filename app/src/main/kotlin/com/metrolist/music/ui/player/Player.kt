@@ -577,6 +577,8 @@ fun BottomSheetPlayer(
         .getDownload(mediaMetadata?.id ?: "")
         .collectAsStateWithLifecycle(initialValue = null)
 
+    val playerVolume by playerConnection.service.playerVolume.collectAsStateWithLifecycle()
+    val castVolume by castHandler?.castVolume?.collectAsStateWithLifecycle() ?: remember { mutableFloatStateOf(1f) }
     val scope = rememberCoroutineScope()
 
     var showChoosePlaylistDialog by rememberSaveable {
@@ -922,21 +924,7 @@ fun BottomSheetPlayer(
                 Spacer(modifier = Modifier.width(12.dp))
 
                 if (useNewPlayerDesign) {
-                    val shareShape =
-                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
-                            topStart = 50.dp,
-                            bottomStart = 50.dp,
-                            topEnd = 3.dp,
-                            bottomEnd = 3.dp,
-                        )
-
-                    val favShape =
-                        if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(
-                            topStart = 3.dp,
-                            bottomStart = 3.dp,
-                            topEnd = 50.dp,
-                            bottomEnd = 50.dp,
-                        )
+                    val favShape = RoundedCornerShape(50)
 
                     val middleShape = if (LocalLiquidGlassEnabled.current) RoundedCornerShape(50) else RoundedCornerShape(3.dp)
 
@@ -944,34 +932,6 @@ fun BottomSheetPlayer(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-
-                                FilledIconButton(
-                                    onClick = {
-                                        val intent =
-                                            Intent().apply {
-                                                action = Intent.ACTION_SEND
-                                                type = "text/plain"
-                                                putExtra(
-                                                    Intent.EXTRA_TEXT,
-                                                    "https://music.youtube.com/watch?v=${mediaMetadata.id}",
-                                                )
-                                            }
-                                        context.startActivity(Intent.createChooser(intent, null))
-                                    },
-                                    shape = shareShape,
-                                    colors =
-                                        IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = textButtonColor,
-                                            contentColor = iconButtonColor,
-                                        ),
-                                    modifier = Modifier.size(42.dp),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.share),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
 
                                 // For episodes, show saved state (inLibrary); for songs, show liked state
                                 val isEpisode = currentSong?.song?.isEpisode == true
@@ -1003,40 +963,6 @@ fun BottomSheetPlayer(
                     }
                 } else {
 
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(textButtonColor)
-                                        .clickable {
-                                            val intent =
-                                                Intent().apply {
-                                                    action = Intent.ACTION_SEND
-                                                    type = "text/plain"
-                                                    putExtra(
-                                                        Intent.EXTRA_TEXT,
-                                                        "https://music.youtube.com/watch?v=${mediaMetadata.id}",
-                                                    )
-                                                }
-                                            context.startActivity(Intent.createChooser(intent, null))
-                                        },
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.share),
-                                    contentDescription = null,
-                                    tint = iconButtonColor,
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.Center)
-                                            .size(24.dp),
-                                )
-                            }
-
-
-                    Spacer(modifier = Modifier.size(12.dp))
-
-
                             PlayerMoreMenuButton(
                                 mediaMetadata = mediaMetadata,
                                 state = state,
@@ -1047,7 +973,7 @@ fun BottomSheetPlayer(
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             when (if (LocalLiquidGlassEnabled.current) SliderStyle.SLIM else sliderStyle) {
                 SliderStyle.DEFAULT -> {
@@ -1201,7 +1127,7 @@ fun BottomSheetPlayer(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(16.dp))
 
             AnimatedVisibility(
                 visible = !isFullScreen,
@@ -1289,13 +1215,13 @@ fun BottomSheetPlayer(
                                     ),
                                 modifier =
                                     Modifier
-                                        .height(68.dp)
+                                        .height(76.dp)
                                         .weight(backButtonWeight),
                             ) {
                                 Icon(
                                     painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous),
                                     contentDescription = stringResource(R.string.previous),
-                                    modifier = Modifier.size(32.dp),
+                                    modifier = Modifier.size(40.dp),
                                 )
                             }
 
@@ -1326,7 +1252,7 @@ fun BottomSheetPlayer(
                                     ),
                                 modifier =
                                     Modifier
-                                        .height(68.dp)
+                                        .height(76.dp)
                                         .weight(playPauseWeight)
                                         .semantics { contentDescription = playPauseLabel }
                                         .focusRequester(focusRequester),
@@ -1343,7 +1269,7 @@ fun BottomSheetPlayer(
                                                 },
                                             ),
                                         contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
+                                        modifier = Modifier.size(40.dp),
                                     )
                                     if (!LocalLiquidGlassEnabled.current) {
                                     Spacer(modifier = Modifier.width(8.dp))
@@ -1372,13 +1298,13 @@ fun BottomSheetPlayer(
                                     ),
                                 modifier =
                                     Modifier
-                                        .height(68.dp)
+                                        .height(76.dp)
                                         .weight(nextButtonWeight),
                             ) {
                                 Icon(
                                     painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next),
                                     contentDescription = stringResource(R.string.next),
-                                    modifier = Modifier.size(32.dp),
+                                    modifier = Modifier.size(40.dp),
                                 )
                             }
                         }
@@ -1513,6 +1439,35 @@ fun BottomSheetPlayer(
                     }
                 }
             }
+            if (!isFullScreen) {
+                val volumeValue = (if (isCasting) castVolume else playerVolume).coerceIn(0f, 1f)
+                val volumeState = remember { SliderState(value = volumeValue, trackRange = 0f..1f) }
+                volumeState.value = volumeValue
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = PlayerHorizontalPadding),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Icon(painterResource(R.drawable.volume_down), null, Modifier.size(16.dp), tint = TextBackgroundColor)
+                    Slider(
+                        state = volumeState,
+                        onValueChange = { volume ->
+                            if (isCasting) castHandler?.setVolume(volume)
+                            else playerConnection.service.playerVolume.value = volume
+                        },
+                        modifier = Modifier.weight(1f).height(40.dp).semantics { contentDescription = context.getString(R.string.player_volume) },
+                        thumb = { Spacer(Modifier.size(0.dp)) },
+                        track = { slider ->
+                            PlayerSliderTrack(
+                                sliderState = slider,
+                                colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
+                                trackHeight = 4.dp
+                            )
+                        }
+                    )
+                    Icon(painterResource(R.drawable.volume_up), null, Modifier.size(16.dp), tint = TextBackgroundColor)
+                }
+            }
         }
 
         when (LocalConfiguration.current.orientation) {
@@ -1609,7 +1564,7 @@ fun BottomSheetPlayer(
                         controlsContent(it)
                     }
 
-                    Spacer(Modifier.height(30.dp))
+                    Spacer(Modifier.height(12.dp))
                 }
             }
         }

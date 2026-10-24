@@ -218,7 +218,7 @@ fun PlayerMenu(
         )
     }
 
-    if (isQueueTrigger != true) {
+    if (isQueueTrigger != true && isCasting && castDeviceName != null) {
         Column(
             modifier =
                 Modifier
@@ -251,23 +251,7 @@ fun PlayerMenu(
                 }
             }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                VolumeSlider(
-                    value = if (isCasting) castVolume else playerVolume.value,
-                    onValueChange = { volume ->
-                        if (isCasting) {
-                            castHandler?.setVolume(volume)
-                        } else {
-                            playerConnection.service.playerVolume.value = volume
-                        }
-                    },
-                    modifier = Modifier.weight(1f),
-                    accentColor = MaterialTheme.colorScheme.primary,
-                )
-            }
+
         }
     }
 
@@ -560,6 +544,20 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     buildList {
+                        add(
+                            Material3MenuItemData(
+                                title = { Text(stringResource(R.string.share)) },
+                                icon = { Icon(painterResource(R.drawable.share), contentDescription = null) },
+                                onClick = {
+                                    val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(android.content.Intent.EXTRA_TEXT, "https://music.youtube.com/watch?v=${mediaMetadata.id}")
+                                    }
+                                    context.startActivity(android.content.Intent.createChooser(intent, null))
+                                    onDismiss()
+                                }
+                            )
+                        )
                         add(
                             Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.details)) },

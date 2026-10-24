@@ -1,5 +1,8 @@
 package fr.makoff.music.downloads
 
+import androidx.datastore.preferences.core.edit
+import fr.makoff.music.utils.dataStore
+import kotlinx.coroutines.flow.first
 import android.provider.DocumentsContract
 import androidx.documentfile.provider.DocumentFile
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -31,6 +34,65 @@ class FolderAudioInstrumentedTest {
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             check(android.os.SystemClock.elapsedRealtime() < deadline) { "Test document tree grant missing: $launch" }
             Thread.sleep(50)
+        }
+    }
+
+    @Test(timeout = 90000) fun likingAutomaticallyExportsToLikedFolderAndKeepsOfflineReference() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val media = fr.makoff.music.models.MediaMetadata(id, "Liked audio test", emptyList(), 1)
+        val prefs = context.dataStore.data.first()
+        val enabled = fr.makoff.music.constants.AutoDownloadOnLikeKey
+        val destination = fr.makoff.music.constants.FolderAudioTreeKey
+        val format = fr.makoff.music.constants.ExternalDownloadFormatKey
+        val documentKey = AutoLikedDownloads.documentKey(tree.toString(), id)
+        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+        val source = File(context.cacheDir, "liked-$id.m4a").apply { writeBytes(bytes) }
+        var original: android.net.Uri? = null
+        var exported: android.net.Uri? = null
+        try {
+            context.dataStore.edit { it[enabled] = false; it[destination] = tree.toString(); it[format] = DownloadAudioFormat.BEST.name }
+            original = saveAudioToTree(context, tree, source, "source-$id.m4a")
+            downloads.registerExternalAudio(media, original!!, bytes.size.toLong())
+            context.dataStore.edit { it[enabled] = true }
+            downloads.database.update(requireNotNull(downloads.database.songEntity(id)).toggleLike(syncToYouTube = false))
+            val deadline = android.os.SystemClock.elapsedRealtime() + 45000
+            while (exported == null && android.os.SystemClock.elapsedRealtime() < deadline) {
+                exported = context.dataStore.data.first()[documentKey]?.let(android.net.Uri::parse)
+                kotlinx.coroutines.delay(100)
+            }
+            assertNotNull("A like must automatically create a public audio file", exported)
+            assertEquals(exported, downloads.externalAudioUri(id))
+            assertTrue(requireNotNull(downloads.database.songEntity(id)).isDownloaded)
+            assertArrayEquals(bytes, context.contentResolver.openInputStream(exported!!)!!.use { it.readBytes() })
+            val likedFolder = requireNotNull(DocumentFile.fromTreeUri(context, tree)?.findFile(AutoLikedDownloads.FOLDER))
+            assertTrue(likedFolder.listFiles().any { it.uri == exported })
+            val count = likedFolder.listFiles().size
+            downloads.database.update(requireNotNull(downloads.database.songEntity(id)).toggleLike(syncToYouTube = false))
+            kotlinx.coroutines.delay(500)
+            downloads.database.update(requireNotNull(downloads.database.songEntity(id)).toggleLike(syncToYouTube = false))
+            kotlinx.coroutines.delay(1000)
+            assertEquals("Reliking must reuse the saved file", count, likedFolder.listFiles().size)
+            assertEquals(exported.toString(), context.dataStore.data.first()[documentKey])
+            println("AUTO_LIKED_OK: automatic export into J'aime, exact audio bytes and offline reference; relike reuses file")
+        } finally {
+            context.dataStore.edit {
+                it[enabled] = false
+                it.remove(documentKey)
+            }
+            androidx.work.WorkManager.getInstance(context).cancelUniqueWork(
+                "folder-audio-$id-${destinationId(tree.toString() + AutoLikedDownloads.FOLDER + 0)}"
+            ).result.get()
+            (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
+            downloads.downloads.value = downloads.downloads.value - id
+            downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
+            listOfNotNull(original, exported).forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            source.delete()
+            context.dataStore.edit {
+                prefs[enabled]?.let { value -> it[enabled] = value } ?: it.remove(enabled)
+                prefs[destination]?.let { value -> it[destination] = value } ?: it.remove(destination)
+                prefs[format]?.let { value -> it[format] = value } ?: it.remove(format)
+            }
         }
     }
 

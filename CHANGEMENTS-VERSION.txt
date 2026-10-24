@@ -1,5 +1,6 @@
-- Nom de l’application : Apple Music ; icône reprise de l’APK Apple Music fourni.
-- Un seul bouton de téléchargement pour le fichier externe et la lecture hors ligne dans l’application.
-- Choix du dossier Musique au premier téléchargement ; sous-dossiers Albums et Playlists par collection.
-- Le fichier externe est utilisé pour le hors-ligne, sans deuxième copie audio permanente.
-- Thème Liquid Glass inchangé.
+- Barre de volume directement dans le lecteur ; contrôle local et Google Cast conservé.
+- Partage déplacé dans le menu du lecteur, juste au-dessus de Détails.
+- Commandes de lecture agrandies et espacement du lecteur ajusté ; thème Liquid Glass conservé.
+- Téléchargement automatique des titres aimés dans le dossier J'aime du dossier choisi, avec le même fichier pour le hors-ligne.
+- Les changements de J'aime sont suivis dans toute l'application et les fichiers déjà exportés sont réutilisés.
+- Essais ajoutés pour le volume réel, les deux modes AudioTrack et l'export automatique des titres aimés.

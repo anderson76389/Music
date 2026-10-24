@@ -1930,9 +1930,7 @@ class MusicService :
                 syncUtils.saveEpisode(songId, isLikedOrSaved, setVideoId)
             } else {
                 syncUtils.likeSong(song)
-                if (dataStore.get(AutoDownloadOnLikeKey, false) && song.liked) {
-                    downloadUtil.download(song.id)
-                }
+
             }
         }
     }

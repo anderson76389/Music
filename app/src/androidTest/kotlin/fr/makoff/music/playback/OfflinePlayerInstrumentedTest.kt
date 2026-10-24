@@ -269,7 +269,23 @@ class OfflinePlayerInstrumentedTest {
             await("AudioTrack change did not recreate actual player") { main { active.player !== originalPlayer } }
             await("Queue lost during audio renderer recreation") { main { active.player.mediaItemCount == 3 && active.player.playbackState == Player.STATE_READY } }
             main { active.player.seekTo(0, 0); controller.pause() }
-            println("PLAYER_RENDERER_OK: AudioTrack setting recreates player, queue and cached playback preserved")
+
+            main { active.player.setPlaybackSpeed(1.25f); controller.play() }
+            val softwarePosition = main { active.player.currentPosition }
+            delay(1200)
+            assertTrue("Software processing must play audio", main { active.player.currentPosition > softwarePosition + 500 })
+            main { controller.pause() }
+            val softwarePlayer = main { active.player }
+            context.dataStore.edit { it[AudioTrackPlaybackParamsKey] = true }
+            await("Re-enabling AudioTrack did not recreate renderer") { main { active.player !== softwarePlayer && active.player.playbackState == Player.STATE_READY } }
+            assertEquals(1.25f, main { active.player.playbackParameters.speed }, 0.001f)
+            main { controller.play() }
+            val hardwarePosition = main { active.player.currentPosition }
+            delay(1200)
+            assertTrue("AudioTrack processing must play audio", main { active.player.currentPosition > hardwarePosition + 500 })
+            main { controller.pause(); active.player.setPlaybackSpeed(1f) }
+            println("PLAYER_RENDERER_OK: both modes preserve queue/speed and play actual cached audio")
+
 
             context.dataStore.edit { it[AudioOffload] = true }
             await("Audio offload preference did not reach player") { main {
@@ -317,6 +333,15 @@ class OfflinePlayerInstrumentedTest {
             assertTrue("Changing quality erased another private download", active.downloadCache.isCached(tracks[1].id, 0, audio.size.toLong()))
             main { controller.play() }
             await("Playback after quality change failed") { main { active.player.isPlaying } }
+            val volume = device.wait(Until.findObject(By.desc(context.getString(R.string.player_volume))), 10000)
+            assertNotNull("Volume must be in the player", volume)
+            val volumeBounds = volume!!.visibleBounds
+            val previousVolume = active.playerVolume.value
+            assertTrue(device.click(volumeBounds.left + volumeBounds.width() / 4, volumeBounds.centerY()))
+            await("Visible volume slider must control service volume") { active.playerVolume.value < 0.8f }
+            await("Volume must reach the audio player") { main { active.player.volume < 0.8f } }
+            main { active.playerVolume.value = previousVolume }
+            println("PLAYER_VOLUME_OK: visible slider changes actual player volume")
             clickDescription(R.string.more_options)
             var eq = device.wait(Until.findObject(By.text(context.getString(R.string.equalizer))), 3000)
             for (attempt in 0 until 8) {
@@ -327,6 +352,11 @@ class OfflinePlayerInstrumentedTest {
             }
             assertNotNull("Built-in equalizer entry", eq)
             assertFalse("System equalizer must be absent", device.hasObject(By.text(context.getString(R.string.system_equalizer))))
+            val share = device.findObject(By.text(context.getString(R.string.share)))
+            val details = device.findObject(By.text(context.getString(R.string.details)))
+            assertNotNull("Share must be in player menu", share)
+            assertNotNull("Details must remain in player menu", details)
+            assertTrue("Share must precede Details", share!!.visibleBounds.top < details!!.visibleBounds.top)
             eq!!.click()
             assertTrue("Built-in equalizer screen", device.wait(Until.hasObject(By.text(context.getString(R.string.equalizer_header))), 10000))
             device.pressBack()
