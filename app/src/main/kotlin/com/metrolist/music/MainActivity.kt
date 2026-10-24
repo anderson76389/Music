@@ -144,22 +144,17 @@ import fr.makoff.music.constants.DensityScaleKey
 import fr.makoff.music.constants.DynamicThemeKey
 import fr.makoff.music.constants.EnableHighRefreshRateKey
 import fr.makoff.music.constants.EnableLandscapeScalingKey
-import fr.makoff.music.constants.ExperimentalLyricsKey
 import fr.makoff.music.constants.ForceBottomNavBarKey
 import fr.makoff.music.constants.LastSeenVersionKey
-import fr.makoff.music.constants.LyricsProviderOrderKey
 import fr.makoff.music.constants.MiniPlayerBottomSpacing
 import fr.makoff.music.constants.MiniPlayerHeight
 import fr.makoff.music.constants.NavigationBarAnimationSpec
 import fr.makoff.music.constants.NavigationBarHeight
 import fr.makoff.music.constants.PauseListenHistoryKey
 import fr.makoff.music.constants.PauseSearchHistoryKey
-import fr.makoff.music.constants.PreferredLyricsProvider
-import fr.makoff.music.constants.PreferredLyricsProviderKey
 import fr.makoff.music.constants.PureBlackKey
 import fr.makoff.music.constants.SYSTEM_DEFAULT
 import fr.makoff.music.constants.SelectedThemeColorKey
-import fr.makoff.music.constants.SimpMusicMigrationDoneKey
 import fr.makoff.music.constants.SlimNavBarHeight
 import fr.makoff.music.constants.SlimNavBarKey
 import fr.makoff.music.constants.StopMusicOnTaskClearKey
@@ -169,7 +164,6 @@ import fr.makoff.music.constants.VideoThumbnailMigrationDoneKey
 import fr.makoff.music.db.MusicDatabase
 import fr.makoff.music.db.entities.SearchHistory
 import fr.makoff.music.extensions.toEnum
-import fr.makoff.music.lyrics.LyricsProviderRegistry
 import fr.makoff.music.models.toMediaMetadata
 import fr.makoff.music.playback.DownloadUtil
 import fr.makoff.music.playback.MusicService
@@ -396,29 +390,7 @@ class MainActivity : FragmentActivity() {
             val currentVersion = BuildConfig.BASE_VERSION_NAME
 
             // SimpMusic Removal Migration
-            if (preferences[SimpMusicMigrationDoneKey] != true) {
-                safeDataStoreEdit { settings ->
-                    val currentOrder = settings[LyricsProviderOrderKey] ?: ""
-                    if (currentOrder.contains("SimpMusic")) {
-                        val orderList =
-                            currentOrder
-                                .split(",")
-                                .map { it.trim() }
-                                .filter { it.isNotBlank() && it != "SimpMusic" }
-                                .toMutableList()
-                        if (orderList.isEmpty()) {
-                            settings[LyricsProviderOrderKey] = ""
-                        } else {
-                            settings[LyricsProviderOrderKey] = orderList.joinToString(",")
-                        }
-                    }
-                    if (settings[PreferredLyricsProviderKey] == "SIMPMUSIC") {
-                        settings[PreferredLyricsProviderKey] = PreferredLyricsProvider.LRCLIB.name
-                    }
-                    settings[SimpMusicMigrationDoneKey] = true
-                    settings[LastSeenVersionKey] = currentVersion
-                }
-            }
+
 
             if (preferences[VideoThumbnailMigrationDoneKey] != true) {
                 database.repairMissingVideoThumbnails()
@@ -852,6 +824,7 @@ class MainActivity : FragmentActivity() {
 
                     // Track previous tab for animations
                     navController.currentBackStackEntry?.destination?.route?.let {
+                        if (BuildConfig.DEBUG) Timber.d("NAV_DESTINATION: %s", it)
                         setPreviousTab(it)
                     }
                 }
@@ -988,6 +961,9 @@ class MainActivity : FragmentActivity() {
                                         },
                                         actions = {
                                             if (showHistoryButton) {
+                                                IconButton(onClick = { navController.navigate(Screens.Search.route) }) {
+                                                    Icon(painterResource(R.drawable.search), contentDescription = stringResource(R.string.search))
+                                                }
                                                 IconButton(onClick = { navController.navigate("history") }) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.history),

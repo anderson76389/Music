@@ -1,8 +1,6 @@
-- Suppression de l’entrée « Journal de modifications » des paramètres.
-- Déplacement d’Android Auto dans « Contenu », accessible aussi avant de brancher la voiture.
-- Suppression du blocage des captures d’écran, y compris pour les anciennes préférences activées.
-- Minuteur automatique : horaires par défaut cohérents, respect du morceau en cours et du fondu de sortie, prise en charge des nuits passant au lendemain.
-- Le minuteur automatique dépend du service audio et fonctionne aussi lorsque l’interface est fermée.
-- Le fondu enchaîné est reprogrammé dès qu’un de ses réglages change ; sa durée se règle par secondes entières.
-- Contrôles étendus des réglages du lecteur, de la lecture hors ligne, du changement de moteur audio et des minuteurs.
-- Google Cast peut être réactivé après un démarrage avec cette option désactivée, sans recréer le service.
+- Suppression complète de l’égaliseur système ; conservation de l’égaliseur intégré.
+- Suppression des alarmes, de la minuterie de sommeil et des paroles dans les paramètres et le lecteur.
+- Suppression des fournisseurs de paroles et de leurs traitements en arrière-plan.
+- Annulation des anciennes alarmes et nettoyage des préférences des fonctions retirées lors de la mise à jour.
+- Déplacement des pauses et effacements des historiques d’écoute et de recherche vers les réglages de lecture ; suppression du bouton Confidentialité.
+- Ajout d’un raccourci de recherche à côté de l’historique dans la barre du haut.

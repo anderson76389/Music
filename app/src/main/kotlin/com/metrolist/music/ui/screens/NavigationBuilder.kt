@@ -48,8 +48,6 @@ import fr.makoff.music.ui.screens.settings.BackupAndRestore
 import fr.makoff.music.ui.screens.settings.ContentSettings
 import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.ui.screens.settings.PlayerSettings
-import fr.makoff.music.ui.screens.settings.PrivacySettings
-import fr.makoff.music.ui.screens.settings.RomanizationSettings
 import fr.makoff.music.ui.screens.settings.SettingsScreen
 import fr.makoff.music.ui.screens.settings.StorageSettings
 import fr.makoff.music.ui.screens.settings.ThemeScreen
@@ -92,10 +90,6 @@ fun NavGraphBuilder.navigationBuilder(
     composable(Screens.Library.route) {
         LibraryScreen()
     }
-
-
-
-
 
     composable("history") {
         HistoryScreen(navController)
@@ -348,13 +342,7 @@ fun NavGraphBuilder.navigationBuilder(
         ContentSettings(navController)
     }
 
-    composable("settings/content/romanization") {
-        RomanizationSettings(navController)
-    }
-
-
-
-    composable("settings/player") {
+composable("settings/player") {
         PlayerSettings(navController)
     }
 
@@ -362,18 +350,9 @@ fun NavGraphBuilder.navigationBuilder(
         StorageSettings(navController)
     }
 
-    composable("settings/privacy") {
-        PrivacySettings(navController)
-    }
-
-    composable("settings/backup_restore") {
+composable("settings/backup_restore") {
         BackupAndRestore(navController)
     }
-
-
-
-
-
 
     composable("settings/updater") {
         UpdaterScreen(navController)

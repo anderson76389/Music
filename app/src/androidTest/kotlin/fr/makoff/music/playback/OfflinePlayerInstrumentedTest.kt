@@ -90,13 +90,13 @@ class OfflinePlayerInstrumentedTest {
     )
 
     @Test(timeout = 210000)
-    fun realCachedAudioPlayerControlsQueueTimersAndQuality() = runBlocking {
+    fun realCachedAudioPlayerControlsQueueAndQuality() = runBlocking {
         await("Offline test requires no active Android network", 20000) {
             context.getSystemService(android.net.ConnectivityManager::class.java).activeNetwork == null
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
-            ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, SleepTimerEnabledKey, SleepTimerStopAfterCurrentSongKey, SleepTimerFadeOutKey)
+            CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true }
         val future = CompletableFuture<MusicService.MusicBinder>()
@@ -317,47 +317,21 @@ class OfflinePlayerInstrumentedTest {
             assertTrue("Changing quality erased another private download", active.downloadCache.isCached(tracks[1].id, 0, audio.size.toLong()))
             main { controller.play() }
             await("Playback after quality change failed") { main { active.player.isPlaying } }
-            main { active.sleepTimer!!.start(0) }
-            await("Zero-minute sleep timer did not pause") { main { !active.player.playWhenReady && !active.sleepTimer!!.isActive } }
-            main { active.player.seekTo(0, 19700); active.sleepTimer!!.start(-1); controller.play() }
-            await("End-of-song sleep timer did not pause", 12000) { main { !active.sleepTimer!!.isActive && !active.player.playWhenReady } }
-            val scheduleKeys = listOf(SleepTimerRepeatKey, SleepTimerStartTimeKey, SleepTimerEndTimeKey)
-            val defaultMinutesBefore = before[SleepTimerDefaultKey]
-            try {
-                context.dataStore.edit {
-                    it[SleepTimerEnabledKey] = true
-                    it[SleepTimerRepeatKey] = "daily"
-                    it[SleepTimerStartTimeKey] = "00:00"
-                    it[SleepTimerEndTimeKey] = "00:00"
-                    it[SleepTimerDefaultKey] = 30f
-                    it[SleepTimerStopAfterCurrentSongKey] = true
-                    it[SleepTimerFadeOutKey] = true
-                }
-                instrumentation.runOnMainSync {
-                    androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
-                        .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
-                        .filterIsInstance<MainActivity>().forEach { it.finish() }
-                }
-                main { controller.dispose(); active.player.seekTo(0, 0); active.sleepTimer!!.clear(); active.player.play() }
-                await("Automatic timer did not honor stop/fade preferences without UI connection") { main {
-                    active.sleepTimer!!.isActive && active.sleepTimer!!.stopAfterCurrentSongOnTimeout && active.sleepTimer!!.fadeOutEnabled
-                } }
-                main { controller.pause(); active.sleepTimer!!.clear() }
-                context.dataStore.edit { it[SleepTimerEnabledKey] = false }
-                val normalVolume = main { active.player.volume }
-                main { active.sleepTimer!!.start(1, stopAfterCurrentSong = false, fadeOut = true) }
-                await("Timer fade did not lower real player volume", 5000) { main { active.player.volume < normalVolume * 0.995f } }
-                main { active.sleepTimer!!.clear() }
-                await("Timer clear did not restore real volume") { main { kotlin.math.abs(active.player.volume - normalVolume) < 0.001f } }
-                println("PLAYER_AUTOMATIC_TIMER_OK: preferences applied on play; real volume fades and restores")
-            } finally {
-                main { active.sleepTimer!!.clear() }
-                context.dataStore.edit { prefs ->
-                    scheduleKeys.forEach { key -> before[key]?.let { prefs[key] = it } ?: prefs.remove(key) }
-                    defaultMinutesBefore?.let { prefs[SleepTimerDefaultKey] = it } ?: prefs.remove(SleepTimerDefaultKey)
-                }
+            clickDescription(R.string.more_options)
+            var eq = device.wait(Until.findObject(By.text(context.getString(R.string.equalizer))), 3000)
+            for (attempt in 0 until 8) {
+                if (eq != null) break
+                device.swipe(device.displayWidth / 2, device.displayHeight * 8 / 10,
+                    device.displayWidth / 2, device.displayHeight * 4 / 10, 35)
+                eq = device.findObject(By.text(context.getString(R.string.equalizer)))
             }
-            println("PLAYER_SETTINGS_OK: renderer, skip-silence, cache, manual and automatic timer effects verified")
+            assertNotNull("Built-in equalizer entry", eq)
+            assertFalse("System equalizer must be absent", device.hasObject(By.text(context.getString(R.string.system_equalizer))))
+            eq!!.click()
+            assertTrue("Built-in equalizer screen", device.wait(Until.hasObject(By.text(context.getString(R.string.equalizer_header))), 10000))
+            device.pressBack()
+            println("PLAYER_EQUALIZER_OK: built-in equalizer remains reachable; system entry absent")
+            println("PLAYER_SETTINGS_OK: renderer, skip-silence, cached playback and crossfade verified")
             assertNull("Streaming resolution should not be used for complete cached test audio", active.currentStreamClient.value)
             assertNull(main { active.player.playerError })
         } catch (failure: Throwable) {
@@ -370,7 +344,7 @@ class OfflinePlayerInstrumentedTest {
             }.onFailure { println("PLAYER_FAILURE_CAPTURE: $it") }
             throw failure
         } finally {
-            main { service?.sleepTimer?.clear(); connection?.pause(); connection?.dispose(); service?.takeIf { it.isPlayerReady.value }?.player?.clearMediaItems() }
+            main { connection?.pause(); connection?.dispose(); service?.takeIf { it.isPlayerReady.value }?.player?.clearMediaItems() }
             scope.cancel()
             service?.let { active -> tracks.forEach { track ->
                 (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(track.id)

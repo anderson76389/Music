@@ -67,13 +67,6 @@ val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
 val PauseOnMute = booleanPreferencesKey("pauseOnMute")
 val ResumeOnBluetoothConnectKey = booleanPreferencesKey("resumeOnBluetoothConnect")
 val KeepScreenOn = booleanPreferencesKey("keepScreenOn")
-val AlarmEnabledKey = booleanPreferencesKey("alarmEnabled")
-val AlarmHourKey = intPreferencesKey("alarmHour")
-val AlarmMinuteKey = intPreferencesKey("alarmMinute")
-val AlarmPlaylistIdKey = stringPreferencesKey("alarmPlaylistId")
-val AlarmRandomSongKey = booleanPreferencesKey("alarmRandomSong")
-val AlarmNextTriggerAtKey = longPreferencesKey("alarmNextTriggerAt")
-val AlarmEntriesKey = stringPreferencesKey("alarmEntries")
 
 enum class SliderStyle {
     DEFAULT,
@@ -85,12 +78,6 @@ const val SYSTEM_DEFAULT = "SYSTEM_DEFAULT"
 val AppLanguageKey = stringPreferencesKey("appLanguage")
 val ContentLanguageKey = stringPreferencesKey("contentLanguage")
 val ContentCountryKey = stringPreferencesKey("contentCountry")
-val EnableZemerKey = booleanPreferencesKey("enableZemer")
-val EnableKugouKey = booleanPreferencesKey("enableKugou")
-val EnableLrcLibKey = booleanPreferencesKey("enableLrclib")
-val EnableBetterLyricsKey = booleanPreferencesKey("enableBetterLyrics")
-val EnablePaxsenixKey = booleanPreferencesKey("enablePaxsenix")
-val EnableLyricsPlus = booleanPreferencesKey("enableLyricsPlus")
 val HideExplicitKey = booleanPreferencesKey("hideExplicit")
 val HideVideoSongsKey = booleanPreferencesKey("hideVideoSongs")
 val HideYoutubeShortsKey = booleanPreferencesKey("hideYoutubeShorts")
@@ -166,8 +153,6 @@ val PauseSearchHistoryKey = booleanPreferencesKey("pauseSearchHistory")
 
 val EnableDynamicIconKey = booleanPreferencesKey("enableDynamicIcon")
 
-
-
 // Google Cast
 val EnableGoogleCastKey = booleanPreferencesKey("enableGoogleCast")
 
@@ -212,9 +197,6 @@ val PlaylistViewTypeKey = stringPreferencesKey("playlistViewType")
 
 val PlaylistEditLockKey = booleanPreferencesKey("playlistEditLock")
 val QuickPicksKey = stringPreferencesKey("discover")
-val PreferredLyricsProviderKey = stringPreferencesKey("lyricsProvider")
-val LyricsProviderOrderKey = stringPreferencesKey("lyricsProviderOrder")
-val SimpMusicMigrationDoneKey = booleanPreferencesKey("simpMusicMigrationDone")
 val VideoThumbnailMigrationDoneKey = booleanPreferencesKey("videoThumbnailMigrationDone")
 val QueueEditLockKey = booleanPreferencesKey("queueEditLock")
 val ShowWrappedCardKey = booleanPreferencesKey("show_wrapped_card")
@@ -372,14 +354,6 @@ enum class QuickPicks {
     LAST_LISTEN,
 }
 
-enum class PreferredLyricsProvider {
-    LRCLIB,
-    KUGOU,
-    BETTER_LYRICS,
-    PAXSENIX,
-    LYRICSPLUS
-}
-
 enum class PlayerButtonsStyle {
     DEFAULT,
     PRIMARY,
@@ -397,49 +371,17 @@ val HistoryDuration = floatPreferencesKey("historyDuration")
 
 val PlayerButtonsStyleKey = stringPreferencesKey("player_buttons_style")
 val PlayerBackgroundStyleKey = stringPreferencesKey("playerBackgroundStyle")
-val ShowLyricsKey = booleanPreferencesKey("showLyrics")
-val LyricsTextPositionKey = stringPreferencesKey("lyricsTextPosition")
-val LyricsClickKey = booleanPreferencesKey("lyricsClick")
-val LyricsScrollKey = booleanPreferencesKey("lyricsScrollKey")
 val HideStatusBarOnFullscreenKey = booleanPreferencesKey("hideStatusBarOnFullscreen")
-val LyricsRomanizeAsMainKey = booleanPreferencesKey("lyricsRomanizeAsMain")
-val LyricsRomanizeCyrillicByLineKey = booleanPreferencesKey("lyricsRomanizeCyrillicByLine")
 
-val LyricsGlowEffectKey = booleanPreferencesKey("lyricsGlowEffect")
-
-val LyricsRomanizeList = stringPreferencesKey("lyricsRomanizeList")
-val LyricsAnimationStyleKey = stringPreferencesKey("lyricsAnimationStyle")
-
-enum class LyricsAnimationStyle {
-    NONE,
-    FADE,
-    GLOW,
-    SLIDE,
-    KARAOKE,
-    APPLE,
-}
-
-val LyricsTextSizeKey = floatPreferencesKey("lyricsTextSize")
-val LyricsLineSpacingKey = floatPreferencesKey("lyricsLineSpacing")
 val RespectAgentPositioningKey = booleanPreferencesKey("respectAgentPositioning")
 val ShowIntervalIndicatorKey = booleanPreferencesKey("showIntervalIndicator")
-val ExperimentalLyricsKey = booleanPreferencesKey("experimentalLyrics")
 
 val PlayerVolumeKey = floatPreferencesKey("playerVolume")
-val SleepTimerDefaultKey = floatPreferencesKey("sleepTimerDefault")
-val SleepTimerStopAfterCurrentSongKey = booleanPreferencesKey("sleepTimerStopAfterCurrentSong")
-val SleepTimerFadeOutKey = booleanPreferencesKey("sleepTimerFadeOut")
 val RepeatModeKey = intPreferencesKey("repeatMode")
 
 val SearchSourceKey = stringPreferencesKey("searchSource")
 val SwipeThumbnailKey = booleanPreferencesKey("swipeThumbnail")
 val SwipeSensitivityKey = floatPreferencesKey("swipeSensitivity")
-val SleepTimerEnabledKey = booleanPreferencesKey("sleepTimerEnabled")
-val SleepTimerRepeatKey = stringPreferencesKey("sleepTimerRepeat")
-val SleepTimerStartTimeKey = stringPreferencesKey("sleepTimerStartTime")
-val SleepTimerEndTimeKey = stringPreferencesKey("sleepTimerEndTime")
-val SleepTimerCustomDaysKey = stringPreferencesKey("sleepTimerCustomDays")
-val SleepTimerDayTimesKey = stringPreferencesKey("sleepTimerDayTimes")
 
 enum class SearchSource {
     LOCAL,

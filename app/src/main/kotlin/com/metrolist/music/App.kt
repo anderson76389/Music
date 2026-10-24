@@ -25,7 +25,6 @@ import coil3.request.crossfade
 import com.metrolist.innertube.YouTube
 import com.metrolist.innertube.models.ArtistConjunctions
 import com.metrolist.innertube.models.YouTubeLocale
-import com.metrolist.kugou.KuGou
 import fr.makoff.music.BuildConfig
 import fr.makoff.music.constants.*
 import fr.makoff.music.di.ApplicationScope
@@ -89,6 +88,10 @@ class App :
         // Plant logging before extraction services initialize.
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
+        applicationScope.launch(Dispatchers.IO) {
+            runCatching { fr.makoff.music.utils.RemovedPlaybackFeatures.clean(this@App) }
+                .onFailure { Timber.e(it, "Could not clean removed playback features") }
+        }
 
         // Pre-read Coil cache size on background to avoid runBlocking in newImageLoader
         applicationScope.launch(Dispatchers.IO) {
@@ -147,9 +150,6 @@ class App :
                         ?: "en",
             )
 
-        if (languageTag == "zh-TW") {
-            KuGou.useTraditionalChinese = true
-        }
 
         if (settings[ProxyEnabledKey] == true) {
             val username = settings[ProxyUsernameKey].orEmpty()

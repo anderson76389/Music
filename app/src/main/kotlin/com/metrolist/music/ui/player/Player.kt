@@ -153,15 +153,11 @@ import fr.makoff.music.constants.PlayerButtonsStyle
 import fr.makoff.music.constants.PlayerButtonsStyleKey
 import fr.makoff.music.constants.PlayerHorizontalPadding
 import fr.makoff.music.constants.QueuePeekHeight
-import fr.makoff.music.constants.SleepTimerDefaultKey
-import fr.makoff.music.constants.SleepTimerFadeOutKey
-import fr.makoff.music.constants.SleepTimerStopAfterCurrentSongKey
 import fr.makoff.music.constants.SliderStyle
 import fr.makoff.music.constants.SliderStyleKey
 import fr.makoff.music.constants.SquigglySliderKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewPlayerDesignKey
-import fr.makoff.music.db.entities.LyricsEntity
 import fr.makoff.music.extensions.metadata
 import fr.makoff.music.extensions.togglePlayPause
 import fr.makoff.music.extensions.toggleRepeatMode
@@ -170,7 +166,6 @@ import fr.makoff.music.ui.component.BottomSheet
 import fr.makoff.music.ui.component.BottomSheetState
 import fr.makoff.music.ui.component.LocalBottomSheetPageState
 import fr.makoff.music.ui.component.LocalMenuState
-import fr.makoff.music.ui.component.Lyrics
 import fr.makoff.music.ui.component.PlayerSliderTrack
 import fr.makoff.music.ui.component.ResizableIconButton
 import fr.makoff.music.ui.component.SquigglySlider
@@ -181,13 +176,11 @@ import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.ui.theme.PlayerColorExtractor
 import fr.makoff.music.ui.theme.PlayerSliderColors
 import fr.makoff.music.ui.utils.ShowMediaInfo
-import fr.makoff.music.ui.utils.ShowOffsetDialog
 import fr.makoff.music.utils.dataStore
 import fr.makoff.music.utils.makeTimeString
 import fr.makoff.music.utils.rememberEnumPreference
 import fr.makoff.music.utils.rememberPreference
 import fr.makoff.music.utils.safeDataStoreEdit
-import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -197,9 +190,6 @@ import kotlinx.coroutines.withContext
 import kotlin.math.max
 import kotlin.math.roundToInt
 import fr.makoff.music.ui.component.Icon as MIcon
-import fr.makoff.music.constants.SleepTimerDefaultKey
-import fr.makoff.music.constants.SleepTimerFadeOutKey
-import fr.makoff.music.constants.SleepTimerStopAfterCurrentSongKey
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -213,7 +203,6 @@ fun BottomSheetPlayer(
     val context = LocalContext.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val menuState = LocalMenuState.current
-    val sleepTimerDefaultSetTemplate = stringResource(R.string.sleep_timer_default_set)
     val copiedTitleStr = stringResource(R.string.copied_title)
     val copiedArtistStr = stringResource(R.string.copied_artist)
     val bottomSheetPageState = LocalBottomSheetPageState.current
@@ -228,9 +217,6 @@ fun BottomSheetPlayer(
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
 
-    var showInlineLyrics by rememberSaveable {
-        mutableStateOf(false)
-    }
 
     var isFullScreen by rememberSaveable {
         mutableStateOf(false)
@@ -591,155 +577,7 @@ fun BottomSheetPlayer(
         .getDownload(mediaMetadata?.id ?: "")
         .collectAsStateWithLifecycle(initialValue = null)
 
-    val sleepTimerEnabled =
-        remember(
-            playerConnection.service.sleepTimer?.triggerTime,
-            playerConnection.service.sleepTimer?.pauseWhenSongEnd,
-        ) {
-            playerConnection.service.sleepTimer?.isActive ?: false
-        }
-
-    var sleepTimerTimeLeft by remember {
-        mutableLongStateOf(0L)
-    }
-
-    LaunchedEffect(sleepTimerEnabled) {
-        if (sleepTimerEnabled) {
-            while (isActive) {
-                sleepTimerTimeLeft =
-                    if (playerConnection.service.sleepTimer?.pauseWhenSongEnd == true) {
-                        playerConnection.player.duration - playerConnection.player.currentPosition
-                    } else {
-                        (playerConnection.service.sleepTimer?.triggerTime ?: 0L) - System.currentTimeMillis()
-                    }
-                delay(1000L)
-            }
-        }
-    }
-
     val scope = rememberCoroutineScope()
-    var showSleepTimerDialog by remember {
-        mutableStateOf(false)
-    }
-
-    val sleepTimerDefault by rememberPreference(SleepTimerDefaultKey, 30f)
-    var sleepTimerValue by remember { mutableFloatStateOf(sleepTimerDefault) }
-    val isAtDefault by remember {
-        derivedStateOf { sleepTimerValue.roundToInt() == sleepTimerDefault.roundToInt() }
-    }
-    LaunchedEffect(sleepTimerDefault) { sleepTimerValue = sleepTimerDefault }
-    val sleepTimerStopAfterCurrentSong by rememberPreference(SleepTimerStopAfterCurrentSongKey, false)
-    val sleepTimerFadeOut by rememberPreference(SleepTimerFadeOutKey, false)
-
-
-    if (showSleepTimerDialog) {
-        AlertDialog(
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-            onDismissRequest = { showSleepTimerDialog = false },
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.bedtime),
-                    contentDescription = null,
-                )
-            },
-            title = { Text(stringResource(R.string.sleep_timer)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showSleepTimerDialog = false
-                        playerConnection.service.sleepTimer?.start(
-                            minute = sleepTimerValue.roundToInt(),
-                            stopAfterCurrentSong = sleepTimerStopAfterCurrentSong,
-                            fadeOut = sleepTimerFadeOut,
-                        )
-                    },
-                ) {
-                    Text(stringResource(android.R.string.ok))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showSleepTimerDialog = false },
-                ) {
-                    Text(stringResource(android.R.string.cancel))
-                }
-            },
-            text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text =
-                            pluralStringResource(
-                                R.plurals.minute,
-                                sleepTimerValue.roundToInt(),
-                                sleepTimerValue.roundToInt(),
-                            ),
-                        style = MaterialTheme.typography.bodyLarge,
-                    )
-
-                    Slider(
-                        value = sleepTimerValue,
-                        onValueChange = { sleepTimerValue = it },
-                        valueRange = 5f..120f,
-                        steps = (120 - 5) / 5 - 1,
-                    )
-
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        if (isAtDefault) {
-                            FilledIconButton(
-                                onClick = {
-                                    scope.launch {
-                                        context.safeDataStoreEdit { settings ->
-                                            settings[SleepTimerDefaultKey] = sleepTimerValue
-                                        }
-                                    }
-                                    Toast.makeText(
-                                        context,
-                                        String.format(sleepTimerDefaultSetTemplate, sleepTimerValue.roundToInt()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                },
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor = MaterialTheme.colorScheme.onPrimary,
-                                ),
-                            ) {
-                                Text(stringResource(R.string.set_as_default))
-                            }
-                        } else {
-                            OutlinedIconButton(
-                                onClick = {
-                                    scope.launch {
-                                        context.safeDataStoreEdit { settings ->
-                                            settings[SleepTimerDefaultKey] = sleepTimerValue
-                                        }
-                                    }
-                                    Toast.makeText(
-                                        context,
-                                        String.format(sleepTimerDefaultSetTemplate, sleepTimerValue.roundToInt()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                },
-                            ) {
-                                Text(stringResource(R.string.set_as_default))
-                            }
-                        }
-
-                        OutlinedIconButton(
-                            onClick = {
-                                showSleepTimerDialog = false
-                                playerConnection.service.sleepTimer?.start(minute = -1)
-                            },
-                        ) {
-                            Text(stringResource(R.string.end_of_song))
-                        }
-                    }
-                }
-            },
-        )
-    }
 
     var showChoosePlaylistDialog by rememberSaveable {
         mutableStateOf(false)
@@ -947,47 +785,9 @@ fun BottomSheetPlayer(
                         .fillMaxWidth()
                         .padding(horizontal = PlayerHorizontalPadding),
             ) {
-                AnimatedContent(
-                    targetState = showInlineLyrics,
-                    label = "ThumbnailAnimation",
-                ) { showLyrics ->
-                    if (showLyrics) {
-                        Row {
-                            if (hidePlayerThumbnail) {
-                                Box(
-                                    modifier =
-                                        Modifier
-                                            .size(56.dp)
-                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.small_icon),
-                                        contentDescription = null,
-                                        modifier =
-                                            Modifier
-                                                .size(32.dp),
-                                        tint = textButtonColor.copy(alpha = 0.7f),
-                                    )
-                                }
-                            } else {
-                                AsyncImage(
-                                    model = mediaMetadata.thumbnailUrl,
-                                    contentDescription = null,
-                                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                                    modifier =
-                                        Modifier
-                                            .size(56.dp)
-                                            .clip(RoundedCornerShape(if (LocalLiquidGlassEnabled.current) 12.dp else ThumbnailCornerRadius)),
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                        }
-                    } else {
+
                         Spacer(modifier = Modifier.width(0.dp))
-                    }
-                }
+
                 Column(
                     modifier = Modifier.weight(1f),
                 ) {
@@ -1144,25 +944,7 @@ fun BottomSheetPlayer(
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
-                            if (showLyrics) {
-                                FilledIconButton(
-                                    onClick = { isFullScreen = !isFullScreen },
-                                    shape = shareShape,
-                                    colors =
-                                        IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = textButtonColor,
-                                            contentColor = iconButtonColor,
-                                        ),
-                                    modifier = Modifier.size(42.dp),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.fullscreen),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                            } else {
+
                                 FilledIconButton(
                                     onClick = {
                                         val intent =
@@ -1190,45 +972,7 @@ fun BottomSheetPlayer(
                                         modifier = Modifier.size(24.dp),
                                     )
                                 }
-                            }
-                        }
 
-                        AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
-                            if (showLyrics) {
-                                val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
-                                FilledIconButton(
-                                    onClick = {
-                                        menuState.show {
-                                            fr.makoff.music.ui.menu.LyricsMenu(
-                                                lyricsProvider = { currentLyrics },
-                                                songProvider = { currentSong?.song },
-                                                mediaMetadataProvider = { mediaMetadata },
-                                                onDismiss = menuState::dismiss,
-                                                onShowOffsetDialog = {
-                                                    bottomSheetPageState.show {
-                                                        ShowOffsetDialog(
-                                                            songProvider = { currentSong?.song },
-                                                        )
-                                                    }
-                                                },
-                                            )
-                                        }
-                                    },
-                                    shape = favShape,
-                                    colors =
-                                        IconButtonDefaults.filledIconButtonColors(
-                                            containerColor = textButtonColor,
-                                            contentColor = iconButtonColor,
-                                        ),
-                                    modifier = Modifier.size(42.dp),
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.more_horiz),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp),
-                                    )
-                                }
-                            } else {
                                 // For episodes, show saved state (inLibrary); for songs, show liked state
                                 val isEpisode = currentSong?.song?.isEpisode == true
                                 val isFavorite = if (isEpisode) currentSong?.song?.inLibrary != null else currentSong?.song?.liked == true
@@ -1255,31 +999,10 @@ fun BottomSheetPlayer(
                                         modifier = Modifier.size(24.dp),
                                     )
                                 }
-                            }
-                        }
+
                     }
                 } else {
-                    AnimatedContent(targetState = showInlineLyrics, label = "ShareButton") { showLyrics ->
-                        if (showLyrics) {
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(textButtonColor)
-                                        .clickable { isFullScreen = !isFullScreen },
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.fullscreen),
-                                    contentDescription = null,
-                                    tint = iconButtonColor,
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.Center)
-                                            .size(24.dp),
-                                )
-                            }
-                        } else {
+
                             Box(
                                 modifier =
                                     Modifier
@@ -1309,57 +1032,18 @@ fun BottomSheetPlayer(
                                             .size(24.dp),
                                 )
                             }
-                        }
-                    }
+
 
                     Spacer(modifier = Modifier.size(12.dp))
 
-                    AnimatedContent(targetState = showInlineLyrics, label = "LikeButton") { showLyrics ->
-                        if (showLyrics) {
-                            val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
-                            Box(
-                                modifier =
-                                    Modifier
-                                        .size(40.dp)
-                                        .clip(RoundedCornerShape(24.dp))
-                                        .background(textButtonColor)
-                                        .clickable {
-                                            menuState.show {
-                                                fr.makoff.music.ui.menu.LyricsMenu(
-                                                    lyricsProvider = { currentLyrics },
-                                                    songProvider = { currentSong?.song },
-                                                    mediaMetadataProvider = { mediaMetadata },
-                                                    onDismiss = menuState::dismiss,
-                                                    onShowOffsetDialog = {
-                                                        bottomSheetPageState.show {
-                                                            ShowOffsetDialog(
-                                                                songProvider = { currentSong?.song },
-                                                            )
-                                                        }
-                                                    },
-                                                )
-                                            }
-                                        },
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.more_horiz),
-                                    contentDescription = null,
-                                    tint = iconButtonColor,
-                                    modifier =
-                                        Modifier
-                                            .align(Alignment.Center)
-                                            .size(24.dp),
-                                )
-                            }
-                        } else {
+
                             PlayerMoreMenuButton(
                                 mediaMetadata = mediaMetadata,
                                 state = state,
                                 textButtonColor = textButtonColor,
                                 iconButtonColor = iconButtonColor,
                             )
-                        }
-                    }
+
                 }
             }
 
@@ -1862,33 +1546,21 @@ fun BottomSheetPlayer(
                         val currentSliderPosition by rememberUpdatedState(sliderPosition)
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
-                        AnimatedContent(
-                            targetState = showInlineLyrics,
-                            label = "Lyrics",
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        ) { showLyrics ->
-                            if (showLyrics) {
-                                InlineLyricsView(
-                                    mediaMetadata = mediaMetadata,
-                                    showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
-                                )
-                            } else {
+
                                 Thumbnail(
                                     sliderPositionProvider = sliderPositionProvider,
                                     modifier = Modifier.animateContentSize(),
                                     isPlayerExpanded = isExpandedProvider,
                                     isLandscape = true,
                                 )
-                            }
-                        }
+
                     }
 
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(if (showInlineLyrics) 0.65f else 1f, false)
+                                .weight(1f, false)
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
@@ -1924,25 +1596,13 @@ fun BottomSheetPlayer(
                         val currentSliderPosition by rememberUpdatedState(sliderPosition)
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
-                        AnimatedContent(
-                            targetState = showInlineLyrics,
-                            label = "Lyrics",
-                            transitionSpec = { fadeIn() togetherWith fadeOut() },
-                        ) { showLyrics ->
-                            if (showLyrics) {
-                                InlineLyricsView(
-                                    mediaMetadata = mediaMetadata,
-                                    showLyrics = showLyrics,
-                                    positionProvider = { effectivePosition },
-                                )
-                            } else {
+
                                 Thumbnail(
                                     sliderPositionProvider = sliderPositionProvider,
                                     modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
                                     isPlayerExpanded = isExpandedProvider,
                                 )
-                            }
-                        }
+
                     }
 
                     mediaMetadata?.let {
@@ -1974,159 +1634,13 @@ fun BottomSheetPlayer(
                 textButtonColor = textButtonColor,
                 iconButtonColor = iconButtonColor,
                 pureBlack = pureBlack,
-                showInlineLyrics = showInlineLyrics,
+
                 playerBackground = playerBackground,
-                onToggleLyrics = {
-                    showInlineLyrics = !showInlineLyrics
-                },
             )
             }
             if (LocalLiquidGlassEnabled.current) {
                 fr.makoff.music.ui.theme.MetrolistTheme(darkTheme = true, themeColor = MaterialTheme.colorScheme.primary, content = queueContent)
             } else queueContent()
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-fun InlineLyricsView(
-    mediaMetadata: MediaMetadata?,
-    showLyrics: Boolean,
-    positionProvider: () -> Long,
-) {
-    val playerConnection = LocalPlayerConnection.current ?: return
-    val currentLyrics by playerConnection.currentLyrics.collectAsStateWithLifecycle(initialValue = null)
-    val queueWindows by playerConnection.queueWindows.collectAsStateWithLifecycle(initialValue = emptyList())
-    val currentWindowIndex by playerConnection.currentWindowIndex.collectAsStateWithLifecycle(initialValue = -1)
-    val lyrics = remember(currentLyrics) { currentLyrics?.lyrics?.trim() }
-    val context = LocalContext.current
-    val database = LocalDatabase.current
-    val coroutineScope = rememberCoroutineScope()
-
-    var appInForeground by remember {
-        mutableStateOf(
-            ProcessLifecycleOwner.get().lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED),
-        )
-    }
-    DisposableEffect(Unit) {
-        val lifecycle = ProcessLifecycleOwner.get().lifecycle
-        val observer =
-            LifecycleEventObserver { _, _ ->
-                appInForeground = lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
-            }
-        lifecycle.addObserver(observer)
-        onDispose { lifecycle.removeObserver(observer) }
-    }
-
-    val nextMetadata =
-        remember(queueWindows, currentWindowIndex) {
-            if (currentWindowIndex >= 0 && currentWindowIndex + 1 < queueWindows.size) {
-                queueWindows[currentWindowIndex + 1].mediaItem.metadata
-            } else {
-                null
-            }
-        }
-
-    LaunchedEffect(mediaMetadata?.id, currentLyrics) {
-        if (mediaMetadata != null && currentLyrics == null) {
-            delay(500)
-            coroutineScope.launch(Dispatchers.IO) {
-                try {
-                    val entryPoint =
-                        EntryPointAccessors.fromApplication(
-                            context.applicationContext,
-                            fr.makoff.music.di.LyricsHelperEntryPoint::class.java,
-                        )
-                    val lyricsHelper = entryPoint.lyricsHelper()
-                    val fetchedLyricsWithProvider = lyricsHelper.getLyrics(mediaMetadata)
-                    database.query {
-                        upsert(LyricsEntity(mediaMetadata.id, fetchedLyricsWithProvider.lyrics, fetchedLyricsWithProvider.provider))
-                    }
-                } catch (e: Exception) {
-                    // Handle error
-                }
-            }
-        }
-    }
-
-    // Prefetch lyrics for the next queue item only while the lyrics pane is visible, the app is in the
-    // foreground, and the current track's lyrics row has finished loading (avoids competing with the
-    // active fetch).
-    LaunchedEffect(
-        nextMetadata?.id,
-        showLyrics,
-        appInForeground,
-        mediaMetadata?.id,
-        currentLyrics,
-    ) {
-        if (!showLyrics || !appInForeground || nextMetadata == null) return@LaunchedEffect
-        val loadedForCurrent =
-            currentLyrics?.let { lyrics ->
-                mediaMetadata == null || lyrics.id == mediaMetadata.id
-            } == true
-        if (mediaMetadata != null && !loadedForCurrent) return@LaunchedEffect
-        val nextId = nextMetadata.id
-        delay(400)
-        if (!showLyrics || !appInForeground || !isActive) return@LaunchedEffect
-        withContext(Dispatchers.IO) {
-            try {
-                val existing = database.lyrics(nextId).first()
-                if (existing != null) return@withContext
-                val entryPoint =
-                    EntryPointAccessors.fromApplication(
-                        context.applicationContext,
-                        fr.makoff.music.di.LyricsHelperEntryPoint::class.java,
-                    )
-                val lyricsHelper = entryPoint.lyricsHelper()
-                val fetched = lyricsHelper.getLyrics(nextMetadata)
-                database.query {
-                    upsert(LyricsEntity(nextId, fetched.lyrics, fetched.provider))
-                }
-            } catch (_: Exception) {
-            }
-        }
-    }
-
-    Box(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .clip(RoundedCornerShape(12.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        when {
-            lyrics == null -> {
-                ContainedLoadingIndicator()
-            }
-
-            lyrics == LyricsEntity.LYRICS_NOT_FOUND -> {
-                Text(
-                    text = stringResource(R.string.lyrics_not_found),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            else -> {
-                val lyricsContent: @Composable () -> Unit = {
-                    Lyrics(
-                        sliderPositionProvider = positionProvider,
-                        modifier = Modifier.padding(horizontal = 24.dp),
-                        showLyrics = showLyrics,
-                    )
-                }
-                ProvideTextStyle(
-                    value =
-                        MaterialTheme.typography.bodyMedium.copy(
-                            fontSize = 14.sp,
-                            textAlign = TextAlign.Center,
-                        ),
-                ) {
-                    lyricsContent()
-                }
-            }
         }
     }
 }
@@ -2168,7 +1682,7 @@ private fun PlayerMoreMenuButton(
     ) {
         Image(
             painter = painterResource(R.drawable.more_horiz),
-            contentDescription = null,
+            contentDescription = stringResource(R.string.more_options),
             colorFilter = ColorFilter.tint(iconButtonColor),
         )
     }
