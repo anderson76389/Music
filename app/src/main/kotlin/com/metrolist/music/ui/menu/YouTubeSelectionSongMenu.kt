@@ -372,8 +372,6 @@ fun YouTubeSelectionSongMenu(
                                 },
                                 onClick = {
                                     unifiedDownload.onClick?.invoke()
-                                    clearAction()
-                                    onDismiss()
                                 },
                             )
                         }
