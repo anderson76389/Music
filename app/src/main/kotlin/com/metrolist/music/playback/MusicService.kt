@@ -23,7 +23,6 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
-import android.media.audiofx.AudioEffect
 import fr.makoff.music.playback.audio.VolumeNormalizationAudioProcessor
 import fr.makoff.music.utils.safeDataStoreEdit
 import android.net.ConnectivityManager
@@ -105,16 +104,6 @@ import fr.makoff.music.constants.AddToPlaylistPositionKey
 import fr.makoff.music.constants.AndroidAutoTargetPlaylistKey
 import fr.makoff.music.constants.AudioNormalizationKey
 import fr.makoff.music.constants.AudioOffload
-import fr.makoff.music.constants.SleepTimerEnabledKey
-import fr.makoff.music.constants.SleepTimerRepeatKey
-import fr.makoff.music.constants.SleepTimerStartTimeKey
-import fr.makoff.music.constants.SleepTimerEndTimeKey
-import fr.makoff.music.constants.SleepTimerCustomDaysKey
-import fr.makoff.music.constants.SleepTimerDayTimesKey
-import fr.makoff.music.constants.SleepTimerDefaultKey
-import fr.makoff.music.constants.SleepTimerStopAfterCurrentSongKey
-import fr.makoff.music.constants.SleepTimerFadeOutKey
-import kotlin.math.roundToInt
 import fr.makoff.music.constants.AudioQualityKey
 import fr.makoff.music.constants.AudioTrackPlaybackParamsKey
 import fr.makoff.music.constants.AutoDownloadOnLikeKey
@@ -144,7 +133,6 @@ import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
 import fr.makoff.music.constants.RepeatModeKey
 import fr.makoff.music.constants.ResumeOnBluetoothConnectKey
-import fr.makoff.music.constants.ShowLyricsKey
 import fr.makoff.music.constants.ShuffleModeKey
 import fr.makoff.music.constants.ShufflePlaylistFirstKey
 import fr.makoff.music.constants.SimilarContent
@@ -154,7 +142,6 @@ import fr.makoff.music.constants.StopMusicOnTaskClearKey
 import fr.makoff.music.db.MusicDatabase
 import fr.makoff.music.db.entities.Event
 import fr.makoff.music.db.entities.FormatEntity
-import fr.makoff.music.db.entities.LyricsEntity
 import fr.makoff.music.db.entities.PlaylistEntity
 import fr.makoff.music.db.entities.RelatedSongMap
 import fr.makoff.music.db.entities.Song
@@ -175,12 +162,9 @@ import fr.makoff.music.extensions.toEnum
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.extensions.toPersistQueue
 import fr.makoff.music.extensions.toQueue
-import fr.makoff.music.lyrics.LyricsHelper
 import fr.makoff.music.models.PersistPlayerState
 import fr.makoff.music.models.PersistQueue
 import fr.makoff.music.models.toMediaMetadata
-import fr.makoff.music.playback.alarm.MusicAlarmScheduler
-import fr.makoff.music.playback.alarm.MusicAlarmStore
 import fr.makoff.music.playback.audio.SilenceDetectorAudioProcessor
 import fr.makoff.music.playback.queues.EmptyQueue
 import fr.makoff.music.playback.queues.ListQueue
@@ -253,9 +237,6 @@ class MusicService :
     PlaybackStatsListener.Callback {
     @Inject
     lateinit var database: MusicDatabase
-
-    @Inject
-    lateinit var lyricsHelper: LyricsHelper
 
     @Inject
     lateinit var syncUtils: SyncUtils
@@ -337,7 +318,6 @@ class MusicService :
 
     lateinit var playerVolume: MutableStateFlow<Float>
     val isMuted = MutableStateFlow(false)
-    private val sleepTimerVolumeMultiplier = MutableStateFlow(1f)
     private val audioFocusVolumeMultiplier = MutableStateFlow(1f)
 
     fun toggleMute() {
@@ -354,11 +334,10 @@ class MusicService :
     private fun calculateEffectiveVolume(
         volume: Float = playerVolume.value,
         muted: Boolean = isMuted.value,
-        sleepTimerMultiplier: Float = sleepTimerVolumeMultiplier.value,
         focusMultiplier: Float = audioFocusVolumeMultiplier.value,
     ): Float {
         if (muted) return 0f
-        return (volume * sleepTimerMultiplier * focusMultiplier).coerceIn(0f, 1f)
+        return (volume * focusMultiplier).coerceIn(0f, 1f)
     }
 
     private fun applyEffectiveVolume() {
@@ -366,7 +345,6 @@ class MusicService :
         player.volume = calculateEffectiveVolume()
     }
 
-    var sleepTimer: SleepTimer? = null
 
     @Inject
     @PlayerCache
@@ -634,11 +612,6 @@ class MusicService :
         )
         player = createExoPlayer(prefs = startupPrefs!!)
         player.addListener(this@MusicService)
-        sleepTimer =
-            SleepTimer(scope, player) { multiplier ->
-                sleepTimerVolumeMultiplier.value = multiplier
-            }
-        player.addListener(sleepTimer!!)
 
         playerInitialized.value = true
         Timber.tag(TAG).d("Player successfully initialized")
@@ -705,8 +678,6 @@ class MusicService :
 
         initializeCast()
 
-        // Collecting this flow activates the internal map that updates lyricsProviders in LyricsHelper
-        lyricsHelper.preferred.collectLatest(scope) {}
 
         // 4. Watch for EQ profile changes
         scope.launch {
@@ -794,13 +765,11 @@ class MusicService :
         combine(
             playerVolume,
             isMuted,
-            sleepTimerVolumeMultiplier,
             audioFocusVolumeMultiplier,
-        ) { volume, muted, timerMultiplier, focusMultiplier ->
+        ) { volume, muted, focusMultiplier ->
             calculateEffectiveVolume(
                 volume = volume,
                 muted = muted,
-                sleepTimerMultiplier = timerMultiplier,
                 focusMultiplier = focusMultiplier,
             )
         }.collectLatest(scope) {
@@ -818,29 +787,6 @@ class MusicService :
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
             updateWidgetUI(player.isPlaying)
-        }
-
-        combine(
-            currentMediaMetadata.distinctUntilChangedBy { it?.id },
-            dataStore.data.map { it[ShowLyricsKey] ?: false }.distinctUntilChanged(),
-        ) { mediaMetadata, showLyrics ->
-            mediaMetadata to showLyrics
-        }.collectLatest(scope) { (mediaMetadata, showLyrics) ->
-            if (showLyrics && mediaMetadata != null && database
-                    .lyrics(mediaMetadata.id)
-                    .first() == null
-            ) {
-                val lyricsWithProvider = lyricsHelper.getLyrics(mediaMetadata)
-                database.query {
-                    upsert(
-                        LyricsEntity(
-                            id = mediaMetadata.id,
-                            lyrics = lyricsWithProvider.lyrics,
-                            provider = lyricsWithProvider.provider,
-                        ),
-                    )
-                }
-            }
         }
 
         dataStore.data
@@ -918,14 +864,11 @@ class MusicService :
                 }
 
                 player.removeListener(this)
-                sleepTimer?.let { player.removeListener(it) }
                 releaseExoPlayer(player)
 
                 val newPlayer = createExoPlayer()
                 newPlayer.addListener(this@MusicService)
-                sleepTimer?.let { newPlayer.addListener(it) }
 
-                sleepTimer?.player = newPlayer
 
                 try {
                     mediaSession?.let { (it as MediaSession).player = newPlayer }
@@ -2196,13 +2139,7 @@ class MusicService :
         isAudioEffectSessionOpened = true
         openedAudioEffectSessionId = audioSessionId
 
-        sendBroadcast(
-            Intent(android.media.audiofx.AudioEffect.ACTION_OPEN_AUDIO_EFFECT_CONTROL_SESSION).apply {
-                putExtra(android.media.audiofx.AudioEffect.EXTRA_AUDIO_SESSION, audioSessionId)
-                putExtra(android.media.audiofx.AudioEffect.EXTRA_PACKAGE_NAME, packageName)
-                putExtra(android.media.audiofx.AudioEffect.EXTRA_CONTENT_TYPE, android.media.audiofx.AudioEffect.CONTENT_TYPE_MUSIC)
-            },
-        )
+
     }
 
     private fun closeAudioEffectSession(sessionIdOverride: Int? = null, clearNormalizationCache: Boolean = true) {
@@ -2224,14 +2161,7 @@ class MusicService :
             openedAudioEffectSessionId = C.AUDIO_SESSION_ID_UNSET
         }
 
-        if (sessionIdToClose != C.AUDIO_SESSION_ID_UNSET && sessionIdToClose > 0) {
-            sendBroadcast(
-                Intent(AudioEffect.ACTION_CLOSE_AUDIO_EFFECT_CONTROL_SESSION).apply {
-                    putExtra(AudioEffect.EXTRA_AUDIO_SESSION, sessionIdToClose)
-                    putExtra(AudioEffect.EXTRA_PACKAGE_NAME, packageName)
-                },
-            )
-        }
+
     }
 
     private var previousMediaItemIndex = C.INDEX_UNSET
@@ -2383,12 +2313,6 @@ class MusicService :
                 scope.launch(Dispatchers.IO) { markCachedIfFullyDownloaded(mediaId) }
             }
 
-            // Check sleep timer guard - don't autoplay/repeat if sleep timer will pause
-            val timer = sleepTimer ?: return
-            if (timer.isActive && timer.pauseWhenSongEnd) {
-                return
-            }
-
             val repeatMode = player.repeatMode
 
             if (player.playWhenReady && repeatMode == REPEAT_MODE_ALL && player.mediaItemCount > 0) {
@@ -2434,34 +2358,6 @@ class MusicService :
 
     }
 
-    private fun startAutomaticSleepTimerIfNeeded() {
-        if (sleepTimer?.isActive == true) return
-        scope.launch {
-            try {
-                val prefs = dataStore.data.first()
-                if (!(prefs[SleepTimerEnabledKey] ?: false) || !player.playWhenReady || sleepTimer?.isActive == true) return@launch
-                if (AutomaticSleepTimerSchedule.isActive(
-                        now = LocalDateTime.now(),
-                        repeat = prefs[SleepTimerRepeatKey] ?: "daily",
-                        start = prefs[SleepTimerStartTimeKey] ?: "22:00",
-                        end = prefs[SleepTimerEndTimeKey] ?: "06:00",
-                        customDays = prefs[SleepTimerCustomDaysKey] ?: "0,1,2,3,4",
-                        dayTimes = prefs[SleepTimerDayTimesKey] ?: "",
-                    )) {
-                    sleepTimer?.start(
-                        minute = (prefs[SleepTimerDefaultKey] ?: 30f).roundToInt(),
-                        stopAfterCurrentSong = prefs[SleepTimerStopAfterCurrentSongKey] ?: false,
-                        fadeOut = prefs[SleepTimerFadeOutKey] ?: false,
-                    )
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Timber.tag(TAG).e(e, "Automatic sleep timer could not start")
-            }
-        }
-    }
-
     override fun onPlayWhenReadyChanged(
         playWhenReady: Boolean,
         reason: Int,
@@ -2492,7 +2388,6 @@ class MusicService :
 
         if (playWhenReady) {
             applyCachedAudioNormalizationNow()
-            startAutomaticSleepTimerIfNeeded()
         }
 
         updateInitialBufferRecovery(player.playbackState)
@@ -3838,7 +3733,6 @@ class MusicService :
         fadingPlayer = null
         isCrossfading = false
         player.removeListener(this)
-        sleepTimer?.let { player.removeListener(it) }
         initialBufferRecoveryJob?.cancel()
         controllerFuture?.let { MediaController.releaseFuture(it) }
         controllerFuture = null
@@ -3928,6 +3822,10 @@ class MusicService :
         flags: Int,
         startId: Int,
     ): Int {
+        if (intent?.action == "fr.makoff.music.action.ALARM_TRIGGER") {
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
         if (taskCleared) {
             // A media button press (headset, car) is the user resuming; anything else is a stale restart.
             if (intent?.action != Intent.ACTION_MEDIA_BUTTON) {
@@ -3951,11 +3849,7 @@ class MusicService :
         }
 
         when (intent?.action) {
-            ACTION_ALARM_TRIGGER -> {
-                handleAlarmTrigger(intent)
-            }
-
-            MusicWidgetReceiver.ACTION_PLAY_PAUSE -> {
+MusicWidgetReceiver.ACTION_PLAY_PAUSE -> {
                 if (player.isPlaying) player.pause() else player.play()
                 updateWidgetUI(player.isPlaying)
             }
@@ -4090,96 +3984,6 @@ class MusicService :
             }
 
             else -> null
-        }
-    }
-
-    private fun handleAlarmTrigger(intent: Intent) {
-        scope.launch(Dispatchers.IO) {
-            try {
-                MusicAlarmScheduler.scheduleFromPreferences(this@MusicService)
-            } catch (t: Throwable) {
-                Timber.tag(TAG).e(t, "Failed to reschedule alarms after trigger")
-            }
-        }
-        val playlistId = intent.getStringExtra(EXTRA_ALARM_PLAYLIST_ID).orEmpty()
-        val alarmId = intent.getStringExtra(EXTRA_ALARM_ID).orEmpty()
-        if (playlistId.isBlank()) {
-            if (alarmId.isNotBlank()) {
-                scope.launch(Dispatchers.IO) {
-                    try {
-                        val alarms = MusicAlarmStore.load(this@MusicService)
-                        val updated =
-                            alarms.map { alarm ->
-                                if (alarm.id == alarmId) alarm.copy(enabled = false, nextTriggerAt = -1L) else alarm
-                            }
-                        MusicAlarmScheduler.scheduleAll(this@MusicService, updated)
-                    } catch (t: Throwable) {
-                        Timber.tag(TAG).e(t, "Failed to disable alarm with invalid playlist")
-                    }
-                }
-            }
-            return
-        }
-        val randomSong = intent.getBooleanExtra(EXTRA_ALARM_RANDOM_SONG, false)
-        scope.launch {
-            try {
-                val playlistSongs =
-                    withContext(Dispatchers.IO) {
-                        database.playlistSongs(playlistId).first()
-                    }
-                if (playlistSongs.isEmpty()) {
-                    if (alarmId.isNotBlank()) {
-                        withContext(Dispatchers.IO) {
-                            val alarms = MusicAlarmStore.load(this@MusicService)
-                            val updated =
-                                alarms.map { alarm ->
-                                    if (alarm.id == alarmId) alarm.copy(enabled = false, nextTriggerAt = -1L) else alarm
-                                }
-                            MusicAlarmScheduler.scheduleAll(this@MusicService, updated)
-                        }
-                    }
-                    return@launch
-                }
-                val items = playlistSongs.map { it.song.toMediaItem() }
-                val playlistName =
-                    withContext(Dispatchers.IO) {
-                        database
-                            .playlist(playlistId)
-                            .first()
-                            ?.playlist
-                            ?.name
-                    }
-                withContext(Dispatchers.IO) {
-                    MusicAlarmScheduler.scheduleFromPreferences(this@MusicService)
-                }
-
-                val alarmItems =
-                    if (randomSong) {
-                        val firstIndex = Random.nextInt(items.size)
-                        buildList(items.size) {
-                            add(items[firstIndex])
-                            items.forEachIndexed { index, item ->
-                                if (index != firstIndex) add(item)
-                            }
-                        }
-                    } else {
-                        items
-                    }
-
-                player.stop()
-                player.clearMediaItems()
-                playQueue(
-                    ListQueue(
-                        title = playlistName,
-                        items = alarmItems,
-                        startIndex = 0,
-                        position = 0L,
-                    ),
-                    playWhenReady = true,
-                )
-            } catch (t: Throwable) {
-                Timber.tag(TAG).e(t, "Failed to start alarm playback")
-            }
         }
     }
 
@@ -4340,7 +4144,7 @@ class MusicService :
     private fun scheduleCrossfade() {
         crossfadeMessage?.cancel()
         crossfadeMessage = null
-        
+
         val mediaCrossfadeDuration = crossfadeDuration.toLong()
 
         if (!crossfadeEnabled || crossfadeDuration <= 0f || player.duration == C.TIME_UNSET || player.duration <= mediaCrossfadeDuration) return
@@ -4354,8 +4158,7 @@ class MusicService :
         val targetMediaId = player.currentMediaItem?.mediaId
 
         crossfadeMessage = player.createMessage { _, _ ->
-            val timer = sleepTimer
-            if (player.isPlaying && player.currentMediaItem?.mediaId == targetMediaId && (timer == null || !timer.pauseWhenSongEnd)) {
+            if (player.isPlaying && player.currentMediaItem?.mediaId == targetMediaId) {
                 startCrossfade()
             }
         }.apply {
@@ -4435,7 +4238,6 @@ class MusicService :
 
         // Do not persist the retired player's temporary repeat-off state.
         fadingPlayer?.removeListener(this)
-        sleepTimer?.let { timer -> fadingPlayer?.removeListener(timer) }
         fadingPlayer?.repeatMode = Player.REPEAT_MODE_OFF
         fadingPlayer?.let {
             val currentIndex = it.currentMediaItemIndex
@@ -4462,9 +4264,7 @@ class MusicService :
 
         nextPlayer.removeListener(secondaryPlayerListener)
         nextPlayer.addListener(this)
-        sleepTimer?.let { nextPlayer.addListener(it) }
 
-        sleepTimer?.player = player
 
         try {
             mediaSession?.let { (it as MediaSession).player = player }
@@ -4535,7 +4335,6 @@ class MusicService :
         crossfadeJob = null
         isCrossfading = false
         applyEffectiveVolume()
-        sleepTimer?.notifySongTransition()
 
         applyCachedAudioNormalizationNow()
 
@@ -4552,10 +4351,6 @@ class MusicService :
     }
 
     companion object {
-        const val ACTION_ALARM_TRIGGER = "fr.makoff.music.action.ALARM_TRIGGER"
-        const val EXTRA_ALARM_ID = "extra_alarm_id"
-        const val EXTRA_ALARM_PLAYLIST_ID = "extra_alarm_playlist_id"
-        const val EXTRA_ALARM_RANDOM_SONG = "extra_alarm_random_song"
 
         const val ROOT = "root"
         const val SONG = "song"
@@ -4583,7 +4378,7 @@ class MusicService :
         @Volatile
         var isRunning = false
             private set
-            
+
         @Volatile
         var shutdownDeferred = kotlinx.coroutines.CompletableDeferred<Unit>().apply { complete(Unit) }
     }

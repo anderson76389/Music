@@ -35,10 +35,25 @@ print(f'PASS: {len(defaults)} directly declared boolean defaults agree with dete
 
 settings = (k/'ui/screens/settings/SettingsScreen.kt').read_text()
 content = (k/'ui/screens/settings/ContentSettings.kt').read_text()
-privacy = (k/'ui/screens/settings/PrivacySettings.kt').read_text()
+history = (k/'ui/screens/settings/HistorySettingsSection.kt').read_text()
 assert 'R.string.changelog' not in settings
 assert 'settings/android_auto' not in settings
 assert 'settings/android_auto' in content
-assert 'disable_screenshot' not in privacy
+assert 'settings/privacy' not in routes
+assert 'HistorySettingsSection()' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
+assert 'clearListenHistory()' in history and 'clearSearchHistory()' in history
 assert 'DisableScreenshotKey' not in (k/'MainActivity.kt').read_text()
 print('PASS: removed settings absent; Android Auto reachable from Content')
+
+assert not (k/'playback/SleepTimer.kt').exists()
+assert not (k/'playback/alarm/MusicAlarmScheduler.kt').exists()
+assert not (k/'lyrics/LyricsHelper.kt').exists()
+assert not (k/'ui/menu/LyricsMenu.kt').exists()
+menu = (k/'ui/menu/PlayerMenu.kt').read_text()
+assert 'system_equalizer' not in menu
+assert 'navController.navigate("equalizer")' in menu
+for path in ('ui/player/Player.kt', 'ui/player/Queue.kt', 'ui/screens/settings/AppearanceSettings.kt', 'ui/screens/settings/ContentSettings.kt'):
+    text = (k/path).read_text()
+    assert not re.search(r'R\.string\.(?:sleep_timer|lyrics|alarm)|sleepTimer|LyricsMenu|onToggleLyrics', text), path
+assert 'R.drawable.search' in (k/'MainActivity.kt').read_text()
+print('PASS: removed playback features absent; integrated equalizer and history actions preserved')

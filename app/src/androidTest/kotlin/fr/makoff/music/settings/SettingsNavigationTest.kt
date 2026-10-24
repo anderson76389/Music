@@ -142,6 +142,9 @@ class SettingsNavigationTest {
         assertFalse(device.hasObject(By.text(label(R.string.about))))
         assertFalse(device.hasObject(By.text(label(R.string.changelog))))
         assertFalse(device.hasObject(By.text(label(R.string.disable_screenshot))))
+        for (id in listOf(R.string.privacy, R.string.sleep_timer, R.string.alarm, R.string.lyrics, R.string.system_equalizer)) {
+            assertFalse("Removed entry remains: ${label(id)}", device.hasObject(By.text(label(id))))
+        }
         assertFalse(device.hasObject(By.textContains("Last.fm")))
         assertFalse(device.hasObject(By.textContains("Discord")))
         assertFalse(device.hasObject(By.textContains("AI lyrics translation")))
@@ -299,12 +302,60 @@ class SettingsNavigationTest {
         }
     }
 
+    @Test(timeout = 30000) fun removedFeatureMigrationCancelsLegacyAlarmAndKeepsOtherSettings() = runBlocking {
+        val done = androidx.datastore.preferences.core.booleanPreferencesKey("removedPlaybackFeaturesV1")
+        val oldAlarm = androidx.datastore.preferences.core.stringPreferencesKey("alarmEntries")
+        val oldTimer = androidx.datastore.preferences.core.booleanPreferencesKey("sleepTimerEnabled")
+        val before = context.dataStore.data.first()
+        val prefs = context.createDeviceProtectedStorageContext().getSharedPreferences("alarm_store", android.content.Context.MODE_PRIVATE)
+        val oldRaw = prefs.getString("alarm_entries", null)
+        val id = "migration-test-legacy-alarm"
+        val code = id.hashCode() and Int.MAX_VALUE
+        val intent = Intent(context, fr.makoff.music.playback.MusicService::class.java).setAction("fr.makoff.music.action.ALARM_TRIGGER")
+        val pending = android.app.PendingIntent.getForegroundService(context, code, intent,
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE)
+        try {
+            val raw = "[{\"id\":\"$id\",\"enabled\":true}]"
+            prefs.edit().putString("alarm_entries", raw).commit()
+            context.dataStore.edit {
+                it[done] = false; it[oldAlarm] = raw; it[oldTimer] = true
+            }
+            context.getSystemService(android.app.AlarmManager::class.java).set(android.app.AlarmManager.ELAPSED_REALTIME_WAKEUP,
+                SystemClock.elapsedRealtime() + 60000, pending)
+            fr.makoff.music.utils.RemovedPlaybackFeatures.clean(context)
+            assertNull(android.app.PendingIntent.getForegroundService(context, code, intent,
+                android.app.PendingIntent.FLAG_NO_CREATE or android.app.PendingIntent.FLAG_IMMUTABLE))
+            val after = context.dataStore.data.first()
+            assertNull(after[oldAlarm]); assertNull(after[oldTimer])
+            assertEquals(before[PauseListenHistoryKey], after[PauseListenHistoryKey])
+            assertEquals(before[AudioQualityKey], after[AudioQualityKey])
+            assertEquals(before[ExternalDownloadFormatKey], after[ExternalDownloadFormatKey])
+            println("REMOVED_FEATURES_OK: pending alarm cancelled; playback/history/download settings preserved")
+        } finally {
+            pending.cancel()
+            prefs.edit().apply { if (oldRaw == null) remove("alarm_entries") else putString("alarm_entries", oldRaw) }.commit()
+            context.dataStore.edit { it[done] = true; it.remove(oldAlarm); it.remove(oldTimer) }
+        }
+    }
+
     @Test(timeout = 540000) fun settingsRoutesAndPlayerPreferences() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
         assertNotNull("Account button", account)
-        account!!.click()
+        val searches = device.findObjects(By.desc(label(R.string.search)))
+        val headerSearch = searches.firstOrNull { it.visibleBounds.centerY() < device.displayHeight / 3 }
+        assertNotNull("Search shortcut next to history", headerSearch)
+        headerSearch!!.click()
+        assertTrue("Search input opened", device.wait(Until.hasObject(By.clazz("android.widget.EditText")), 10000))
+        for (attempt in 0 until 3) {
+            if (device.hasObject(By.desc(label(R.string.account)))) break
+            device.pressBack()
+            device.waitForIdle()
+        }
+        val homeAccount = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
+        assertNotNull("Return from search to home", homeAccount)
+        homeAccount!!.click()
         device.waitForIdle()
         assertNoRemovedEntries()
         open(R.string.settings)
@@ -316,7 +367,6 @@ class SettingsNavigationTest {
             R.string.appearance to R.string.theme,
             R.string.player_and_audio to R.string.audio_quality,
             R.string.content to R.string.content_language,
-            R.string.privacy to R.string.pause_listen_history,
             R.string.storage to R.string.downloaded_songs,
             R.string.backup_restore to R.string.action_backup,
         )
@@ -355,9 +405,7 @@ class SettingsNavigationTest {
                         Triple(R.string.varispeed, VarispeedKey, false),
                         Triple(R.string.audio_track_playback_params, AudioTrackPlaybackParamsKey, true),
                         Triple(R.string.google_cast, EnableGoogleCastKey, true),
-                        Triple(R.string.enable_automatic_sleeptimer, SleepTimerEnabledKey, false),
-                        Triple(R.string.sleep_timer_stop_after_current_song_title, SleepTimerStopAfterCurrentSongKey, false),
-                        Triple(R.string.sleep_timer_fade_out_title, SleepTimerFadeOutKey, false),
+
                         Triple(R.string.auto_download_on_like, AutoDownloadOnLikeKey, false),
                         Triple(R.string.skip_silence, SkipSilenceKey, false),
                         Triple(R.string.audio_normalization, AudioNormalizationKey, true),
@@ -411,14 +459,13 @@ class SettingsNavigationTest {
                         } }
                     }
                     println("SETTINGS_ENUM_OK: quality and all four normalization levels stored and restored")
-                    open(R.string.sleep_timer_repeat)
-                    findText(R.string.sleep_timer_daily)
+                    toggleAndRestore(R.string.pause_listen_history, PauseListenHistoryKey, false)
+                    toggleAndRestore(R.string.pause_search_history, PauseSearchHistoryKey, false)
+                    open(R.string.clear_listen_history)
                     open(android.R.string.cancel)
-                    findText(R.string.history_duration)
-                    open(R.string.alarm_add)
-                    device.pressBack()
-                    device.waitForIdle()
-                    println("PLAYER_DIALOGS_OK: timer schedule and alarm editor open and dismiss")
+                    open(R.string.clear_search_history)
+                    open(android.R.string.cancel)
+                    assertNoRemovedEntries()
                 }
                 R.string.content -> {
                     open(R.string.android_auto)
@@ -426,22 +473,11 @@ class SettingsNavigationTest {
                     device.pressBack()
                     device.waitForIdle()
                     println("SETTINGS_ANDROID_AUTO_OK: content route opens Android Auto")
-                    open(R.string.lyrics_provider_selection)
-                    toggleAndRestore(R.string.enable_lyricsplus, EnableLyricsPlus, true,
-                        effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
-                        clicker = { id -> open(id, switchOnly = true) })
-                    assertEquals(runBlocking { context.dataStore.data.first()[EnableLyricsPlus] ?: true },
-                        fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context))
-                    open(R.string.close)
                     listOf(
                     Triple(R.string.hide_explicit, HideExplicitKey, false),
                     Triple(R.string.hide_video_songs, HideVideoSongsKey, false),
                     Triple(R.string.hide_youtube_shorts, HideYoutubeShortsKey, false),
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
-                }
-                R.string.privacy -> {
-                    toggleAndRestore(R.string.pause_listen_history, PauseListenHistoryKey, false)
-                    toggleAndRestore(R.string.pause_search_history, PauseSearchHistoryKey, false)
                 }
                 R.string.storage -> {
                     toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
