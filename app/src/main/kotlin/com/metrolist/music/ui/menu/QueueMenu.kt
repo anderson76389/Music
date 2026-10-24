@@ -384,7 +384,7 @@ fun QueueMenu(
         // Download section
         item {
             Material3MenuGroup(
-                items = listOf(
+                items = listOfNotNull(
                         folderAudioItem,
                     when (download?.state) {
                         Download.STATE_COMPLETED -> {
@@ -431,20 +431,7 @@ fun QueueMenu(
                         }
 
                         else -> {
-                            Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.action_download)) },
-                                description = { Text(text = stringResource(R.string.download_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.download),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                },
-                                onClick = {
-                                    downloadUtil.download(mediaMetadata)
-                                }
-                            )
+                            null
                         }
                     }
                 )

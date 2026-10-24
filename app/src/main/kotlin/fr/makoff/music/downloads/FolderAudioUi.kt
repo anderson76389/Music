@@ -52,7 +52,8 @@ fun rememberFolderAudioItem(media: MediaMetadata): Material3MenuItemData {
     val scope = rememberCoroutineScope()
     val (tree) = rememberPreference(FolderAudioTreeKey, "")
     fun enqueue(uri: Uri) {
-        runCatching { FolderAudioDownloads.enqueue(context, media, uri) }
+        runCatching { FolderAudioDownloads.enqueue(context, media, uri,
+            media.album?.let { listOf("Albums", collectionFolder(it.title, it.id)) } ?: listOf("Titres")) }
             .onSuccess { Toast.makeText(context, R.string.folder_audio_queued, Toast.LENGTH_SHORT).show() }
             .onFailure { Toast.makeText(context, R.string.folder_audio_invalid, Toast.LENGTH_LONG).show() }
     }
@@ -68,7 +69,7 @@ fun rememberFolderAudioItem(media: MediaMetadata): Material3MenuItemData {
         }
     }
     return Material3MenuItemData(
-        title = { Text(stringResource(R.string.folder_audio_action)) },
+        title = { Text(stringResource(R.string.action_download)) },
         description = { Text(stringResource(R.string.folder_audio_description)) },
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
         onClick = {
@@ -157,7 +158,7 @@ fun FolderAudioSettings() {
     }
 }
 
-/** Collection selection is resolved before queueing; normal in-app downloads stay separate. */
+/** The exported document is also registered as the app's offline audio source. */
 @Composable
 fun rememberFolderCollectionItem(kind: String, title: String, id: String,
     load: suspend () -> List<MediaMetadata>): Material3MenuItemData {
@@ -194,7 +195,7 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
         }
     }
     return Material3MenuItemData(
-        title = { Text(stringResource(if (loading) R.string.folder_audio_waiting else R.string.folder_collection_action)) },
+        title = { Text(stringResource(if (loading) R.string.folder_audio_waiting else R.string.action_download)) },
         description = { Text(stringResource(R.string.folder_collection_description, kind, title)) },
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
         onClick = {

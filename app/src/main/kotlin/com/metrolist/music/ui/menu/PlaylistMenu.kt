@@ -315,7 +315,7 @@ fun PlaylistMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
-        item { Material3MenuGroup(items = listOf(folderCollection)) }
+        item { Material3MenuGroup(items = listOfNotNull(folderCollection)) }
 
         item {
             NewActionGrid(
@@ -566,19 +566,7 @@ fun PlaylistMenu(
                                     }
 
                                     else -> {
-                                        Material3MenuItemData(
-                                            title = { Text(text = stringResource(R.string.action_download)) },
-                                            description = { Text(text = stringResource(R.string.download_desc)) },
-                                            icon = {
-                                                Icon(
-                                                    painter = painterResource(R.drawable.download),
-                                                    contentDescription = null,
-                                                )
-                                            },
-                                            onClick = {
-                                                songs.forEach { downloadUtil.download(it) }
-                                            },
-                                        )
+                                        null
                                     }
                                 },
                             )

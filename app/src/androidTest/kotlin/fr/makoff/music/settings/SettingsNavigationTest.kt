@@ -339,7 +339,7 @@ class SettingsNavigationTest {
     }
 
     @Test(timeout = 540000) fun settingsRoutesAndPlayerPreferences() {
-        assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
+        assertEquals("Apple Music", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
         assertNotNull("Account button", account)

@@ -470,7 +470,7 @@ fun AlbumMenu(
         item {
             Material3MenuGroup(
                 items =
-                    listOf(
+                    listOfNotNull(
                         when (downloadState) {
                             STATE_COMPLETED -> {
                                 Material3MenuItemData(
@@ -521,19 +521,7 @@ fun AlbumMenu(
                             }
 
                             else -> {
-                                Material3MenuItemData(
-                                    title = { Text(text = stringResource(R.string.action_download)) },
-                                    description = { Text(text = stringResource(R.string.download_desc)) },
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.download),
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    onClick = {
-                                        songs.forEach { downloadUtil.download(it) }
-                                    },
-                                )
+                                null
                             }
                         },
                     ),

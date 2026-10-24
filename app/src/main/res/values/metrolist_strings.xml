@@ -828,7 +828,7 @@
     <string name="other">Other</string>
 
     <string name="folder_audio_action">Enregistrer un fichier audio (yt-dlp)</string>
-    <string name="folder_audio_description">Meilleur flux audio disponible, dans un dossier accessible hors de l’application.</string>
+    <string name="folder_audio_description">Conserver hors ligne dans l’application et enregistrer le fichier dans votre dossier Musique.</string>
     <string name="folder_audio_settings">Fichiers audio — yt-dlp</string>
     <string name="folder_audio_choose">Choisir le dossier de destination</string>
     <string name="folder_audio_choose_hint">Créez ou choisissez un sous-dossier, par exemple Téléchargements/Metrolist.</string>
@@ -851,7 +851,7 @@
     <string name="makoff_changelog_error">Impossible de charger les changements depuis GitHub. Vérifiez votre connexion, puis réessayez.</string>
     <string name="makoff_retry">Réessayer</string>
     <string name="folder_collection_action">Télécharger la collection dans un dossier</string>
-    <string name="folder_collection_description">Fichiers audio dans %1$s / %2$s, avec pistes numérotées. Ces fichiers servent aussi à la lecture hors connexion dans Metrolist.</string>
+    <string name="folder_collection_description">Hors ligne dans l’application et fichiers dans %1$s / %2$s.</string>
     <string name="folder_collection_queued">%1$d pistes ajoutées à la file d’export</string>
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>

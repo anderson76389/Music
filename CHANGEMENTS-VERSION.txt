@@ -1,3 +1,5 @@
-- Correction du placement des palettes de couleurs sur tablette et écran déplié : plusieurs rangées selon la largeur disponible.
-- Les commandes de thème restent sous la barre de titre et peuvent défiler sur les écrans larges.
-- Rendu, effets et animations Liquid Glass inchangés.
+- Nom de l’application : Apple Music ; icône reprise de l’APK Apple Music fourni.
+- Un seul bouton de téléchargement pour le fichier externe et la lecture hors ligne dans l’application.
+- Choix du dossier Musique au premier téléchargement ; sous-dossiers Albums et Playlists par collection.
+- Le fichier externe est utilisé pour le hors-ligne, sans deuxième copie audio permanente.
+- Thème Liquid Glass inchangé.

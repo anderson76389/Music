@@ -432,7 +432,7 @@ fun YouTubeAlbumMenu(
         item {
             Material3MenuGroup(
                 items =
-                    listOf(
+                    listOfNotNull(
                         when (downloadState) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(
@@ -483,19 +483,7 @@ fun YouTubeAlbumMenu(
                             }
 
                             else -> {
-                                Material3MenuItemData(
-                                    title = { Text(text = stringResource(R.string.action_download)) },
-                                    description = { Text(text = stringResource(R.string.download_desc)) },
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.download),
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    onClick = {
-                                        album?.songs?.forEach { downloadUtil.download(it) }
-                                    },
-                                )
+                                null
                             }
                         },
                     ),

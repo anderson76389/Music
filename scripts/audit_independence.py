@@ -35,7 +35,7 @@ assert not (r/'services/listen-together').exists()
 for p in (r/'app/src/main').rglob('*'):
     if p.suffix in ('.kt', '.java', '.xml'):
         assert not re.search(r'ListenTogether|listen_together|LyricsTranslationHelper|OpenRouter|DeepLService|AiSettings|R\.string\.ai_', p.read_text()), p
-assert '?: "Metrolist"' in (r/'app/build.gradle.kts').read_text()
+assert '?: "Apple Music"' in (r/'app/build.gradle.kts').read_text()
 print('PASS: removed shared-listening and AI code/resources absent; requested app name; GPL preserved')
 
 # Keep the requested original icon local and byte-identical to the pinned source.
@@ -47,7 +47,7 @@ assert 'fr.makoff.music:innertubex' in (r/'gradle/libs.versions.toml').read_text
 assert 'GROUP=fr.makoff.music' in (r/'vendor/innertubex/gradle.properties').read_text()
 for path in ('settings.gradle.kts', 'gradle/libs.versions.toml', 'vendor/innertubex/gradle.properties', 'vendor/innertubex/build.gradle.kts'):
     assert 'com.github.MetrolistGroup' not in (r/path).read_text(), path
-print('PASS: original logo preserved locally; own library coordinates and local substitution')
+print('PASS: pinned local icon assets verified; own library coordinates and local substitution')
 
 for path in (r/'vendor/innertubex/src').rglob('*.kt'):
     assert 'MetrolistGroup/faraday' not in path.read_text(), path

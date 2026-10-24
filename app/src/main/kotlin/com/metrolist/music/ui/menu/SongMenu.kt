@@ -864,7 +864,7 @@ fun SongMenu(
         item {
             Material3MenuGroup(
                 items =
-                    listOf(
+                    listOfNotNull(
                         folderAudioItem,
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
@@ -912,19 +912,7 @@ fun SongMenu(
                             }
 
                             else -> {
-                                Material3MenuItemData(
-                                    title = { Text(text = stringResource(R.string.action_download)) },
-                                    description = { Text(text = stringResource(R.string.download_desc)) },
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.download),
-                                            contentDescription = null,
-                                        )
-                                    },
-                                    onClick = {
-                                        downloadUtil.download(song)
-                                    },
-                                )
+                                null
                             }
                         },
                     ),
