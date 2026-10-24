@@ -186,9 +186,7 @@ fun HistorySettingsSection() {
             )
         )
 
-        Spacer(modifier = Modifier.height(27.dp))
 
-        Spacer(modifier = Modifier.height(16.dp))
     }
 
 

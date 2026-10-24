@@ -337,7 +337,7 @@ fun Queue(
                     ) {
                         Icon(
                             painter = painterResource(id = R.drawable.more_vert),
-                            contentDescription = null,
+                            contentDescription = stringResource(R.string.more_options),
                             modifier = Modifier.size(iconSize),
                             tint = iconButtonColor,
                         )
