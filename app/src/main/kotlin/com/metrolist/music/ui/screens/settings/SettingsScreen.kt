@@ -38,7 +38,6 @@ import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.ui.component.ReleaseNotesCard
 import fr.makoff.music.ui.utils.backToMain
 import fr.makoff.music.utils.Updater
-import androidx.compose.runtime.remember
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,16 +48,7 @@ fun SettingsScreen(
     val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
     val isAndroid12OrLater = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
-    val hasAndroidAuto = remember {
-        try {
-            context.packageManager.getPackageInfo(
-                "com.google.android.projection.gearhead", 0
-            )
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
+
 
     Column(
         Modifier
@@ -107,22 +97,6 @@ fun SettingsScreen(
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
-        // Android Auto Section — only shown if Android Auto is installed
-        if (hasAndroidAuto) {
-            Material3SettingsGroup(
-                title = "Android Auto",
-                items = listOf(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.ic_android_auto),
-                        title = { Text(stringResource(R.string.android_auto)) },
-                        onClick = { navController.navigate("settings/android_auto") }
-                    )
-                )
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-        }
 
         // Privacy & Security Section
         Material3SettingsGroup(
@@ -214,14 +188,6 @@ fun SettingsScreen(
                         )
                     )
                 }
-                val showChangelog = fr.makoff.music.LocalChangelogState.current
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.newspaper),
-                        title = { Text(stringResource(R.string.changelog)) },
-                        onClick = { showChangelog.value = true }
-                    )
-                )
                 if (BuildConfig.UPDATER_AVAILABLE && latestVersionName != BuildConfig.BASE_VERSION_NAME) {
                     val releaseInfo = Updater.getCachedLatestRelease()
                     val downloadUrl = releaseInfo?.let { Updater.getDownloadUrlForCurrentVariant(it) }

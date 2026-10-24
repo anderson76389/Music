@@ -105,6 +105,16 @@ import fr.makoff.music.constants.AddToPlaylistPositionKey
 import fr.makoff.music.constants.AndroidAutoTargetPlaylistKey
 import fr.makoff.music.constants.AudioNormalizationKey
 import fr.makoff.music.constants.AudioOffload
+import fr.makoff.music.constants.SleepTimerEnabledKey
+import fr.makoff.music.constants.SleepTimerRepeatKey
+import fr.makoff.music.constants.SleepTimerStartTimeKey
+import fr.makoff.music.constants.SleepTimerEndTimeKey
+import fr.makoff.music.constants.SleepTimerCustomDaysKey
+import fr.makoff.music.constants.SleepTimerDayTimesKey
+import fr.makoff.music.constants.SleepTimerDefaultKey
+import fr.makoff.music.constants.SleepTimerStopAfterCurrentSongKey
+import fr.makoff.music.constants.SleepTimerFadeOutKey
+import kotlin.math.roundToInt
 import fr.makoff.music.constants.AudioQualityKey
 import fr.makoff.music.constants.AudioTrackPlaybackParamsKey
 import fr.makoff.music.constants.AutoDownloadOnLikeKey
@@ -949,6 +959,7 @@ class MusicService :
                 crossfadeEnabled = enabled
                 crossfadeDuration = duration * 1000f
                 crossfadeGapless = gapless
+                scheduleCrossfade()
             }
 
         // Observe and cache common preferences to avoid runBlocking reads in playback callbacks
@@ -2423,6 +2434,34 @@ class MusicService :
 
     }
 
+    private fun startAutomaticSleepTimerIfNeeded() {
+        if (sleepTimer?.isActive == true) return
+        scope.launch {
+            try {
+                val prefs = dataStore.data.first()
+                if (!(prefs[SleepTimerEnabledKey] ?: false) || !player.playWhenReady || sleepTimer?.isActive == true) return@launch
+                if (AutomaticSleepTimerSchedule.isActive(
+                        now = LocalDateTime.now(),
+                        repeat = prefs[SleepTimerRepeatKey] ?: "daily",
+                        start = prefs[SleepTimerStartTimeKey] ?: "22:00",
+                        end = prefs[SleepTimerEndTimeKey] ?: "06:00",
+                        customDays = prefs[SleepTimerCustomDaysKey] ?: "0,1,2,3,4",
+                        dayTimes = prefs[SleepTimerDayTimesKey] ?: "",
+                    )) {
+                    sleepTimer?.start(
+                        minute = (prefs[SleepTimerDefaultKey] ?: 30f).roundToInt(),
+                        stopAfterCurrentSong = prefs[SleepTimerStopAfterCurrentSongKey] ?: false,
+                        fadeOut = prefs[SleepTimerFadeOutKey] ?: false,
+                    )
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Timber.tag(TAG).e(e, "Automatic sleep timer could not start")
+            }
+        }
+    }
+
     override fun onPlayWhenReadyChanged(
         playWhenReady: Boolean,
         reason: Int,
@@ -2453,6 +2492,7 @@ class MusicService :
 
         if (playWhenReady) {
             applyCachedAudioNormalizationNow()
+            startAutomaticSleepTimerIfNeeded()
         }
 
         updateInitialBufferRecovery(player.playbackState)
@@ -4276,14 +4316,14 @@ class MusicService :
      * Initialize Google Cast support
      */
     private fun initializeCast() {
-        if (dataStore.get(fr.makoff.music.constants.EnableGoogleCastKey, true)) {
-            try {
-                castConnectionHandler = CastConnectionHandler(this, scope, this)
+        try {
+            // Keep the same handler/flows when Cast starts disabled and is enabled later.
+            castConnectionHandler = CastConnectionHandler(this, scope, this)
+            if (dataStore.get(fr.makoff.music.constants.EnableGoogleCastKey, true)) {
                 castConnectionHandler?.initialize()
-                timber.log.Timber.d("Google Cast initialized")
-            } catch (e: Exception) {
-                timber.log.Timber.e(e, "Failed to initialize Google Cast")
             }
+        } catch (e: Exception) {
+            timber.log.Timber.e(e, "Failed to initialize Google Cast")
         }
     }
 

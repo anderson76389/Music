@@ -35,7 +35,6 @@ import androidx.navigation.NavController
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.R
-import fr.makoff.music.constants.DisableScreenshotKey
 import fr.makoff.music.constants.PauseListenHistoryKey
 import fr.makoff.music.constants.PauseSearchHistoryKey
 import fr.makoff.music.ui.component.DefaultDialog
@@ -59,10 +58,7 @@ fun PrivacySettings(
         key = PauseSearchHistoryKey,
         defaultValue = false
     )
-    val (disableScreenshot, onDisableScreenshotChange) = rememberPreference(
-        key = DisableScreenshotKey,
-        defaultValue = false
-    )
+
 
     var showClearListenHistoryDialog by remember {
         mutableStateOf(false)
@@ -218,32 +214,6 @@ fun PrivacySettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        Material3SettingsGroup(
-            title = stringResource(R.string.misc),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.screenshot),
-                    title = { Text(stringResource(R.string.disable_screenshot)) },
-                    description = { Text(stringResource(R.string.disable_screenshot_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = disableScreenshot,
-                            onCheckedChange = onDisableScreenshotChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (disableScreenshot) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(androidx.compose.material3.SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onDisableScreenshotChange(!disableScreenshot) }
-                )
-            )
-        )
         Spacer(modifier = Modifier.height(16.dp))
     }
 

@@ -332,7 +332,7 @@ fun PlayerSettings(
                                     value = crossfadeDuration,
                                     onValueChange = onCrossfadeDurationChange,
                                     valueRange = 1f..15f,
-                                    steps = 14
+                                    steps = 13
                                 )
                             }
                         }
@@ -667,19 +667,7 @@ fun PlayerSettings(
                                 )
                             },
                             trailingContent = {
-                                Switch(
-                                    checked = sleepTimerEnabled,
-                                    onCheckedChange = {showSleepTimerDialog = true},
-                                    thumbContent = {
-                                        Icon(
-                                            painter = painterResource(
-                                                id = if (sleepTimerEnabled) R.drawable.check else R.drawable.close
-                                            ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize)
-                                        )
-                                    }
-                                )
+                                Icon(painterResource(R.drawable.arrow_forward), contentDescription = null)
                             },
                             onClick = { showSleepTimerDialog = true }
                         )

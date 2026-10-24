@@ -95,9 +95,10 @@ class OfflinePlayerInstrumentedTest {
             context.getSystemService(android.net.ConnectivityManager::class.java).activeNetwork == null
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
-            ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey)
+            ShowLyricsKey, CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, SleepTimerEnabledKey, SleepTimerStopAfterCurrentSongKey, SleepTimerFadeOutKey)
         val before = context.dataStore.data.first()
-        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true }
+        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -134,6 +135,7 @@ class OfflinePlayerInstrumentedTest {
             val binder = future.get(30, TimeUnit.SECONDS)
             println("PLAYER_STAGE: production service bound")
             val active = binder.service
+            assertNotNull("Cast handler must exist even when Cast starts disabled", active.castConnectionHandler)
             service = active
             await("Production player not ready") { active.isPlayerReady.value }
             val audio = audioFixture()
@@ -262,6 +264,49 @@ class OfflinePlayerInstrumentedTest {
             await("Unlike not persisted") { runBlocking { active.database.song(tracks[0].id).first()?.song?.liked == false } }
             println("PLAYER_LIBRARY_OK: library add/remove and like/unlike persisted locally")
 
+            val originalPlayer = main { active.player }
+            context.dataStore.edit { it[AudioTrackPlaybackParamsKey] = false }
+            await("AudioTrack change did not recreate actual player") { main { active.player !== originalPlayer } }
+            await("Queue lost during audio renderer recreation") { main { active.player.mediaItemCount == 3 && active.player.playbackState == Player.STATE_READY } }
+            main { active.player.seekTo(0, 0); controller.pause() }
+            println("PLAYER_RENDERER_OK: AudioTrack setting recreates player, queue and cached playback preserved")
+
+            context.dataStore.edit { it[AudioOffload] = true }
+            await("Audio offload preference did not reach player") { main {
+                active.player.trackSelectionParameters.audioOffloadPreferences.audioOffloadMode ==
+                    androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_ENABLED
+            } }
+            val durationBefore = before[CrossfadeDurationKey]
+            val gaplessBefore = before[CrossfadeGaplessKey]
+            try {
+                main { active.player.seekTo(0, 17000) }
+                context.dataStore.edit {
+                    it[CrossfadeEnabledKey] = true
+                    it[CrossfadeDurationKey] = 1f
+                    it[CrossfadeGaplessKey] = false
+                }
+                await("Crossfade did not disable incompatible offload") { main {
+                    active.player.trackSelectionParameters.audioOffloadPreferences.audioOffloadMode ==
+                        androidx.media3.common.TrackSelectionParameters.AudioOffloadPreferences.AUDIO_OFFLOAD_MODE_DISABLED
+                } }
+                val beforeCrossfade = main { active.player }
+                main { controller.play() }
+                await("Crossfade preference did not schedule a real player swap", 12000) { main {
+                    active.player !== beforeCrossfade && active.player.currentMediaItem?.mediaId == tracks[2].id
+                } }
+                await("Crossfade did not restore full player volume", 5000) { main { active.player.volume > 0.99f } }
+                main { controller.pause() }
+                println("PLAYER_CROSSFADE_OK: changing preference schedules actual overlap/swap; offload excluded")
+            } finally {
+                context.dataStore.edit { prefs ->
+                    prefs[CrossfadeEnabledKey] = false
+                    prefs[AudioOffload] = false
+                    durationBefore?.let { prefs[CrossfadeDurationKey] = it } ?: prefs.remove(CrossfadeDurationKey)
+                    gaplessBefore?.let { prefs[CrossfadeGaplessKey] = it } ?: prefs.remove(CrossfadeGaplessKey)
+                }
+                main { active.player.seekTo(0, 0); controller.pause() }
+            }
+
             context.dataStore.edit { it[SkipSilenceKey] = true }
             await("Skip-silence preference did not reach actual player") { main { active.player.skipSilenceEnabled } }
             context.dataStore.edit { it[SkipSilenceKey] = false; it[AudioQualityKey] = AudioQuality.LOW.name }
@@ -276,7 +321,43 @@ class OfflinePlayerInstrumentedTest {
             await("Zero-minute sleep timer did not pause") { main { !active.player.playWhenReady && !active.sleepTimer!!.isActive } }
             main { active.player.seekTo(0, 19700); active.sleepTimer!!.start(-1); controller.play() }
             await("End-of-song sleep timer did not pause", 12000) { main { !active.sleepTimer!!.isActive && !active.player.playWhenReady } }
-            println("PLAYER_SETTINGS_OK: skip-silence applied, cached file kept on quality change, timer immediate/end-of-song")
+            val scheduleKeys = listOf(SleepTimerRepeatKey, SleepTimerStartTimeKey, SleepTimerEndTimeKey)
+            val defaultMinutesBefore = before[SleepTimerDefaultKey]
+            try {
+                context.dataStore.edit {
+                    it[SleepTimerEnabledKey] = true
+                    it[SleepTimerRepeatKey] = "daily"
+                    it[SleepTimerStartTimeKey] = "00:00"
+                    it[SleepTimerEndTimeKey] = "00:00"
+                    it[SleepTimerDefaultKey] = 30f
+                    it[SleepTimerStopAfterCurrentSongKey] = true
+                    it[SleepTimerFadeOutKey] = true
+                }
+                instrumentation.runOnMainSync {
+                    androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                        .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                        .filterIsInstance<MainActivity>().forEach { it.finish() }
+                }
+                main { controller.dispose(); active.player.seekTo(0, 0); active.sleepTimer!!.clear(); active.player.play() }
+                await("Automatic timer did not honor stop/fade preferences without UI connection") { main {
+                    active.sleepTimer!!.isActive && active.sleepTimer!!.stopAfterCurrentSongOnTimeout && active.sleepTimer!!.fadeOutEnabled
+                } }
+                main { controller.pause(); active.sleepTimer!!.clear() }
+                context.dataStore.edit { it[SleepTimerEnabledKey] = false }
+                val normalVolume = main { active.player.volume }
+                main { active.sleepTimer!!.start(1, stopAfterCurrentSong = false, fadeOut = true) }
+                await("Timer fade did not lower real player volume", 5000) { main { active.player.volume < normalVolume * 0.995f } }
+                main { active.sleepTimer!!.clear() }
+                await("Timer clear did not restore real volume") { main { kotlin.math.abs(active.player.volume - normalVolume) < 0.001f } }
+                println("PLAYER_AUTOMATIC_TIMER_OK: preferences applied on play; real volume fades and restores")
+            } finally {
+                main { active.sleepTimer!!.clear() }
+                context.dataStore.edit { prefs ->
+                    scheduleKeys.forEach { key -> before[key]?.let { prefs[key] = it } ?: prefs.remove(key) }
+                    defaultMinutesBefore?.let { prefs[SleepTimerDefaultKey] = it } ?: prefs.remove(SleepTimerDefaultKey)
+                }
+            }
+            println("PLAYER_SETTINGS_OK: renderer, skip-silence, cache, manual and automatic timer effects verified")
             assertNull("Streaming resolution should not be used for complete cached test audio", active.currentStreamClient.value)
             assertNull(main { active.player.playerError })
         } catch (failure: Throwable) {

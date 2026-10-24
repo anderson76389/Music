@@ -32,3 +32,13 @@ for key, expected in defaults.items():
             for match in re.finditer(pattern, source):
                 assert match[1] == expected, (p, key, expected, match[1])
 print(f'PASS: {len(defaults)} directly declared boolean defaults agree with detected consumers')
+
+settings = (k/'ui/screens/settings/SettingsScreen.kt').read_text()
+content = (k/'ui/screens/settings/ContentSettings.kt').read_text()
+privacy = (k/'ui/screens/settings/PrivacySettings.kt').read_text()
+assert 'R.string.changelog' not in settings
+assert 'settings/android_auto' not in settings
+assert 'settings/android_auto' in content
+assert 'disable_screenshot' not in privacy
+assert 'DisableScreenshotKey' not in (k/'MainActivity.kt').read_text()
+print('PASS: removed settings absent; Android Auto reachable from Content')

@@ -140,6 +140,8 @@ class SettingsNavigationTest {
     private fun assertNoRemovedEntries() {
         assertFalse(device.hasObject(By.text(label(R.string.integrations))))
         assertFalse(device.hasObject(By.text(label(R.string.about))))
+        assertFalse(device.hasObject(By.text(label(R.string.changelog))))
+        assertFalse(device.hasObject(By.text(label(R.string.disable_screenshot))))
         assertFalse(device.hasObject(By.textContains("Last.fm")))
         assertFalse(device.hasObject(By.textContains("Discord")))
         assertFalse(device.hasObject(By.textContains("AI lyrics translation")))
@@ -277,7 +279,27 @@ class SettingsNavigationTest {
         }
     }
 
-    @Test(timeout = 360000) fun settingsRoutesPersistenceAndOwnChangelog() {
+    @Test(timeout = 30000) fun legacyScreenshotPreferenceNoLongerBlocksCaptures() {
+        val key = androidx.datastore.preferences.core.booleanPreferencesKey("disableScreenshot")
+        val original = runBlocking { context.dataStore.data.first()[key] }
+        try {
+            runBlocking { context.dataStore.edit { it[key] = true } }
+            context.startActivity(Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            val deadline = SystemClock.elapsedRealtime() + 15000
+            while (resumedMainActivity() == null && SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(100)
+            val activity = requireNotNull(resumedMainActivity())
+            instrumentation.runOnMainSync {
+                assertEquals(0, activity.window.attributes.flags and android.view.WindowManager.LayoutParams.FLAG_SECURE)
+            }
+            println("SCREENSHOTS_OK: legacy true preference does not secure the window")
+        } finally {
+            runBlocking { context.dataStore.edit { prefs -> original?.let { prefs[key] = it } ?: prefs.remove(key) } }
+            resumedMainActivity()?.let { activity -> instrumentation.runOnMainSync { activity.finish() } }
+        }
+    }
+
+    @Test(timeout = 540000) fun settingsRoutesAndPlayerPreferences() {
         assertEquals("Metrolist", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
@@ -312,8 +334,31 @@ class SettingsNavigationTest {
                     device.waitForIdle()
                 }
                 R.string.player_and_audio -> {
+                    toggleAndRestore(R.string.crossfade, CrossfadeEnabledKey, false)
+                    val crossfadeBefore = runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] }
+                    try {
+                        runBlocking { context.dataStore.edit { it[CrossfadeEnabledKey] = true } }
+                        toggleAndRestore(R.string.crossfade_gapless, CrossfadeGaplessKey, true)
+                        findText(R.string.crossfade_duration)
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs -> crossfadeBefore?.let { prefs[CrossfadeEnabledKey] = it } ?: prefs.remove(CrossfadeEnabledKey) } }
+                    }
+                    val silenceBefore = runBlocking { context.dataStore.data.first()[SkipSilenceKey] }
+                    try {
+                        runBlocking { context.dataStore.edit { it[SkipSilenceKey] = true } }
+                        toggleAndRestore(R.string.skip_silence_instant, SkipSilenceInstantKey, false)
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs -> silenceBefore?.let { prefs[SkipSilenceKey] = it } ?: prefs.remove(SkipSilenceKey) } }
+                    }
                     listOf(
-                        Triple(R.string.crossfade, CrossfadeEnabledKey, false),
+                        Triple(R.string.audio_offload, AudioOffload, false),
+                        Triple(R.string.varispeed, VarispeedKey, false),
+                        Triple(R.string.audio_track_playback_params, AudioTrackPlaybackParamsKey, true),
+                        Triple(R.string.google_cast, EnableGoogleCastKey, true),
+                        Triple(R.string.enable_automatic_sleeptimer, SleepTimerEnabledKey, false),
+                        Triple(R.string.sleep_timer_stop_after_current_song_title, SleepTimerStopAfterCurrentSongKey, false),
+                        Triple(R.string.sleep_timer_fade_out_title, SleepTimerFadeOutKey, false),
+                        Triple(R.string.auto_download_on_like, AutoDownloadOnLikeKey, false),
                         Triple(R.string.skip_silence, SkipSilenceKey, false),
                         Triple(R.string.audio_normalization, AudioNormalizationKey, true),
                         Triple(R.string.seek_seconds_addup, SeekExtraSeconds, false),
@@ -346,9 +391,41 @@ class SettingsNavigationTest {
                             originalQuality?.let { prefs[AudioQualityKey] = it } ?: prefs.remove(AudioQualityKey)
                         } }
                     }
-                    println("SETTINGS_ENUM_OK: LOW/AUTO/HIGH stored, original restored")
+                    val normalizationBefore = runBlocking { context.dataStore.data.first()[AudioNormalizationKey] }
+                    val loudnessBefore = runBlocking { context.dataStore.data.first()[LoudnessLevelKey] }
+                    try {
+                        runBlocking { context.dataStore.edit { it[AudioNormalizationKey] = true } }
+                        for ((text, level) in listOf(
+                            R.string.loudness_level_aggressive to LoudnessLevel.AGGRESSIVE,
+                            R.string.loudness_level_loud to LoudnessLevel.LOUD,
+                            R.string.loudness_level_balanced to LoudnessLevel.BALANCED,
+                            R.string.loudness_level_quiet to LoudnessLevel.QUIET)) {
+                            open(R.string.loudness_level)
+                            open(text)
+                            awaitPreference("loudness ${level.name}") { context.dataStore.data.first()[LoudnessLevelKey] == level.name }
+                        }
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs ->
+                            normalizationBefore?.let { prefs[AudioNormalizationKey] = it } ?: prefs.remove(AudioNormalizationKey)
+                            loudnessBefore?.let { prefs[LoudnessLevelKey] = it } ?: prefs.remove(LoudnessLevelKey)
+                        } }
+                    }
+                    println("SETTINGS_ENUM_OK: quality and all four normalization levels stored and restored")
+                    open(R.string.sleep_timer_repeat)
+                    findText(R.string.sleep_timer_daily)
+                    open(android.R.string.cancel)
+                    findText(R.string.history_duration)
+                    open(R.string.alarm_add)
+                    device.pressBack()
+                    device.waitForIdle()
+                    println("PLAYER_DIALOGS_OK: timer schedule and alarm editor open and dismiss")
                 }
                 R.string.content -> {
+                    open(R.string.android_auto)
+                    findText(R.string.android_auto_visible_sections)
+                    device.pressBack()
+                    device.waitForIdle()
+                    println("SETTINGS_ANDROID_AUTO_OK: content route opens Android Auto")
                     open(R.string.lyrics_provider_selection)
                     toggleAndRestore(R.string.enable_lyricsplus, EnableLyricsPlus, true,
                         effect = { fr.makoff.music.lyrics.LyricsPlusProvider.isEnabled(context) },
@@ -389,19 +466,6 @@ class SettingsNavigationTest {
             device.pressBack()
             device.waitForIdle()
         }
-        val latestTag = runBlocking {
-            kotlinx.coroutines.withTimeout(45000) {
-                fr.makoff.music.utils.Updater.getAllReleases().getOrThrow().first().tagName
-            }
-        }
-        open(R.string.changelog)
-        assertTrue("Changelog title", device.wait(Until.hasObject(By.text(label(R.string.changelog))), 5000))
-        val deadline = SystemClock.elapsedRealtime() + 45000
-        while (!visibleControls().any { it.text == latestTag } &&
-            !device.hasObject(By.text(label(R.string.makoff_changelog_error))) &&
-            SystemClock.elapsedRealtime() < deadline) SystemClock.sleep(250)
-        assertTrue("Latest release from our GitHub is visible", visibleControls().any { it.text == latestTag })
-        println("SETTINGS_CHANGELOG_OK: latest repository release visible: $latestTag")
         assertNoRemovedEntries()
     }
 }

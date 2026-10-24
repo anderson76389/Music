@@ -43,7 +43,7 @@ for variant in foss gms; do
     adb shell cmd connectivity airplane-mode disable
     grep -Eq 'OK \(1 test\)' smoke-results/offline-player-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
-    timeout 420s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
+    timeout 660s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
     adb pull /data/local/tmp/settings-failure.png smoke-results/ || true
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
     adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true

@@ -747,6 +747,11 @@ fun ContentSettings(
             title = stringResource(R.string.general),
             items = listOf(
                 Material3SettingsItem(
+                    icon = painterResource(R.drawable.ic_android_auto),
+                    title = { Text(stringResource(R.string.android_auto)) },
+                    onClick = { navController.navigate("settings/android_auto") }
+                ),
+                Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content_language)) },
                     description = {
