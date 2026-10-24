@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderCollectionItem
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -60,6 +61,8 @@ fun YouTubeSelectionSongMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Sélections", "Titres", songSelection.map { it.id }.sorted().joinToString(",")) { songSelection.map { it.toMediaMetadata() } }
+
     val playerConnection = LocalPlayerConnection.current ?: return
     val coroutineScope = rememberCoroutineScope()
     val syncUtils = LocalSyncUtils.current
@@ -368,7 +371,7 @@ fun YouTubeSelectionSongMenu(
                                     )
                                 },
                                 onClick = {
-                                    songSelection.forEach { downloadUtil.download(it) }
+                                    unifiedDownload.onClick?.invoke()
                                     clearAction()
                                     onDismiss()
                                 },

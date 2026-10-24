@@ -5,6 +5,7 @@
 
 package fr.makoff.music.ui.menu
 
+import fr.makoff.music.downloads.rememberFolderCollectionItem
 import android.annotation.SuppressLint
 import android.content.res.Configuration
 import android.widget.Toast
@@ -80,6 +81,8 @@ fun SelectionSongMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Sélections", "Titres", songSelection.map { it.id }.sorted().joinToString(",")) { songSelection.map { it.toMediaMetadata() } }
+
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
     val syncUtils = LocalSyncUtils.current
@@ -544,7 +547,7 @@ fun SelectionSongMenu(
                                             )
                                         },
                                         onClick = {
-                                            songSelection.forEach { downloadUtil.download(it) }
+                                            unifiedDownload.onClick?.invoke()
                                         },
                                     )
                                 }
@@ -660,6 +663,8 @@ fun SelectionMediaMetadataMenu(
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Sélections", "Titres", songSelection.map { it.id }.sorted().joinToString(",")) { songSelection }
+
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
 
@@ -961,7 +966,7 @@ fun SelectionMediaMetadataMenu(
                                             )
                                         },
                                         onClick = {
-                                            songSelection.forEach { downloadUtil.download(it) }
+                                            unifiedDownload.onClick?.invoke()
                                         },
                                     )
                                 }

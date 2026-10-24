@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.screens.playlist
 
+import fr.makoff.music.models.toMediaMetadata
+import fr.makoff.music.downloads.rememberFolderCollectionItem
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
@@ -476,6 +478,8 @@ private fun CachePlaylistHeader(
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Playlists", "Cache", "Cache") { songs.map { it.toMediaMetadata() } }
+
 
     Column(
         modifier = modifier
@@ -602,7 +606,7 @@ private fun CachePlaylistHeader(
                             },
                             onDownload = {
                                 // Download all cached songs
-                                songs.forEach { downloadUtil.download(it) }
+                                unifiedDownload.onClick?.invoke()
                             },
                             onDismiss = { menuState.dismiss() }
                         )

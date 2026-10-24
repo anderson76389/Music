@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.screens.playlist
 
+import fr.makoff.music.models.toMediaMetadata
+import fr.makoff.music.downloads.rememberFolderCollectionItem
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -846,6 +848,8 @@ private fun AutoPlaylistHeader(
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Playlists", name, name) { songs.map { it.toMediaMetadata() } }
+
 
     Column(
         modifier =
@@ -998,7 +1002,7 @@ private fun AutoPlaylistHeader(
                                     }
 
                                     else -> {
-                                        songs.forEach { downloadUtil.download(it) }
+                                        unifiedDownload.onClick?.invoke()
                                     }
                                 }
                             },

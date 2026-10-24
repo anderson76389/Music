@@ -5,6 +5,8 @@
 
 package fr.makoff.music.ui.screens.playlist
 
+import fr.makoff.music.models.toMediaMetadata
+import fr.makoff.music.downloads.rememberFolderCollectionItem
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
@@ -884,6 +886,8 @@ fun LocalPlaylistHeader(
         }
 
     val downloadUtil = LocalDownloadUtil.current
+    val unifiedDownload = rememberFolderCollectionItem("Playlists", playlist.playlist.name, playlist.id) { songs.map { it.song.toMediaMetadata() } }
+
     var downloadState by remember {
         mutableIntStateOf(Download.STATE_STOPPED)
     }
@@ -1413,9 +1417,7 @@ fun LocalPlaylistHeader(
                                     }
 
                                     else -> {
-                                        songs.forEach { song ->
-                                            downloadUtil.download(song.song)
-                                        }
+                                        unifiedDownload.onClick?.invoke()
                                     }
                                 }
                             },
