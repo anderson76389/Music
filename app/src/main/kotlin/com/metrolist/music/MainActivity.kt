@@ -824,6 +824,7 @@ class MainActivity : FragmentActivity() {
 
                     // Track previous tab for animations
                     navController.currentBackStackEntry?.destination?.route?.let {
+                        if (BuildConfig.DEBUG) Timber.d("NAV_DESTINATION: %s", it)
                         setPreviousTab(it)
                     }
                 }
