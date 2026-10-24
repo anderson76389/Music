@@ -592,7 +592,7 @@ fun YouTubePlaylistMenu(
                 items =
                     buildList {
                         if (songs.isNotEmpty()) {
-                            add(
+                            addAll(listOfNotNull(
                                 when (downloadState) {
                                     Download.STATE_COMPLETED -> {
                                         Material3MenuItemData(
@@ -632,7 +632,7 @@ fun YouTubePlaylistMenu(
                                         null
                                     }
                                 },
-                            )
+                            ))
                         }
                         add(
                             Material3MenuItemData(

@@ -529,7 +529,7 @@ fun PlaylistMenu(
                             ),
                         )
                         if (downloadPlaylist != true) {
-                            add(
+                            addAll(listOfNotNull(
                                 when (downloadState) {
                                     Download.STATE_COMPLETED -> {
                                         Material3MenuItemData(
@@ -569,7 +569,7 @@ fun PlaylistMenu(
                                         null
                                     }
                                 },
-                            )
+                            ))
                         }
                         // Export playlist
                         add(
