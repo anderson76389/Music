@@ -21,6 +21,9 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -47,6 +50,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -146,39 +150,71 @@ fun ThemeScreen(
         onDynamicThemeChange(isDynamicColor)
     }
 
-    if (isLandscape) {
-        LandscapeThemeLayout(
-            innerPadding = PaddingValues(0.dp),
-            darkMode = darkMode,
-            onDarkModeChange = onDarkModeChange,
-            pureBlack = pureBlack,
-            onPureBlackChange = onPureBlackChange,
-            selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
-        )
-    } else {
-        PortraitThemeLayout(
-            innerPadding = PaddingValues(0.dp),
-            darkMode = darkMode,
-            onDarkModeChange = onDarkModeChange,
-            pureBlack = pureBlack,
-            onPureBlackChange = onPureBlackChange,
-            selectedThemeColor = selectedThemeColor,
-            onSelectedThemeColorChange = handleColorSelection
-        )
-    }
-
-    TopAppBar(
-        title = { Text(stringResource(R.string.theme_colors)) },
-        navigationIcon = {
-            IconButton(onClick = { navController.navigateUp() }) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_back),
-                    contentDescription = stringResource(R.string.cd_back)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        if (maxWidth >= 600.dp) {
+            Scaffold(
+                containerColor = Color.Transparent,
+                topBar = {
+                    TopAppBar(
+                        title = { Text(stringResource(R.string.theme_colors)) },
+                        navigationIcon = {
+                            IconButton(onClick = { navController.navigateUp() }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.arrow_back),
+                                    contentDescription = stringResource(R.string.cd_back)
+                                )
+                            }
+                        }
+                    )
+                }
+            ) { padding ->
+                LandscapeThemeLayout(
+                    innerPadding = padding,
+                    darkMode = darkMode,
+                    onDarkModeChange = onDarkModeChange,
+                    pureBlack = pureBlack,
+                    onPureBlackChange = onPureBlackChange,
+                    selectedThemeColor = selectedThemeColor,
+                    onSelectedThemeColorChange = handleColorSelection,
+                    wrapPalettes = true
                 )
             }
+        } else {
+            if (isLandscape) {
+                LandscapeThemeLayout(
+                    innerPadding = PaddingValues(0.dp),
+                    darkMode = darkMode,
+                    onDarkModeChange = onDarkModeChange,
+                    pureBlack = pureBlack,
+                    onPureBlackChange = onPureBlackChange,
+                    selectedThemeColor = selectedThemeColor,
+                    onSelectedThemeColorChange = handleColorSelection
+                )
+            } else {
+                PortraitThemeLayout(
+                    innerPadding = PaddingValues(0.dp),
+                    darkMode = darkMode,
+                    onDarkModeChange = onDarkModeChange,
+                    pureBlack = pureBlack,
+                    onPureBlackChange = onPureBlackChange,
+                    selectedThemeColor = selectedThemeColor,
+                    onSelectedThemeColorChange = handleColorSelection
+                )
+            }
+        
+            TopAppBar(
+                title = { Text(stringResource(R.string.theme_colors)) },
+                navigationIcon = {
+                    IconButton(onClick = { navController.navigateUp() }) {
+                        Icon(
+                            painter = painterResource(R.drawable.arrow_back),
+                            contentDescription = stringResource(R.string.cd_back)
+                        )
+                    }
+                }
+            )
         }
-    )
+    }
 }
 
 @Composable
@@ -235,7 +271,8 @@ fun LandscapeThemeLayout(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    wrapPalettes: Boolean = false
 ) {
     Row(
         modifier = Modifier
@@ -277,7 +314,8 @@ fun LandscapeThemeLayout(
                 pureBlack = pureBlack,
                 onPureBlackChange = onPureBlackChange,
                 selectedThemeColor = selectedThemeColor,
-                onSelectedThemeColorChange = onSelectedThemeColorChange
+                onSelectedThemeColorChange = onSelectedThemeColorChange,
+                wrapPalettes = wrapPalettes
             )
 
             Spacer(modifier = Modifier.height(80.dp))
@@ -285,6 +323,7 @@ fun LandscapeThemeLayout(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ThemeControls(
     darkMode: DarkMode,
@@ -292,7 +331,8 @@ fun ThemeControls(
     pureBlack: Boolean,
     onPureBlackChange: (Boolean) -> Unit,
     selectedThemeColor: Color,
-    onSelectedThemeColorChange: (Color) -> Unit
+    onSelectedThemeColorChange: (Color) -> Unit,
+    wrapPalettes: Boolean = false
 ) {
     Card(
         modifier = Modifier
@@ -386,26 +426,37 @@ fun ThemeControls(
                     color = MaterialTheme.colorScheme.onSurface
                 )
                 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-                    contentPadding = PaddingValues(horizontal = 4.dp)
-                ) {
-                    items(PaletteColors) { palette ->
-                        val isDynamicPalette = palette.seedColor == Color.Transparent
-                        val isSelected = if (isDynamicPalette) {
-                            selectedThemeColor == DefaultThemeColor
-                        } else {
-                            selectedThemeColor == palette.seedColor
+                val paletteContent: @Composable (ThemePalette) -> Unit = { palette ->
+                    val isDynamicPalette = palette.seedColor == Color.Transparent
+                    val isSelected = if (isDynamicPalette) {
+                        selectedThemeColor == DefaultThemeColor
+                    } else {
+                        selectedThemeColor == palette.seedColor
+                    }
+                    
+                    PaletteItem(
+                        palette = palette,
+                        isSelected = isSelected,
+                        onClick = { 
+                            val colorToSave = if (isDynamicPalette) DefaultThemeColor else palette.seedColor
+                            onSelectedThemeColorChange(colorToSave) 
                         }
-                        
-                        PaletteItem(
-                            palette = palette,
-                            isSelected = isSelected,
-                            onClick = { 
-                                val colorToSave = if (isDynamicPalette) DefaultThemeColor else palette.seedColor
-                                onSelectedThemeColorChange(colorToSave) 
-                            }
-                        )
+                    )
+                }
+                if (wrapPalettes) {
+                    FlowRow(
+                        modifier = Modifier.fillMaxWidth().padding(4.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        PaletteColors.forEach { paletteContent(it) }
+                    }
+                } else {
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
+                        contentPadding = PaddingValues(horizontal = 4.dp)
+                    ) {
+                        items(PaletteColors) { paletteContent(it) }
                     }
                 }
             }

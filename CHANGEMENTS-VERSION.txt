@@ -1,6 +1,3 @@
-- Suppression complète de l’égaliseur système ; conservation de l’égaliseur intégré.
-- Suppression des alarmes, de la minuterie de sommeil et des paroles dans les paramètres et le lecteur.
-- Suppression des fournisseurs de paroles et de leurs traitements en arrière-plan.
-- Annulation des anciennes alarmes et nettoyage des préférences des fonctions retirées lors de la mise à jour.
-- Déplacement des pauses et effacements des historiques d’écoute et de recherche vers les réglages de lecture ; suppression du bouton Confidentialité.
-- Ajout d’un raccourci de recherche à côté de l’historique dans la barre du haut.
+- Correction du placement des palettes de couleurs sur tablette et écran déplié : plusieurs rangées selon la largeur disponible.
+- Les commandes de thème restent sous la barre de titre et peuvent défiler sur les écrans larges.
+- Rendu, effets et animations Liquid Glass inchangés.
