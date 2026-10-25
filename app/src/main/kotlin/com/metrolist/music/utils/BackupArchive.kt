@@ -6,7 +6,6 @@ import android.net.Uri
 import android.os.Build
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.toMutablePreferences
 import fr.makoff.music.constants.*
 import fr.makoff.music.db.InternalDatabase
 import fr.makoff.music.db.MusicDatabase

@@ -256,7 +256,6 @@ fun AccountSettings(
             items = listOfNotNull(
                 Material3SettingsItem(
                     title = {
-                                         title = {
                         Column(Modifier.fillMaxWidth()) {
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
