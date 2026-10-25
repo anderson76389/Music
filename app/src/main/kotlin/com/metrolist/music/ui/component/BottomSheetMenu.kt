@@ -103,7 +103,7 @@ fun AnimatedBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier.liquidGlass(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), chrome = true),
+        modifier = modifier.liquidGlass(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), chrome = true, showBorder = false),
         sheetState = sheetState,
         sheetMaxWidth = sheetMaxWidth,
         shape = shape,

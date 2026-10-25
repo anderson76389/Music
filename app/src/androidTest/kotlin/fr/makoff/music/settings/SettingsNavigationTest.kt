@@ -254,10 +254,24 @@ class SettingsNavigationTest {
             assertTrue("Dark glass home remains accessible", device.wait(Until.hasObject(By.desc(label(R.string.account))), 10000))
             device.executeShellCommand("screencap -p /data/local/tmp/glass-home-dark.png")
             println("GLASS_APPEARANCES_OK: light and dark glass home/settings captured")
+            runBlocking { context.dataStore.edit { it[AppLanguageKey] = "fr"; it[DarkModeKey] = DarkMode.OFF.name } }
+            context.startActivity(Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            assertTrue("French navigation is visible", device.wait(Until.hasObject(By.text("Bibliothèque")), 15000))
+            device.findObjects(By.text("Bibliothèque")).maxByOrNull { it.visibleBounds.top }!!.click()
+            assertTrue("Playlist library is visible", device.wait(Until.hasObject(By.text("Playlists")), 10000))
+            SystemClock.sleep(1000)
+            val title = device.findObjects(By.text("Bibliothèque")).minByOrNull { it.visibleBounds.top }
+            assertNotNull("Full French library title", title)
+            assertTrue("Library title must stay on one line",
+                title!!.visibleBounds.height() < 48 * context.resources.displayMetrics.density)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-library-fr.png")
+            println("LIBRARY_TITLE_OK: French title remains on one line; library and create button captured")
         } finally {
             runBlocking { context.dataStore.edit { prefs ->
                 original[LiquidGlassEnabledKey]?.let { prefs[LiquidGlassEnabledKey] = it } ?: prefs.remove(LiquidGlassEnabledKey)
                 original[DarkModeKey]?.let { prefs[DarkModeKey] = it } ?: prefs.remove(DarkModeKey)
+                original[AppLanguageKey]?.let { prefs[AppLanguageKey] = it } ?: prefs.remove(AppLanguageKey)
             } }
             val activity = resumedMainActivity()
             instrumentation.runOnMainSync { activity?.finish() }

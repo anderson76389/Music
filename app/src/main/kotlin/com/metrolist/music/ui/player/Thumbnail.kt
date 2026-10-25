@@ -564,7 +564,7 @@ private fun ThumbnailItem(
 
                 ThumbnailImage(
                     artworkUri = artworkUriToUse,
-                    cropArtwork = cropAlbumArt
+                    cropArtwork = cropAlbumArt || LocalLiquidGlassEnabled.current
                 )
             }
 

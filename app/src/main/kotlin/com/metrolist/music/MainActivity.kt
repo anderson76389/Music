@@ -31,6 +31,9 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -106,6 +109,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -956,9 +960,18 @@ class MainActivity : FragmentActivity() {
                                 Row(Modifier.liquidGlass(androidx.compose.foundation.shape.RoundedCornerShape(0.dp), chrome = true)) {
                                     TopAppBar(
                                         title = {
-                                            Text(
+                                            BasicText(
                                                 text = currentTitleRes?.let { stringResource(it) } ?: "",
-                                                style = MaterialTheme.typography.titleLarge,
+                                                style = MaterialTheme.typography.titleLarge.copy(
+                                                    color = MaterialTheme.colorScheme.onSurface,
+                                                ),
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                autoSize = TextAutoSize.StepBased(
+                                                    minFontSize = 16.sp,
+                                                    maxFontSize = MaterialTheme.typography.titleLarge.fontSize,
+                                                    stepSize = 0.5.sp,
+                                                ),
                                             )
                                         },
                                         actions = {

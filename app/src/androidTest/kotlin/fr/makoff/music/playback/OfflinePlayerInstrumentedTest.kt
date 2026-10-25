@@ -111,14 +111,14 @@ class OfflinePlayerInstrumentedTest {
         var connection: PlayerConnection? = null
         var service: MusicService? = null
         val artwork = java.io.File(context.cacheDir, "glass-validation-art.png")
-        val bitmap = android.graphics.Bitmap.createBitmap(400, 400, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = android.graphics.Bitmap.createBitmap(720, 400, android.graphics.Bitmap.Config.ARGB_8888)
         val canvas = android.graphics.Canvas(bitmap)
         val paint = android.graphics.Paint().apply {
-            shader = android.graphics.LinearGradient(0f, 0f, 400f, 400f,
+            shader = android.graphics.LinearGradient(0f, 0f, 720f, 400f,
                 intArrayOf(0xFF12657F.toInt(), 0xFFD37B35.toInt(), 0xFF653C25.toInt()), null,
                 android.graphics.Shader.TileMode.CLAMP)
         }
-        canvas.drawRect(0f, 0f, 400f, 400f, paint)
+        canvas.drawRect(0f, 0f, 720f, 400f, paint)
         artwork.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it) }
         bitmap.recycle()
         val tracks = (0..3).map { index ->
