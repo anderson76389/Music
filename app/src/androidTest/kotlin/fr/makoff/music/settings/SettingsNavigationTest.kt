@@ -280,7 +280,9 @@ class SettingsNavigationTest {
             val settledNotification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 5000)
             assertNotNull("Update notification remains after the panel settles", settledNotification)
             var clickable = settledNotification!!
-            while (!clickable.isClickable && clickable.parent != null) clickable = clickable.parent
+            while (!clickable.isClickable) {
+                clickable = clickable.parent ?: break
+            }
             clickable.click()
             val deadline = SystemClock.elapsedRealtime() + 15000
             while (SystemClock.elapsedRealtime() < deadline && opened == null) {
