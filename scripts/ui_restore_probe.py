@@ -28,12 +28,15 @@ def click(pattern, timeout=25):
         for node in reversed(matches):
             bounds = list(map(int, re.findall(r"\d+", node.get("bounds", ""))))
             if len(bounds) == 4 and bounds[2] > bounds[0] and bounds[3] > bounds[1]:
+                time.sleep(.3)
                 subprocess.run(["adb", "shell", "input", "tap", str((bounds[0]+bounds[2])//2),
                                 str((bounds[1]+bounds[3])//2)], check=True)
                 time.sleep(.5)
                 return
         time.sleep(.5)
     pathlib.Path("smoke-results/restore-ui-failure.xml").write_text(last)
+    with open("smoke-results/restore-ui-logcat.txt", "w") as log:
+        subprocess.run(["adb", "logcat", "-d"], stdout=log)
     subprocess.run(["adb", "shell", "screencap", "-p", "/sdcard/restore-ui-failure.png"])
     subprocess.run(["adb", "pull", "/sdcard/restore-ui-failure.png", "smoke-results/"])
     raise RuntimeError(f"Restore UI control missing: {pattern}")
@@ -43,6 +46,13 @@ click("Account")
 click("Settings")
 click("Backup.*restore")
 click("Restore")
-click(re.escape(filename))
+for attempt in range(5):
+    click(re.escape(filename))
+    time.sleep(1)
+    subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/restore-ui.xml"],
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+    hierarchy = subprocess.check_output(["adb", "shell", "cat", "/sdcard/restore-ui.xml"], text=True)
+    if "com.google.android.documentsui" not in hierarchy:
+        break
 click("Restore")
 print("RESTORE_UI_SUBMITTED: actual file picker and restore confirmation clicked")
