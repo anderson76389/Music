@@ -73,6 +73,12 @@ import androidx.compose.material3.SliderState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import fr.makoff.music.ui.component.BottomSheetMenu
+import fr.makoff.music.ui.component.MenuState
+import fr.makoff.music.ui.theme.LocalChromeGlass
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -202,7 +208,8 @@ fun BottomSheetPlayer(
 ) {
     val context = LocalContext.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    val menuState = LocalMenuState.current
+    val playerMenuState = remember { MenuState() }
+    val playerGlass = remember { HazeState() }
     val copiedTitleStr = stringResource(R.string.copied_title)
     val copiedArtistStr = stringResource(R.string.copied_artist)
     val bottomSheetPageState = LocalBottomSheetPageState.current
@@ -399,6 +406,7 @@ fun BottomSheetPlayer(
 
     LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode) {
         if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
+            gradientColors = gradientColorsCache["${mediaMetadata?.id}_$glassMode"] ?: defaultGradientColors
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
                 val cachedColors = gradientColorsCache["${currentMetadata.id}_$glassMode"]
@@ -669,6 +677,12 @@ fun BottomSheetPlayer(
 
     val backgroundAlpha = state.progress.coerceIn(0f, 1f)
 
+    CompositionLocalProvider(
+        LocalMenuState provides playerMenuState,
+        LocalChromeGlass provides playerGlass,
+    ) {
+    // Capture the player separately: the navigation canvas sits behind it.
+    Box(Modifier.then(if (glassMode) Modifier.hazeSource(playerGlass) else Modifier)) {
     BottomSheet(
         state = state,
         modifier = modifier,
@@ -718,7 +732,7 @@ fun BottomSheetPlayer(
 
                     PlayerBackgroundStyle.GRADIENT -> {
                         AnimatedContent(
-                            targetState = gradientColors,
+                            targetState = gradientColors.ifEmpty { defaultGradientColors },
                             transitionSpec = {
                                 fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
                             },
@@ -1597,6 +1611,20 @@ fun BottomSheetPlayer(
                 fr.makoff.music.ui.theme.MetrolistTheme(darkTheme = true, themeColor = MaterialTheme.colorScheme.primary, content = queueContent)
             } else queueContent()
         }
+    }
+    }
+    val menuContent: @Composable () -> Unit = {
+        BottomSheetMenu(state = playerMenuState)
+    }
+    if (glassMode) {
+        fr.makoff.music.ui.theme.MetrolistTheme(
+            darkTheme = true,
+            themeColor = MaterialTheme.colorScheme.primary,
+            content = menuContent,
+        )
+    } else {
+        menuContent()
+    }
     }
 }
 

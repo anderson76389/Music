@@ -1,6 +1,4 @@
-- Barre de volume directement dans le lecteur ; contrôle local et Google Cast conservé.
-- Partage déplacé dans le menu du lecteur, juste au-dessus de Détails.
-- Commandes de lecture agrandies et espacement du lecteur ajusté ; thème Liquid Glass conservé.
-- Téléchargement automatique des titres aimés dans le dossier J'aime du dossier choisi, avec le même fichier pour le hors-ligne.
-- Les changements de J'aime sont suivis dans toute l'application et les fichiers déjà exportés sont réutilisés.
-- Essais ajoutés pour le volume réel, les deux modes AudioTrack et l'export automatique des titres aimés.
+- Le menu du lecteur utilise désormais le lecteur et sa pochette comme arrière-plan du verre, au lieu de l'accueil.
+- Couleurs sombres cohérentes pour le menu du lecteur Liquid Glass, y compris avec le thème général clair.
+- Fond de secours immédiat à l'ouverture d'un titre, sans conserver les couleurs du titre précédent pendant le chargement.
+- Disposition, commandes, téléchargements et thème général conservés.

@@ -343,6 +343,18 @@ class OfflinePlayerInstrumentedTest {
             main { active.playerVolume.value = previousVolume }
             println("PLAYER_VOLUME_OK: visible slider changes actual player volume")
             clickDescription(R.string.more_options)
+            assertNotNull("Player menu opens", device.wait(Until.findObject(By.text(context.getString(R.string.start_radio))), 5000))
+            delay(1200)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-player-menu.png")
+            device.pressBack()
+            await("Closing the menu must return to the expanded player") {
+                freshControlBounds(context.getString(R.string.player_volume)) != null &&
+                    freshControlBounds(context.getString(R.string.next)) != null
+            }
+            assertEquals("Opening menu must keep the current track", tracks[0].id,
+                main { active.player.currentMediaItem?.mediaId })
+            println("PLAYER_MENU_OK: menu dismisses back to expanded player with the same track")
+            clickDescription(R.string.more_options)
             var eq = device.wait(Until.findObject(By.text(context.getString(R.string.equalizer))), 3000)
             for (attempt in 0 until 8) {
                 if (eq != null) break

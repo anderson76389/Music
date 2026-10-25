@@ -40,6 +40,7 @@ for variant in foss gms; do
     adb exec-out screencap -p > smoke-results/offline-player.png
     adb pull /data/local/tmp/glass-mini-player.png smoke-results/ || true
     adb pull /data/local/tmp/glass-player.png smoke-results/ || true
+    adb pull /data/local/tmp/glass-player-menu.png smoke-results/ || true
     adb shell cmd connectivity airplane-mode disable
     grep -Eq 'OK \(1 test\)' smoke-results/offline-player-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
