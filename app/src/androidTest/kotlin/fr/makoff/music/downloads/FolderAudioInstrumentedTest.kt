@@ -83,6 +83,10 @@ class FolderAudioInstrumentedTest {
             androidx.work.WorkManager.getInstance(context).cancelUniqueWork(
                 "folder-audio-$id-${destinationId(tree.toString() + AutoLikedDownloads.FOLDER + 0)}"
             ).result.get()
+            val notifications = context.getSystemService(android.app.NotificationManager::class.java)
+            notifications.activeNotifications.filter {
+                it.notification.extras.getString(android.app.Notification.EXTRA_TITLE) == media.title
+            }.forEach { notifications.cancel(it.tag, it.id) }
             (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
             downloads.downloads.value = downloads.downloads.value - id
             downloads.database.songEntity(id)?.let { downloads.database.delete(it) }

@@ -274,7 +274,14 @@ class SettingsNavigationTest {
             device.openNotification()
             val notification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 10000)
             assertNotNull("Update notification is visible", notification)
-            notification!!.click()
+            device.waitForIdle()
+            val automation = instrumentation.uiAutomation
+            automation.serviceInfo = automation.serviceInfo
+            val settledNotification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 5000)
+            assertNotNull("Update notification remains after the panel settles", settledNotification)
+            var clickable = settledNotification!!
+            while (!clickable.isClickable && clickable.parent != null) clickable = clickable.parent
+            clickable.click()
             val deadline = SystemClock.elapsedRealtime() + 15000
             while (SystemClock.elapsedRealtime() < deadline && opened == null) {
                 instrumentation.runOnMainSync {
