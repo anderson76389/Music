@@ -28,22 +28,32 @@ class BackupRestoreProbe {
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val database = InternalDatabase.newInstance(context)
         val id = java.util.UUID.randomUUID().toString().replace("-", "").take(11)
-        val archive = File(context.cacheDir, "roundtrip.backup")
+        val values = android.content.ContentValues().apply {
+            put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, "restore-probe-$id.backup")
+            put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "application/octet-stream")
+            put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            put(android.provider.MediaStore.MediaColumns.IS_PENDING, 1)
+        }
+        val archive = requireNotNull(context.contentResolver.insert(
+            android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values))
         database.insert(SongEntity(id, "Original sauvegardé"))
         context.dataStore.edit { it[proofKey] = "snapshot-$id" }
         ArtistNameAliases.set(context, "backup-probe", null, "Original", "Alias sauvegardé")
-        BackupArchive.write(context, database, Uri.fromFile(archive))
-        assertTrue(archive.length() > 100)
-        val preview = BackupRestoreViewModel(database).previewBackup(context, Uri.fromFile(archive))
+        BackupArchive.write(context, database, archive)
+        context.contentResolver.update(archive, android.content.ContentValues().apply {
+            put(android.provider.MediaStore.MediaColumns.IS_PENDING, 0)
+        }, null, null)
+        assertTrue(context.contentResolver.openAssetFileDescriptor(archive, "r")!!.use { it.length } > 100)
+        val preview = BackupRestoreViewModel(database).previewBackup(context, archive)
         assertFalse(preview.hasAuthData)
         database.update(SongEntity(id, "Modification après sauvegarde"))
         context.dataStore.edit { it[proofKey] = "changed" }
         ArtistNameAliases.set(context, "backup-probe", null, "Original", "Alias modifié")
-        File(context.noBackupFilesDir, "restore-proof").writeText("$id\n${Process.myPid()}")
+        File(context.noBackupFilesDir, "restore-proof").writeText("$id\n${Process.myPid()}\n$archive")
+        database.close()
         println("RESTORE_PREPARED: actual SQLite archive and changed preferences ready")
-        BackupRestoreViewModel(database).restore(context, Uri.fromFile(archive))
-        delay(25000)
-        fail("Restore must restart the main process")
+        // The host drives the real file picker after instrumentation has finished.
+
     }
 
     @Test(timeout = 45000) fun verifyAfterRestart() = runBlocking(Dispatchers.IO) {
@@ -104,7 +114,7 @@ class BackupRestoreProbe {
             database.song(id).first()?.let { database.delete(it.song) }
             context.dataStore.edit { it.remove(proofKey) }
             marker.delete()
-            File(context.cacheDir, "roundtrip.backup").delete()
+            context.contentResolver.delete(Uri.parse(parts[2]), null, null)
             database.close()
         }
     }

@@ -44,10 +44,12 @@ for variant in foss gms; do
     adb shell cmd connectivity airplane-mode disable
     grep -Eq 'OK \(1 test\)' smoke-results/offline-player-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/offline-player-tests.txt
-    # Restoration intentionally terminates the old main process; verify the replacement process.
-    timeout 60s adb shell am instrument -w -r -e class fr.makoff.music.settings.BackupRestoreProbe#prepareAndRestore "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/restore-prepare.txt 2>&1 || true
+    # Prepare data, then trigger restore outside instrumentation through the real file picker.
+    timeout 60s adb shell am instrument -w -r -e class fr.makoff.music.settings.BackupRestoreProbe#prepareAndRestore "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/restore-prepare.txt
+    grep -Fq 'OK (1 test)' smoke-results/restore-prepare.txt
     adb logcat -d > smoke-results/restore-process-logcat.txt
     grep -Fq RESTORE_PREPARED smoke-results/restore-process-logcat.txt
+    python3 scripts/ui_restore_probe.py "$package" | tee smoke-results/restore-ui.txt
     for attempt in $(seq 1 30); do
       adb logcat -d > smoke-results/restore-process-logcat.txt
       if grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt; then break; fi
