@@ -679,7 +679,6 @@ fun BottomSheetPlayer(
 
     CompositionLocalProvider(
         LocalMenuState provides playerMenuState,
-        LocalChromeGlass provides playerGlass,
     ) {
     // Capture the player separately: the navigation canvas sits behind it.
     Box(Modifier.then(if (glassMode) Modifier.hazeSource(playerGlass) else Modifier)) {
@@ -1614,7 +1613,9 @@ fun BottomSheetPlayer(
     }
     }
     val menuContent: @Composable () -> Unit = {
-        BottomSheetMenu(state = playerMenuState)
+        CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
+            BottomSheetMenu(state = playerMenuState)
+        }
     }
     if (glassMode) {
         fr.makoff.music.ui.theme.MetrolistTheme(
