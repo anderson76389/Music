@@ -187,6 +187,7 @@ abstract class InternalDatabase : RoomDatabase() {
             context: Context,
             dbName: String = DB_NAME,
             withPragmaCallback: Boolean = true,
+            allowDestructiveMigration: Boolean = true,
         ): InternalDatabase {
             val builder = Room
                 .databaseBuilder(context, InternalDatabase::class.java, dbName)
@@ -196,7 +197,7 @@ abstract class InternalDatabase : RoomDatabase() {
                     MIGRATION_21_24,
                     MIGRATION_22_24,
                     MIGRATION_24_25,
-                ).fallbackToDestructiveMigration(false)
+                )
                 .setJournalMode(RoomDatabase.JournalMode.WRITE_AHEAD_LOGGING)
                 .setTransactionExecutor(
                     java.util.concurrent.Executors
@@ -205,6 +206,8 @@ abstract class InternalDatabase : RoomDatabase() {
                     java.util.concurrent.Executors
                         .newFixedThreadPool(4),
                 )
+
+            if (allowDestructiveMigration) builder.fallbackToDestructiveMigration(false)
 
             if (withPragmaCallback) {
                 builder.addCallback(

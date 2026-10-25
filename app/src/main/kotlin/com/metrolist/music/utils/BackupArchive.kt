@@ -138,6 +138,13 @@ internal object BackupArchive {
                         // Recover older archives that contain committed rows only in their WAL.
                         db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null).use { it.moveToFirst() }
                     }
+                    val validated = InternalDatabase.build(context, file.path,
+                        withPragmaCallback = false, allowDestructiveMigration = false)
+                    try {
+                        validated.openHelper.writableDatabase.query("SELECT 1").close()
+                    } finally {
+                        validated.close()
+                    }
                 }
                 File(stage, ArtistNameAliases.BACKUP_FILENAME).takeIf(File::exists)?.let {
                     ArtistNameAliases.deserialize(it.readText())
