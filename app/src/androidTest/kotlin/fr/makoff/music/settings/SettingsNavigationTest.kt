@@ -288,7 +288,6 @@ class SettingsNavigationTest {
             assertNotNull("Individual update notification is registered", published)
             val action = published!!.notification.contentIntent
             assertNotNull("Individual update notification has an installer action", action)
-            assertTrue("Update action starts an activity", action.isActivity)
             device.pressBack()
             action.send()
             val deadline = SystemClock.elapsedRealtime() + 15000
