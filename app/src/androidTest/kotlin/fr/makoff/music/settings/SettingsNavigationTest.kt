@@ -80,6 +80,22 @@ class SettingsNavigationTest {
         error("Missing control: $text")
     }
 
+    private fun freshDescriptionBounds(label: String): android.graphics.Rect? {
+        fun find(node: android.view.accessibility.AccessibilityNodeInfo): android.graphics.Rect? {
+            try {
+                if (!node.refresh()) return null
+                if (node.isVisibleToUser && node.contentDescription?.toString() == label) {
+                    return android.graphics.Rect().also(node::getBoundsInScreen)
+                }
+                for (index in 0 until node.childCount) {
+                    node.getChild(index)?.let { child -> find(child)?.let { return it } }
+                }
+                return null
+            } finally { node.recycle() }
+        }
+        return instrumentation.uiAutomation.rootInActiveWindow?.let(::find)
+    }
+
     private fun captureFailure() {
         runCatching {
             device.executeShellCommand("screencap -p /data/local/tmp/settings-failure.png")
@@ -476,10 +492,16 @@ class SettingsNavigationTest {
         // Reapplying the same service info clears UiAutomation's cache on Android 11 too.
         val automation = instrumentation.uiAutomation
         automation.serviceInfo = automation.serviceInfo
-        val homeAccount = device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)
+        var homeAccount: android.graphics.Rect? = null
+        val accountDeadline = SystemClock.elapsedRealtime() + 15000
+        while (homeAccount == null && SystemClock.elapsedRealtime() < accountDeadline) {
+            homeAccount = freshDescriptionBounds(label(R.string.account))
+            if (homeAccount == null) SystemClock.sleep(100)
+        }
         if (homeAccount == null) captureFailure()
         assertNotNull("Return from search to home", homeAccount)
-        homeAccount!!.click()
+        val accountBounds = requireNotNull(homeAccount)
+        assertTrue(device.click(accountBounds.centerX(), accountBounds.centerY()))
         device.waitForIdle()
         assertNoRemovedEntries()
         open(R.string.settings)

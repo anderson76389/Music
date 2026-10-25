@@ -74,7 +74,17 @@ class BackupRestoreProbe {
             }
             val imported = model.loadM3UOnline(context, Uri.fromFile(m3u))
             assertEquals("lmnopqrstuv", imported.single().id)
-            assertEquals("lmnopqrstuv", fr.makoff.music.ui.menu.resolveImportedMedia(imported.single())!!.id)
+            val m3uMedia = fr.makoff.music.ui.menu.resolveImportedMedia(imported.single())!!
+            assertEquals("lmnopqrstuv", m3uMedia.id)
+            database.insert(m3uMedia)
+            val playlistEntity = fr.makoff.music.db.entities.PlaylistEntity(name = "Import CSV et M3U")
+            database.insert(playlistEntity)
+            val playlist = requireNotNull(database.playlist(playlistEntity.id).first())
+            database.addSongsToPlaylist(playlist, listOf(media.id to null, m3uMedia.id to null))
+            assertEquals(listOf(media.id, m3uMedia.id),
+                database.playlistSongs(playlistEntity.id).first().map { it.song.id })
+            database.delete(playlistEntity)
+            database.song(m3uMedia.id).first()?.let { database.delete(it.song) }
             csv.delete(); m3u.delete()
             database.song(media.id).first()?.let { database.delete(it.song) }
             val invalid = File(context.cacheDir, "invalid.backup")
