@@ -80,7 +80,7 @@ fun DefaultDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
+            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
             shape = AlertDialogDefaults.shape,
             color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,
@@ -170,7 +170,7 @@ fun AccountSettingsDialog(
                         .fillMaxWidth()
                         .padding(top = 72.dp, start = 16.dp, end = 16.dp)
                         .clip(RoundedCornerShape(28.dp))
-                        .liquidGlass(RoundedCornerShape(28.dp), chrome = true),
+                        .liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
                 shape = MaterialTheme.shapes.large,
                 color = if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surface,
                 tonalElevation = 8.dp,
@@ -254,7 +254,7 @@ fun ListDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true),
+            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
             shape = AlertDialogDefaults.shape,
             color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,

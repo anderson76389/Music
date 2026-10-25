@@ -1,4 +1,5 @@
-- Le titre Bibliothèque reste sur une seule ligne et adapte sa taille à la place disponible.
-- Boutons flottants ronds, avec un fond lisible et une ombre discrète, sans forme irrégulière.
-- Les pochettes au format paysage remplissent leur cadre dans le thème Liquid Glass, dans le lecteur et les listes.
-- Le contour blanc extérieur du menu des trois points est retiré ; son verre et son arrière-plan du lecteur sont conservés.
+- Fenêtres et paramètres Liquid Glass plus lisibles, avec un fond moins transparent.
+- Bouton de reconnaissance audio rond et lisible ; disposition du nom de compte et de la déconnexion corrigée.
+- Sauvegarde sur fichier réel en arrière-plan et restauration après arrêt du processus principal, avec vérification des fichiers avant remplacement.
+- Imports CSV et M3U : liens YouTube conservés, caractères et séparateurs mieux pris en charge, chargement fermé en cas de fichier vide ou invalide.
+- Vérifications ajoutées pour les réglages du compte, la déconnexion sans perte de bibliothèque et une sauvegarde/restauration complète après redémarrage.

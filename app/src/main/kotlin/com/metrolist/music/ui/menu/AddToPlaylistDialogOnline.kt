@@ -311,31 +311,11 @@ fun AddToPlaylistDialogOnline(
                                     coroutineScope.launch {
                                         semaphore.withPermit {
                                             try {
-                                                var allArtists = ""
-                                                song.artists.forEach { artist ->
-                                                    allArtists += " ${URLDecoder.decode(artist.name, StandardCharsets.UTF_8.toString())}"
+                                                val media = resolveImportedMedia(song)
+                                                if (media != null) {
+                                                    database.insert(media)
+                                                    resolvedSongIds[index] = media.id
                                                 }
-                                                val query = "${song.title} - $allArtists"
-
-                                                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
-                                                    .onSuccess { result ->
-                                                        val items = result.items.distinctBy { it.id }
-                                                        if (items.isNotEmpty()) {
-                                                            val firstSong = items.firstOrNull() as? SongItem
-                                                            if (firstSong != null) {
-                                                                val firstSongMedia = firstSong.toMediaMetadata()
-                                                                withContext(Dispatchers.IO) {
-                                                                    try {
-                                                                        database.insert(firstSongMedia)
-                                                                    } catch (e: Exception) {
-                                                                        Timber.tag("Exception").e(e.toString())
-                                                                    }
-                                                                    resolvedSongIds[index] = firstSong.id
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    .onFailure { reportException(it) }
                                             } catch (e: Exception) {
                                                 Timber.tag("ERROR").v(e.toString())
                                             } finally {
@@ -378,34 +358,11 @@ fun AddToPlaylistDialogOnline(
                                     coroutineScope.launch {
                                         semaphore.withPermit {
                                             try {
-                                                var allArtists = ""
-                                                song.artists.forEach { artist ->
-                                                    allArtists += " ${URLDecoder.decode(artist.name, StandardCharsets.UTF_8.toString())}"
+                                                val media = resolveImportedMedia(song)
+                                                if (media != null) {
+                                                    database.insert(media)
+                                                    database.query { update(media.toSongEntity().toggleLike()) }
                                                 }
-                                                val query = "${song.title} - $allArtists"
-
-                                                YouTube.search(query, YouTube.SearchFilter.FILTER_SONG)
-                                                    .onSuccess { result ->
-                                                        val items = result.items.distinctBy { it.id }
-                                                        if (items.isNotEmpty()) {
-                                                            val firstSong = items.firstOrNull() as? SongItem
-                                                            if (firstSong != null) {
-                                                                val firstSongMedia = firstSong.toMediaMetadata()
-                                                                val firstSongEnt = firstSong.toMediaMetadata().toSongEntity()
-                                                                withContext(Dispatchers.IO) {
-                                                                    try {
-                                                                        database.insert(firstSongMedia)
-                                                                        database.query {
-                                                                            update(firstSongEnt.toggleLike())
-                                                                        }
-                                                                    } catch (e: Exception) {
-                                                                        Timber.tag("Exception").e(e.toString())
-                                                                    }
-                                                                }
-                                                            }
-                                                        }
-                                                    }
-                                                    .onFailure { reportException(it) }
                                             } catch (e: Exception) {
                                                 Timber.tag("ERROR").v(e.toString())
                                             } finally {
@@ -517,4 +474,26 @@ fun AddToPlaylistDialogOnline(
             )
         }
     }
+}
+
+
+internal suspend fun resolveImportedMedia(
+    song: fr.makoff.music.db.entities.Song,
+): fr.makoff.music.models.MediaMetadata? {
+    val id = fr.makoff.music.utils.PlaylistImport.youtubeId(song.id)
+    if (id != null) {
+        return fr.makoff.music.models.MediaMetadata(
+            id = id,
+            title = song.title,
+            artists = song.artists.map {
+                fr.makoff.music.models.MediaMetadata.Artist(id = null, name = it.name)
+            },
+            duration = song.song.duration,
+            thumbnailUrl = song.thumbnailUrl ?: "https://i.ytimg.com/vi/$id/hqdefault.jpg",
+        )
+    }
+    val query = listOf(song.title, song.artists.joinToString(" ") { it.name })
+        .filter(String::isNotBlank).joinToString(" - ")
+    return YouTube.search(query, YouTube.SearchFilter.FILTER_SONG).getOrThrow()
+        .items.filterIsInstance<SongItem>().firstOrNull()?.toMediaMetadata()
 }

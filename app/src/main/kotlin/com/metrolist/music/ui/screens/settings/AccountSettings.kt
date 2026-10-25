@@ -256,42 +256,44 @@ fun AccountSettings(
             items = listOfNotNull(
                 Material3SettingsItem(
                     title = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (isLoggedIn && accountImageUrl != null) {
-                                AsyncImage(
-                                    model = accountImageUrl,
-                                    contentDescription = null,
-                                    contentScale = ContentScale.Crop,
-                                    modifier = Modifier.size(40.dp).clip(CircleShape)
+                                         title = {
+                        Column(Modifier.fillMaxWidth()) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (isLoggedIn && accountImageUrl != null) {
+                                    AsyncImage(
+                                        model = accountImageUrl,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.size(40.dp).clip(CircleShape),
+                                    )
+                                    Spacer(Modifier.width(12.dp))
+                                }
+                                Text(
+                                    text = if (isLoggedIn) accountName else stringResource(R.string.login),
+                                    modifier = Modifier.weight(1f),
+                                    maxLines = 2,
+                                    overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                                 )
-
-                                Spacer(Modifier.width(12.dp))
                             }
-
-                            Text(
-                                text = if (isLoggedIn) accountName else stringResource(R.string.login),
-                            )
+                            if (isLoggedIn) {
+                                Spacer(Modifier.height(12.dp))
+                                OutlinedButton(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    onClick = { showLogoutDialog = true },
+                                    colors = ButtonDefaults.outlinedButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                    ),
+                                ) {
+                                    Text(stringResource(R.string.action_logout))
+                                }
+                            }
                         }
                     },
                     icon = if (!isLoggedIn) painterResource(R.drawable.login) else null,
-                    trailingContent = {
-                        if (isLoggedIn) {
-                            OutlinedButton(
-                                onClick = {
-                                    Timber.d("[LOGOUT] User clicked logout button, showing dialog")
-                                    showLogoutDialog = true
-                                },
-                                colors = ButtonDefaults.outlinedButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                    contentColor = MaterialTheme.colorScheme.onSurface
-                                )
-                            ) {
-                                Text(stringResource(R.string.action_logout))
-                            }
-                        }
-                    },
                     onClick = {
                         onClose()
                         if (isLoggedIn) {

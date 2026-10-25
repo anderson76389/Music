@@ -288,6 +288,73 @@ class SettingsNavigationTest {
         }
     }
 
+    @Test(timeout = 120000) fun accountControlsAndReadableDownloadDialog() {
+        val original = runBlocking { context.dataStore.data.first() }
+        device.executeShellCommand("cmd connectivity airplane-mode enable")
+        val database = fr.makoff.music.db.InternalDatabase.newInstance(context)
+        val fixture = fr.makoff.music.db.entities.SongEntity("accountTest", "Conserver ma bibliothèque")
+        try {
+            runBlocking(kotlinx.coroutines.Dispatchers.IO) { database.insert(fixture) }
+            runBlocking { context.dataStore.edit {
+                it[LiquidGlassEnabledKey] = true
+                it[InnerTubeCookieKey] = "SAPISID=local-test-only"
+                it[AccountNameKey] = "RYU 🌍🔥 — Compte de validation"
+                it[UseLoginForBrowse] = false
+                it[YtmSyncKey] = false
+                it[AutoDownloadOnLikeKey] = false
+            } }
+            context.startActivity(Intent(context, MainActivity::class.java)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 15000)
+            assertNotNull(account)
+            account!!.click()
+            findText(R.string.action_logout)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-account-readable.png")
+            open(R.string.more_content, switchOnly = true)
+            awaitPreference("Authenticated browse enabled") {
+                context.dataStore.data.first()[UseLoginForBrowse] == true
+            }
+            assertTrue("Browse switch reaches actual YouTube client",
+                com.metrolist.innertube.YouTube.useLoginForBrowse)
+            open(R.string.more_content, switchOnly = true)
+            awaitPreference("Authenticated browse disabled") {
+                context.dataStore.data.first()[UseLoginForBrowse] == false
+            }
+            assertFalse(com.metrolist.innertube.YouTube.useLoginForBrowse)
+            open(R.string.yt_sync, switchOnly = true)
+            awaitPreference("Automatic sync enabled") { context.dataStore.data.first()[YtmSyncKey] == true }
+            open(R.string.yt_sync, switchOnly = true)
+            awaitPreference("Automatic sync disabled") { context.dataStore.data.first()[YtmSyncKey] == false }
+            open(R.string.action_logout)
+            open(R.string.logout_keep)
+            awaitPreference("Logout removes saved session") {
+                context.dataStore.data.first()[InnerTubeCookieKey].isNullOrBlank()
+            }
+            assertTrue("Logout clears live YouTube session", com.metrolist.innertube.YouTube.cookie.isNullOrBlank())
+            assertNotNull("Keep option preserves local library",
+                runBlocking { database.song(fixture.id).first() })
+            device.waitForIdle()
+            device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)!!.click()
+            open(R.string.settings)
+            open(R.string.storage)
+            open(R.string.download_format_external)
+            SystemClock.sleep(700)
+            device.executeShellCommand("screencap -p /data/local/tmp/glass-selection-readable.png")
+            device.pressBack()
+            println("ACCOUNT_ACTIONS_OK: authenticated browse reaches client, sync preference persists, logout keeps local library")
+            println("READABLE_DIALOG_OK: Liquid Glass account and real download selection captured")
+        } finally {
+            runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                database.song(fixture.id).first()?.let { database.delete(it.song) }
+                context.dataStore.updateData { original }
+            }
+            database.close()
+            val activity = resumedMainActivity()
+            instrumentation.runOnMainSync { activity?.finish() }
+            device.executeShellCommand("cmd connectivity airplane-mode disable")
+        }
+    }
+
     @Test(timeout = 45000) fun updateNotificationOpensIntegratedInstaller() {
         val url = "https://github.com/anderson76389/Music/releases/download/test-notification-no-apk/Metrolist.apk"
         val release = fr.makoff.music.utils.ReleaseInfo("test-notification", "test-notification", "", "",

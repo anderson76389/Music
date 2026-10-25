@@ -49,12 +49,26 @@ for variant in foss gms; do
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
     adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true
     adb pull /data/local/tmp/glass-home-enabled.png smoke-results/ || true
-    for capture in glass-home-light glass-home-dark glass-settings-light glass-settings-dark glass-library-fr; do
+    for capture in glass-home-light glass-home-dark glass-settings-light glass-settings-dark glass-library-fr glass-account-readable glass-selection-readable; do
       adb pull "/data/local/tmp/$capture.png" smoke-results/ || true
     done
     adb logcat -d > smoke-results/settings-navigation-logcat.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/settings-navigation-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/settings-navigation-tests.txt
+    # Restoration intentionally terminates the old main process; verify the replacement process.
+    timeout 60s adb shell am instrument -w -r -e class fr.makoff.music.settings.BackupRestoreProbe#prepareAndRestore "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/restore-prepare.txt 2>&1 || true
+    adb logcat -d > smoke-results/restore-process-logcat.txt
+    grep -Fq RESTORE_PREPARED smoke-results/restore-process-logcat.txt
+    for attempt in $(seq 1 30); do
+      adb logcat -d > smoke-results/restore-process-logcat.txt
+      if grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt; then break; fi
+      sleep 1
+    done
+    grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt
+    timeout 60s adb shell am instrument -w -r -e class fr.makoff.music.settings.BackupRestoreProbe#verifyAfterRestart "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/restore-verify.txt
+    grep -Eq 'OK \(1 test\)' smoke-results/restore-verify.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/restore-verify.txt
+    adb logcat -d > smoke-results/backup-restore-logcat.txt
     timeout 150s adb shell am instrument -w -r -e class fr.makoff.music.downloads.YouTubeAudioLiveTest "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/youtube-live-test.txt || echo "Essai YouTube interrompu ou délai dépassé" >> smoke-results/youtube-live-test.txt
     if ! grep -Eq 'OK \(1 test\)' smoke-results/youtube-live-test.txt; then
       echo "::warning::Le téléchargement YouTube réel n’a pas réussi depuis le réseau de l’émulateur ; voir youtube-live-test.txt."

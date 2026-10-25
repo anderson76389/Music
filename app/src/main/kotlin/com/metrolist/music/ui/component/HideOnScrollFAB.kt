@@ -60,12 +60,13 @@ fun BoxScope.HideOnScrollFAB(
             modifier = Modifier.padding(16.dp)
         ) {
             if (onRecognitionClick != null) {
-                SmallFloatingActionButton(
+                FloatingActionButton(
                     onClick = onRecognitionClick,
                     shape = CircleShape,
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    modifier = Modifier.size(40.dp)
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    contentColor = MaterialTheme.colorScheme.primary,
+                    elevation = FloatingActionButtonDefaults.elevation(2.dp),
+                    modifier = Modifier.size(48.dp)
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.mic),

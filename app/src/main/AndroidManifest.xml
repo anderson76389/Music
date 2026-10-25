@@ -44,6 +44,10 @@
             android:required="false" />
 
         <activity
+            android:name=".utils.RestoreApplyActivity"
+            android:exported="false"
+            android:process=":restore" />
+        <activity
             android:name=".ui.screens.CrashActivity"
             android:exported="false"
             android:theme="@style/Theme.MakoffMusic"

@@ -119,24 +119,15 @@ fun BackupAndRestore(
     val restoreLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
-                pendingRestoreUri = uri
-                val preview = viewModel.previewBackup(context, uri)
-                backupPreviewInfo = preview
-                showRestoreConfirmDialog = true
-
-                // Fetch account info asynchronously if backup has auth data
-                accountCheckFailed = false
-                if (preview.hasAuthData && preview.cookie != null) {
-                    isLoadingAccountInfo = true
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val accountInfo = viewModel.fetchAccountInfoFromBackup(preview.cookie)
-                        if (accountInfo != null) {
-                            backupPreviewInfo = accountInfo
-                        } else {
-                            accountCheckFailed = true
-                        }
-                        isLoadingAccountInfo = false
+                coroutineScope.launch {
+                    val preview = kotlinx.coroutines.withContext(Dispatchers.IO) {
+                        viewModel.previewBackup(context, uri)
                     }
+                    pendingRestoreUri = uri
+                    backupPreviewInfo = preview
+                    accountCheckFailed = false
+                    isLoadingAccountInfo = false
+                    showRestoreConfirmDialog = true
                 }
             }
         }
@@ -157,6 +148,9 @@ fun BackupAndRestore(
 
             if (importedSongs.isNotEmpty()) {
                 showChoosePlaylistDialogOnline = true
+            } else {
+                android.widget.Toast.makeText(context, R.string.import_playlist_failed,
+                    android.widget.Toast.LENGTH_LONG).show()
             }
         }
 
@@ -201,7 +195,8 @@ fun BackupAndRestore(
                         title = { Text(stringResource(R.string.import_online)) },
                         icon = painterResource(R.drawable.playlist_add),
                         onClick = {
-                            importM3uLauncherOnline.launch(arrayOf("audio/*"))
+                            importM3uLauncherOnline.launch(arrayOf("audio/*", "application/vnd.apple.mpegurl",
+                                "application/x-mpegurl", "text/plain", "application/octet-stream"))
                         },
                     ),
                     Material3SettingsItem(
@@ -263,27 +258,34 @@ fun BackupAndRestore(
                 csvImportState = mappingState
                 pendingCsvUri?.let { uri ->
                     showCsvImportProgress = true
-                    coroutineScope.launch(Dispatchers.Default) {
-                        val result =
-                            viewModel.importPlaylistFromCsv(
-                                context,
-                                uri,
-                                mappingState,
+                    coroutineScope.launch {
+                        try {
+                            val result = viewModel.importPlaylistFromCsv(
+                                context, uri, mappingState,
                                 onProgress = { progress ->
-                                    csvImportProgress = progress
+                                    coroutineScope.launch { csvImportProgress = progress }
                                 },
                                 onLogUpdate = { logs ->
-                                    csvRecentLogs.clear()
-                                    csvRecentLogs.addAll(logs)
+                                    coroutineScope.launch {
+                                        csvRecentLogs.clear()
+                                        csvRecentLogs.addAll(logs)
+                                    }
                                 },
                             )
-                        importedSongs.clear()
-                        importedSongs.addAll(result)
-                        if (result.isNotEmpty()) {
+                            importedSongs.clear()
+                            importedSongs.addAll(result)
+                            if (result.isNotEmpty()) showChoosePlaylistDialogOnline = true
+                            else android.widget.Toast.makeText(context, R.string.import_playlist_failed,
+                                android.widget.Toast.LENGTH_LONG).show()
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            android.widget.Toast.makeText(context, R.string.import_playlist_failed,
+                                android.widget.Toast.LENGTH_LONG).show()
+                        } finally {
                             showCsvImportProgress = false
                             csvImportProgress = 0
                             csvRecentLogs.clear()
-                            showChoosePlaylistDialogOnline = true
                         }
                     }
                 }

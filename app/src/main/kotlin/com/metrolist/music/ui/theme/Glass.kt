@@ -49,6 +49,7 @@ fun Modifier.liquidGlass(
     shape: RoundedCornerShape = RoundedCornerShape(24.dp),
     chrome: Boolean = false,
     showBorder: Boolean = true,
+    readable: Boolean = false,
 ): Modifier {
     if (!LocalLiquidGlassEnabled.current) return this
     val surface = MaterialTheme.colorScheme.surface
@@ -58,7 +59,7 @@ fun Modifier.liquidGlass(
             Brush.linearGradient(listOf(Color.White.copy(alpha = 0.42f), Color.White.copy(alpha = 0.06f), Color.Black.copy(alpha = 0.08f)))
         }
         val card = if (surface.luminance() < 0.5f) Color(0xFF242426) else Color.White
-        return clip(shape).background(card.copy(alpha = 0.9f)).border(0.5.dp, highlight, shape)
+        return clip(shape).background(card.copy(alpha = 0.96f)).border(0.5.dp, highlight, shape)
     }
     val state = LocalChromeGlass.current ?: return background(surface, shape)
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
@@ -67,7 +68,7 @@ fun Modifier.liquidGlass(
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
-            tint(surface.copy(alpha = if (dark) 0.22f else 0.16f))
+            tint(surface.copy(alpha = if (dark) 0.40f else 0.34f))
             optics(blurRadius = 18.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
                 refractionHeightFraction = 0.28f, depth = 0.45f)
             specularIntensity(if (!showBorder) 0f else if (dark) 0.52f else 0.72f)
@@ -85,5 +86,6 @@ fun Modifier.liquidGlass(
     val glass = shadow(8.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.12f),
         spotColor = Color.Black.copy(alpha = 0.16f))
         .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
-    return if (showBorder) glass.border(0.8.dp, rim, shape) else glass
+    val panel = if (readable) glass.background(surface.copy(alpha = 0.96f)) else glass
+    return if (showBorder) panel.border(0.8.dp, rim, shape) else panel
 }
