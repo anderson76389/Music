@@ -274,16 +274,19 @@ class SettingsNavigationTest {
             device.openNotification()
             val notification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 10000)
             assertNotNull("Update notification is visible", notification)
-            device.waitForIdle()
-            val automation = instrumentation.uiAutomation
-            automation.serviceInfo = automation.serviceInfo
-            val settledNotification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 5000)
-            assertNotNull("Update notification remains after the panel settles", settledNotification)
-            var clickable = settledNotification!!
-            while (!clickable.isClickable) {
-                clickable = clickable.parent ?: break
+            // Android can auto-group media/download/update notifications. The group summary
+            // opens the launcher; verify the actual individual notification's registered action.
+            val manager = context.getSystemService(android.app.NotificationManager::class.java)
+            val published = manager.activeNotifications.singleOrNull {
+                it.id == 1001 && it.notification.extras.getString(android.app.Notification.EXTRA_TITLE) ==
+                    label(R.string.update_available_title)
             }
-            clickable.click()
+            assertNotNull("Individual update notification is registered", published)
+            val action = published!!.notification.contentIntent
+            assertNotNull("Individual update notification has an installer action", action)
+            assertTrue("Update action starts an activity", action.isActivity)
+            device.pressBack()
+            action.send()
             val deadline = SystemClock.elapsedRealtime() + 15000
             while (SystemClock.elapsedRealtime() < deadline && opened == null) {
                 instrumentation.runOnMainSync {
@@ -294,7 +297,7 @@ class SettingsNavigationTest {
             }
             assertNotNull("Notification opens integrated APK update activity", opened)
             assertEquals(url, opened!!.intent.getStringExtra("apk-url"))
-            println("UPDATE_NOTIFICATION_OK: tap opens integrated installer with own APK URL")
+            println("UPDATE_NOTIFICATION_OK: registered notification action opens integrated installer with own APK URL")
         } finally {
             instrumentation.runOnMainSync { opened?.finish() }
             fr.makoff.music.utils.UpdateNotifications.cancel(context)
