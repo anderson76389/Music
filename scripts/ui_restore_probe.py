@@ -46,13 +46,26 @@ click("Account")
 click("Settings")
 click("Backup.*restore")
 click("Restore")
-for attempt in range(5):
-    click(re.escape(filename))
-    time.sleep(1)
+click(re.escape(filename))
+time.sleep(1)
+def document_hierarchy():
     subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/restore-ui.xml"],
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
-    hierarchy = subprocess.check_output(["adb", "shell", "cat", "/sdcard/restore-ui.xml"], text=True)
-    if "com.google.android.documentsui" not in hierarchy:
-        break
+    return subprocess.check_output(["adb", "shell", "cat", "/sdcard/restore-ui.xml"], text=True)
+hierarchy = document_hierarchy()
+if "android.documentsui" in hierarchy:
+    # Android 11's document list supports keyboard activation even when a tap only focuses it.
+    for attempt in range(18):
+        subprocess.run(["adb", "shell", "input", "keyevent", "KEYCODE_TAB"], check=True)
+        hierarchy = document_hierarchy()
+        nodes = ET.fromstring(hierarchy).iter("node")
+        focused_file = next((node for node in nodes
+            if node.get("focused") == "true"
+            and node.get("resource-id", "").endswith(":id/item_root")
+            and any(child.get("text") == filename for child in node.iter("node"))), None)
+        if focused_file is not None:
+            subprocess.run(["adb", "shell", "input", "keyevent", "KEYCODE_ENTER"], check=True)
+            time.sleep(1)
+            break
 click("Restore")
 print("RESTORE_UI_SUBMITTED: actual file picker and restore confirmation clicked")
