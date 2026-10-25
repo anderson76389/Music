@@ -232,6 +232,10 @@ class SettingsNavigationTest {
 
     @Test(timeout = 90000) fun glassReferenceInLightAndDark() {
         val original = runBlocking { context.dataStore.data.first() }
+        val localeManager = if (android.os.Build.VERSION.SDK_INT >= 33)
+            context.getSystemService(android.app.LocaleManager::class.java) else null
+        val originalLocales = if (android.os.Build.VERSION.SDK_INT >= 33)
+            localeManager?.applicationLocales else null
         try {
             runBlocking { context.dataStore.edit { it[LiquidGlassEnabledKey] = true; it[DarkModeKey] = DarkMode.OFF.name } }
             context.startActivity(Intent(context, MainActivity::class.java)
@@ -255,6 +259,9 @@ class SettingsNavigationTest {
             device.executeShellCommand("screencap -p /data/local/tmp/glass-home-dark.png")
             println("GLASS_APPEARANCES_OK: light and dark glass home/settings captured")
             runBlocking { context.dataStore.edit { it[AppLanguageKey] = "fr"; it[DarkModeKey] = DarkMode.OFF.name } }
+            if (android.os.Build.VERSION.SDK_INT >= 33) {
+                localeManager!!.applicationLocales = android.os.LocaleList.forLanguageTags("fr")
+            }
             context.startActivity(Intent(context, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             assertTrue("French navigation is visible", device.wait(Until.hasObject(By.text("Bibliothèque")), 15000))
@@ -275,6 +282,9 @@ class SettingsNavigationTest {
             } }
             val activity = resumedMainActivity()
             instrumentation.runOnMainSync { activity?.finish() }
+            if (android.os.Build.VERSION.SDK_INT >= 33 && originalLocales != null) {
+                localeManager!!.applicationLocales = originalLocales
+            }
         }
     }
 
