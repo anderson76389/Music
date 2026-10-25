@@ -270,6 +270,10 @@ class SettingsNavigationTest {
             listOf(fr.makoff.music.utils.ReleaseAsset("Metrolist.apk", url, 100, "universal", "gms")))
         var opened: Activity? = null
         try {
+            context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            val foregroundDeadline = SystemClock.elapsedRealtime() + 15000
+            while (resumedMainActivity() == null && SystemClock.elapsedRealtime() < foregroundDeadline) SystemClock.sleep(100)
+            assertNotNull("Foreground activity for notification action dispatch", resumedMainActivity())
             fr.makoff.music.utils.UpdateNotifications.show(context, release)
             device.openNotification()
             val notification = device.wait(Until.findObject(By.text(label(R.string.update_available_title))), 10000)
