@@ -11,13 +11,33 @@ package = sys.argv[1]
 proof = subprocess.check_output(["adb", "shell", "run-as", package, "cat", "no_backup/restore-proof"], text=True).splitlines()
 filename = f"restore-probe-{proof[0]}.backup"
 
-def click(pattern, timeout=25):
+def document_hierarchy(timeout=25):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        # A transition can leave UIAutomator without an idle root. Do not read an old dump.
+        subprocess.run(["adb", "shell", "rm", "-f", "/sdcard/restore-ui.xml"],
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        try:
+            subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/restore-ui.xml"],
+                           stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
+            result = subprocess.run(["adb", "shell", "cat", "/sdcard/restore-ui.xml"],
+                                    capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                ET.fromstring(result.stdout)
+                return result.stdout
+        except (subprocess.TimeoutExpired, ET.ParseError):
+            pass
+        time.sleep(.5)
+    raise RuntimeError("UIAutomator could not obtain a valid current hierarchy")
+
+def click(pattern, timeout=45):
     deadline = time.monotonic() + timeout
     last = ""
     while time.monotonic() < deadline:
-        subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/restore-ui.xml"],
-                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
-        last = subprocess.check_output(["adb", "shell", "cat", "/sdcard/restore-ui.xml"], text=True)
+        try:
+            last = document_hierarchy()
+        except RuntimeError:
+            continue
         try:
             nodes = list(ET.fromstring(last).iter("node"))
         except ET.ParseError:
@@ -48,10 +68,6 @@ click("Backup.*restore")
 click("Restore")
 click(re.escape(filename))
 time.sleep(1)
-def document_hierarchy():
-    subprocess.run(["adb", "shell", "uiautomator", "dump", "/sdcard/restore-ui.xml"],
-                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=20)
-    return subprocess.check_output(["adb", "shell", "cat", "/sdcard/restore-ui.xml"], text=True)
 hierarchy = document_hierarchy()
 if "android.documentsui" in hierarchy:
     # Android 11's document list supports keyboard activation even when a tap only focuses it.
