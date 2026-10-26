@@ -37,6 +37,28 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test fun exportWaitsForNativeCompletionAndStopsOnFailureOrCancellation() = runBlocking {
+        val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder("test-native", android.net.Uri.parse("https://example.invalid/audio")).build()
+        fun download(state: Int) = androidx.media3.exoplayer.offline.Download(request, state, 1, 1, 100, 0,
+            if (state == androidx.media3.exoplayer.offline.Download.STATE_FAILED) androidx.media3.exoplayer.offline.Download.FAILURE_REASON_UNKNOWN else 0)
+        val states = listOf(androidx.media3.exoplayer.offline.Download.STATE_QUEUED,
+            androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING,
+            androidx.media3.exoplayer.offline.Download.STATE_COMPLETED).iterator()
+        var reads = 0
+        awaitOfflineAudio { reads++; download(states.next()) }
+        assertEquals(3, reads)
+        for (state in listOf(androidx.media3.exoplayer.offline.Download.STATE_FAILED,
+            androidx.media3.exoplayer.offline.Download.STATE_STOPPED,
+            androidx.media3.exoplayer.offline.Download.STATE_REMOVING)) {
+            assertTrue(runCatching { awaitOfflineAudio { download(state) } }.isFailure)
+        }
+        var removed = false
+        assertTrue(runCatching { awaitOfflineAudio {
+            if (removed) null else download(androidx.media3.exoplayer.offline.Download.STATE_QUEUED).also { removed = true }
+        } }.isFailure)
+        println("NATIVE_EXPORT_QUEUE_OK: waits for native completion, stops on failed/stopped/removed downloads without another transfer")
+    }
+
     @Test(timeout = 90000) fun likingAutomaticallyExportsToLikedFolderAndKeepsOfflineReference() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val id = UUID.randomUUID().toString().replace("-", "").take(11)

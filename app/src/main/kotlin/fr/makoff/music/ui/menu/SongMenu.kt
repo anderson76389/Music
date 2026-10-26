@@ -865,7 +865,9 @@ fun SongMenu(
             Material3MenuGroup(
                 items =
                     listOfNotNull(
-                        folderAudioItem,
+                        folderAudioItem.takeUnless { download?.state in setOf(
+                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
+                        ) },
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(

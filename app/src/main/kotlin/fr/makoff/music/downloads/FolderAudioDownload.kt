@@ -42,16 +42,20 @@ import java.io.IOException
 object FolderAudioDownloads {
     const val TAG = "folder-audio"
     const val TITLE_TAG = "audio-title:"
+    const val SONG_TAG = "audio-song:"
     internal fun downloadUtil(context: Context) = dagger.hilt.android.EntryPointAccessors.fromApplication(context.applicationContext,
         FolderDownloadDependencies::class.java).downloadUtil()
     private val videoId = Regex("[A-Za-z0-9_-]{11}")
 
     fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
         require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
+        val downloads = downloadUtil(context)
+        val format = DownloadAudioFormat.parse(context.dataStore.get(fr.makoff.music.constants.ExternalDownloadFormatKey, DownloadAudioFormat.BEST.name))
+        downloads.download(media, requestedFormat = format)
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
             .setInputData(workDataOf(
                 "videoId" to media.id,
-                "format" to context.dataStore.get(fr.makoff.music.constants.ExternalDownloadFormatKey, DownloadAudioFormat.BEST.name),
+                "format" to format.name,
                 "title" to media.title.take(200),
                 "artist" to media.artists.joinToString { it.name }.take(200),
                 "artistNames" to media.artists.take(20).map { it.name.take(100) }.toTypedArray(),
@@ -67,6 +71,7 @@ object FolderAudioDownloads {
             ))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(if (downloadUtil(context).downloads.value[media.id]?.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED) NetworkType.NOT_REQUIRED else NetworkType.CONNECTED).build())
             .addTag(TAG)
+            .addTag(SONG_TAG + media.id)
             .addTag("audio-created:${System.currentTimeMillis()}")
             .addTag(TITLE_TAG + media.title.take(100))
             .build()
@@ -245,21 +250,12 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
             return slots.withPermit {
                 setProgress(workDataOf("percent" to 0))
                 setForeground(notification(title, 0))
-                var lastUpdate = 0L
-                if (downloads.downloads.value[videoId]?.isTerminalState == false) return@withPermit Result.failure(workDataOf("error" to "active"))
+                awaitOfflineAudio({ downloads.downloadManager.downloadIndex.getDownload(videoId) })
                 val format = DownloadAudioFormat.parse(inputData.getString("format"))
-                val source = YtDlpAudioEngine.reuse(applicationContext, downloads.stageExistingAudio(videoId, directory), format, directory, id.toString()) ?: PlaybackAudioEngine.download(
-                    applicationContext, videoId, directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format,
-                    isExplicit = media.explicit,
-                ) { progress ->
-                    val now = android.os.SystemClock.elapsedRealtime()
-                    if (now - lastUpdate > 800) {
-                        lastUpdate = now
-                        val percent = progress.toInt().coerceIn(0, 100)
-                        setProgressAsync(workDataOf("percent" to percent))
-                        setForegroundAsync(notification(title, percent))
-                    }
-                }
+                val staged = downloads.stageExistingAudio(videoId, directory)
+                    ?: throw IOException("Completed offline audio is unavailable")
+                val source = YtDlpAudioEngine.reuse(applicationContext, staged, format, directory, id.toString())
+                    ?: throw IOException("Requested audio format is unavailable")
                 exporting = true
                 setProgress(workDataOf("copying" to true))
                 val track = inputData.getInt("track", 0)
@@ -340,4 +336,24 @@ internal fun readableAudioName(value: String): String {
         .replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), " ")
         .replace(Regex("\\s+"), " ").trim(' ', '.')
     return normalized.codePoints().limit(50).toArray().let { String(it, 0, it.size) }.trimEnd(' ', '.')
+}
+
+/** Export follows the native download; cancellation/failure must never start a second transfer. */
+internal suspend fun awaitOfflineAudio(read: () -> androidx.media3.exoplayer.offline.Download?) {
+    var seen = false
+    val started = android.os.SystemClock.elapsedRealtime()
+    while (true) {
+        currentCoroutineContext().ensureActive()
+        val download = withContext(Dispatchers.IO) { read() }
+        if (download != null) seen = true
+        when (download?.state) {
+            androidx.media3.exoplayer.offline.Download.STATE_COMPLETED -> return
+            androidx.media3.exoplayer.offline.Download.STATE_FAILED,
+            androidx.media3.exoplayer.offline.Download.STATE_STOPPED,
+            androidx.media3.exoplayer.offline.Download.STATE_REMOVING -> throw IOException("Native download did not complete")
+            null -> if (seen || android.os.SystemClock.elapsedRealtime() - started > 60000)
+                throw IOException("Native download was cancelled or not queued")
+        }
+        kotlinx.coroutines.delay(200)
+    }
 }

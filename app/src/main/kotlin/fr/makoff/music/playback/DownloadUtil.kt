@@ -328,7 +328,7 @@ constructor(
 
     fun download(song: SongItem) = download(song.toMediaMetadata())
 
-    fun download(mediaMetadata: MediaMetadata) {
+    fun download(mediaMetadata: MediaMetadata, requestedFormat: DownloadAudioFormat? = null) {
         scope.launch {
             downloadPreparations.withPermit {
                 // Revalidate document permission/existence before treating an external copy as complete.
@@ -368,7 +368,7 @@ constructor(
                 // New/retried downloads must not mix bytes from a previous quality or container.
                 downloadCache.removeResource(mediaMetadata.id)
                 songUrlCache.invalidate(mediaMetadata.id)
-                val selectedFormat = downloadFormat
+                val selectedFormat = requestedFormat ?: downloadFormat
                 val request =
                     DownloadRequest
                         .Builder(mediaMetadata.id, mediaMetadata.id.toUri().buildUpon()
@@ -432,7 +432,8 @@ constructor(
     }
 }
 
-internal fun shouldPrepareDownload(downloadState: Int?): Boolean = downloadState != Download.STATE_COMPLETED
+internal fun shouldPrepareDownload(downloadState: Int?): Boolean = downloadState == null ||
+    downloadState == Download.STATE_FAILED || downloadState == Download.STATE_STOPPED
 
 internal fun downloadArtworkUrls(
     songArtwork: String?,
