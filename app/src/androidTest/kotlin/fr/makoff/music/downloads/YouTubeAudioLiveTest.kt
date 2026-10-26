@@ -15,8 +15,10 @@ class YouTubeAudioLiveTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val directory = File(context.cacheDir, "live-audio-${UUID.randomUUID()}")
         try {
+            for (format in listOf(DownloadAudioFormat.BEST, DownloadAudioFormat.M4A)) {
             val file = try {
-                YtDlpAudioEngine.download(context, "https://www.youtube.com/watch?v=jNQXAC9IVRw", directory, "live-${UUID.randomUUID()}") { }
+                PlaybackAudioEngine.download(context, "jNQXAC9IVRw", File(directory, format.name),
+                    "live-${UUID.randomUUID()}", "", format) { }
             } catch (error: Exception) {
                 // Suppress stderr and signed URLs in public CI logs.
                 val errors = error.message.orEmpty().lineSequence().filter { it.startsWith("ERROR:") }.joinToString(" ")
@@ -29,11 +31,13 @@ class YouTubeAudioLiveTest {
                     "ffmpeg" to "FFMPEG_REQUIRED",
                     "not available" to "VIDEO_UNAVAILABLE",
                 ).firstOrNull { errors.contains(it.first, ignoreCase = true) }?.second ?: error.javaClass.simpleName
-                val detail = errors.replace(Regex("https?://\\S+"), "[URL]").take(700)
-                throw AssertionError("Téléchargement YouTube non réussi depuis ce réseau ($diagnostic). $detail")
+                throw AssertionError("Téléchargement YouTube non réussi depuis ce réseau ($diagnostic).")
             }
             assertTrue(file.length() > 1000)
             assertTrue(file.extension in setOf("m4a", "webm", "opus", "ogg", "mp4"))
+            if (format == DownloadAudioFormat.M4A) assertTrue(file.extension == "m4a")
+            println("YOUTUBE_DOWNLOAD_OK: format=$format; native=${file.parentFile?.name == "resolved"}; bytes=${file.length()}")
+            }
         } finally { directory.deleteRecursively() }
     }
 }
