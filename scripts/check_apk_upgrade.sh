@@ -9,7 +9,7 @@ adb install -r dist/Metrolist.apk
 adb shell dumpsys package "$package" > smoke-results/upgrade-after.txt
 compat_work=$(mktemp -d)
 mkdir -p "$compat_work/classes" "$compat_work/dex"
-javac -cp "$ANDROID_HOME/platforms/android-37.0/android.jar" -d "$compat_work/classes" scripts/compat/QueueFormatProbe.java
+javac -cp "$ANDROID_HOME/platforms/android-37.0/android.jar" -d "$compat_work/classes" scripts/compat/QueueFormatProbe.java scripts/compat/DownloadEngineProbe.java
 jar cf "$compat_work/probe.jar" -C "$compat_work/classes" .
 "$ANDROID_HOME/build-tools/36.0.0/d8" --lib "$ANDROID_HOME/platforms/android-37.0/android.jar" --min-api 26 --output "$compat_work/dex" "$compat_work/probe.jar"
 adb push "$compat_work/dex/classes.dex" /data/local/tmp/music-queue-compat.dex
@@ -17,6 +17,10 @@ adb push previous-apk/Metrolist.apk /data/local/tmp/music-queue-previous.apk
 adb push dist/Metrolist.apk /data/local/tmp/music-queue-current.apk
 adb shell CLASSPATH=/data/local/tmp/music-queue-compat.dex app_process /system/bin fr.makoff.music.compat.QueueFormatProbe /data/local/tmp/music-queue-previous.apk /data/local/tmp/music-queue-current.apk | tee smoke-results/queue-upgrade.txt
 grep -q QUEUE_UPGRADE_OK smoke-results/queue-upgrade.txt
+# Diagnose the old APK separately; only a working current release may be published.
+adb shell CLASSPATH=/data/local/tmp/music-queue-compat.dex app_process /system/bin fr.makoff.music.compat.DownloadEngineProbe /data/local/tmp/music-queue-previous.apk diagnose | tee smoke-results/engine-previous.txt
+adb shell CLASSPATH=/data/local/tmp/music-queue-compat.dex app_process /system/bin fr.makoff.music.compat.DownloadEngineProbe /data/local/tmp/music-queue-current.apk | tee smoke-results/engine-current.txt
+grep -q RELEASE_ENGINE_ZIP_OK smoke-results/engine-current.txt
 rm -rf "$compat_work"
 python3 - <<'PY'
 from pathlib import Path

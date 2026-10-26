@@ -196,3 +196,9 @@
 -keep class com.yausername.youtubedl_android.** { *; }
 -keep class com.yausername.youtubedl_common.** { *; }
 -dontwarn com.fasterxml.jackson.**
+
+# Commons Compress 1.12 registers these classes with Class.newInstance().
+# Their public no-arg constructors must survive release shrinking.
+-keep class * implements org.apache.commons.compress.archivers.zip.ZipExtraField {
+    public <init>();
+}

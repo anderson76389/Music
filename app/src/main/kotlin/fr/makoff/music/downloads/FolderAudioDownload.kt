@@ -116,8 +116,12 @@ internal object YtDlpAudioEngine {
 
     suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
-            initialize(context)
-            if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+            try {
+                initialize(context)
+                if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+            } catch (failure: LinkageError) {
+                throw IOException("Download engine initialization failed", failure)
+            }
             check(directory.isDirectory || directory.mkdirs())
             val request = YoutubeDLRequest(url)
                 .addOption("--ignore-config")
