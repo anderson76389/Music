@@ -36,6 +36,8 @@ jobs:
       - name: Build and test
         run: |
           chmod +x gradlew
+          mkdir -p "$RUNNER_TEMP/music-queue-probe"
+          javac -cp "$ANDROID_HOME/platforms/android-37.0/android.jar" -d "$RUNNER_TEMP/music-queue-probe" scripts/compat/QueueFormatProbe.java
           ./gradlew :innertubex:desktopApiDump
           ./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest :app:assembleGmsDebugAndroidTest :innertubex:desktopTest :innertubex:apiCheck
       - name: Conserver l’interface générée du moteur

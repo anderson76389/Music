@@ -156,7 +156,7 @@
     <string name="enable_scrobbling">開啟紀錄播放歌曲</string>
     <string name="lastfm_now_playing">傳送正在播放歌曲</string>
     <string name="last_fm_send_likes">同步喜歡和不喜歡歌曲</string>
-    <string name="last_fm_send_likes_description">同步 Metrolist 喜歡/不喜歡歌曲到 Last.fm</string>
+    <string name="last_fm_send_likes_description">同步 Apple Music 喜歡/不喜歡歌曲到 Last.fm</string>
     <string name="scrobbling_configuration">歌曲紀錄設定</string>
     <string name="scrobble_min_track_duration">紀錄播放長度超過以下時間的歌曲</string>
     <string name="scrobble_delay_percent">紀錄延遲比例</string>
@@ -221,7 +221,7 @@
     <string name="error_file_read">無法閱讀檔案</string>
     <string name="pause_music_when_media_is_muted">靜音時暫停音樂播放</string>
     <string name="turntable_widget_description">快速存取最近播放的曲目</string>
-    <string name="tap_to_open">點擊開啟 Metrolist</string>
+    <string name="tap_to_open">點擊開啟 Apple Music</string>
     <string name="persistent_shuffle_desc">在開始播放新歌曲或播放清單時，仍維持隨機播放狀態</string>
     <string name="persistent_shuffle_title">固定隨機播放</string>
     <string name="enable">啟用</string>
@@ -325,7 +325,7 @@
     <string name="stands_with_palestine">這個計畫支持巴勒斯坦🇵🇸</string>
     <string name="yeah">是的！</string>
     <string name="wanna_play_favorite_song">想播放他們最喜歡的歌曲嗎？</string>
-    <string name="metrolist">Metrolist</string>
+    <string name="metrolist">Apple Music</string>
     <string name="community_and_info">社區與資訊</string>
     <string name="buy_mo_a_coffee">請我喝杯咖啡吧！</string>
     <string name="credits_view_repo">查看儲存庫</string>
@@ -354,7 +354,7 @@
     <string name="artist_name_column">藝術家姓名列</string>
     <string name="map_csv_columns">映射 CSV 列</string>
     <string name="qs_tile_music_recognizer">辨識音樂</string>
-    <string name="play_on_app">在 Metrolist 上播放</string>
+    <string name="play_on_app">在 Apple Music 上播放</string>
     <string name="re_listen">再聽一遍</string>
     <string name="delete_from_history">從歷史記錄中刪除</string>
     <string name="clear_recognition_history_confirm">您確定要清除所有識別記錄嗎？</string>
@@ -397,7 +397,7 @@
     <string name="palette_dynamic">動態</string>
     <string name="crash_no_log">沒有可用的崩潰日誌</string>
     <string name="crash_close">關閉</string>
-    <string name="crash_report_subject">Metrolist 崩潰報告</string>
+    <string name="crash_report_subject">Apple Music 崩潰報告</string>
     <string name="crash_share_title">分享崩潰報告</string>
     <string name="crash_share_logs">分享日誌</string>
     <string name="crash_description">發生意外錯誤。請提供崩潰報告，以便我們修復問題</string>
@@ -453,15 +453,15 @@
     <string name="wrapped_total_artists_subtitle">獨特的藝術家!</string>
     <string name="wrapped_total_songs_title">你聽了</string>
     <string name="wrapped_total_songs_subtitle">獨特的歌曲!</string>
-    <string name="wrapped_intro_title">Metrolist</string>
+    <string name="wrapped_intro_title">Apple Music</string>
     <string name="wrapped_intro_subtitle">是時候看看你這一整年都在聽些什麼了…</string>
     <string name="wrapped_intro_button">我們開始吧！</string>
-    <string name="wrapped_logo_content_description">Metrolist 標誌</string>
+    <string name="wrapped_logo_content_description">Apple Music 標誌</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">你的年度總結已準備好！</string>
     <string name="wrapped_ready_subtitle">是時候看看你今年最喜歡什麼了…</string>
     <string name="wrapped_thank_you">謝謝聆聽!</string>
-    <string name="wrapped_special_thanks">Thank you for listening with Metrolist</string>
+    <string name="wrapped_special_thanks">Thank you for listening with Apple Music</string>
     <string name="wrapped_close">關閉年度總結</string>
     <string name="wrapped_playlist_title">您的 %s 年度總結</string>
     <string name="wrapped_create_playlist">建立播放清單</string>
@@ -480,7 +480,7 @@
     <string name="play_pause">播放/暫停</string>
     <string name="next">下一首</string>
     <string name="not_playing">沒有歌曲播放</string>
-    <string name="tap_to_play">點擊開啟 Metrolist</string>
+    <string name="tap_to_play">點擊開啟 Apple Music</string>
     <string name="widget_description">帶有播放控制的小部件</string>
     <string name="widget_music_player">音樂播放器</string>
     <string name="widget_recognizer_name">音樂辨識器</string>
@@ -537,7 +537,7 @@
     <string name="recognition_notification_listening">正在識別歌曲…</string>
     <string name="recognition_notification_processing">識別中…</string>
     <string name="recognition_notification_failed">識別失敗</string>
-    <string name="listen_on_metrolist">Metrolist</string>
+    <string name="listen_on_metrolist">Apple Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">部分可見</string>
     <string name="android_auto_reorder_hint">點擊某個版塊即可啟用或停用它…\n長按拖曳手把可重新排序。預設會顯示第一部分</string>
@@ -644,8 +644,8 @@
     <string name="choose_something_below">在下方選擇</string>
     <string name="and">和</string>
     <string name="playlist_unavailable">播放列表不可用</string>
-    <string name="kmp_upgrade_title">Metrolist KMP %s 現已推出</string>
-    <string name="kmp_upgrade_warning">Metrolist KMP 還在開發中。你可能會遇到功能有缺陷、不完整或變更。</string>
+    <string name="kmp_upgrade_title">Apple Music KMP %s 現已推出</string>
+    <string name="kmp_upgrade_warning">Apple Music KMP 還在開發中。你可能會遇到功能有缺陷、不完整或變更。</string>
     <string name="kmp_upgrade_action">嘗試 KMP</string>
     <string name="kmp_upgrade_later">暫不升級</string>
     <string name="audio_track_playback_params">使用硬體音訊處理</string>
@@ -685,7 +685,7 @@
     <string name="stream_source_visionos">visionOS</string>
     <string name="stream_source_web_creator">WEB_CREATOR</string>
     <string name="playlist_created_locally">同步 YouTube 失敗。播放清單已本地建立。</string>
-    <string name="update_available_message">Metrolist%s 已經準備好下載了。</string>
+    <string name="update_available_message">Apple Music%s 已經準備好下載了。</string>
     <string name="update_action">更新</string>
     <string name="error_no_internet_connection">沒有網路連結</string>
     <string name="error_offline_playback">你已離線。請連線到網路，或播放已下載的離線曲目。</string>

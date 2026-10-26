@@ -164,7 +164,7 @@
     <string name="scrobble_delay_minutes">Întârziere pentru scrobble (minute)</string>
     <string name="swipe_song_to_remove">Glisează pentru a elimina melodia din playlist</string>
     <string name="last_fm_send_likes">Sincronizează aprecierile</string>
-    <string name="last_fm_send_likes_description">Apreciază sau dezapreciază melodiile în Last.fm atunci când le apreciezi sau dezapreciezi în Metrolist</string>
+    <string name="last_fm_send_likes_description">Apreciază sau dezapreciază melodiile în Last.fm atunci când le apreciezi sau dezapreciezi în Apple Music</string>
     <string name="primary_color_style">Culoare principală</string>
     <string name="tertiary_color_style">Culoare terțiară</string>
     <string name="auto_scroll">Resincronizare</string>
@@ -228,15 +228,15 @@
     <string name="wrapped_total_artists_subtitle">artiști unici!</string>
     <string name="wrapped_total_songs_title">Ai ascultat</string>
     <string name="wrapped_total_songs_subtitle">(de) melodii unice!</string>
-    <string name="wrapped_intro_title">Metrolist</string>
+    <string name="wrapped_intro_title">Apple Music</string>
     <string name="wrapped_intro_subtitle">este timpul să vedem ce ai ascultat în tot acest an…</string>
     <string name="wrapped_intro_button">să mergem!</string>
-    <string name="wrapped_logo_content_description">Logo-ul Metrolist</string>
+    <string name="wrapped_logo_content_description">Logo-ul Apple Music</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">WRAPPED-UL TĂU ESTE GATA!</string>
     <string name="wrapped_ready_subtitle">Este timpul să vedem ce ai apreciat în tot acest an…</string>
     <string name="wrapped_thank_you">Mulțumim pentru ascultare!</string>
-    <string name="wrapped_special_thanks">Thank you for listening with Metrolist</string>
+    <string name="wrapped_special_thanks">Thank you for listening with Apple Music</string>
     <string name="wrapped_close">Închide Wrapped</string>
     <string name="wrapped_playlist_title">Wrapped-ul tău %s</string>
     <string name="wrapped_create_playlist">Creează playlist</string>
@@ -281,7 +281,7 @@
     <string name="system_equalizer">Egalizator de sistem</string>
     <string name="album_art">Coperta albumului</string>
     <string name="no_song_playing">Nu se redă nicio melodie</string>
-    <string name="tap_to_open">Atinge pentru a deschide Metrolist</string>
+    <string name="tap_to_open">Atinge pentru a deschide Apple Music</string>
     <string name="previous">Anterioara</string>
     <string name="play_pause">Redă/Pauză</string>
     <string name="next">Următoarea</string>
@@ -303,7 +303,7 @@
     <string name="crash_description">A apărut o eroare neașteptată. Te rugăm să ne trimiți raportul de eroare pentru a ne ajuta să remediem problema</string>
     <string name="crash_share_logs">Partajează jurnalele</string>
     <string name="crash_share_title">Partajează raportul de eroare</string>
-    <string name="crash_report_subject">Raport de eroare Metrolist</string>
+    <string name="crash_report_subject">Raport de eroare Apple Music</string>
     <string name="crash_close">Închide</string>
     <string name="crash_no_log">Niciun jurnal de eroare disponibil</string>
     <string name="palette_dynamic">Dinamic</string>
@@ -323,7 +323,7 @@
     <string name="palette_grey">Gri</string>
     <string name="cd_back">Înapoi</string>
     <string name="not_playing">Nu se redă nicio melodie</string>
-    <string name="tap_to_play">Atinge pentru a deschide Metrolist</string>
+    <string name="tap_to_play">Atinge pentru a deschide Apple Music</string>
     <string name="widget_music_player">Player de muzică</string>
     <string name="widget_turntable">Platan</string>
     <string name="palette_rose">Trandafir</string>
@@ -358,7 +358,7 @@
     <string name="song_title_column">Coloana cu numele melodiei</string>
     <string name="recently_converted">Convertite recent</string>
     <string name="importing_csv">Se importă CSV-ul…</string>
-    <string name="play_on_app">Redă pe Metrolist</string>
+    <string name="play_on_app">Redă pe Apple Music</string>
     <string name="listening">Se ascultă…</string>
     <string name="continue_action">Continuă</string>
     <string name="enable">Activează</string>
@@ -444,7 +444,7 @@
     <string name="credits_view_repo">Vezi depozitul</string>
     <string name="buy_mo_a_coffee">Cumpără-mi o cafea!</string>
     <string name="community_and_info">Comunitate și informații</string>
-    <string name="metrolist">Metrolist</string>
+    <string name="metrolist">Apple Music</string>
     <string name="wanna_play_favorite_song">Vrei să redai melodia lui/ei preferată?</string>
     <string name="yeah">Da!</string>
     <string name="stands_with_palestine">Acest proiect ține cu Palestina 🇵🇸</string>
@@ -583,7 +583,7 @@
     <string name="recognition_notification_processing">Se identifică…</string>
     <string name="recognition_notification_no_match">Nicio potrivire găsită</string>
     <string name="recognition_notification_failed">Recunoaștere eșuată</string>
-    <string name="listen_on_metrolist">Metrolist</string>
+    <string name="listen_on_metrolist">Apple Music</string>
     <string name="android_auto">Android Auto</string>
     <string name="android_auto_visible_sections">Secțiuni vizibile</string>
     <string name="android_auto_reorder_hint">Atinge o secțiune pentru a o activa sau dezactiva.\nȚine apăsat glisorul pentru a reordona. Prima secțiune va fi afișată în mod prestabilit</string>
@@ -686,8 +686,8 @@
     <string name="enable_dynamic_icon">Culori dinamice pentru pictogramă</string>
     <string name="enable_dynamic_icon_desc">Folosește culori dinamice pentru pictograma aplicației. Atunci când această opțiune este dezactivată, pictograma folosește culori solide.</string>
     <string name="playlist_unavailable">Playlist indisponibil</string>
-    <string name="kmp_upgrade_title">Metrolist KMP %s este disponibil</string>
-    <string name="kmp_upgrade_warning">Metrolist KMP este încă în dezvoltare. Este posibil să întâmpini bug-uri sau funcții incomplete.</string>
+    <string name="kmp_upgrade_title">Apple Music KMP %s este disponibil</string>
+    <string name="kmp_upgrade_warning">Apple Music KMP este încă în dezvoltare. Este posibil să întâmpini bug-uri sau funcții incomplete.</string>
     <string name="kmp_upgrade_action">Încearcă KMP</string>
     <string name="kmp_upgrade_later">Nu acum</string>
     <string name="android_auto_search_options">Opțiuni de căutare</string>
@@ -710,6 +710,6 @@
     <string name="error_explicit_login_recommended">Redarea explicită funcționează cel mai bine cu un cont autentificat.</string>
     <string name="enable_zemer">Activează Zemer</string>
     <string name="enable_zemer_desc">Versuri pentru muzica evreiască</string>
-    <string name="update_available_message">Metrolist %s este gata de descărcare.</string>
+    <string name="update_available_message">Apple Music %s este gata de descărcare.</string>
     <string name="update_action">Actualizează</string>
 </resources>

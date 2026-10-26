@@ -162,7 +162,7 @@
     <string name="scrobble_delay_minutes">Scrobble gecikmesi (dakika)</string>
     <string name="swipe_song_to_remove">Şarkıyı oynatma listesinden kaldırmak için kaydırın</string>
     <string name="last_fm_send_likes">Beğenilenleri ve beğenilmeyenleri eşitle</string>
-    <string name="last_fm_send_likes_description">Metrolist\'te bir şarkıyı beğendiğinizde veya beğenmediğinizde bu Last.fm\'de güncellenir</string>
+    <string name="last_fm_send_likes_description">Apple Music\'te bir şarkıyı beğendiğinizde veya beğenmediğinizde bu Last.fm\'de güncellenir</string>
     <string name="primary_color_style">Ana renk</string>
     <string name="auto_scroll">Yeniden eşitle</string>
     <string name="google_cast">Google Cast</string>
@@ -224,15 +224,15 @@
     <string name="wrapped_total_artists_subtitle">farklı sanatçı!</string>
     <string name="wrapped_total_songs_title">Şunları dinledin</string>
     <string name="wrapped_total_songs_subtitle">farklı şarkı!</string>
-    <string name="wrapped_intro_title">Metrolist</string>
+    <string name="wrapped_intro_title">Apple Music</string>
     <string name="wrapped_intro_subtitle">bu yıl neler dinlediğine bakma zamanı…</string>
     <string name="wrapped_intro_button">hadi başlayalım!</string>
-    <string name="wrapped_logo_content_description">Metrolist Logosu</string>
+    <string name="wrapped_logo_content_description">Apple Music Logosu</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">ÖZETİN HAZIR!</string>
     <string name="wrapped_ready_subtitle">Bu yıl neleri sevdiğini görme zamanı…</string>
     <string name="wrapped_thank_you">Dinlediğin için teşekkürler!</string>
-    <string name="wrapped_special_thanks">Thank you for listening with Metrolist</string>
+    <string name="wrapped_special_thanks">Thank you for listening with Apple Music</string>
     <string name="wrapped_close">Özeti kapat</string>
     <string name="wrapped_playlist_title">%s Özetin</string>
     <string name="wrapped_create_playlist">Oynatma listesi oluştur</string>
@@ -267,7 +267,7 @@
     <string name="system_equalizer">Sistem ekolayzırı</string>
     <string name="album_art">Albüm görseli</string>
     <string name="no_song_playing">Oynatılan şarkı yok</string>
-    <string name="tap_to_open">Metrolist\'i açmak için dokun</string>
+    <string name="tap_to_open">Apple Music\'i açmak için dokun</string>
     <string name="previous">Önceki</string>
     <string name="play_pause">Oynat/Duraklat</string>
     <string name="next">Sonraki</string>
@@ -300,7 +300,7 @@
     <string name="crash_description">Beklenmedik bir hata oluştu. Sorunu düzeltmemize yardımcı olmak için lütfen hata raporunu paylaşın</string>
     <string name="crash_share_logs">Kayıtları paylaş</string>
     <string name="crash_share_title">Hata raporlarını paylaş</string>
-    <string name="crash_report_subject">Metrolist hata raporu</string>
+    <string name="crash_report_subject">Apple Music hata raporu</string>
     <string name="crash_close">Kapat</string>
     <string name="crash_no_log">Çökme kayıtları mevcut değil</string>
     <string name="palette_dynamic">Dinamik</string>
@@ -330,7 +330,7 @@
     <string name="cd_system_mode">Sistem modu</string>
     <string name="cd_palette_item">%1$s paleti</string>
     <string name="not_playing">Şarkı oynatılmıyor</string>
-    <string name="tap_to_play">Metrolist\'i açmak için dokun</string>
+    <string name="tap_to_play">Apple Music\'i açmak için dokun</string>
     <string name="widget_music_player">Müzik Çalar</string>
     <string name="widget_turntable">Dönen plak</string>
     <string name="play_all">Tümünü oynat</string>
@@ -355,7 +355,7 @@
     <string name="song_title_column">Şarkı adı sütunu</string>
     <string name="recently_converted">Son dönüştürülenler</string>
     <string name="importing_csv">CSV içe aktarılıyor…</string>
-    <string name="play_on_app">Metrolist\'te Oynat</string>
+    <string name="play_on_app">Apple Music\'te Oynat</string>
     <string name="listening">Dinleniliyor…</string>
     <string name="continue_action">Devam et</string>
     <string name="enable">Etkinleştir</string>
@@ -431,7 +431,7 @@
     <string name="credits_view_repo">Depoyu görüntüle</string>
     <string name="buy_mo_a_coffee">Bana bir kahve ısmarla!</string>
     <string name="community_and_info">Topluluk ve Bilgi</string>
-    <string name="metrolist">Metrolist</string>
+    <string name="metrolist">Apple Music</string>
     <string name="wanna_play_favorite_song">Onların en sevdiği şarkıyı çalmak ister misin?</string>
     <string name="yeah">Evet!</string>
     <string name="stands_with_palestine">Bu proje Filistin\'in yanındadır 🇵🇸</string>
@@ -549,7 +549,7 @@
     <string name="android_auto_reorder_hint">Bir bölümü etkinleştirmek veya devre dışı bırakmak için o bölüme dokunun.\nSıralamayı değiştirmek için sürükleme tutamacına uzun süre basın. Varsayılan olarak ilk bölüm gösterilecektir</string>
     <string name="android_auto_visible_sections">Görünür bölümler</string>
     <string name="android_auto">Android Auto</string>
-    <string name="listen_on_metrolist">Metrolist</string>
+    <string name="listen_on_metrolist">Apple Music</string>
     <string name="recognition_notification_failed">Tanıma başarısız oldu</string>
     <string name="recognition_notification_no_match">Eşleşme bulunamadı</string>
     <string name="recognition_notification_processing">Tanımlanıyor…</string>
@@ -679,8 +679,8 @@
     <string name="enable_landscape_scaling_desc">Büyük ekranlarda yatay mod için arayüzü ölçeklendir</string>
     <string name="enable_dynamic_icon">Dinamik ikon renkleri</string>
     <string name="enable_dynamic_icon_desc">Uygulama ikonu için dinamik tema renklerini kullan. Eğer kapatılırsa, ikon sabit renkleri kullanır.</string>
-    <string name="kmp_upgrade_title">Metrolist %s KMP sürümü kullanılabilir</string>
-    <string name="kmp_upgrade_warning">Metrolist KMP şu anda geliştirme aşamasındadır. Hatalara veya tamamlanmamış özelliklere denk gelebilirsiniz.</string>
+    <string name="kmp_upgrade_title">Apple Music %s KMP sürümü kullanılabilir</string>
+    <string name="kmp_upgrade_warning">Apple Music KMP şu anda geliştirme aşamasındadır. Hatalara veya tamamlanmamış özelliklere denk gelebilirsiniz.</string>
     <string name="kmp_upgrade_action">KMP\'yi dene</string>
     <string name="kmp_upgrade_later">Şimdi değil</string>
     <string name="android_auto_search_options">Arama seçenekleri</string>
@@ -704,6 +704,6 @@
     <string name="playlist_created_locally">YouTube eşitlemesi başarısız. Oynatma listeleri yerelde oluşturuldu.</string>
     <string name="enable_zemer">Zemer\'i aktifleştir</string>
     <string name="enable_zemer_desc">Yahudi müzikleri için şarkı sözleri</string>
-    <string name="update_available_message">Metrolist %s indirmeye hazır.</string>
+    <string name="update_available_message">Apple Music %s indirmeye hazır.</string>
     <string name="update_action">Güncelle</string>
 </resources>
