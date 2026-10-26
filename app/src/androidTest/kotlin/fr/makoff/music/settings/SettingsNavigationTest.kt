@@ -331,12 +331,12 @@ class SettingsNavigationTest {
                 context.dataStore.data.first()[UseLoginForBrowse] == true
             }
             assertTrue("Browse switch reaches actual YouTube client",
-                com.metrolist.innertube.YouTube.useLoginForBrowse)
+                fr.makoff.music.innertube.YouTube.useLoginForBrowse)
             open(R.string.more_content, switchOnly = true)
             awaitPreference("Authenticated browse disabled") {
                 context.dataStore.data.first()[UseLoginForBrowse] == false
             }
-            assertFalse(com.metrolist.innertube.YouTube.useLoginForBrowse)
+            assertFalse(fr.makoff.music.innertube.YouTube.useLoginForBrowse)
             open(R.string.yt_sync, switchOnly = true)
             awaitPreference("Automatic sync enabled") { context.dataStore.data.first()[YtmSyncKey] == true }
             open(R.string.yt_sync, switchOnly = true)
@@ -346,7 +346,7 @@ class SettingsNavigationTest {
             awaitPreference("Logout removes saved session") {
                 context.dataStore.data.first()[InnerTubeCookieKey].isNullOrBlank()
             }
-            assertTrue("Logout clears live YouTube session", com.metrolist.innertube.YouTube.cookie.isNullOrBlank())
+            assertTrue("Logout clears live YouTube session", fr.makoff.music.innertube.YouTube.cookie.isNullOrBlank())
             assertNotNull("Keep option preserves local library",
                 runBlocking { database.song(fixture.id).first() })
             device.waitForIdle()

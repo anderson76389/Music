@@ -2,7 +2,7 @@
 from pathlib import Path
 import re
 r = Path(__file__).resolve().parents[1]
-k = r / 'app/src/main/kotlin/com/metrolist/music'
+k = r / 'app/src/main/kotlin/fr/makoff/music'
 nav = (k/'ui/screens/NavigationBuilder.kt').read_text()
 routes = set(re.findall(r'composable\((?:route\s*=\s*)?"([^"]+)"', nav))
 for removed in ('settings/about', 'settings/integrations', 'settings/integrations/lastfm', 'settings/ai', 'settings/integrations/listen_together'):

@@ -1,5 +1,4 @@
-- Fenêtres et paramètres Liquid Glass plus lisibles, avec un fond moins transparent.
-- Bouton de reconnaissance audio rond et lisible ; disposition du nom de compte et de la déconnexion corrigée.
-- Sauvegarde sur fichier réel en arrière-plan et restauration après arrêt du processus principal, avec vérification des fichiers avant remplacement.
-- Imports CSV et M3U : liens YouTube conservés, caractères et séparateurs mieux pris en charge, chargement fermé en cas de fichier vide ou invalide.
-- Vérifications ajoutées pour les réglages du compte, la déconnexion sans perte de bibliothèque et une sauvegarde/restauration complète après redémarrage.
+- Les dossiers et espaces de noms internes des moteurs YouTube et de reconnaissance utilisent désormais fr.makoff.music.
+- Les noms techniques du thème, de l’application et du gestionnaire de widgets sont renommés sans modification du thème Liquid Glass.
+- Les textes résiduels de l’interface utilisent Apple Music ; les licences et crédits d’origine sont conservés.
+- Le format de reprise de lecture reste compatible avec la version signée précédente ; la signature, l’identifiant Android et les données sont conservés.

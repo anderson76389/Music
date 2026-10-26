@@ -375,12 +375,12 @@
     <string name="check_for_updates">Automatically check for updates</string>
     <string name="update_notifications">Enable update notifications</string>
     <string name="update_available_title">New update available</string>
-    <string name="update_available_message">Metrolist %s is ready to download.</string>
+    <string name="update_available_message">Apple Music %s is ready to download.</string>
     <string name="update_action">Update</string>
     <string name="update_channel_name">App updates</string>
     <string name="update_channel_desc">Notifications about new app versions</string>
-    <string name="kmp_upgrade_title">Metrolist KMP %s is available</string>
-    <string name="kmp_upgrade_warning">Metrolist KMP is still in development. You may encounter bugs or incomplete features.</string>
+    <string name="kmp_upgrade_title">Apple Music KMP %s is available</string>
+    <string name="kmp_upgrade_warning">Apple Music KMP is still in development. You may encounter bugs or incomplete features.</string>
     <string name="kmp_upgrade_action">Try KMP</string>
     <string name="kmp_upgrade_later">Not now</string>
 
@@ -412,7 +412,7 @@
     <string name="enable_scrobbling">Enable scrobbling</string>
     <string name="lastfm_now_playing">Send Now Playing status</string>
     <string name="last_fm_send_likes">Sync Loved and Unloved</string>
-    <string name="last_fm_send_likes_description">Love or unlove songs in Last.fm when you like or unlike them in Metrolist</string>
+    <string name="last_fm_send_likes_description">Love or unlove songs in Last.fm when you like or unlike them in Apple Music</string>
     <string name="logging_in">Logging in…</string>
 
     <string name="scrobbling_configuration">Scrobbling configuration</string>
@@ -467,15 +467,15 @@
     <string name="wrapped_total_artists_subtitle">unique artists!</string>
     <string name="wrapped_total_songs_title">You\'ve listened to</string>
     <string name="wrapped_total_songs_subtitle">unique songs!</string>
-    <string name="wrapped_intro_title">Metrolist</string>
+    <string name="wrapped_intro_title">Apple Music</string>
     <string name="wrapped_intro_subtitle">it\'s time to see what you\'ve been listening to all this year…</string>
     <string name="wrapped_intro_button">let\'s go!</string>
-    <string name="wrapped_logo_content_description">Metrolist Logo</string>
+    <string name="wrapped_logo_content_description">Apple Music Logo</string>
     <string name="wrapped_year">2025</string>
     <string name="wrapped_ready_title">YOUR WRAPPED IS READY!</string>
     <string name="wrapped_ready_subtitle">Time to see what you loved all this year…</string>
     <string name="wrapped_thank_you">Thank you for listening!</string>
-    <string name="wrapped_special_thanks">Thank you for listening with Metrolist</string>
+    <string name="wrapped_special_thanks">Thank you for listening with Apple Music</string>
     <string name="wrapped_close">Close Wrapped</string>
     <string name="wrapped_playlist_title">Your %s Wrapped</string>
     <string name="wrapped_create_playlist">Create playlist</string>
@@ -543,14 +543,14 @@
     <!-- Widget strings -->
     <string name="album_art">Album art</string>
     <string name="no_song_playing">No song playing</string>
-    <string name="tap_to_open">Tap to open Metrolist</string>
+    <string name="tap_to_open">Tap to open Apple Music</string>
     <string name="previous">Previous</string>
     <string name="play_pause">Play/Pause</string>
     <string name="player_pause">Pause</string>
     <string name="next">Next</string>
     <string name="like">Like</string>
     <string name="not_playing">No song playing</string>
-    <string name="tap_to_play">Tap to open Metrolist</string>
+    <string name="tap_to_play">Tap to open Apple Music</string>
     <string name="widget_description">Music player widget with playback controls</string>
     <string name="turntable_widget_description">Circular music widget with play and like controls</string>
     <string name="widget_music_player">Music Player</string>
@@ -585,7 +585,7 @@
     <string name="crash_description">An unexpected error occurred. Please share the crash report to help us fix the issue</string>
     <string name="crash_share_logs">Share logs</string>
     <string name="crash_share_title">Share crash report</string>
-    <string name="crash_report_subject">Metrolist crash report</string>
+    <string name="crash_report_subject">Apple Music crash report</string>
     <string name="crash_close">Close</string>
     <string name="crash_no_log">No crash log available</string>
 
@@ -637,7 +637,7 @@
     <string name="clear_recognition_history_confirm">Are you sure you want to clear all recognition history?</string>
     <string name="delete_from_history">Delete from history</string>
     <string name="re_listen">Re-listen</string>
-    <string name="play_on_app">Play on Metrolist</string>
+    <string name="play_on_app">Play on Apple Music</string>
     <string name="qs_tile_music_recognizer">Recognize music</string>
     <string name="recognition_notification_channel_name">Music recognition</string>
     <string name="recognition_notification_channel_desc">Shows a notification while identifying a song from quick settings</string>
@@ -645,7 +645,7 @@
     <string name="recognition_notification_processing">Identifying…</string>
     <string name="recognition_notification_no_match">No match found</string>
     <string name="recognition_notification_failed">Recognition failed</string>
-    <string name="listen_on_metrolist">Metrolist</string>
+    <string name="listen_on_metrolist">Apple Music</string>
 
     <!-- CSV Import Strings -->
     <string name="map_csv_columns">Map CSV columns</string>
@@ -691,7 +691,7 @@
     <string name="credits_view_repo">View repository</string>
     <string name="buy_mo_a_coffee">Buy me a coffee!</string>
     <string name="community_and_info">Community &amp; Info</string>
-    <string name="metrolist">Metrolist</string>
+    <string name="metrolist">Apple Music</string>
     <string name="wanna_play_favorite_song">Want to play their favorite song?</string>
     <string name="yeah">Yeah!</string>
     <string name="stands_with_palestine">This project stands with Palestine 🇵🇸</string>
@@ -831,7 +831,7 @@
     <string name="folder_audio_description">Conserver hors ligne dans l’application et enregistrer le fichier dans votre dossier Musique.</string>
     <string name="folder_audio_settings">Fichiers audio — yt-dlp</string>
     <string name="folder_audio_choose">Choisir le dossier de destination</string>
-    <string name="folder_audio_choose_hint">Créez ou choisissez un sous-dossier, par exemple Téléchargements/Metrolist.</string>
+    <string name="folder_audio_choose_hint">Créez ou choisissez un sous-dossier, par exemple Téléchargements/Apple Music.</string>
     <string name="folder_audio_ready">Dossier autorisé pour les prochains fichiers</string>
     <string name="folder_audio_queued">Ajouté aux téléchargements de fichiers</string>
     <string name="folder_audio_access_error">Accès au dossier impossible. Choisissez à nouveau un dossier autorisé.</string>
@@ -845,7 +845,7 @@
     <string name="folder_audio_recent">Téléchargements de fichiers récents</string>
     <string name="folder_audio_open">Ouvrir le fichier</string>
     <string name="folder_audio_open_error">Aucune application ne peut ouvrir ce fichier.</string>
-    <string name="folder_audio_native">Format audio d’origine (Opus/WebM ou M4A), sans réencodage. Le même fichier est utilisé hors connexion dans Metrolist, sans copie privée supplémentaire. Si vous le déplacez, le supprimez ou retirez l’accès au dossier, il faudra le télécharger à nouveau. Retirer un téléchargement dans Metrolist ne supprime pas votre fichier personnel.</string>
+    <string name="folder_audio_native">Format audio d’origine (Opus/WebM ou M4A), sans réencodage. Le même fichier est utilisé hors connexion dans Apple Music, sans copie privée supplémentaire. Si vous le déplacez, le supprimez ou retirez l’accès au dossier, il faudra le télécharger à nouveau. Retirer un téléchargement dans Apple Music ne supprime pas votre fichier personnel.</string>
     <string name="folder_audio_invalid">Ce morceau ne possède pas de lien YouTube téléchargeable.</string>
     <string name="folder_audio_cancel">Annuler</string>
     <string name="makoff_changelog_error">Impossible de charger les changements depuis GitHub. Vérifiez votre connexion, puis réessayez.</string>
@@ -868,7 +868,7 @@
     <string name="apk_update_retry">Réessayer le téléchargement</string>
     <string name="apk_update_ready">APK vérifié : version plus récente et même signature. Vous pouvez installer la mise à jour en conservant vos données.</string>
     <string name="apk_update_install_result">Si l’installation a été annulée, vous pouvez la relancer avec le bouton ci-dessous.</string>
-    <string name="apk_update_permission_needed">Autorisez Metrolist à installer ses mises à jour dans les paramètres Android, puis revenez ici.</string>
+    <string name="apk_update_permission_needed">Autorisez Apple Music à installer ses mises à jour dans les paramètres Android, puis revenez ici.</string>
     <string name="apk_update_invalid_source">Cette adresse ne correspond pas aux APK du dépôt Music.</string>
     <string name="apk_update_download_failed">Le téléchargement a échoué. Vérifiez votre connexion et réessayez.</string>
     <string name="apk_update_invalid_apk">Le fichier reçu n’est pas un APK valide.</string>

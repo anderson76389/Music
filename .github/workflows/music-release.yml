@@ -1,12 +1,12 @@
 name: Publier les APK stables signés
 on:
   workflow_run:
-    workflows: ["Metrolist Android"]
+    workflows: ["Music Android"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
 concurrency:
-  group: metrolist-signed-release
+  group: music-signed-release
   cancel-in-progress: false
 permissions:
   contents: write
@@ -60,7 +60,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.MUSIC_KEY_PASSWORD }}
         run: |
           mkdir -p "$HOME/.android"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Metrolist Test,O=MAKOFF,C=FR"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
@@ -100,7 +100,7 @@ jobs:
           printf 'MUSIC_VERSION_CODE=%s\nMUSIC_VERSION_NAME=%s\nSOURCE_SHA=%s\n' "$MUSIC_VERSION_CODE" "$MUSIC_VERSION_NAME" "$SOURCE_SHA" > dist/BUILD.txt
           (cd dist && sha256sum Metrolist.apk MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
           cat > notes.txt <<'NOTES'
-          ## Metrolist pour Android
+          ## Apple Music pour Android
 
           - **Metrolist.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle des APK jointes.
@@ -110,7 +110,7 @@ jobs:
           cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Metrolist $RELEASE_TAG" --notes-file notes.txt
+            gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Apple Music $RELEASE_TAG" --notes-file notes.txt
           fi
           gh release upload "$RELEASE_TAG" dist/* --clobber
           gh release edit "$RELEASE_TAG" --draft=false --latest --notes-file notes.txt

@@ -34,11 +34,11 @@ val generateYtEjsNativeScripts =
                 out
                     .get()
                     .asFile
-                    .resolve("com/metrolist/innertubex/cipher")
+                    .resolve("fr/makoff/music/innertubex/cipher")
                     .apply { mkdirs() }
             dir.resolve("YtEjsScriptLoader.native.kt").writeText(
                 listOf(
-                    "package com.metrolist.innertubex.cipher",
+                    "package fr.makoff.music.innertubex.cipher",
                     "",
                     "import kotlin.io.encoding.Base64",
                     "import kotlin.io.encoding.ExperimentalEncodingApi",
@@ -59,7 +59,7 @@ val generateYtEjsNativeScripts =
 
 kotlin {
     android {
-        namespace = "com.metrolist.innertubex"
+        namespace = "fr.makoff.music.innertubex"
         compileSdk =
             libs.versions.compileSdk
                 .get()

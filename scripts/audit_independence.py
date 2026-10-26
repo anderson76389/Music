@@ -1,7 +1,7 @@
 from pathlib import Path
 import re
 r = Path(__file__).resolve().parents[1]
-k = r / 'app/src/main/kotlin/com/metrolist/music'
+k = r / 'app/src/main/kotlin/fr/makoff/music'
 assert 'fr.makoff.music' in (r/'app/build.gradle.kts').read_text()
 assert 'includeBuild("vendor/innertubex")' in (r/'settings.gradle.kts').read_text()
 assert (r/'vendor/innertubex/LICENSE').exists()
@@ -63,3 +63,9 @@ for module in ('app', 'innertube', 'vendor/innertubex'):
             continue
         assert not re.search(r'(?:https?|wss?)://[^"\s<]*(?:metrolistgroup|metrolist\.cc|meowery\.eu|lyricsplus\.atomix\.one|t\.me/metrolist)', p.read_text(), re.I), p
 print('PASS: all production modules checked for known upstream service addresses')
+
+for module in ('app', 'innertube', 'vendor/innertubex'):
+    for p in (r/module/'src').rglob('*.kt'):
+        assert 'com/metrolist/' not in p.as_posix(), p
+        assert 'com.metrolist.' not in p.read_text(), p
+print('PASS: application and vendored source namespaces use the independent identity')

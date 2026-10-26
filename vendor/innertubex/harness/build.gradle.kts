@@ -6,7 +6,7 @@ plugins {
 }
 
 kotlin { jvmToolchain(21) }
-application { mainClass.set("com.metrolist.innertubex.harness.MainKt") }
+application { mainClass.set("fr.makoff.music.innertubex.harness.MainKt") }
 
 dependencies {
     implementation(project(":", configuration = "desktopRuntimeElements"))

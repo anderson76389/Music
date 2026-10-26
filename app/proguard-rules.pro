@@ -129,6 +129,8 @@
 -keep class com.atilika.kuromoji.** { *; }
 
 ## Queue Persistence Rules
+-keep class fr.makoff.music.models.MediaMetadata { *; }
+-keep class fr.makoff.music.models.MediaMetadata$* { *; }
 # Keep queue-related classes to prevent serialization issues in release builds
 -keep class fr.makoff.music.models.PersistQueue { *; }
 -keep class fr.makoff.music.models.PersistPlayerState { *; }
@@ -176,17 +178,17 @@
 -keepclassmembers class fr.makoff.music.listentogether.proto.** { *; }
 
 ## Shazam Models
--keep class com.metrolist.shazamkit.models.** { *; }
--keepclassmembers class com.metrolist.shazamkit.models.** {
+-keep class fr.makoff.music.shazamkit.models.** { *; }
+-keepclassmembers class fr.makoff.music.shazamkit.models.** {
     *;
 }
 
 ## Kotlinx Serialization
 -keepattributes *Annotation*
--keepclassmembers class com.metrolist.shazamkit.models.** {
+-keepclassmembers class fr.makoff.music.shazamkit.models.** {
     *** Companion;
 }
--keepclasseswithmembers class com.metrolist.shazamkit.models.** {
+-keepclasseswithmembers class fr.makoff.music.shazamkit.models.** {
     kotlinx.serialization.KSerializer serializer(...);
 }
 

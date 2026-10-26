@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.metrolist.innertube"
+    namespace = "fr.makoff.music.innertube"
     compileSdk = 37
 
     defaultConfig {

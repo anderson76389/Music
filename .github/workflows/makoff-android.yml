@@ -1,4 +1,4 @@
-name: Metrolist Android
+name: Music Android
 on:
   workflow_dispatch:
   push:
@@ -32,11 +32,21 @@ jobs:
       - name: Create test signing key
         run: |
           mkdir -p "$HOME/.android"
-          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Metrolist Test,O=MAKOFF,C=FR"
+          keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
       - name: Build and test
         run: |
           chmod +x gradlew
+          ./gradlew :innertubex:desktopApiDump
           ./gradlew :app:assembleFossDebug :app:assembleGmsDebug :app:testFossDebugUnitTest :app:assembleGmsDebugAndroidTest :innertubex:desktopTest :innertubex:apiCheck
+      - name: Conserver l’interface générée du moteur
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: Music-generated-engine-api
+          path: vendor/innertubex/api/desktop/innertubex.api
+          if-no-files-found: error
+      - name: Vérifier que l’interface générée est enregistrée
+        run: git diff --exit-code -- vendor/innertubex/api
       - uses: actions/upload-artifact@v4
         with:
           name: MAKOFF-Music-test-APK
