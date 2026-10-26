@@ -31,7 +31,15 @@ class ExoDownloadService : DownloadService(
     lateinit var downloadUtil: DownloadUtil
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        if (intent?.action == DownloadService.ACTION_REMOVE_DOWNLOAD) {
+            intent.getStringExtra(DownloadService.KEY_CONTENT_ID)?.let { songId ->
+                androidx.work.WorkManager.getInstance(this).cancelAllWorkByTag(
+                    fr.makoff.music.downloads.FolderAudioDownloads.SONG_TAG + songId,
+                )
+            }
+        }
         if (intent?.action == REMOVE_ALL_PENDING_DOWNLOADS) {
+            androidx.work.WorkManager.getInstance(this).cancelAllWorkByTag(fr.makoff.music.downloads.FolderAudioDownloads.TAG)
             downloadManager.currentDownloads.forEach { download ->
                 downloadManager.removeDownload(download.request.id)
             }

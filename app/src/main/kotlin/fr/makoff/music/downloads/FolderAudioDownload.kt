@@ -261,6 +261,10 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val track = inputData.getInt("track", 0)
                 val name = (if (track > 0) "%03d - ".format(java.util.Locale.ROOT, track) else "") + audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
                 val uri = saveAudioToTree(applicationContext, tree, source, name, inputData.getStringArray("folders")?.toList().orEmpty())
+                currentCoroutineContext().ensureActive()
+                // Removing a completed native download during export must not restore it.
+                if (downloads.downloadManager.downloadIndex.getDownload(videoId)?.state != androidx.media3.exoplayer.offline.Download.STATE_COMPLETED)
+                    return@withPermit Result.failure(workDataOf("error" to "cancelled"))
                 downloads.registerExternalAudio(media, uri, source.length())
                 if (inputData.getStringArray("folders")?.toList() == listOf(AutoLikedDownloads.FOLDER)) {
                     applicationContext.dataStore.edit {
