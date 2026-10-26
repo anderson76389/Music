@@ -247,8 +247,9 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 var lastUpdate = 0L
                 if (downloads.downloads.value[videoId]?.isTerminalState == false) return@withPermit Result.failure(workDataOf("error" to "active"))
                 val format = DownloadAudioFormat.parse(inputData.getString("format"))
-                val source = YtDlpAudioEngine.reuse(applicationContext, downloads.stageExistingAudio(videoId, directory), format, directory, id.toString()) ?: YtDlpAudioEngine.download(
-                    applicationContext, "https://www.youtube.com/watch?v=$videoId", directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format,
+                val source = YtDlpAudioEngine.reuse(applicationContext, downloads.stageExistingAudio(videoId, directory), format, directory, id.toString()) ?: PlaybackAudioEngine.download(
+                    applicationContext, videoId, directory, id.toString(), applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format,
+                    isExplicit = media.explicit,
                 ) { progress ->
                     val now = android.os.SystemClock.elapsedRealtime()
                     if (now - lastUpdate > 800) {

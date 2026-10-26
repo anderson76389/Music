@@ -103,132 +103,7 @@ constructor(
             val mediaId = dataSpec.key ?: error("No media id")
             val formatChoice = DownloadAudioFormat.parse(
                 downloadManager.downloadIndex.getDownload(mediaId)?.request?.uri?.getQueryParameter("downloadFormat"))
-            if (formatChoice != DownloadAudioFormat.BEST) {
-                return@Factory dataSpec.withUri(android.net.Uri.fromFile(prepareFormattedAudio(mediaId, formatChoice)))
-            }
-
-            songUrlCache[mediaId]?.let { cachedStream ->
-                return@Factory dataSpec.withResolvedStream(cachedStream)
-            }
-            val cacheGeneration = songUrlCache.generation(mediaId)
-
-            val playbackData = runBlocking(Dispatchers.IO) {
-                val song = database.songEntity(mediaId)
-                InnerTubeXPlayer.playerResponseForPlayback(
-                    mediaId,
-                    audioQuality = AudioQuality.HIGH,
-                    connectivityManager = connectivityManager,
-                    contentHints = ContentHints(
-                        isExplicit = song?.explicit,
-                        isUploaded = song?.isUploaded,
-                    ),
-                    allowBoundedRange = false,
-                )
-            }.getOrElse { error ->
-                val cookie = context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, "")
-                if (!mediaId.matches(Regex("[A-Za-z0-9_-]{11}")) || !canUseAuthenticatedDownloadFallback(error, cookie)) throw error
-                return@Factory dataSpec.withUri(android.net.Uri.fromFile(prepareFormattedAudio(mediaId, DownloadAudioFormat.BEST)))
-            }
-            val format = playbackData.format
-
-            val actualContentLength =
-                format.contentLength?.takeIf { it > 0L } ?: run {
-                    val request = okhttp3.Request.Builder()
-                        .get()
-                        .url(playbackData.streamUrl)
-                        .apply {
-                            playbackData.streamHeaders.forEach { (name, value) ->
-                                header(name, value)
-                            }
-                        }
-                        .header("Range", "bytes=0-0")
-                        .build()
-                    try {
-                        streamHttpClient.newCall(request).execute().use { response ->
-                            downloadContentLength(
-                                statusCode = response.code,
-                                contentRange = response.header("Content-Range"),
-                                contentLength = response.header("Content-Length"),
-                            )
-                        }
-                    } catch (_: IOException) {
-                        null
-                    }
-                }
-
-            database.query {
-                if (actualContentLength != null) {
-                    upsert(
-                        FormatEntity(
-                            id = mediaId,
-                            itag = format.itag,
-                            mimeType = format.mimeType.substringBefore(";"),
-                            codecs =
-                                format.mimeType
-                                    .substringAfter("codecs=", missingDelimiterValue = "")
-                                    .substringBefore(";")
-                                    .trim()
-                                    .removeSurrounding("\""),
-                            bitrate = format.bitrate,
-                            sampleRate = format.audioSampleRate,
-                            contentLength = actualContentLength,
-                            loudnessDb = playbackData.audioConfig?.loudnessDb,
-                            perceptualLoudnessDb = playbackData.audioConfig?.perceptualLoudnessDb,
-                            playbackUrl = playbackData.playbackTracking?.videostatsPlaybackUrl?.baseUrl
-                        ),
-                    )
-                } else {
-                    deleteFormat(mediaId)
-                }
-
-                // Metadata registration only — dateDownload is intentionally NOT set here.
-                // It belongs solely to onDownloadChanged()'s STATE_COMPLETED branch below,
-                // which only fires once the download has actually finished. Setting it here
-                // (at URL-resolve time, i.e. the moment the download merely *starts*) would
-                // mark the song as "cached" before a single byte is written.
-                val existing = getSongByIdBlocking(mediaId)?.song
-                val updatedSong = existing ?: SongEntity(
-                    id = mediaId,
-                    title = playbackData.videoDetails?.title ?: "Unknown",
-                    duration = playbackData.videoDetails?.lengthSeconds?.toIntOrNull() ?: 0,
-                    thumbnailUrl = playbackData.videoDetails?.thumbnail?.thumbnails?.lastOrNull()?.url,
-                    dateDownload = null,
-                    isDownloaded = false
-                )
-
-                upsert(updatedSong)
-            }
-
-            // googlevideo throttles unbounded requests to roughly playback speed; a range param covering
-            // the whole file lets the download run at full speed.
-            val streamUrl =
-                if (actualContentLength != null && "&range=" !in playbackData.streamUrl) {
-                    "${playbackData.streamUrl}&range=0-${actualContentLength - 1}"
-                } else {
-                    playbackData.streamUrl
-                }
-
-            songUrlCache.put(
-                mediaId = mediaId,
-                url = streamUrl,
-                requestHeaders = playbackData.streamHeaders,
-                clientName = playbackData.streamClient,
-                expiresInSeconds = playbackData.streamExpiresInSeconds,
-                requireBoundedRange = playbackData.requireBoundedRange,
-                rangeChunkSizeBytes = playbackData.rangeChunkSizeBytes,
-                useRangeChunks = playbackData.useRangeChunks,
-                expectedGeneration = cacheGeneration,
-            )
-            dataSpec.withResolvedStream(
-                CachedStreamUrl(
-                    url = streamUrl,
-                    requestHeaders = playbackData.streamHeaders,
-                    clientName = playbackData.streamClient,
-                    requireBoundedRange = playbackData.requireBoundedRange,
-                    rangeChunkSizeBytes = playbackData.rangeChunkSizeBytes,
-                    useRangeChunks = playbackData.useRangeChunks,
-                ),
-            )
+            dataSpec.withUri(android.net.Uri.fromFile(prepareFormattedAudio(mediaId, formatChoice)))
         }
 
     val downloadNotificationHelper =
@@ -408,14 +283,17 @@ constructor(
         val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId/${format.name}")
         val marker = java.io.File(directory, "complete.txt")
         val file = runBlocking(Dispatchers.IO) {
-            val saved = marker.takeIf { it.exists() }?.readText()?.takeIf { it.matches(Regex("audio\\.[a-z0-9]{1,8}")) }
+            val saved = marker.takeIf { it.exists() }?.readText()?.takeIf { it.matches(Regex("(?:resolved/|converted/)?audio\\.[a-z0-9]{1,8}")) }
                 ?.let { java.io.File(directory, it) }?.takeIf { it.isFile && it.length() > 0 }
             saved ?: try {
                 directory.deleteRecursively()
-                val result = fr.makoff.music.downloads.YtDlpAudioEngine.download(context,
-                    "https://www.youtube.com/watch?v=$mediaId", directory, "internal-$mediaId",
-                    context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format) { }
-                marker.writeText(result.name)
+                val song = database.songEntity(mediaId)
+                val result = fr.makoff.music.downloads.PlaybackAudioEngine.download(context,
+                    mediaId, directory, "internal-$mediaId",
+                    context.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""), format = format,
+                    isExplicit = song?.explicit, isUploaded = song?.isUploaded,
+                    audioQuality = AudioQuality.HIGH) { }
+                marker.writeText(result.relativeTo(directory).invariantSeparatorsPath)
                 result
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
@@ -431,8 +309,14 @@ constructor(
             val sourceMime = file.inputStream().use {
                 fr.makoff.music.downloads.sourceAudioMime(it, audio.getString(android.media.MediaFormat.KEY_MIME)!!)
             }
+            val durationUs = if (audio.containsKey(android.media.MediaFormat.KEY_DURATION))
+                audio.getLong(android.media.MediaFormat.KEY_DURATION) else 0L
+            val bitrate = if (sourceMime != "audio/flac" && audio.containsKey(android.media.MediaFormat.KEY_BIT_RATE))
+                audio.getInteger(android.media.MediaFormat.KEY_BIT_RATE)
+            else if (durationUs > 0) (file.length() * 8_000_000L / durationUs).coerceAtMost(Int.MAX_VALUE.toLong()).toInt()
+            else 0
             database.upsert(FormatEntity(mediaId, -1, sourceMime,
-                "", 0, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
+                "", bitrate, if (audio.containsKey(android.media.MediaFormat.KEY_SAMPLE_RATE)) audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE) else null,
                 file.length(), null, playbackUrl = null))
         } finally { extractor.release() }
         return file

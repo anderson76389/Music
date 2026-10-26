@@ -235,6 +235,7 @@ class FolderAudioInstrumentedTest {
                 instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() },
                 android.util.Base64.DEFAULT,
             )
+            verifyResolvedAudioRanges(audio, asset)
             val server = ServerSocket(0)
             val responder = thread(isDaemon = true) {
                 while (!server.isClosed) try {
@@ -328,5 +329,63 @@ class FolderAudioInstrumentedTest {
             val after = DocumentFile.fromTreeUri(context, tree)!!.listFiles().map { it.uri }.toSet()
             assertEquals(before, after)
         } finally { source.delete() }
+    }
+
+    private suspend fun verifyResolvedAudioRanges(audio: ByteArray, asset: String) {
+        for (mode in 0..4) {
+            val server = ServerSocket(0)
+            val responder = thread(isDaemon = true) {
+                while (!server.isClosed) try {
+                    server.accept().use { socket ->
+                        socket.soTimeout = 5000
+                        val reader = socket.getInputStream().bufferedReader()
+                        reader.readLine()
+                        val headers = mutableMapOf<String, String>()
+                        while (true) {
+                            val line = reader.readLine().orEmpty()
+                            if (line.isEmpty()) break
+                            headers[line.substringBefore(':').lowercase()] = line.substringAfter(':').trim()
+                        }
+                        val authorized = headers["x-audio-test"] == "kept"
+                        val range = Regex("bytes=(\\d+)-(\\d+)").matchEntire(headers["range"].orEmpty())
+                        val start = range?.groupValues?.get(1)?.toInt() ?: 0
+                        val end = minOf(range?.groupValues?.get(2)?.toInt() ?: audio.lastIndex, audio.lastIndex)
+                        val bytes = if (mode == 0) audio else audio.copyOfRange(start, end + 1)
+                        val status = if (!authorized || mode == 2) "403 Forbidden" else if (mode == 0) "200 OK" else "206 Partial Content"
+                        val declared = bytes.size + if (mode == 3) 1 else 0
+                        val contentRange = if (mode == 0 || mode == 2) "" else
+                            "Content-Range: bytes ${if (mode == 4) start + 1 else start}-$end/${audio.size}\r\n"
+                        socket.getOutputStream().apply {
+                            write(("HTTP/1.1 $status\r\n" + contentRange +
+                                "Content-Length: $declared\r\nConnection: close\r\n\r\n").toByteArray())
+                            write(bytes)
+                            flush()
+                        }
+                    }
+                } catch (_: Exception) { if (server.isClosed) break }
+            }
+            val dir = File(context.cacheDir, "resolved-test-${UUID.randomUUID()}").apply { mkdirs() }
+            val destination = File(dir, asset)
+            try {
+                var failed = false
+                try {
+                    downloadResolvedAudio(okhttp3.OkHttpClient(), "http://127.0.0.1:${server.localPort}/$asset",
+                        mapOf("X-Audio-Test" to "kept"), audio.size.toLong(), destination, 1024)
+                } catch (_: Exception) { failed = true }
+                if (mode < 2) {
+                    assertFalse("Full response and bounded ranges must succeed", failed)
+                    assertArrayEquals(audio, destination.readBytes())
+                    val exported = saveAudioToTree(context, tree, destination, "${UUID.randomUUID()}-$asset")
+                    try {
+                        assertArrayEquals(audio, context.contentResolver.openInputStream(exported)!!.use { it.readBytes() })
+                    } finally { DocumentsContract.deleteDocument(context.contentResolver, exported) }
+                } else {
+                    assertTrue("HTTP errors, truncated bodies and shifted ranges must fail", failed)
+                    assertFalse(destination.exists())
+                }
+                assertFalse(File(dir, asset + ".part").exists())
+            } finally { server.close(); responder.join(2000); dir.deleteRecursively() }
+        }
+        println("RESOLVED_DOWNLOAD_OK: $asset; complete ranges, headers, exact bytes, SAF export and failed-transfer cleanup")
     }
 }

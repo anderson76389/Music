@@ -60,6 +60,7 @@ object InnerTubeXPlayer {
         connectivityManager: ConnectivityManager,
         contentHints: ContentHints = ContentHints(),
         allowBoundedRange: Boolean = true,
+        preferM4a: Boolean = false,
     ): Result<PlaybackData> =
         try {
             val hints =
@@ -80,7 +81,7 @@ object InnerTubeXPlayer {
                         videoId = videoId,
                         hints = hints,
                         excludedClients = excludedClients,
-                        audioQuality = audioQuality.toInnerTubeX(connectivityManager),
+                        audioQuality = if (preferM4a) InnerTubeXAudioQuality.MP4 else audioQuality.toInnerTubeX(connectivityManager),
                         clientPlaybackNonce = generateClientPlaybackNonce(),
                     ),
                 ) { "InnerTubeX returned no playable stream" }
