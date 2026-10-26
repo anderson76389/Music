@@ -11,6 +11,13 @@ class FolderAudioNameTest {
         assertFalse(name.contains('\n'))
         assertTrue(name.endsWith("[BaW_jenozKc].webm"))
     }
+    @Test fun collectionNamesAreReadableWithoutHashOrCombiningStacks() {
+        assertEquals("See", collectionFolder("S\u030d\u0351e\u0334e\u036f", "album-id"))
+        assertEquals("Album été", collectionFolder("𝔄𝔩𝔟𝔲𝔪 été", "album-id"))
+        assertEquals("Mix été 2026", collectionFolder("Mix / été : \"2026\"", "album-id"))
+        assertEquals("Album", collectionFolder("\u202eAlbum\u200b", "album-id"))
+        assertFalse(collectionFolder("..", "album-id").contains('/'))
+    }
     @Test fun cookiesAreDomainScopedAndCannotInjectJarRows() {
         val jar = youtubeCookieJar("SID=secret; invalid=bad\n.evil.com; SAPISID=ok")
         assertTrue(jar.contains(".youtube.com\tTRUE\t/\tTRUE\t0\tSID\tsecret"))

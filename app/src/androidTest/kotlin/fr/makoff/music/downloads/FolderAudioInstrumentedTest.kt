@@ -257,19 +257,31 @@ class FolderAudioInstrumentedTest {
             try {
                 val source = YtDlpAudioEngine.download(context,
                     "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", format = if (asset == "aac.m4a") DownloadAudioFormat.M4A else DownloadAudioFormat.BEST) { }
-                assertArrayEquals(audio, source.readBytes())
-                val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}-$asset")
+                if (asset == "aac.m4a") {
+                    assertArrayEquals(audio, source.readBytes())
+                } else {
+                    assertEquals("opus", source.extension)
+                    assertEquals("OggS", source.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
+                    val original = File(directory, "original.webm").apply { writeBytes(audio) }
+                    assertArrayEquals(audioPackets(original), audioPackets(source))
+                    val reused = YtDlpAudioEngine.reuse(context, original, DownloadAudioFormat.BEST,
+                        File(directory, "offline"), "remux-${UUID.randomUUID()}")!!
+                    assertEquals("opus", reused.extension)
+                    assertArrayEquals(audioPackets(original), audioPackets(reused))
+                }
+                val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}.${source.extension}")
                 exported = uri
-                assertArrayEquals(audio, context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                assertArrayEquals(source.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
                 val extractor = android.media.MediaExtractor()
                 try {
                     extractor.setDataSource(context, uri, null)
                     val formats = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                    assertFalse(formats.any { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("video/") == true })
                     val format = formats.single { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
                     assertEquals(mime, format.getString(android.media.MediaFormat.KEY_MIME))
                     assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
                     assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
-                    println("AUDIO_CODEC_OK: $asset; $format; source and exported bytes identical")
+                    println("AUDIO_CODEC_OK: $asset; $format; audio-only output, encoded audio packets preserved")
                 } finally { extractor.release() }
             } finally {
                 exported?.let { DocumentsContract.deleteDocument(context.contentResolver, it) }
@@ -329,6 +341,29 @@ class FolderAudioInstrumentedTest {
             val after = DocumentFile.fromTreeUri(context, tree)!!.listFiles().map { it.uri }.toSet()
             assertEquals(before, after)
         } finally { source.delete() }
+    }
+
+    private fun audioPackets(file: File): ByteArray {
+        val extractor = android.media.MediaExtractor()
+        try {
+            extractor.setDataSource(file.absolutePath)
+            val track = (0 until extractor.trackCount).single {
+                extractor.getTrackFormat(it).getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true
+            }
+            extractor.selectTrack(track)
+            val hash = java.security.MessageDigest.getInstance("SHA-256")
+            val buffer = java.nio.ByteBuffer.allocate(1024 * 1024)
+            while (true) {
+                buffer.clear()
+                val size = extractor.readSampleData(buffer, 0)
+                if (size < 0) break
+                buffer.position(0)
+                buffer.limit(size)
+                hash.update(buffer)
+                extractor.advance()
+            }
+            return hash.digest()
+        } finally { extractor.release() }
     }
 
     private suspend fun verifyResolvedAudioRanges(audio: ByteArray, asset: String) {

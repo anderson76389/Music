@@ -112,7 +112,7 @@ internal object YtDlpAudioEngine {
     suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             initialize(context)
-            if (format == DownloadAudioFormat.FLAC) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+            if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
             check(directory.isDirectory || directory.mkdirs())
             val request = YoutubeDLRequest(url)
                 .addOption("--ignore-config")
@@ -124,8 +124,8 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", if (url.startsWith("file:")) "best" else if (lowQuality && format == DownloadAudioFormat.BEST) "worstaudio" else format.selector)
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format == DownloadAudioFormat.FLAC) {
-                request.addOption("--extract-audio").addOption("--audio-format", "flac")
+            if (format != DownloadAudioFormat.M4A) {
+                request.addOption("--extract-audio").addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
             }
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
@@ -146,6 +146,9 @@ internal object YtDlpAudioEngine {
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
         source ?: return null
         return when {
+            format == DownloadAudioFormat.BEST && source.extension.lowercase() == "webm" ->
+                download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
+                    format = DownloadAudioFormat.BEST) { }
             format == DownloadAudioFormat.BEST -> source
             format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
             format == DownloadAudioFormat.M4A -> { source.delete(); null }
@@ -167,10 +170,8 @@ internal fun youtubeCookieJar(cookie: String): String = buildString {
 }
 
 internal fun audioFileName(title: String, artist: String, id: String, extension: String): String {
-    val safe = "$artist - $title".replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), "_").trim(' ', '.')
     val ext = extension.lowercase().takeIf { it.matches(Regex("[a-z0-9]{1,8}")) } ?: "audio"
-    // Bound UTF-8 filename size even when every character needs four bytes.
-    val stem = safe.codePoints().limit(40).toArray().let { String(it, 0, it.size) }.ifBlank { "Audio" }
+    val stem = readableAudioName("$artist - $title").ifBlank { "Audio" }
     return "$stem [$id].$ext"
 }
 
@@ -329,7 +330,14 @@ internal fun destinationId(value: String): String = java.security.MessageDigest.
     .digest(value.toByteArray()).take(8).joinToString("") { "%02x".format(it) }
 
 internal fun collectionFolder(title: String, id: String): String {
-    val safe = title.replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), "_").trim(' ', '.')
-    val stem = safe.codePoints().limit(40).toArray().let { String(it, 0, it.size) }.ifBlank { "Collection" }
-    return "$stem [${destinationId(id)}]"
+    return readableAudioName(title).ifBlank { "Collection ${destinationId(id)}" }
+}
+
+/** Normalize stylized letters and strip combining stacks/invisible direction controls. */
+internal fun readableAudioName(value: String): String {
+    val normalized = java.text.Normalizer.normalize(value, java.text.Normalizer.Form.NFKC)
+        .replace(Regex("[\\p{M}\\p{Cf}]"), "")
+        .replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), " ")
+        .replace(Regex("\\s+"), " ").trim(' ', '.')
+    return normalized.codePoints().limit(50).toArray().let { String(it, 0, it.size) }.trimEnd(' ', '.')
 }

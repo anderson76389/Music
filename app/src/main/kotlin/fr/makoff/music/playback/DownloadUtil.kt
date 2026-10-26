@@ -283,7 +283,7 @@ constructor(
         val directory = java.io.File(context.cacheDir, "authenticated-download/$mediaId/${format.name}")
         val marker = java.io.File(directory, "complete.txt")
         val file = runBlocking(Dispatchers.IO) {
-            val saved = marker.takeIf { it.exists() }?.readText()?.takeIf { it.matches(Regex("(?:resolved/|converted/)?audio\\.[a-z0-9]{1,8}")) }
+            val saved = marker.takeIf { it.exists() }?.readText()?.takeIf { it.matches(Regex("(?:resolved/|converted/|remuxed/)?audio\\.[a-z0-9]{1,8}")) }
                 ?.let { java.io.File(directory, it) }?.takeIf { it.isFile && it.length() > 0 }
             saved ?: try {
                 directory.deleteRecursively()

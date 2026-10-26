@@ -1,5 +1,1 @@
-- Les téléchargements internes et vers le dossier utilisent d’abord le moteur et la session YouTube du lecteur, avec prise en charge des flux découpés.
-- Les transferts vérifient les plages reçues, la taille totale et la présence d’une piste audio avant de valider le fichier.
-- Le mode M4A choisit le meilleur flux AAC/M4A disponible à la source, sans conversion depuis Opus ; le FLAC convertit la meilleure source disponible.
-- Le téléchargement partagé conserve le fichier dans le dossier et sa référence hors ligne dans l’application.
-- Tests ajoutés sur les réponses complètes et partielles, la conservation des octets et des en-têtes, les erreurs HTTP et le nettoyage des fichiers incomplets.
+Téléchargements audio : export Opus dans un vrai conteneur audio Ogg/Opus au lieu de WebM, sans réencodage. M4A et FLAC conservés. Noms des collections lisibles, caractères décoratifs normalisés et identifiant technique retiré des noms de dossiers. Les anciens fichiers et dossiers ne sont pas supprimés.
