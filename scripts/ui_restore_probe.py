@@ -30,7 +30,7 @@ def document_hierarchy(timeout=25):
         time.sleep(.5)
     raise RuntimeError("UIAutomator could not obtain a valid current hierarchy")
 
-def click(pattern, timeout=45):
+def click(pattern, timeout=45, scroll=False):
     deadline = time.monotonic() + timeout
     last = ""
     while time.monotonic() < deadline:
@@ -53,6 +53,15 @@ def click(pattern, timeout=45):
                                 str((bounds[1]+bounds[3])//2)], check=True)
                 time.sleep(.5)
                 return
+        if scroll:
+            container = next((node for node in nodes if node.get("scrollable") == "true"), None)
+            if container is not None:
+                bounds = list(map(int, re.findall(r"\d+", container.get("bounds", ""))))
+                if len(bounds) == 4 and bounds[3] - bounds[1] > 80:
+                    x = (bounds[0] + bounds[2]) // 2
+                    margin = (bounds[3] - bounds[1]) // 5
+                    subprocess.run(["adb", "shell", "input", "swipe", str(x), str(bounds[3] - margin),
+                                    str(x), str(bounds[1] + margin), "450"], check=True)
         time.sleep(.5)
     pathlib.Path("smoke-results/restore-ui-failure.xml").write_text(last)
     with open("smoke-results/restore-ui-logcat.txt", "w") as log:
@@ -64,7 +73,7 @@ def click(pattern, timeout=45):
 subprocess.run(["adb", "shell", "am", "start", "-W", "-n", f"{package}/fr.makoff.music.MainActivity"], check=True)
 click("Account")
 click("Settings")
-click("Backup.*restore")
+click("Backup.*restore", scroll=True)
 click("Restore")
 click(re.escape(filename))
 time.sleep(1)
