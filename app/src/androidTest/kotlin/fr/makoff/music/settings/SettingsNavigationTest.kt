@@ -653,18 +653,18 @@ class SettingsNavigationTest {
                     }
                     println("DOWNLOAD_FORMAT_SETTINGS_OK: unified BEST/M4A/FLAC selection updates both download paths")
                     assertFalse("Storage has no native-download explanatory paragraph", visibleControls().any { it.text == label(R.string.folder_audio_native) })
+                    val libraryBefore = runBlocking { context.dataStore.data.first() }
                     open(R.string.downloaded_songs)
-                    awaitPreference("Downloaded songs opens filtered library") {
-                        val prefs = context.dataStore.data.first()
-                        prefs[SongFilterKey] == SongFilter.DOWNLOADED.name && prefs[ChipSortTypeKey] == LibraryFilter.SONGS.name
-                    }
-                    findText(R.string.filter_downloaded)
+                    findText(R.string.offline)
+                    val libraryAfter = runBlocking { context.dataStore.data.first() }
+                    assertEquals("Downloaded-list shortcut keeps the library filter", libraryBefore[ChipSortTypeKey], libraryAfter[ChipSortTypeKey])
+                    assertEquals("Downloaded-list shortcut keeps the song filter", libraryBefore[SongFilterKey], libraryAfter[SongFilterKey])
                     device.pressBack()
                     device.waitForIdle()
                     open(R.string.clear_all_downloads)
                     findText(R.string.clear_exported_downloads)
                     open(android.R.string.cancel)
-                    println("STORAGE_DOWNLOAD_ACTIONS_OK: real filtered library navigation and clear confirmation with public-file choice")
+                    println("STORAGE_DOWNLOAD_ACTIONS_OK: direct offline-list navigation without library preference changes and clear confirmation with public-file choice")
                 }
             }
             device.pressBack()

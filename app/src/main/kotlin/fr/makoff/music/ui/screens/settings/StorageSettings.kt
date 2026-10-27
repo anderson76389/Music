@@ -7,12 +7,6 @@ package fr.makoff.music.ui.screens.settings
 
 import fr.makoff.music.downloads.FolderAudioSettings
 import fr.makoff.music.downloads.FolderAudioDownloads
-import fr.makoff.music.constants.ChipSortTypeKey
-import fr.makoff.music.constants.LibraryFilter
-import fr.makoff.music.constants.SongFilterKey
-import fr.makoff.music.constants.SongFilter
-import fr.makoff.music.ui.screens.Screens
-import fr.makoff.music.utils.safeDataStoreEdit
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.selection.toggleable
@@ -339,14 +333,7 @@ fun StorageSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.storage),
                         title = { Text(stringResource(R.string.downloaded_songs)) },
-                        onClick = {
-                            coroutineScope.launch {
-                                if (context.safeDataStoreEdit {
-                                    it[ChipSortTypeKey] = LibraryFilter.SONGS.name
-                                    it[SongFilterKey] = SongFilter.DOWNLOADED.name
-                                }) navController.navigate(Screens.Library.route)
-                            }
-                        },
+                        onClick = { navController.navigate("auto_playlist/downloaded") },
                         description = {
                             Text(text = pluralStringResource(R.plurals.n_song, downloadedCount, downloadedCount) +
                                 " · " + Formatter.formatShortFileSize(context, downloadCacheSize))
