@@ -327,6 +327,26 @@ class OfflinePlayerInstrumentedTest {
                 main { active.player.toggleRepeatMode() }
                 await("Repeat state not propagated: $expected") { controller.repeatMode.value == expected }
             }
+            val rememberedRepeat = context.dataStore.data.first()[RepeatModeKey]
+            val rememberModes = context.dataStore.data.first()[RememberShuffleAndRepeatKey]
+            try {
+                context.dataStore.edit { it[RememberShuffleAndRepeatKey] = false; it[RepeatModeKey] = Player.REPEAT_MODE_ONE }
+                main { active.player.repeatMode = Player.REPEAT_MODE_ALL }
+                delay(300)
+                assertEquals("Disabled mode memory must not persist repeat changes", Player.REPEAT_MODE_ONE,
+                    context.dataStore.data.first()[RepeatModeKey])
+                context.dataStore.edit { it[RememberShuffleAndRepeatKey] = true }
+                main { active.player.repeatMode = Player.REPEAT_MODE_OFF }
+                await("Enabled mode memory must persist repeat changes") {
+                    runBlocking { context.dataStore.data.first()[RepeatModeKey] == Player.REPEAT_MODE_OFF }
+                }
+                println("PLAYER_REPEAT_MEMORY_OK: real repeat changes respect enabled/disabled setting")
+            } finally {
+                context.dataStore.edit { prefs ->
+                    rememberedRepeat?.let { prefs[RepeatModeKey] = it } ?: prefs.remove(RepeatModeKey)
+                    rememberModes?.let { prefs[RememberShuffleAndRepeatKey] = it } ?: prefs.remove(RememberShuffleAndRepeatKey)
+                }
+            }
             main { active.player.setPlaybackSpeed(1.25f) }
             assertEquals(1.25f, main { active.player.playbackParameters.speed }, 0.001f)
             main { active.player.setPlaybackSpeed(1f) }

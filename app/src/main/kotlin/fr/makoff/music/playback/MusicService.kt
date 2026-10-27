@@ -638,9 +638,8 @@ class MusicService :
                     ),
                 ).setBitmapLoader(CoilBitmapLoader(this, scope))
                 .build()
-        player.repeatMode = startupPrefs!![RepeatModeKey] ?: REPEAT_MODE_OFF
-
         if (startupPrefs!![RememberShuffleAndRepeatKey] ?: true) {
+            player.repeatMode = startupPrefs!![RepeatModeKey] ?: REPEAT_MODE_OFF
             player.shuffleModeEnabled = startupPrefs!![ShuffleModeKey] ?: false
         }
 
@@ -2510,9 +2509,11 @@ class MusicService :
 
     override fun onRepeatModeChanged(repeatMode: Int) {
         updateNotification()
-        scope.launch {
-            safeDataStoreEdit { settings ->
-                settings[RepeatModeKey] = repeatMode
+        if (dataStore.get(RememberShuffleAndRepeatKey, true)) {
+            scope.launch {
+                safeDataStoreEdit { settings ->
+                    settings[RepeatModeKey] = repeatMode
+                }
             }
         }
 
