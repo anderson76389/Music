@@ -44,7 +44,7 @@ fun DownloadFormatSettings() {
         )
     }
     Material3SettingsGroup(
-        title = stringResource(R.string.audio_quality),
+        title = stringResource(R.string.download_quality_settings),
         items = listOf(Material3SettingsItem(
             icon = painterResource(R.drawable.download),
             title = { Text(stringResource(R.string.download_format_unified)) },
