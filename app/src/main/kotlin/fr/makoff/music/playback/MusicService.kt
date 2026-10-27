@@ -706,6 +706,20 @@ class MusicService :
             }
         }
 
+        scope.launch {
+            var previous = emptyMap<String, Pair<Int, android.net.Uri>>()
+            downloadUtil.downloads.collect { downloads ->
+                val id = player.currentMediaItem?.mediaId
+                val ready = id?.let(downloads::get)?.takeIf {
+                    it.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED
+                }
+                val next = downloads.mapValues { (_, value) -> value.state to value.request.uri }
+                val changed = id != null && ready != null && previous[id] != next[id]
+                previous = next
+                if (changed && playerInitialized.value) rebuildOfflineSource()
+            }
+        }
+
         // Watch for audio quality setting changes
         var isFirstQualityEmit = true
         scope.launch {
@@ -2667,6 +2681,22 @@ class MusicService :
             error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_MALFORMED ||
             error.errorCode == PlaybackException.ERROR_CODE_PARSING_MANIFEST_UNSUPPORTED
 
+    private fun rebuildOfflineSource() {
+        val index = player.currentMediaItemIndex
+        if (index == C.INDEX_UNSET) return
+        val items = List(player.mediaItemCount) { player.getMediaItemAt(it) }
+        val position = player.currentPosition.coerceAtLeast(0L)
+        val playing = player.playWhenReady
+        val order = player.shuffleOrder
+        retryJob?.cancel()
+        waitingForNetworkConnection.value = false
+        currentStreamClient.value = null
+        player.setMediaItems(items, index, position)
+        player.setShuffleOrder(order)
+        player.playWhenReady = playing
+        player.prepare()
+    }
+
     override fun onPlayerError(error: PlaybackException) {
         super.onPlayerError(error)
 
@@ -2686,6 +2716,13 @@ class MusicService :
             Timber.tag(TAG).w("Song $mediaId has exceeded retry limit, skipping")
             markSongAsFailed(mediaId)
             handleFinalFailure()
+            return
+        }
+
+        if (mediaId != null && (isStreamClientError(error) || isFileNotFoundError(error)) &&
+            downloadUtil.downloads.value[mediaId]?.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED) {
+            incrementRetryCount(mediaId)
+            rebuildOfflineSource()
             return
         }
 
@@ -3125,34 +3162,18 @@ class MusicService :
         }
     }
 
-    private fun createCacheDataSource(): CacheDataSource.Factory =
-        CacheDataSource
-            .Factory()
-            .setCache(downloadCache)
-            .setUpstreamDataSourceFactory(
-                CacheDataSource
-                    .Factory()
-                    .setCache(playerCache)
-                    .setUpstreamDataSourceFactory(
-                        DefaultDataSource.Factory(
-                            this,
-                            OkHttpDataSource.Factory(
-                                OkHttpClient
-                                    .Builder()
-                                    .proxy(YouTube.proxy)
-                                    .proxyAuthenticator { _, response ->
-                                        YouTube.proxyAuth?.let { auth ->
-                                            response.request
-                                                .newBuilder()
-                                                .header("Proxy-Authorization", auth)
-                                                .build()
-                                        } ?: response.request
-                                    }.build(),
-                            ),
-                        ),
-                    ),
-            ).setCacheWriteDataSinkFactory(null)
-            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR)
+    private fun createCacheDataSource(includeDownloads: Boolean = true): CacheDataSource.Factory {
+        val streaming = CacheDataSource.Factory().setCache(playerCache)
+            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(this,
+                OkHttpDataSource.Factory(OkHttpClient.Builder().proxy(YouTube.proxy)
+                    .proxyAuthenticator { _, response ->
+                        YouTube.proxyAuth?.let { auth -> response.request.newBuilder()
+                            .header("Proxy-Authorization", auth).build() } ?: response.request
+                    }.build())))
+        return if (includeDownloads) CacheDataSource.Factory().setCache(downloadCache)
+            .setUpstreamDataSourceFactory(streaming).setCacheWriteDataSinkFactory(null)
+            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR) else streaming
+    }
 
     private var isSilenceSkipping = false
 
@@ -3204,14 +3225,29 @@ class MusicService :
         playerProvider: () -> ExoPlayer?,
     ): DataSource.Factory {
         val cachedFactory = createCacheDataSource()
-        val sourceFactory = DataSource.Factory { fr.makoff.music.downloads.LocalAudioDataSource(this, cachedFactory) }
-        return ResolvingDataSource.Factory(sourceFactory) { dataSpec ->
+        val streamingFactory = createCacheDataSource(includeDownloads = false)
+        return DataSource.Factory {
+            // A progressive extractor cannot switch containers or byte offsets between opens.
+            var bound = false
+            var document: android.net.Uri? = null
+            var useDownloadCache = false
+            val upstream = fr.makoff.music.downloads.LocalAudioDataSource(this,
+                DataSource.Factory { (if (useDownloadCache) cachedFactory else streamingFactory).createDataSource() })
+            ResolvingDataSource(upstream) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
-            downloadUtil.externalAudioUri(mediaId)?.let { uri ->
+            if (!bound) {
+                document = downloadUtil.externalAudioUri(mediaId)
+                val downloadState = downloadUtil.downloads.value[mediaId]?.state
+                val cachedLength = ContentMetadata.getContentLength(downloadCache.getContentMetadata(mediaId))
+                useDownloadCache = downloadState == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED ||
+                    (downloadState == null && cachedLength > 0L && downloadCache.isCached(mediaId, 0, cachedLength))
+                bound = true
+            }
+            document?.let { uri ->
                 applyAudioNormalizationBeforePlayback(processor = normalizationProcessor, playerProvider = playerProvider,
                     mediaId = mediaId, loudnessDb = null, perceptualLoudnessDb = null, preserveCachedIfMissing = false)
                 currentStreamClient.value = null
-                return@Factory dataSpec.withUri(uri)
+                return@ResolvingDataSource dataSpec.withUri(uri)
             }
             val storedFormat = runBlocking(Dispatchers.IO) { database.format(mediaId).first() }
             applyAudioNormalizationBeforePlayback(
@@ -3240,20 +3276,20 @@ class MusicService :
                         else -> CHUNK_LENGTH // contentLength unknown yet — fall back to old probe size
                     }
 
-                if (downloadCache.isCached(mediaId, dataSpec.position, requiredLength)) {
+                if (useDownloadCache && downloadCache.isCached(mediaId, dataSpec.position, requiredLength)) {
                     recoverSongDeduped(mediaId)
-                    return@Factory dataSpec
+                    return@ResolvingDataSource dataSpec
                 }
 
                 if (usePlayerCache && playerCache.isCached(mediaId, dataSpec.position, requiredLength)) {
                     recoverSongDeduped(mediaId)
-                    return@Factory dataSpec
+                    return@ResolvingDataSource dataSpec
                 }
 
                 songUrlCache[mediaId]?.let { cachedStream ->
                     recoverSongDeduped(mediaId)
                     currentStreamClient.value = cachedStream.clientName
-                    return@Factory dataSpec.withResolvedStream(cachedStream)
+                    return@ResolvingDataSource dataSpec.withResolvedStream(cachedStream)
                 }
             } else {
                 Timber.tag(TAG).i("BYPASSING CACHE for $mediaId due to quality change")
@@ -3376,7 +3412,7 @@ class MusicService :
                     playbackUrlCache[cacheKey(mediaId)] = it
                 }
 
-                return@Factory dataSpec.withResolvedStream(
+                return@ResolvingDataSource dataSpec.withResolvedStream(
                     CachedStreamUrl(
                         url = streamUrl,
                         requestHeaders = nonNullPlayback.streamHeaders,
@@ -3387,6 +3423,7 @@ class MusicService :
                     ),
                 )
             }
+        }
         }
     }
 

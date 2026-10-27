@@ -9,7 +9,8 @@ class FolderAudioNameTest {
         assertFalse(name.contains('/'))
         assertFalse(name.contains('\\'))
         assertFalse(name.contains('\n'))
-        assertTrue(name.endsWith("[BaW_jenozKc].webm"))
+        assertTrue(name.endsWith(".webm"))
+        assertFalse(name.contains("BaW_jenozKc"))
     }
     @Test fun collectionNamesAreReadableWithoutHashOrCombiningStacks() {
         assertEquals("See", collectionFolder("S\u030d\u0351e\u0334e\u036f", "album-id"))
@@ -31,6 +32,11 @@ class FolderAudioNameTest {
             prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = format.name
             assertEquals(format, prefs.selectedDownloadFormat())
         }
+    }
+    @Test fun readableFileNamesKeepLongTitlesAndNoTechnicalIdentifier() {
+        assertEquals("Scott James - W.opus", audioFileName("W", "Scott James", "zkHICAwAI4E", "opus"))
+        val title = "You Are Working In Silence With The Full Original Title"
+        assertEquals("Cinematic Focus - $title.m4a", audioFileName(title, "Cinematic Focus", "1cMhZX3tfqM", "m4a"))
     }
     @Test fun cookiesAreDomainScopedAndCannotInjectJarRows() {
         val jar = youtubeCookieJar("SID=secret; invalid=bad\n.evil.com; SAPISID=ok")

@@ -86,7 +86,7 @@ internal object YtDlpAudioEngine {
     private var verified = false
 
     @Synchronized
-    private fun initialize(context: Context) {
+    internal fun initialize(context: Context) {
         if (verified) return
         val engine = YoutubeDL.getInstance()
         engine.init(context.applicationContext)
@@ -180,8 +180,8 @@ internal fun youtubeCookieJar(cookie: String): String = buildString {
 
 internal fun audioFileName(title: String, artist: String, id: String, extension: String): String {
     val ext = extension.lowercase().takeIf { it.matches(Regex("[a-z0-9]{1,8}")) } ?: "audio"
-    val stem = readableAudioName("$artist - $title").ifBlank { "Audio" }
-    return "$stem [$id].$ext"
+    val stem = readableAudioName(listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - ")).ifBlank { "Audio" }
+    return "$stem.$ext"
 }
 
 internal fun audioMime(extension: String): String = when (extension.lowercase()) {
@@ -205,8 +205,11 @@ internal suspend fun saveAudioToTree(context: Context, tree: Uri, source: File, 
         parent = child
     }
     // Let the provider choose a unique name rather than overwrite an existing file.
-    val finalName = if (parent.findFile(name) == null) name else
-        name.substringBeforeLast('.') + " (" + java.util.UUID.randomUUID().toString().take(8) + ")." + source.extension
+    var finalName = name
+    var suffix = 2
+    while (parent.findFile(finalName) != null) {
+        finalName = name.substringBeforeLast('.') + " (${suffix++})." + name.substringAfterLast('.')
+    }
     val document = parent.createFile(audioMime(source.extension), "$finalName.part") ?: throw IOException("Cannot create document")
     try {
         context.contentResolver.openOutputStream(document.uri, "w")?.use { output ->
@@ -258,8 +261,9 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val format = DownloadAudioFormat.parse(inputData.getString("format"))
                 val staged = downloads.stageExistingAudio(videoId, directory)
                     ?: throw IOException("Completed offline audio is unavailable")
-                val source = YtDlpAudioEngine.reuse(applicationContext, staged, format, directory, id.toString())
+                val raw = YtDlpAudioEngine.reuse(applicationContext, staged, format, directory, id.toString())
                     ?: throw IOException("Requested audio format is unavailable")
+                val source = tagAudioFile(applicationContext, raw, media, inputData.getInt("track", 0), directory)
                 exporting = true
                 setProgress(workDataOf("copying" to true))
                 val track = inputData.getInt("track", 0)
@@ -343,7 +347,16 @@ internal fun readableAudioName(value: String): String {
         .replace(Regex("[\\p{M}\\p{Cf}]"), "")
         .replace(Regex("[\\p{Cntrl}/\\\\:*?\"<>|]"), " ")
         .replace(Regex("\\s+"), " ").trim(' ', '.')
-    return normalized.codePoints().limit(50).toArray().let { String(it, 0, it.size) }.trimEnd(' ', '.')
+    val result = StringBuilder()
+    var bytes = 0
+    for (point in normalized.codePoints().toArray()) {
+        val character = String(Character.toChars(point))
+        val size = character.toByteArray(Charsets.UTF_8).size
+        if (bytes + size > 200) break
+        result.append(character)
+        bytes += size
+    }
+    return result.toString().trimEnd(' ', '.')
 }
 
 /** Export follows the native download; cancellation/failure must never start a second transfer. */

@@ -23,6 +23,15 @@ class PlaybackErrorTest {
         )
     }
 
+    @Test fun `local parser failures do not require internet`() {
+        val parser = androidx.media3.common.PlaybackException("Invalid local container", null,
+            androidx.media3.common.PlaybackException.ERROR_CODE_PARSING_CONTAINER_MALFORMED)
+        org.junit.Assert.assertFalse(parser.needsNetworkConnection())
+        val network = androidx.media3.common.PlaybackException("Offline", java.net.UnknownHostException(),
+            androidx.media3.common.PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED)
+        org.junit.Assert.assertTrue(network.needsNetworkConnection())
+    }
+
     @Test
     fun `offline warning replaces misleading stream errors`() {
         assertEquals(

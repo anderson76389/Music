@@ -89,6 +89,18 @@ class OfflinePlayerInstrumentedTest {
         android.util.Base64.DEFAULT,
     )
 
+    private fun cacheAudio(cache: androidx.media3.datasource.cache.Cache, id: String, bytes: ByteArray) {
+        val hole = cache.startReadWrite(id, 0, bytes.size.toLong())
+        try {
+            val file = cache.startFile(id, 0, bytes.size.toLong())
+            file.writeBytes(bytes)
+            cache.commitFile(file, bytes.size.toLong())
+        } finally { cache.releaseHoleSpan(hole) }
+        val metadata = ContentMetadataMutations()
+        ContentMetadataMutations.setContentLength(metadata, bytes.size.toLong())
+        cache.applyContentMetadataMutations(id, metadata)
+    }
+
     @Test(timeout = 210000)
     fun realCachedAudioPlayerControlsQueueAndQuality() = runBlocking {
         await("Offline test requires no active Android network", 20000) {
@@ -96,9 +108,9 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey)
         val before = context.dataStore.data.first()
-        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true }
+        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -191,12 +203,48 @@ class OfflinePlayerInstrumentedTest {
                 val exported = fr.makoff.music.downloads.YtDlpAudioEngine.reuse(context, stage, format, directory, "offline-$index")!!
                 assertEquals(if (index == 1) "opus" else "m4a", exported.extension)
                 // Retain compatibility with the .ogg documents produced by previous versions.
-                val uri = fr.makoff.music.downloads.saveAudioToTree(context, tree, exported,
+                if (index == 1) {
+                    // The stream is WebM while the native download is remuxed Opus: never mix their byte offsets.
+                    active.downloadCache.removeResource(track.id)
+                    cacheAudio(active.playerCache, track.id, opus)
+                    val originalSize = ContentMetadataMutations()
+                    ContentMetadataMutations.setContentLength(originalSize, opus.size.toLong())
+                    active.downloadCache.applyContentMetadataMutations(track.id, originalSize)
+                    val pending = androidx.media3.exoplayer.offline.Download(nativeRequest,
+                        androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING, 1, 1, length, 0, 0)
+                    (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(pending)
+                    active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to pending)
+                    main { active.playQueue(ListQueue("Pendant le téléchargement", listOf(track.toMediaItem())), playWhenReady = true) }
+                    await("Original WebM must play before download publication") {
+                        main { active.player.isPlaying && active.player.currentPosition > 200 }
+                    }
+                    cacheAudio(active.downloadCache, track.id, exported.readBytes())
+                    main { active.player.seekTo(8000) }
+                    await("Pending Opus download must not corrupt the WebM reader") {
+                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition in 7900..11000 && active.player.playerError == null }
+                    }
+                    val finished = androidx.media3.exoplayer.offline.Download(nativeRequest,
+                        androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, exported.length(), 0, 0)
+                    (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(finished)
+                    active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to finished)
+                    await("Finished native Opus must preserve playback position") {
+                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition >= 7800 && active.player.playerError == null }
+                    }
+                }
+                val tagged = fr.makoff.music.downloads.tagAudioFile(context, exported, track, index, directory)
+                val uri = fr.makoff.music.downloads.saveAudioToTree(context, tree, tagged,
                     "${track.id}.${if (index == 1) "ogg" else "m4a"}")
                 extraSharedUris += uri
-                active.downloadUtil.registerExternalAudio(track, uri, exported.length())
+                active.downloadUtil.registerExternalAudio(track, uri, tagged.length())
                 assertTrue(active.downloadCache.getCachedSpans(track.id).isEmpty())
-                assertArrayEquals(exported.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                assertArrayEquals(tagged.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                if (index == 1) {
+                    main { active.player.seekTo(12000) }
+                    await("Publishing a tagged public Opus must preserve offline seeking") {
+                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition in 11800..15000 && active.player.playerError == null }
+                    }
+                    println("DOWNLOAD_HANDOFF_OK: WebM stream -> native Opus -> tagged shared Opus; offline seek and position retained")
+                }
             }
             directory.deleteRecursively()
             assertTrue("Private copy was not removed", active.downloadCache.getCachedSpans(first.id).isEmpty())

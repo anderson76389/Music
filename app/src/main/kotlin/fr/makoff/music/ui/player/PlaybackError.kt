@@ -56,6 +56,7 @@ fun PlaybackError(
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val streamClient by playerConnection.currentStreamClient.collectAsState()
     val isOnline by playerConnection.service.connectivityObserver.networkStatus.collectAsState()
+    val showOfflineMessage = !isOnline && error.needsNetworkConnection()
     val causes = remember(error) { error.causeChain() }
     val rawErrorMessages =
         remember(causes) {
@@ -83,7 +84,7 @@ fun PlaybackError(
         }
     val errorMessage =
         playbackErrorMessages(
-            isOnline = isOnline,
+            isOnline = !showOfflineMessage,
             offlineMessage = stringResource(R.string.error_offline_playback),
             guidance = guidance,
             rawErrorMessages = rawErrorMessages,
@@ -122,7 +123,7 @@ fun PlaybackError(
 
         Text(
             text = stringResource(
-                if (isOnline) R.string.error_playback_failed else R.string.error_no_internet_connection,
+                if (showOfflineMessage) R.string.error_no_internet_connection else R.string.error_playback_failed,
             ),
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.error,
@@ -213,6 +214,11 @@ fun PlaybackError(
 
 internal fun Throwable.causeChain(): List<Throwable> =
     generateSequence(this) { it.cause }.take(8).toList()
+
+internal fun PlaybackException.needsNetworkConnection(): Boolean =
+    errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+        errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+        causeChain().any { it is java.net.UnknownHostException || it is java.net.ConnectException }
 
 internal fun playbackErrorMessages(
     isOnline: Boolean,

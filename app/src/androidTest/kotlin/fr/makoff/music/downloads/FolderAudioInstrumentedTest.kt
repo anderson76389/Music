@@ -37,6 +37,44 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 90000) fun exportedAudioContainsPortableTagsAndEmbeddedCover() = runBlocking {
+        val root = File(context.cacheDir, "metadata-${UUID.randomUUID()}").apply { mkdirs() }
+        val cover = File(root, "cover.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(128, 128, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.RED)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
+        bitmap.recycle()
+        val title = "Title with 'quotes' and % signs"
+        val media = fr.makoff.music.models.MediaMetadata("BaW_jenozKc", title,
+            listOf(fr.makoff.music.models.MediaMetadata.Artist("test", "Audio artist")), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
+            album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album"))
+        try {
+            for (format in DownloadAudioFormat.entries) {
+                val dir = File(root, format.name).apply { mkdirs() }
+                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
+                    instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
+                val raw = YtDlpAudioEngine.reuse(context, source, format, dir, "metadata-${format.name}")!!
+                val tagged = tagAudioFile(context, raw, media, 2, dir)
+                assertArrayEquals("Tagging must preserve encoded audio", audioPackets(raw), audioPackets(tagged))
+                val uri = saveAudioToTree(context, tree, tagged, "metadata-${UUID.randomUUID()}.${tagged.extension}")
+                try {
+                    val retriever = android.media.MediaMetadataRetriever()
+                    try {
+                        retriever.setDataSource(context, uri)
+                        assertEquals(title, retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE))
+                        assertEquals("Audio artist", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST))
+                        assertEquals("Audio album", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM))
+                        assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER))
+                        assertTrue("Embedded cover for ${tagged.extension}", retriever.embeddedPicture?.isNotEmpty() == true)
+                    } finally { retriever.release() }
+                } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, embedded cover and unchanged audio")
+            }
+        } finally { root.deleteRecursively() }
+    }
+
     @Test fun exportWaitsForNativeCompletionAndStopsOnFailureOrCancellation() = runBlocking {
         val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder("test-native", android.net.Uri.parse("https://example.invalid/audio")).build()
         fun download(state: Int) = androidx.media3.exoplayer.offline.Download(request, state, 1, 1, 100, 0,
