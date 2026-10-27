@@ -273,7 +273,7 @@ fun PlayerSettings(
             )
         )
 
-        DownloadFormatSettings()
+        DownloadFormatSettings(showHelp = false)
 
         Material3SettingsGroup(
             title = stringResource(R.string.player),

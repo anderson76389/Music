@@ -70,7 +70,7 @@ internal class StreamUrlCache(
         synchronized(entries) { entries[mediaId]?.stream?.clientName }
 
     fun generation(mediaId: String): Long =
-        synchronized(entries) { generations[mediaId] ?: 0L }
+        synchronized(entries) { generations.getOrPut(mediaId) { 0L } }
 
     fun put(
         mediaId: String,
@@ -105,6 +105,13 @@ internal class StreamUrlCache(
                     expiresAtMillis = expiresAtMillis,
                 )
             return true
+        }
+    }
+
+    fun invalidateAll() {
+        synchronized(entries) {
+            (generations.keys + entries.keys).toSet().forEach(::advanceGeneration)
+            entries.clear()
         }
     }
 

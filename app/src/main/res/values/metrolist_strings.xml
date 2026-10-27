@@ -888,4 +888,7 @@
     <string name="clear_downloads_partial">Téléchargements retirés de l’application, mais certains fichiers du téléphone n’ont pas pu être supprimés.</string>
     <string name="clear_downloads_failed">Impossible d’effacer tous les téléchargements. Réessayez.</string>
     <string name="download_history_cover">Pochette de %1$s</string>
+    <string name="download_missing_clean">Supprimer les téléchargements disparus</string>
+    <string name="download_missing_cleaned">Références supprimées : %1$d</string>
+    <string name="download_missing_error">Impossible de terminer le nettoyage. Réessayez.</string>
 </resources>

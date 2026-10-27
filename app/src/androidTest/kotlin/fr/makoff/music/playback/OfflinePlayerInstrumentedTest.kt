@@ -110,7 +110,7 @@ class OfflinePlayerInstrumentedTest {
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
             AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey)
         val before = context.dataStore.data.first()
-        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true }
+        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -418,8 +418,10 @@ class OfflinePlayerInstrumentedTest {
 
             context.dataStore.edit { it[SkipSilenceKey] = true }
             await("Skip-silence preference did not reach actual player") { main { active.player.skipSilenceEnabled } }
+            cacheAudio(active.playerCache, tracks[3].id, audio)
             context.dataStore.edit { it[SkipSilenceKey] = false; it[AudioQualityKey] = AudioQuality.LOW.name }
-            SystemClock.sleep(500)
+            await("Quality change must clear queued streaming bytes") { active.playerCache.getCachedSpans(tracks[3].id).isEmpty() }
+            println("PLAYER_QUALITY_CACHE_OK: queued streaming cache cleared; completed shared/private downloads kept")
             assertEquals("Changing quality lost shared download", sharedUri, active.downloadUtil.externalAudioUri(tracks[0].id))
             assertTrue("Playback recreated private download bytes", active.downloadCache.getCachedSpans(tracks[0].id).isEmpty())
             assertTrue("Playback recreated streaming cache bytes", active.playerCache.getCachedSpans(tracks[0].id).isEmpty())

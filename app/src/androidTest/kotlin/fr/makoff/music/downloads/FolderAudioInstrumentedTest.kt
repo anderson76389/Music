@@ -157,6 +157,81 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 90000) fun missingDownloadCleanupKeepsReadableFilesAndLibrary() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val before = context.dataStore.data.first()
+        val tracks = (0..3).map { index -> fr.makoff.music.models.MediaMetadata(
+            UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1) }
+        val source = File(context.cacheDir, "missing-cleanup.m4a").apply { writeBytes(android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
+        val documents = mutableListOf<android.net.Uri>()
+        try {
+            context.dataStore.edit { it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false }
+            for (track in tracks.take(2)) {
+                val uri = saveAudioToTree(context, tree, source, "cleanup-${track.id}.m4a")
+                documents += uri
+                downloads.registerExternalAudio(track, uri, source.length())
+            }
+            val missing = tracks[0]
+            downloads.database.update(requireNotNull(downloads.database.songEntity(missing.id)).toggleLike(syncToYouTube = false))
+            FolderAudioDownloads.enqueue(context, missing, tree, listOf("Cleanup"))
+            var work: androidx.work.WorkInfo? = null
+            val deadline = android.os.SystemClock.elapsedRealtime() + 45000
+            while (work == null && android.os.SystemClock.elapsedRealtime() < deadline) {
+                work = androidx.work.WorkManager.getInstance(context).getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + missing.id)
+                    .get().firstOrNull { it.state.isFinished }
+                kotlinx.coroutines.delay(100)
+            }
+            assertEquals(androidx.work.WorkInfo.State.SUCCEEDED, work?.state)
+            val exported = android.net.Uri.parse(requireNotNull(work!!.outputData.getString("uri")))
+            documents += exported
+            assertFalse(documentIsMissing(context, exported))
+            DocumentsContract.deleteDocument(context.contentResolver, exported)
+            assertTrue(documentIsMissing(context, exported))
+            assertFalse("Unavailable provider must be preserved", documentIsMissing(context,
+                android.net.Uri.parse("content://missing.invalid/tree/root/document/deleted")))
+            for ((index, track) in tracks.withIndex().filter { it.index >= 2 }) {
+                downloads.database.insert(track)
+                if (index == 3) {
+                    val hole = downloads.downloadCache.startReadWrite(track.id, 0, source.length())
+                    try {
+                        val file = downloads.downloadCache.startFile(track.id, 0, source.length())
+                        file.writeBytes(source.readBytes())
+                        downloads.downloadCache.commitFile(file, source.length())
+                    } finally { downloads.downloadCache.releaseHoleSpan(hole) }
+                }
+                val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(track.id, android.net.Uri.parse(track.id))
+                    .setCustomCacheKey(track.id).build()
+                val completed = androidx.media3.exoplayer.offline.Download(request,
+                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, source.length(), 0, 0)
+                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(completed)
+                downloads.downloads.value = downloads.downloads.value + (track.id to completed)
+                downloads.database.updateDownloadedInfo(track.id, true, java.time.LocalDateTime.now())
+            }
+            assertTrue(cleanMissingDownloads(context, downloads) >= 2)
+            assertNull(downloads.downloads.value[missing.id])
+            assertNull(downloads.downloadManager.downloadIndex.getDownload(tracks[2].id))
+            assertFalse(requireNotNull(downloads.database.songEntity(missing.id)).isDownloaded)
+            assertTrue("Like and library metadata retained", requireNotNull(downloads.database.songEntity(missing.id)).liked)
+            assertTrue(missing.id in context.dataStore.data.first()[AutoLikedDownloads.SKIPPED].orEmpty())
+            assertTrue(work.id.toString() in context.dataStore.data.first()[HiddenDownloadHistory].orEmpty())
+            assertEquals(documents[1], downloads.externalAudioUri(tracks[1].id))
+            assertTrue(downloads.downloadCache.isCached(tracks[3].id, 0, source.length()))
+            assertNotNull(downloads.downloads.value[tracks[3].id])
+            println("MISSING_DOWNLOAD_CLEANUP_OK: vanished documents/history and absent private bytes removed; readable public/private audio, likes and metadata kept; unavailable provider preserved")
+        } finally {
+            documents.forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            tracks.forEach { track ->
+                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(track.id)
+                downloads.downloads.value = downloads.downloads.value - track.id
+                downloads.downloadCache.removeResource(track.id)
+                downloads.database.songEntity(track.id)?.let { downloads.database.delete(it) }
+            }
+            source.delete()
+            context.dataStore.updateData { before }
+        }
+    }
+
     @Test(timeout = 90000) fun manualLikedDownloadWithAlbumExportsIntoLikedAndKeepsHistoryArtwork() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val originalPreferences = context.dataStore.data.first()

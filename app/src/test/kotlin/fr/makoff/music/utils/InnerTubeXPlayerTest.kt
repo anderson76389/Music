@@ -9,6 +9,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class InnerTubeXPlayerTest {
+    @Test
+    fun `high quality never downgrades on a metered connection`() {
+        val high = fr.makoff.music.constants.AudioQuality.HIGH
+        val low = fr.makoff.music.constants.AudioQuality.LOW
+        val auto = fr.makoff.music.constants.AudioQuality.AUTO
+        InnerTubeXPlayer.run {
+            for (metered in listOf(false, true)) {
+                assertEquals(fr.makoff.music.innertubex.extraction.AudioQuality.HIGH, high.toInnerTubeX(metered))
+                assertEquals(fr.makoff.music.innertubex.extraction.AudioQuality.LOW, low.toInnerTubeX(metered))
+            }
+            assertEquals(fr.makoff.music.innertubex.extraction.AudioQuality.LOW, auto.toInnerTubeX(true))
+            assertEquals(fr.makoff.music.innertubex.extraction.AudioQuality.AUTO, auto.toInnerTubeX(false))
+        }
+    }
+
     @After
     fun tearDown() {
         InnerTubeXPlayer.clearStreamClientFailures()

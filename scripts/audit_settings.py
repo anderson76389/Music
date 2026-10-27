@@ -65,3 +65,17 @@ for path in ('ui/player/Player.kt', 'ui/player/Queue.kt', 'ui/screens/settings/A
     assert not re.search(r'R\.string\.(?:sleep_timer|lyrics|alarm)|sleepTimer|LyricsMenu|onToggleLyrics', text), path
 assert 'R.drawable.search' in (k/'MainActivity.kt').read_text()
 print('PASS: removed playback features absent; integrated equalizer and history actions preserved')
+
+player_settings = (k/'ui/screens/settings/PlayerSettings.kt').read_text()
+player_keys = set(re.findall(r'remember(?:Enum)?Preference\(\s*(?:key\s*=\s*)?(\w+)', player_settings))
+for key in sorted(player_keys):
+    consumers = []
+    for p, source in sources:
+        if p.name == 'PreferenceKeys.kt':
+            continue
+        body = '\n'.join(line for line in source.splitlines() if not line.startswith('import '))
+        if re.search(r'\b' + re.escape(key) + r'\b', body):
+            consumers.append(str(p.relative_to(k)))
+    assert consumers, ('Player setting without production consumer', key)
+    print(f'PLAYER_SETTING: {key} -> {", ".join(consumers)}')
+print(f'PASS: all {len(player_keys)} Player/audio preferences have production consumers; runtime/hardware checks remain separate')

@@ -531,6 +531,7 @@ class SettingsNavigationTest {
                     device.waitForIdle()
                 }
                 R.string.player_and_audio -> {
+                    assertFalse("Download-format helper paragraph removed", device.hasObject(By.text(label(R.string.download_format_unified_help))))
                     open(R.string.download_format_unified)
                     findText(R.string.download_format_m4a)
                     findText(R.string.download_format_flac)
@@ -634,6 +635,10 @@ class SettingsNavigationTest {
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
                 }
                 R.string.download_settings -> {
+                    val recent = findText(R.string.folder_audio_recent)
+                    val cleanup = findText(R.string.download_missing_clean)
+                    assertTrue("Cleanup follows recent-files heading", recent.bottom <= cleanup.top)
+                    println("DOWNLOAD_CLEANUP_UI_OK: cleanup action is between recent-files heading and history")
                     val title = "Liked album routing test"
                     val titleBounds = findText(title)
                     val description = context.getString(R.string.download_history_cover, title)

@@ -742,32 +742,28 @@ class MusicService :
 
                     Timber.tag(TAG).i("QUALITY CHANGED: $oldQuality -> $newQuality")
 
-                    val mediaId = player.currentMediaItem?.mediaId ?: return@collect
-                    // Existing downloads keep their original encoding until explicitly downloaded again.
-                    if (downloadCache.getCachedSpans(mediaId).isNotEmpty()) return@collect
+                    val mediaId = player.currentMediaItem?.mediaId
                     val currentPosition = player.currentPosition
-                    val wasPlaying = player.isPlaying
+                    val wasPlaying = player.playWhenReady
                     val currentIndex = player.currentMediaItemIndex
-
-                    Timber.tag(TAG).i("RELOADING STREAM: $mediaId at position ${currentPosition}ms")
-
-                    songUrlCache.invalidate(mediaId)
-
-                    // CRITICAL: Clear caches synchronously to prevent format parsing errors
+                    val completedDownload = mediaId?.let { id ->
+                        downloadUtil.downloads.value[id]?.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED ||
+                            ContentMetadata.getContentLength(downloadCache.getContentMetadata(id)).let { size ->
+                                size > 0 && downloadCache.isCached(id, 0, size)
+                            }
+                    } == true
+                    if (mediaId != null && !completedDownload) player.stop()
+                    // Queued URLs and streaming bytes must not retain the previous quality.
+                    songUrlCache.invalidateAll()
                     runBlocking(Dispatchers.IO) {
-                        try {
-                            playerCache.removeResource(mediaId)
-                            Timber.tag(TAG).d("Cleared streaming cache for $mediaId")
-                        } catch (e: Exception) {
-                            Timber.tag(TAG).e(e, "Failed to clear cache for $mediaId")
+                        playerCache.keys.toList().forEach { id ->
+                            runCatching { playerCache.removeResource(id) }
+                                .onFailure { Timber.tag(TAG).w(it, "Could not clear streaming cache after quality change") }
                         }
                     }
-
-                    // Set bypass flag so resolver skips cache checks
+                    // Existing downloads keep their original encoding until explicitly downloaded again.
+                    if (mediaId == null || completedDownload) return@collect
                     bypassCacheForQualityChange.add(mediaId)
-                    Timber.tag(TAG).d("Set bypass cache flag for $mediaId")
-
-                    player.stop()
                     player.seekTo(currentIndex, currentPosition)
                     player.prepare()
                     if (wasPlaying) {

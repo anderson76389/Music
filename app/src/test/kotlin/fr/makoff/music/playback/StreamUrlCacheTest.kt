@@ -8,6 +8,20 @@ import java.util.concurrent.Executors
 
 class StreamUrlCacheTest {
     @Test
+    fun `quality change invalidates queued URLs and all in-flight resolutions`() {
+        val cache = StreamUrlCache()
+        cache.put("current", "https://example.com/low", emptyMap(), "WEB_REMIX", 300)
+        cache.put("queued", "https://example.com/low-next", emptyMap(), "WEB_REMIX", 300)
+        val inFlight = cache.generation("resolving")
+        cache.invalidateAll()
+        assertNull(cache["current"])
+        assertNull(cache["queued"])
+        assertEquals(false, cache.put("resolving", "https://example.com/stale", emptyMap(), "WEB_REMIX", 300,
+            expectedGeneration = inFlight))
+        assertEquals(true, cache.put("queued", "https://example.com/high", emptyMap(), "WEB_REMIX", 300))
+    }
+
+    @Test
     fun `fresh entry is returned with request headers`() {
         var now = 1_000L
         val cache = StreamUrlCache(currentTimeMillis = { now })

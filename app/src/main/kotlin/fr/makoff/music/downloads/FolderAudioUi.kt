@@ -44,6 +44,8 @@ import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.utils.rememberPreference
 import fr.makoff.music.utils.safeDataStoreEdit
+import fr.makoff.music.utils.dataStore
+import androidx.datastore.preferences.core.emptyPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -130,6 +132,10 @@ fun FolderAudioHistory() {
     val context = LocalContext.current
     val database = LocalDatabase.current
     val manager = remember { WorkManager.getInstance(context) }
+    val scope = rememberCoroutineScope()
+    val preferences by context.dataStore.data.collectAsState(initial = emptyPreferences())
+    val hidden = preferences[HiddenDownloadHistory].orEmpty()
+    var cleaning by remember { mutableStateOf(false) }
     var jobs by remember { mutableStateOf<List<WorkInfo>>(emptyList()) }
     LaunchedEffect(manager) {
         while (isActive) {
@@ -138,8 +144,22 @@ fun FolderAudioHistory() {
         }
     }
     Text(stringResource(R.string.folder_audio_recent), modifier = Modifier.padding(12.dp))
-    if (jobs.isEmpty()) Text(stringResource(R.string.download_history_empty), modifier = Modifier.padding(12.dp))
-    jobs.sortedByDescending { work -> work.tags.firstOrNull { it.startsWith("audio-created:") }?.substringAfter(':')?.toLongOrNull() ?: 0L }.take(15).forEach { work ->
+    TextButton(enabled = !cleaning, onClick = {
+        cleaning = true
+        scope.launch {
+            try {
+                val count = cleanMissingDownloads(context, FolderAudioDownloads.downloadUtil(context))
+                Toast.makeText(context, context.getString(R.string.download_missing_cleaned, count), Toast.LENGTH_LONG).show()
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                Toast.makeText(context, R.string.download_missing_error, Toast.LENGTH_LONG).show()
+            } finally { cleaning = false }
+        }
+    }) { Text(stringResource(R.string.download_missing_clean)) }
+    val visibleJobs = jobs.filter { it.id.toString() !in hidden }
+    if (visibleJobs.isEmpty()) Text(stringResource(R.string.download_history_empty), modifier = Modifier.padding(12.dp))
+    visibleJobs.sortedByDescending { work -> work.tags.firstOrNull { it.startsWith("audio-created:") }?.substringAfter(':')?.toLongOrNull() ?: 0L }.take(15).forEach { work ->
         val songId = work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.SONG_TAG) }
             ?.removePrefix(FolderAudioDownloads.SONG_TAG).orEmpty()
         val song by remember(database, songId) { database.song(songId) }.collectAsState(initial = null)

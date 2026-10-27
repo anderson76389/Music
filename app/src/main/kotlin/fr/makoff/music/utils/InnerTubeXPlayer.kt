@@ -281,11 +281,14 @@ object InnerTubeXPlayer {
         }
 
     private fun AudioQuality.toInnerTubeX(connectivityManager: ConnectivityManager): InnerTubeXAudioQuality =
+        toInnerTubeX(connectivityManager.isActiveNetworkMetered)
+
+    internal fun AudioQuality.toInnerTubeX(isMetered: Boolean): InnerTubeXAudioQuality =
         when (this) {
             AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH
             AudioQuality.LOW -> InnerTubeXAudioQuality.LOW
             AudioQuality.AUTO ->
-                if (connectivityManager.isActiveNetworkMetered) {
+                if (isMetered) {
                     InnerTubeXAudioQuality.LOW
                 } else {
                     InnerTubeXAudioQuality.AUTO

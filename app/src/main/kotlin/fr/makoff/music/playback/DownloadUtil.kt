@@ -214,6 +214,17 @@ constructor(
         return null
     }
 
+    internal fun forgetMissingDownload(download: Download): Boolean {
+        val id = download.request.id
+        if (downloads.value[id] !== download || downloadManager.downloadIndex.getDownload(id)?.request != download.request) return false
+        (downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
+        downloads.update { it - id }
+        database.updateDownloadedInfo(id, false, null)
+        downloadCache.removeResource(id)
+        songUrlCache.invalidate(id)
+        return true
+    }
+
     /** Commit the document reference before removing private bytes; never delete the public document. */
     fun registerExternalAudio(media: MediaMetadata, uri: android.net.Uri, size: Long) {
         require(uri.scheme == "content" && size > 0)
