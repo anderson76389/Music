@@ -2494,9 +2494,9 @@ class MusicService :
             applyShuffleOrder(currentIndex, totalCount, shufflePlaylistFirst)
         }
 
-        if (dataStore.get(RememberShuffleAndRepeatKey, true)) {
-            scope.launch {
-                safeDataStoreEdit { settings ->
+        scope.launch {
+            safeDataStoreEdit { settings ->
+                if (settings[RememberShuffleAndRepeatKey] ?: true) {
                     settings[ShuffleModeKey] = shuffleModeEnabled
                 }
             }
@@ -2509,9 +2509,9 @@ class MusicService :
 
     override fun onRepeatModeChanged(repeatMode: Int) {
         updateNotification()
-        if (dataStore.get(RememberShuffleAndRepeatKey, true)) {
-            scope.launch {
-                safeDataStoreEdit { settings ->
+        scope.launch {
+            safeDataStoreEdit { settings ->
+                if (settings[RememberShuffleAndRepeatKey] ?: true) {
                     settings[RepeatModeKey] = repeatMode
                 }
             }
