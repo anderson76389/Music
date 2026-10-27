@@ -44,6 +44,7 @@ class OnlinePlaylistViewModel @Inject constructor(
 
     // Check if this is a special podcast playlist (with or without VL prefix)
     private val normalizedPlaylistId = playlistId.removePrefix("VL")
+    val isLikedPlaylist = normalizedPlaylistId == "LM"
     val isPodcastPlaylist = normalizedPlaylistId == "RDPN" || normalizedPlaylistId == "SE"
 
     val playlist = MutableStateFlow<PlaylistItem?>(null)

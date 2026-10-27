@@ -56,12 +56,13 @@ import java.time.LocalDateTime
 fun YouTubeSelectionSongMenu(
     songSelection: List<SongItem>,
     onDismiss: () -> Unit,
+    downloadInLiked: Boolean = false,
     clearAction: () -> Unit,
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
     val downloadUtil = LocalDownloadUtil.current
-    val unifiedDownload = rememberFolderCollectionItem("Sélections", "Titres", songSelection.map { it.id }.sorted().joinToString(",")) { songSelection.map { it.toMediaMetadata() } }
+    val unifiedDownload = rememberFolderCollectionItem("Sélections", "Titres", songSelection.map { it.id }.sorted().joinToString(","), downloadInLiked = downloadInLiked) { songSelection.map { it.toMediaMetadata() } }
 
     val playerConnection = LocalPlayerConnection.current ?: return
     val coroutineScope = rememberCoroutineScope()

@@ -329,7 +329,7 @@ fun OnlinePlaylistScreen(
                                 } else {
                                     IconButton(onClick = {
                                         menuState.show {
-                                            YouTubeSongMenu(songItem, menuState::dismiss)
+                                            YouTubeSongMenu(songItem, menuState::dismiss, downloadInLiked = viewModel.isLikedPlaylist)
                                         }
                                     }) {
                                         Icon(painterResource(R.drawable.more_vert), null)
@@ -449,6 +449,7 @@ fun OnlinePlaylistScreen(
                                             .map { it.second },
                                     onDismiss = menuState::dismiss,
                                     clearAction = onExitSelectionMode,
+                                    downloadInLiked = viewModel.isLikedPlaylist,
                                 )
                             }
                         },

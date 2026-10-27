@@ -119,7 +119,8 @@ fun SongMenu(
     val playerConnection = LocalPlayerConnection.current ?: return
     val songState = database.song(originalSong.id).collectAsStateWithLifecycle(initialValue = originalSong)
     val song = songState.value ?: originalSong
-    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata())
+    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata(),
+        downloadInLiked = fr.makoff.music.downloads.isLikedPlaylist(playlistBrowseId.orEmpty()))
     val downloadUtil = LocalDownloadUtil.current
     val download by downloadUtil
         .getDownload(originalSong.id)

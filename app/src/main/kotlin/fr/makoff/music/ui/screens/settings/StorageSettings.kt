@@ -507,6 +507,7 @@ fun StorageSettings(
                     ),
                 ),
         )
+        BackupAndRestoreContent()
     }
 
     TopAppBar(

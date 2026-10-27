@@ -50,8 +50,9 @@ class SettingsNavigationTest {
         return result
     }
 
-    private fun findText(id: Int): android.graphics.Rect {
-        val text = label(id)
+    private fun findText(id: Int): android.graphics.Rect = findText(label(id))
+
+    private fun findText(text: String): android.graphics.Rect {
         fun current() = visibleControls().firstOrNull { it.text == text }?.bounds
         // Accessibility actions are queued on the app main thread. Give a newly
         // opened screen/dialog a chance to compose before injecting scroll gestures.
@@ -515,7 +516,6 @@ class SettingsNavigationTest {
             R.string.content to R.string.content_language,
             R.string.storage to R.string.downloaded_songs,
             R.string.download_settings to R.string.folder_audio_recent,
-            R.string.backup_restore to R.string.action_backup,
         )
         for ((screen, marker) in screens) {
             open(screen)
@@ -633,7 +633,38 @@ class SettingsNavigationTest {
                     Triple(R.string.hide_youtube_shorts, HideYoutubeShortsKey, false),
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
                 }
+                R.string.download_settings -> {
+                    val title = "Liked album routing test"
+                    val titleBounds = findText(title)
+                    val description = context.getString(R.string.download_history_cover, title)
+                    var imageBounds: android.graphics.Rect? = null
+                    var blueCoverRendered = false
+                    val deadline = SystemClock.elapsedRealtime() + 10000
+                    while (!blueCoverRendered && SystemClock.elapsedRealtime() < deadline) {
+                        imageBounds = freshDescriptionBounds(description)
+                        val bounds = imageBounds
+                        if (bounds != null) {
+                            val screenshot = instrumentation.uiAutomation.takeScreenshot()
+                            if (screenshot != null) {
+                                val pixel = screenshot.getPixel(bounds.centerX(), bounds.centerY())
+                                blueCoverRendered = android.graphics.Color.blue(pixel) > 140 && android.graphics.Color.red(pixel) < 90
+                                screenshot.recycle()
+                            }
+                        }
+                        if (!blueCoverRendered) SystemClock.sleep(150)
+                    }
+                    assertTrue("Actual history artwork rendered", blueCoverRendered)
+                    assertTrue("Cover is beside the song title", requireNotNull(imageBounds).right <= titleBounds.left)
+                    device.executeShellCommand("screencap -p /data/local/tmp/download-history-covers.png")
+                    context.filesDir.listFiles()?.filter { it.name.startsWith("history-liked-cover-") }?.forEach { it.delete() }
+                    println("DOWNLOAD_HISTORY_COVER_OK: real local artwork rendered beside its title using completed-work metadata")
+                }
                 R.string.storage -> {
+                    findText(R.string.action_backup)
+                    findText(R.string.action_restore)
+                    findText(R.string.import_online)
+                    findText(R.string.import_csv)
+                    println("STORAGE_BACKUP_ACTIONS_OK: backup, restore, M3U and CSV import visible inside Storage")
                     toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
                     val keys = listOf(UnifiedDownloadFormatKey, InternalDownloadFormatKey, ExternalDownloadFormatKey)
                     val original = runBlocking { context.dataStore.data.first() }

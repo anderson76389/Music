@@ -157,6 +157,64 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 90000) fun manualLikedDownloadWithAlbumExportsIntoLikedAndKeepsHistoryArtwork() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val originalPreferences = context.dataStore.data.first()
+        val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val cover = File(context.filesDir, "history-liked-cover-$id.jpg")
+        val image = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        image.eraseColor(android.graphics.Color.BLUE)
+        cover.outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        image.recycle()
+        val media = fr.makoff.music.models.MediaMetadata(id, "Liked album routing test", emptyList(), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
+            album = fr.makoff.music.models.MediaMetadata.Album("album-$id", "Album $id"))
+        val source = File(context.cacheDir, "manual-liked-$id.m4a").apply { writeBytes(android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
+        var original: android.net.Uri? = null
+        var exported: android.net.Uri? = null
+        var succeeded = false
+        try {
+            context.dataStore.edit {
+                it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false
+                it[fr.makoff.music.constants.UnifiedDownloadFormatKey] = DownloadAudioFormat.BEST.name
+            }
+            original = saveAudioToTree(context, tree, source, "manual-source-$id.m4a")
+            downloads.registerExternalAudio(media, original!!, source.length())
+            downloads.database.update(requireNotNull(downloads.database.songEntity(id)).toggleLike(syncToYouTube = false))
+            // Manual single-song action intentionally supplies no collection folder.
+            FolderAudioDownloads.enqueue(context, media, tree)
+            var completed: androidx.work.WorkInfo? = null
+            val deadline = android.os.SystemClock.elapsedRealtime() + 45000
+            while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
+                completed = androidx.work.WorkManager.getInstance(context)
+                    .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().firstOrNull { it.state.isFinished }
+                kotlinx.coroutines.delay(100)
+            }
+            assertNotNull("Manual export completes", completed)
+            assertEquals(androidx.work.WorkInfo.State.SUCCEEDED, completed!!.state)
+            exported = android.net.Uri.parse(requireNotNull(completed.outputData.getString("uri")))
+            val likedFolder = requireNotNull(DocumentFile.fromTreeUri(context, tree)?.findFile(AutoLikedDownloads.FOLDER))
+            assertTrue("Manual liked song belongs to J'aime", likedFolder.listFiles().any { it.uri == exported })
+            assertNull("Album metadata must not create an album export", DocumentFile.fromTreeUri(context, tree)
+                ?.findFile("Albums")?.findFile("Album $id"))
+            assertEquals(exported, downloads.externalAudioUri(id))
+            assertEquals(android.net.Uri.fromFile(cover).toString(), completed.outputData.getString("thumbnail"))
+            assertEquals(exported.toString(), context.dataStore.data.first()[AutoLikedDownloads.documentKey(tree.toString(), id)])
+            succeeded = true
+            println("MANUAL_LIKED_FOLDER_OK: manual download with album metadata exports to J'aime, keeps offline reference and history thumbnail")
+        } finally {
+            androidx.work.WorkManager.getInstance(context).cancelAllWorkByTag(FolderAudioDownloads.SONG_TAG + id).result.get()
+            (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
+            downloads.downloads.value = downloads.downloads.value - id
+            downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
+            listOfNotNull(original, exported).forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            source.delete()
+            if (!succeeded) cover.delete()
+            context.dataStore.updateData { originalPreferences }
+        }
+    }
+
     @Test fun exportWaitsForNativeCompletionAndStopsOnFailureOrCancellation() = runBlocking {
         val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder("test-native", android.net.Uri.parse("https://example.invalid/audio")).build()
         fun download(state: Int) = androidx.media3.exoplayer.offline.Download(request, state, 1, 1, 100, 0,
@@ -182,7 +240,8 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun likingAutomaticallyExportsToLikedFolderAndKeepsOfflineReference() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val id = UUID.randomUUID().toString().replace("-", "").take(11)
-        val media = fr.makoff.music.models.MediaMetadata(id, "Liked audio test", emptyList(), 1)
+        val media = fr.makoff.music.models.MediaMetadata(id, "Liked audio test", emptyList(), 1,
+            album = fr.makoff.music.models.MediaMetadata.Album("auto-album-$id", "Album $id"))
         val prefs = context.dataStore.data.first()
         val enabled = fr.makoff.music.constants.AutoDownloadOnLikeKey
         val destination = fr.makoff.music.constants.FolderAudioTreeKey

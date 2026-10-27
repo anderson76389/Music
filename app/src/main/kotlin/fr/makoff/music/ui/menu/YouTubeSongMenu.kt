@@ -98,13 +98,14 @@ import java.time.LocalDateTime
 fun YouTubeSongMenu(
     song: SongItem,
     onDismiss: () -> Unit,
+    downloadInLiked: Boolean = false,
     onHistoryRemoved: () -> Unit = {}
 ) {
     val navController = LocalNavController.current
     val context = LocalContext.current
     val database = LocalDatabase.current
     val playerConnection = LocalPlayerConnection.current ?: return
-    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata())
+    val folderAudioItem = rememberFolderAudioItem(song.toMediaMetadata(), downloadInLiked)
     val downloadUtil = LocalDownloadUtil.current
     val librarySong by database.song(song.id).collectAsStateWithLifecycle(initialValue = null)
     val download by downloadUtil.getDownload(song.id).collectAsStateWithLifecycle(initialValue = null)

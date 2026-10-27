@@ -522,6 +522,7 @@ fun AutoPlaylistScreen(
                         item(key = "playlist_header") {
                             AutoPlaylistHeader(
                                 name = playlist,
+                                id = playlistId,
                                 songs = songs!!,
                                 likeLength = likeLength,
                                 downloadState = downloadState,
@@ -587,6 +588,7 @@ fun AutoPlaylistScreen(
                                                 SongMenu(
                                                     originalSong = song,
                                                     onDismiss = menuState::dismiss,
+                                                    playlistBrowseId = if (playlistId == "liked") "LM" else null,
                                                 )
                                             }
                                         },
@@ -838,6 +840,7 @@ fun AutoPlaylistScreen(
 @Composable
 private fun AutoPlaylistHeader(
     name: String,
+    id: String,
     songs: List<Song>,
     likeLength: Int,
     downloadState: Int,
@@ -848,7 +851,7 @@ private fun AutoPlaylistHeader(
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
     val downloadUtil = LocalDownloadUtil.current
-    val unifiedDownload = rememberFolderCollectionItem("Playlists", name, name) { songs.map { it.toMediaMetadata() } }
+    val unifiedDownload = rememberFolderCollectionItem("Playlists", name, id) { songs.map { it.toMediaMetadata() } }
 
 
     Column(

@@ -50,6 +50,9 @@ object FolderAudioDownloads {
     fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
         require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
         val downloads = downloadUtil(context)
+        val liked = downloads.database.getSongByIdBlocking(media.id)?.song?.liked == true
+        val destination = audioDestinationFolders(media, folders, liked)
+        val position = if (destination == listOf(AutoLikedDownloads.FOLDER)) 0 else track
         val format = context.selectedDownloadFormat()
         downloads.download(media, requestedFormat = format)
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
@@ -66,8 +69,8 @@ object FolderAudioDownloads {
                 "albumTitle" to media.album?.title.orEmpty().take(200),
                 "explicit" to media.explicit,
                 "tree" to tree.toString(),
-                "folders" to folders.toTypedArray(),
-                "track" to track,
+                "folders" to destination.toTypedArray(),
+                "track" to position,
             ))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(if (downloadUtil(context).downloads.value[media.id]?.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED) NetworkType.NOT_REQUIRED else NetworkType.CONNECTED).build())
             .addTag(TAG)
@@ -75,7 +78,7 @@ object FolderAudioDownloads {
             .addTag("audio-created:${System.currentTimeMillis()}")
             .addTag(TITLE_TAG + media.title.take(100))
             .build()
-        WorkManager.getInstance(context).enqueueUniqueWork("folder-audio-${media.id}-${destinationId(tree.toString() + folders.joinToString("/") + track)}", ExistingWorkPolicy.KEEP, request)
+        WorkManager.getInstance(context).enqueueUniqueWork("folder-audio-${media.id}-${destinationId(tree.toString() + destination.joinToString("/") + position)}", ExistingWorkPolicy.KEEP, request)
     }
 }
 
@@ -298,7 +301,8 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 }
                 val mime = audioMime(source.extension)
                 notifyCompleted(title, uri, mime)
-                Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name))
+                Result.success(workDataOf("uri" to uri.toString(), "mime" to mime, "name" to name,
+                    "thumbnail" to media.thumbnailUrl.orEmpty().take(1500)))
             }
         } catch (cancelled: CancellationException) {
             throw cancelled
@@ -394,4 +398,18 @@ internal suspend fun awaitOfflineAudio(read: () -> androidx.media3.exoplayer.off
         }
         kotlinx.coroutines.delay(200)
     }
+}
+
+internal fun isLikedPlaylist(id: String): Boolean = id in setOf("liked", "LM", "VLLM")
+
+internal fun collectionAudioFolders(kind: String, title: String, id: String): List<String> =
+    if (kind == "Playlists" && isLikedPlaylist(id)) listOf(AutoLikedDownloads.FOLDER)
+    else listOf(kind, collectionFolder(title, id))
+
+internal fun audioDestinationFolders(media: MediaMetadata, folders: List<String>, liked: Boolean): List<String> = when {
+    folders == listOf(AutoLikedDownloads.FOLDER) -> folders
+    liked && (folders.isEmpty() || folders.firstOrNull() == "Sélections") -> listOf(AutoLikedDownloads.FOLDER)
+    folders.isNotEmpty() -> folders
+    media.album != null -> listOf("Albums", collectionFolder(media.album.title, media.album.id))
+    else -> listOf("Titres")
 }

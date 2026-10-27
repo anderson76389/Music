@@ -73,8 +73,33 @@ import java.time.format.DateTimeFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BackupAndRestore(
-    navController: NavController,
+fun BackupAndRestore(navController: NavController) {
+    Column(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(
+        WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)).verticalScroll(rememberScrollState())
+        .padding(horizontal = 16.dp)) {
+        Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)))
+        BackupAndRestoreContent()
+    }
+    TopAppBar(
+        title = { Text(stringResource(R.string.backup_restore)) },
+        navigationIcon = {
+            IconButton(
+                onClick = navController::navigateUp,
+                onLongClick = navController::backToMain,
+            ) {
+                Icon(
+                    painterResource(R.drawable.arrow_back),
+                    contentDescription = null,
+                )
+            }
+        },
+    )
+
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BackupAndRestoreContent(
     viewModel: BackupRestoreViewModel = hiltViewModel(),
 ) {
     var importedTitle by remember { mutableStateOf("") }
@@ -154,22 +179,10 @@ fun BackupAndRestore(
             }
         }
 
-    Column(
-        Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
-            .verticalScroll(rememberScrollState())
-            .padding(horizontal = 16.dp),
-    ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top,
-                ),
-            ),
-        )
-
+    Column {
         val appName = stringResource(R.string.app_name)
         Material3SettingsGroup(
+            title = stringResource(R.string.backup_restore),
             items =
                 listOf(
                     Material3SettingsItem(
@@ -211,21 +224,6 @@ fun BackupAndRestore(
                 ),
         )
     }
-
-    TopAppBar(
-        title = { Text(stringResource(R.string.backup_restore)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
 
     AddToPlaylistDialogOnline(
         isVisible = showChoosePlaylistDialogOnline,

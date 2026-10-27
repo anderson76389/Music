@@ -6,12 +6,21 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil3.compose.AsyncImage
+import fr.makoff.music.LocalDatabase
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -47,15 +56,21 @@ private fun persistFolder(context: android.content.Context, uri: Uri) {
 }
 
 @Composable
-fun rememberFolderAudioItem(media: MediaMetadata): Material3MenuItemData {
+fun rememberFolderAudioItem(media: MediaMetadata, downloadInLiked: Boolean = false): Material3MenuItemData {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val (tree) = rememberPreference(FolderAudioTreeKey, "")
     fun enqueue(uri: Uri) {
-        runCatching { FolderAudioDownloads.enqueue(context, media, uri,
-            media.album?.let { listOf("Albums", collectionFolder(it.title, it.id)) } ?: listOf("Titres")) }
-            .onSuccess { Toast.makeText(context, R.string.folder_audio_queued, Toast.LENGTH_SHORT).show() }
-            .onFailure { Toast.makeText(context, R.string.folder_audio_invalid, Toast.LENGTH_LONG).show() }
+        (context.applicationContext as fr.makoff.music.App).applicationScope.launch(Dispatchers.Main.immediate) {
+            runCatching {
+                withContext(Dispatchers.IO) {
+                    FolderAudioDownloads.enqueue(context, media, uri,
+                        if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER) else emptyList())
+                }
+            }
+                .onSuccess { Toast.makeText(context, R.string.folder_audio_queued, Toast.LENGTH_SHORT).show() }
+                .onFailure { Toast.makeText(context, R.string.folder_audio_invalid, Toast.LENGTH_LONG).show() }
+        }
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) scope.launch {
@@ -113,6 +128,7 @@ fun FolderAudioSettings() {
 @Composable
 fun FolderAudioHistory() {
     val context = LocalContext.current
+    val database = LocalDatabase.current
     val manager = remember { WorkManager.getInstance(context) }
     var jobs by remember { mutableStateOf<List<WorkInfo>>(emptyList()) }
     LaunchedEffect(manager) {
@@ -124,39 +140,56 @@ fun FolderAudioHistory() {
     Text(stringResource(R.string.folder_audio_recent), modifier = Modifier.padding(12.dp))
     if (jobs.isEmpty()) Text(stringResource(R.string.download_history_empty), modifier = Modifier.padding(12.dp))
     jobs.sortedByDescending { work -> work.tags.firstOrNull { it.startsWith("audio-created:") }?.substringAfter(':')?.toLongOrNull() ?: 0L }.take(15).forEach { work ->
-        Column(Modifier.fillMaxWidth().padding(12.dp)) {
-            Text(work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.TITLE_TAG) }?.removePrefix(FolderAudioDownloads.TITLE_TAG).orEmpty())
-            val status = when (work.state) {
-                WorkInfo.State.SUCCEEDED -> R.string.folder_audio_completed
-                WorkInfo.State.FAILED -> when (work.outputData.getString("error")) {
-                    "storage" -> R.string.folder_audio_write_error
-                    "active" -> R.string.folder_audio_internal_busy
-                    else -> R.string.folder_audio_failed
-                }
-                WorkInfo.State.CANCELLED -> R.string.folder_audio_cancelled
-                WorkInfo.State.RUNNING -> when {
-                    work.progress.getBoolean("waiting", false) -> R.string.folder_audio_waiting
-                    work.progress.getBoolean("copying", false) -> R.string.folder_audio_copying
-                    else -> R.string.folder_audio_running
-                }
-                else -> R.string.folder_audio_waiting
-            }
-            Text(stringResource(status))
-            if (!work.state.isFinished) {
-                val percent = work.progress.getInt("percent", -1)
-                if (percent >= 0) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
-                TextButton(onClick = { manager.cancelWorkById(work.id) }) { Text(stringResource(R.string.folder_audio_cancel)) }
-            } else if (work.state == WorkInfo.State.SUCCEEDED) {
-                TextButton(onClick = {
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                            .setDataAndType(Uri.parse(requireNotNull(work.outputData.getString("uri"))), work.outputData.getString("mime"))
-                            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                        context.startActivity(intent)
-                    } catch (_: Exception) {
-                        Toast.makeText(context, R.string.folder_audio_open_error, Toast.LENGTH_LONG).show()
+        val songId = work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.SONG_TAG) }
+            ?.removePrefix(FolderAudioDownloads.SONG_TAG).orEmpty()
+        val song by remember(database, songId) { database.song(songId) }.collectAsState(initial = null)
+        val title = work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.TITLE_TAG) }
+            ?.removePrefix(FolderAudioDownloads.TITLE_TAG).orEmpty()
+        Row(Modifier.fillMaxWidth().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            AsyncImage(
+                model = song?.song?.thumbnailUrl?.takeIf { it.isNotBlank() }
+                    ?: work.outputData.getString("thumbnail")?.takeIf { it.isNotBlank() }
+                    ?: songId.takeIf { it.matches(Regex("[A-Za-z0-9_-]{11}")) }?.let { "https://i.ytimg.com/vi/$it/hqdefault.jpg" },
+                contentDescription = stringResource(R.string.download_history_cover, title),
+                placeholder = painterResource(R.drawable.music_note),
+                error = painterResource(R.drawable.music_note),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.size(56.dp).clip(RoundedCornerShape(8.dp)),
+            )
+            Column(Modifier.weight(1f).padding(start = 12.dp)) {
+                Text(title)
+                val status = when (work.state) {
+                    WorkInfo.State.SUCCEEDED -> R.string.folder_audio_completed
+                    WorkInfo.State.FAILED -> when (work.outputData.getString("error")) {
+                        "storage" -> R.string.folder_audio_write_error
+                        "active" -> R.string.folder_audio_internal_busy
+                        else -> R.string.folder_audio_failed
                     }
-                }) { Text(stringResource(R.string.folder_audio_open)) }
+                    WorkInfo.State.CANCELLED -> R.string.folder_audio_cancelled
+                    WorkInfo.State.RUNNING -> when {
+                        work.progress.getBoolean("waiting", false) -> R.string.folder_audio_waiting
+                        work.progress.getBoolean("copying", false) -> R.string.folder_audio_copying
+                        else -> R.string.folder_audio_running
+                    }
+                    else -> R.string.folder_audio_waiting
+                }
+                Text(stringResource(status))
+                if (!work.state.isFinished) {
+                    val percent = work.progress.getInt("percent", -1)
+                    if (percent >= 0) LinearProgressIndicator(progress = { percent / 100f }, modifier = Modifier.fillMaxWidth())
+                    TextButton(onClick = { manager.cancelWorkById(work.id) }) { Text(stringResource(R.string.folder_audio_cancel)) }
+                } else if (work.state == WorkInfo.State.SUCCEEDED) {
+                    TextButton(onClick = {
+                        try {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                                .setDataAndType(Uri.parse(requireNotNull(work.outputData.getString("uri"))), work.outputData.getString("mime"))
+                                .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            context.startActivity(intent)
+                        } catch (_: Exception) {
+                            Toast.makeText(context, R.string.folder_audio_open_error, Toast.LENGTH_LONG).show()
+                        }
+                    }) { Text(stringResource(R.string.folder_audio_open)) }
+                }
             }
         }
     }
@@ -165,7 +198,7 @@ fun FolderAudioHistory() {
 /** The exported document is also registered as the app's offline audio source. */
 @Composable
 fun rememberFolderCollectionItem(kind: String, title: String, id: String,
-    load: suspend () -> List<MediaMetadata>): Material3MenuItemData {
+    downloadInLiked: Boolean = false, load: suspend () -> List<MediaMetadata>): Material3MenuItemData {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val (tree) = rememberPreference(FolderAudioTreeKey, "")
@@ -178,7 +211,8 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
                 val tracks = withContext(Dispatchers.IO) { load() }
                 check(tracks.isNotEmpty())
                 require(tracks.all { it.id.matches(Regex("[A-Za-z0-9_-]{11}")) })
-                val folders = listOf(kind, collectionFolder(title, id))
+                val folders = if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER)
+                    else collectionAudioFolders(kind, title, id)
                 withContext(Dispatchers.IO) {
                     tracks.forEachIndexed { index, media -> FolderAudioDownloads.enqueue(context, media, uri, folders, index + 1) }
                 }

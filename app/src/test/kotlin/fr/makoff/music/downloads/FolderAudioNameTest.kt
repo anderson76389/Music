@@ -4,6 +4,20 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class FolderAudioNameTest {
+    @Test fun likedDownloadsKeepTheirOwnFolderEvenWhenTheSongHasAnAlbum() {
+        val media = fr.makoff.music.models.MediaMetadata("BaW_jenozKc", "Liked title", emptyList(), 1,
+            album = fr.makoff.music.models.MediaMetadata.Album("album-id", "An album"))
+        assertEquals(listOf("J'aime"), audioDestinationFolders(media, emptyList(), liked = true))
+        assertEquals(listOf("J'aime"), audioDestinationFolders(media, listOf("Sélections", "Titres"), liked = true))
+        assertEquals(listOf("J'aime"), audioDestinationFolders(media, listOf("J'aime"), liked = false))
+        assertEquals(listOf("Albums", "An album"), audioDestinationFolders(media, emptyList(), liked = false))
+        assertEquals(listOf("Albums", "Explicit album"), audioDestinationFolders(media, listOf("Albums", "Explicit album"), liked = true))
+        for (id in listOf("liked", "LM", "VLLM")) {
+            assertEquals(listOf("J'aime"), collectionAudioFolders("Playlists", "Localized likes title", id))
+        }
+        assertEquals(listOf("Playlists", "My playlist"), collectionAudioFolders("Playlists", "My playlist", "private-custom"))
+    }
+
     @org.junit.Test fun exportArtworkUsesUncroppedSourcesWithoutChangingOtherHosts() {
         org.junit.Assert.assertEquals("https://lh3.googleusercontent.com/image=w1024",
             exportArtworkUrls("https://lh3.googleusercontent.com/image=w544-h544-l90-rj", "BaW_jenozKc").first())

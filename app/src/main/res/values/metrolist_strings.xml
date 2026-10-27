@@ -887,4 +887,5 @@
     <string name="clear_exported_downloads">Supprimer aussi les fichiers audio associés sur le téléphone</string>
     <string name="clear_downloads_partial">Téléchargements retirés de l’application, mais certains fichiers du téléphone n’ont pas pu être supprimés.</string>
     <string name="clear_downloads_failed">Impossible d’effacer tous les téléchargements. Réessayez.</string>
+    <string name="download_history_cover">Pochette de %1$s</string>
 </resources>
