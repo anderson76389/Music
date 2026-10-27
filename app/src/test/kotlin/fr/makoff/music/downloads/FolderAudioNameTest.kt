@@ -4,6 +4,15 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class FolderAudioNameTest {
+    @org.junit.Test fun exportArtworkUsesUncroppedSourcesWithoutChangingOtherHosts() {
+        org.junit.Assert.assertEquals("https://lh3.googleusercontent.com/image=w1024",
+            exportArtworkUrls("https://lh3.googleusercontent.com/image=w544-h544-l90-rj", "BaW_jenozKc").first())
+        org.junit.Assert.assertEquals("https://i.ytimg.com/vi/BaW_jenozKc/maxresdefault.jpg",
+            exportArtworkUrls("https://i.ytimg.com/vi/BaW_jenozKc/hq720.jpg?sqp=cropped", "BaW_jenozKc").first())
+        org.junit.Assert.assertEquals("https://other.example/picture?size=512&token=abc",
+            exportArtworkUrls("https://other.example/picture?size=512&token=abc", "BaW_jenozKc").first())
+    }
+
     @Test fun namesCannotEscapeTheChosenFolder() {
         val name = audioFileName("../../a/b\n:c*?", "../artiste", "BaW_jenozKc", "webm")
         assertFalse(name.contains('/'))

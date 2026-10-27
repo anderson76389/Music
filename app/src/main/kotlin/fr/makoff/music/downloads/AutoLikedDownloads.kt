@@ -2,6 +2,8 @@ package fr.makoff.music.downloads
 
 import android.content.Context
 import android.net.Uri
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import fr.makoff.music.constants.AutoDownloadOnLikeKey
 import fr.makoff.music.constants.FolderAudioTreeKey
@@ -14,6 +16,7 @@ import timber.log.Timber
 
 internal object AutoLikedDownloads {
     const val FOLDER = "J'aime"
+    val SKIPPED = stringSetPreferencesKey("clearedLikedDownloads")
     fun documentKey(tree: String, id: String) =
         stringPreferencesKey("likedAudio:" + destinationId(tree) + ":" + id)
 
@@ -22,6 +25,10 @@ internal object AutoLikedDownloads {
         var destination: String? = null
         combine(context.dataStore.data, downloads.database.likedSongsByRowIdAsc()) { prefs, songs -> prefs to songs }
             .collect { (prefs, songs) ->
+                val eligible = songs.filter { !it.song.isLocal && !it.song.isEpisode && it.id.matches(Regex("[A-Za-z0-9_-]{11}")) }
+                val eligibleIds = eligible.map { it.id }.toSet()
+                val skipped = prefs[SKIPPED].orEmpty().intersect(eligibleIds)
+                if (skipped != prefs[SKIPPED].orEmpty()) context.dataStore.edit { it[SKIPPED] = skipped }
                 if (prefs[AutoDownloadOnLikeKey] != true) {
                     handled.clear()
                     destination = null
@@ -29,10 +36,9 @@ internal object AutoLikedDownloads {
                 }
                 val tree = prefs[FolderAudioTreeKey].orEmpty()
                 if (destination != tree) { handled.clear(); destination = tree }
-                val eligible = songs.filter { !it.song.isLocal && !it.song.isEpisode && it.id.matches(Regex("[A-Za-z0-9_-]{11}")) }
-                handled.retainAll(eligible.map { it.id }.toSet())
+                handled.retainAll(eligibleIds)
                 for (song in eligible) {
-                    if (song.id in handled) continue
+                    if (song.id in handled || song.id in skipped) continue
                     try {
                         val previous = prefs[documentKey(tree, song.id)]?.let(Uri::parse)
                         val size = previous?.let { uri ->

@@ -49,6 +49,7 @@ import fr.makoff.music.ui.screens.settings.ContentSettings
 import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.ui.screens.settings.PlayerSettings
 import fr.makoff.music.ui.screens.settings.SettingsScreen
+import fr.makoff.music.ui.screens.settings.DownloadsSettings
 import fr.makoff.music.ui.screens.settings.StorageSettings
 import fr.makoff.music.ui.screens.settings.ThemeScreen
 import fr.makoff.music.ui.screens.settings.UpdaterScreen
@@ -344,6 +345,10 @@ fun NavGraphBuilder.navigationBuilder(
 
 composable("settings/player") {
         PlayerSettings(navController)
+    }
+
+    composable("settings/downloads") {
+        DownloadsSettings(navController)
     }
 
     composable("settings/storage") {

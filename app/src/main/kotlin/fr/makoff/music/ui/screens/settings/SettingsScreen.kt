@@ -108,6 +108,11 @@ fun SettingsScreen(
                     onClick = { navController.navigate("settings/storage") }
                 ),
                 Material3SettingsItem(
+                    icon = painterResource(R.drawable.download),
+                    title = { Text(stringResource(R.string.download_settings)) },
+                    onClick = { navController.navigate("settings/downloads") }
+                ),
+                Material3SettingsItem(
                     icon = painterResource(R.drawable.restore),
                     title = { Text(stringResource(R.string.backup_restore)) },
                     onClick = { navController.navigate("settings/backup_restore") }

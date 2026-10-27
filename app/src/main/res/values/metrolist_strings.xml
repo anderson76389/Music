@@ -881,4 +881,10 @@
     <string name="apk_update_install_failed">Impossible d’ouvrir l’installateur Android. Vérifiez l’autorisation d’installer des applications.</string>
     <string name="player_volume">Volume</string>
     <string name="import_playlist_failed">Import impossible : fichier vide ou non valide.</string>
+    <string name="download_settings">Téléchargement</string>
+    <string name="download_history_empty">Aucun téléchargement dans l’historique.</string>
+    <string name="clear_offline_downloads_help">Retirer tous les téléchargements de l’application et annuler ceux en cours ? Votre bibliothèque et vos titres aimés sont conservés.</string>
+    <string name="clear_exported_downloads">Supprimer aussi les fichiers audio associés sur le téléphone</string>
+    <string name="clear_downloads_partial">Téléchargements retirés de l’application, mais certains fichiers du téléphone n’ont pas pu être supprimés.</string>
+    <string name="clear_downloads_failed">Impossible d’effacer tous les téléchargements. Réessayez.</string>
 </resources>

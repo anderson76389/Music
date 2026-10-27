@@ -18,7 +18,7 @@ import fr.makoff.music.utils.safeDataStoreEdit
 import kotlinx.coroutines.launch
 
 @Composable
-fun DownloadFormatSettings() {
+fun DownloadFormatSettings(showHelp: Boolean = true) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val preferences by context.dataStore.data.collectAsState(initial = emptyPreferences())
@@ -48,9 +48,9 @@ fun DownloadFormatSettings() {
         items = listOf(Material3SettingsItem(
             icon = painterResource(R.drawable.download),
             title = { Text(stringResource(R.string.download_format_unified)) },
-            description = { Text(stringResource(selected.label)) },
+            description = if (showHelp) { { Text(stringResource(selected.label)) } } else null,
             onClick = { editing = true },
         )),
     )
-    Text(stringResource(R.string.download_format_unified_help))
+    if (showHelp) Text(stringResource(R.string.download_format_unified_help))
 }

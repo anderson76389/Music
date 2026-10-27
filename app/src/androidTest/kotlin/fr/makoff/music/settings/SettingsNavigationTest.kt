@@ -514,6 +514,7 @@ class SettingsNavigationTest {
             R.string.player_and_audio to R.string.audio_quality,
             R.string.content to R.string.content_language,
             R.string.storage to R.string.downloaded_songs,
+            R.string.download_settings to R.string.folder_audio_recent,
             R.string.backup_restore to R.string.action_backup,
         )
         for ((screen, marker) in screens) {
@@ -651,6 +652,19 @@ class SettingsNavigationTest {
                         } } }
                     }
                     println("DOWNLOAD_FORMAT_SETTINGS_OK: unified BEST/M4A/FLAC selection updates both download paths")
+                    assertFalse("Storage has no native-download explanatory paragraph", visibleControls().any { it.text == label(R.string.folder_audio_native) })
+                    open(R.string.downloaded_songs)
+                    awaitPreference("Downloaded songs opens filtered library") {
+                        val prefs = context.dataStore.data.first()
+                        prefs[SongFilterKey] == SongFilter.DOWNLOADED.name && prefs[ChipSortTypeKey] == LibraryFilter.SONGS.name
+                    }
+                    findText(R.string.filter_downloaded)
+                    device.pressBack()
+                    device.waitForIdle()
+                    open(R.string.clear_all_downloads)
+                    findText(R.string.clear_exported_downloads)
+                    open(android.R.string.cancel)
+                    println("STORAGE_DOWNLOAD_ACTIONS_OK: real filtered library navigation and clear confirmation with public-file choice")
                 }
             }
             device.pressBack()

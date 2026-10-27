@@ -48,6 +48,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Runnable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
+import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -90,6 +95,8 @@ constructor(
             .build()
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    @Volatile private var clearingDownloads = false
+    private val preparationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val downloadPreparations = Semaphore(3)
 
     val downloads = MutableStateFlow<Map<String, Download>>(emptyMap())
@@ -327,8 +334,10 @@ constructor(
     fun download(song: SongItem) = download(song.toMediaMetadata())
 
     fun download(mediaMetadata: MediaMetadata, requestedFormat: DownloadAudioFormat? = null) {
-        scope.launch {
+        if (clearingDownloads) return
+        preparationScope.launch {
             downloadPreparations.withPermit {
+                if (clearingDownloads) return@withPermit
                 // Revalidate document permission/existence before treating an external copy as complete.
                 externalAudioUri(mediaMetadata.id)
                 if (!shouldPrepareDownload(downloads.value[mediaMetadata.id]?.state)) return@withPermit
@@ -400,14 +409,60 @@ constructor(
     }
 
     fun download(songId: String) {
-        scope.launch {
+        preparationScope.launch {
             database.getSongByIdBlocking(songId)?.let { song ->
                 download(song)
             }
         }
     }
 
+    /** Clear the native queue/index as well as shared-document references; public deletion is opt-in. */
+    suspend fun clearDownloads(deleteExportedFiles: Boolean): Int = withContext(Dispatchers.IO + kotlinx.coroutines.NonCancellable) {
+        clearingDownloads = true
+        try {
+            preparationScope.coroutineContext[kotlinx.coroutines.Job]?.children?.toList()?.forEach { it.cancelAndJoin() }
+            androidx.work.WorkManager.getInstance(context)
+                .cancelAllWorkByTag(fr.makoff.music.downloads.FolderAudioDownloads.TAG).result.get()
+            val snapshot = mutableMapOf<String, Download>()
+            downloadManager.downloadIndex.getDownloads().use { cursor ->
+                while (cursor.moveToNext()) snapshot[cursor.download.request.id] = cursor.download
+            }
+            snapshot.putAll(downloads.value)
+            // Explicit removal must survive restart with auto-download-on-like still enabled.
+            val likedIds = database.likedSongsByRowIdAsc().first().map { it.id }.toSet()
+            context.dataStore.edit { prefs ->
+                prefs[fr.makoff.music.downloads.AutoLikedDownloads.SKIPPED] =
+                    prefs[fr.makoff.music.downloads.AutoLikedDownloads.SKIPPED].orEmpty() + likedIds
+            }
+            var failedFiles = 0
+            if (deleteExportedFiles) {
+                snapshot.values.map { it.request.uri }.filter { it.scheme == "content" }.distinct().forEach { uri ->
+                    val deleted = try {
+                        android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri)
+                    } catch (_: java.io.FileNotFoundException) { true }
+                    catch (_: Exception) { false }
+                    if (!deleted) failedFiles++
+                }
+            }
+            DownloadService.sendRemoveAllDownloads(context, ExoDownloadService::class.java, false)
+            val deadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (downloadManager.downloadIndex.getDownloads().use { it.moveToNext() }) {
+                check(android.os.SystemClock.elapsedRealtime() < deadline) { "Download removal timed out" }
+                delay(50)
+            }
+            val ids = snapshot.keys + downloadCache.keys
+            ids.forEach { id ->
+                downloadCache.removeResource(id)
+                songUrlCache.invalidate(id)
+                database.updateDownloadedInfo(id, false, null)
+            }
+            downloads.value = emptyMap()
+            failedFiles
+        } finally { clearingDownloads = false }
+    }
+
     fun release() {
+        preparationScope.cancel()
         scope.cancel()
     }
 

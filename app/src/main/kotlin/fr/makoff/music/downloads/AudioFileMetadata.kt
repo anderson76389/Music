@@ -18,16 +18,22 @@ import java.util.concurrent.TimeUnit
 
 /** Write portable tags and cover art without decoding/re-encoding the audio packets. */
 internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File): File {
-    val thumbnailUrls = buildList {
-        media.thumbnailUrl?.takeIf { it.isNotBlank() }?.let(::add)
-        if (media.id.matches(Regex("[A-Za-z0-9_-]{11}"))) add("https://i.ytimg.com/vi/${media.id}/hqdefault.jpg")
-    }.distinct()
+    val thumbnailUrls = exportArtworkUrls(media.thumbnailUrl, media.id)
     var cover: Cover? = null
     for (url in thumbnailUrls) {
         try {
             val result = context.imageLoader.execute(ImageRequest.Builder(context).data(url)
-                .size(512).allowHardware(false).build()) as? SuccessResult ?: continue
-            var bitmap = result.image.toBitmap()
+                .size(1024).scale(coil3.size.Scale.FIT).allowHardware(false).build()) as? SuccessResult ?: continue
+            val original = result.image.toBitmap()
+            val side = maxOf(original.width, original.height)
+            var bitmap = if (original.width == original.height) original else {
+                Bitmap.createBitmap(side, side, Bitmap.Config.ARGB_8888).also { square ->
+                    android.graphics.Canvas(square).apply {
+                        drawColor(android.graphics.Color.BLACK)
+                        drawBitmap(original, (side - original.width) / 2f, (side - original.height) / 2f, null)
+                    }
+                }
+            }
             while (true) {
                 val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
                 if (bytes.size in 1..64000) {
@@ -101,3 +107,18 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
 }
 
 private data class Cover(val bytes: ByteArray, val width: Int, val height: Int)
+
+internal fun exportArtworkUrls(thumbnail: String?, videoId: String): List<String> = buildList {
+    thumbnail?.takeIf { it.isNotBlank() }?.let { url ->
+        val host = runCatching { java.net.URI(url).host?.lowercase() }.getOrNull().orEmpty()
+        if (host == "googleusercontent.com" || host.endsWith(".googleusercontent.com") ||
+            host == "ggpht.com" || host.endsWith(".ggpht.com")) {
+            add(url.substringBefore('=') + "=w1024")
+        } else if ((host == "i.ytimg.com" || host == "img.youtube.com") && videoId.matches(Regex("[A-Za-z0-9_-]{11}"))) {
+            add("https://i.ytimg.com/vi/$videoId/maxresdefault.jpg")
+            add("https://i.ytimg.com/vi/$videoId/hqdefault.jpg")
+        }
+        add(url)
+    }
+    if (videoId.matches(Regex("[A-Za-z0-9_-]{11}"))) add("https://i.ytimg.com/vi/$videoId/hqdefault.jpg")
+}.distinct()

@@ -6,6 +6,20 @@
 package fr.makoff.music.ui.screens.settings
 
 import fr.makoff.music.downloads.FolderAudioSettings
+import fr.makoff.music.downloads.FolderAudioDownloads
+import fr.makoff.music.constants.ChipSortTypeKey
+import fr.makoff.music.constants.LibraryFilter
+import fr.makoff.music.constants.SongFilterKey
+import fr.makoff.music.constants.SongFilter
+import fr.makoff.music.ui.screens.Screens
+import fr.makoff.music.utils.safeDataStoreEdit
+import android.widget.Toast
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Checkbox
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.collectAsState
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Column
@@ -83,6 +97,9 @@ fun StorageSettings(
     val playerCache = LocalPlayerConnection.current?.service?.playerCache ?: return
     val downloadCache = LocalPlayerConnection.current?.service?.downloadCache ?: return
 
+    val downloads = remember(context) { FolderAudioDownloads.downloadUtil(context) }
+    val downloadStates by downloads.downloads.collectAsState()
+    val downloadedCount = downloadStates.values.count { it.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED }
     val coroutineScope = rememberCoroutineScope()
     val songCacheString = stringResource(R.string.song_cache).lowercase()
     val imageCacheString = stringResource(R.string.image_cache).lowercase()
@@ -100,6 +117,8 @@ fun StorageSettings(
     )
 
     var clearDownloads by remember { mutableStateOf(false) }
+    var clearingDownloads by remember { mutableStateOf(false) }
+    var deleteExportedFiles by remember { mutableStateOf(false) }
     var clearCacheDialog by remember { mutableStateOf(false) }
     var clearImageCacheDialog by remember { mutableStateOf(false) }
 
@@ -168,7 +187,9 @@ fun StorageSettings(
     LaunchedEffect(downloadCache) {
         while (isActive) {
             delay(500)
-            downloadCacheSize = tryOrNull { downloadCache.cacheSpace } ?: 0
+            downloadCacheSize = (tryOrNull { downloadCache.cacheSpace } ?: 0) + downloads.downloads.value.values
+                .filter { it.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED && it.request.uri.scheme == "content" }
+                .sumOf { it.contentLength.coerceAtLeast(0L) }
         }
     }
 
@@ -177,16 +198,28 @@ fun StorageSettings(
             title = stringResource(R.string.clear_all_downloads),
             onDismiss = { clearDownloads = false },
             onConfirm = {
-                coroutineScope.launch(Dispatchers.IO) {
-                    downloadCache.keys.forEach { key ->
-                        downloadCache.removeResource(key)
-                    }
+                clearingDownloads = true
+                coroutineScope.launch {
+                    try {
+                        val failed = downloads.clearDownloads(deleteExportedFiles)
+                        if (failed > 0) Toast.makeText(context, R.string.clear_downloads_partial, Toast.LENGTH_LONG).show()
+                    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        Toast.makeText(context, R.string.clear_downloads_failed, Toast.LENGTH_LONG).show()
+                    } finally { clearingDownloads = false }
                 }
                 clearDownloads = false
             },
             onCancel = { clearDownloads = false },
             content = {
-                Text(text = stringResource(R.string.clear_downloads_dialog))
+                Text(text = stringResource(R.string.clear_offline_downloads_help))
+                Row(Modifier.fillMaxWidth().toggleable(value = deleteExportedFiles,
+                    onValueChange = { deleteExportedFiles = it }).padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(checked = deleteExportedFiles, onCheckedChange = null)
+                    Text(stringResource(R.string.clear_exported_downloads), modifier = Modifier.weight(1f))
+                }
             },
         )
     }
@@ -306,14 +339,25 @@ fun StorageSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.storage),
                         title = { Text(stringResource(R.string.downloaded_songs)) },
+                        onClick = {
+                            coroutineScope.launch {
+                                if (context.safeDataStoreEdit {
+                                    it[ChipSortTypeKey] = LibraryFilter.SONGS.name
+                                    it[SongFilterKey] = SongFilter.DOWNLOADED.name
+                                }) navController.navigate(Screens.Library.route)
+                            }
+                        },
                         description = {
-                            Text(text = Formatter.formatShortFileSize(context, downloadCacheSize))
+                            Text(text = pluralStringResource(R.plurals.n_song, downloadedCount, downloadedCount) +
+                                " · " + Formatter.formatShortFileSize(context, downloadCacheSize))
                         },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.clear_all),
                         title = { Text(stringResource(R.string.clear_all_downloads)) },
+                        enabled = !clearingDownloads,
                         onClick = {
+                            deleteExportedFiles = false
                             clearDownloads = true
                         },
                     ),

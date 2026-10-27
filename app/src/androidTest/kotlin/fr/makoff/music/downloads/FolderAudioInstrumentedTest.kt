@@ -40,10 +40,15 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun exportedAudioContainsPortableTagsAndEmbeddedCover() = runBlocking {
         val root = File(context.cacheDir, "metadata-${UUID.randomUUID()}").apply { mkdirs() }
         val cover = File(root, "cover.jpg")
-        val bitmap = android.graphics.Bitmap.createBitmap(512, 512, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = android.graphics.Bitmap.createBitmap(512, 288, android.graphics.Bitmap.Config.ARGB_8888)
         val random = java.util.Random(42)
-        bitmap.setPixels(IntArray(512 * 512) { android.graphics.Color.rgb(random.nextInt(256),
-            random.nextInt(256), random.nextInt(256)) }, 0, 512, 0, 0, 512, 512)
+        bitmap.setPixels(IntArray(512 * 288) { index ->
+            when {
+                index % 512 < 48 -> android.graphics.Color.RED
+                index % 512 >= 464 -> android.graphics.Color.BLUE
+                else -> android.graphics.Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256))
+            }
+        }, 0, 512, 0, 0, 512, 288)
         cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
         bitmap.recycle()
         val title = "Title with 'quotes' and % signs"
@@ -74,12 +79,79 @@ class FolderAudioInstrumentedTest {
                         assertTrue("Artwork remains within the process argument limit", picture.size <= 64000)
                         val decoded = android.graphics.BitmapFactory.decodeByteArray(picture, 0, picture.size)
                         assertNotNull("Complete, decodable cover for ${tagged.extension}", decoded)
-                        decoded?.recycle()
+                        requireNotNull(decoded)
+                        assertEquals("Square canvas avoids viewer-side cropping", decoded.width, decoded.height)
+                        assertTrue("Left edge retained", android.graphics.Color.red(decoded.getPixel(3, decoded.height / 2)) > 180)
+                        assertTrue("Right edge retained", android.graphics.Color.blue(decoded.getPixel(decoded.width - 4, decoded.height / 2)) > 180)
+                        assertTrue("Letterbox retains the complete wide picture", android.graphics.Color.red(decoded.getPixel(decoded.width / 2, 3)) < 30)
+                        decoded.recycle()
                     } finally { retriever.release() }
                 } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
-                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, complete photographic-size cover and unchanged audio")
+                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, complete uncropped wide cover, both edges, letterbox and unchanged audio")
             }
         } finally { root.deleteRecursively() }
+    }
+
+    @Test(timeout = 60000) fun clearDownloadsRemovesNativeAndSharedEntriesAndHonorsPublicFileChoice() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val originalPreferences = context.dataStore.data.first()
+        val sharedId = UUID.randomUUID().toString().replace("-", "").take(11)
+        val nativeId = UUID.randomUUID().toString().replace("-", "").take(11)
+        val shared = fr.makoff.music.models.MediaMetadata(sharedId, "Clear shared audio", emptyList(), 1)
+        val native = fr.makoff.music.models.MediaMetadata(nativeId, "Clear private audio", emptyList(), 1)
+        val source = File(context.cacheDir, "clear-$sharedId.m4a").apply { writeBytes(android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
+        var uri: android.net.Uri? = null
+        try {
+            context.dataStore.edit { it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false }
+            uri = saveAudioToTree(context, tree, source, "clear-$sharedId.m4a")
+            downloads.registerExternalAudio(shared, uri!!, source.length())
+            downloads.database.update(requireNotNull(downloads.database.songEntity(sharedId)).toggleLike(syncToYouTube = false))
+            downloads.database.insert(native)
+            val cache = downloads.downloadCache
+            val hole = cache.startReadWrite(nativeId, 0, source.length())
+            try {
+                val file = cache.startFile(nativeId, 0, source.length())
+                file.writeBytes(source.readBytes())
+                cache.commitFile(file, source.length())
+            } finally { cache.releaseHoleSpan(hole) }
+            val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(nativeId, android.net.Uri.parse(nativeId))
+                .setCustomCacheKey(nativeId).build()
+            val completed = androidx.media3.exoplayer.offline.Download(request,
+                androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, source.length(), 0, 0)
+            (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(completed)
+            downloads.downloads.value = downloads.downloads.value + (nativeId to completed)
+            downloads.database.updateDownloadedInfo(nativeId, true, java.time.LocalDateTime.now())
+            assertEquals(0, downloads.clearDownloads(deleteExportedFiles = false))
+            assertTrue("Queue and shared-document index cleared", downloads.downloads.value.isEmpty())
+            assertNull(downloads.downloadManager.downloadIndex.getDownload(nativeId))
+            assertNull(downloads.downloadManager.downloadIndex.getDownload(sharedId))
+            assertEquals("Private audio bytes cleared", 0L, cache.getCachedBytes(nativeId, 0, source.length()))
+            assertFalse(requireNotNull(downloads.database.songEntity(nativeId)).isDownloaded)
+            assertFalse(requireNotNull(downloads.database.songEntity(sharedId)).isDownloaded)
+            assertTrue("Public file kept when unchecked", context.contentResolver.openAssetFileDescriptor(uri!!, "r")!!.use { it.length > 0 })
+            assertTrue("Explicit removal persisted for auto-like", sharedId in context.dataStore.data.first()[AutoLikedDownloads.SKIPPED].orEmpty())
+            context.dataStore.edit { it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = true }
+            kotlinx.coroutines.delay(1200)
+            assertNull("Auto-like must not undo clear", downloads.externalAudioUri(sharedId))
+            context.dataStore.edit { it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false }
+            downloads.registerExternalAudio(shared, uri!!, source.length())
+            assertEquals(0, downloads.clearDownloads(deleteExportedFiles = true))
+            assertFalse("Opt-in public file deletion", requireNotNull(DocumentFile.fromSingleUri(context, uri!!)).exists())
+            assertFalse(requireNotNull(downloads.database.songEntity(sharedId)).isDownloaded)
+            assertTrue("Library and likes retained", requireNotNull(downloads.database.songEntity(sharedId)).liked)
+            println("CLEAR_DOWNLOADS_OK: native bytes and index removed, shared reference removed, public-file choice honored, library and likes kept, auto-like cannot restore cleared audio")
+        } finally {
+            uri?.let { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            for (id in listOf(sharedId, nativeId)) {
+                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
+                downloads.downloads.value = downloads.downloads.value - id
+                downloads.downloadCache.removeResource(id)
+                downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
+            }
+            source.delete()
+            context.dataStore.updateData { originalPreferences }
+        }
     }
 
     @Test fun exportWaitsForNativeCompletionAndStopsOnFailureOrCancellation() = runBlocking {

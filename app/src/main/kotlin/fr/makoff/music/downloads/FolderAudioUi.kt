@@ -85,14 +85,6 @@ fun FolderAudioSettings() {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val (tree) = rememberPreference(FolderAudioTreeKey, "")
-    val manager = remember { WorkManager.getInstance(context) }
-    var jobs by remember { mutableStateOf<List<WorkInfo>>(emptyList()) }
-    LaunchedEffect(manager) {
-        while (isActive) {
-            jobs = withContext(Dispatchers.IO) { manager.getWorkInfosByTag(FolderAudioDownloads.TAG).get() }
-            delay(1500)
-        }
-    }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) scope.launch {
             try {
@@ -105,20 +97,32 @@ fun FolderAudioSettings() {
             }
         }
     }
-    DownloadFormatSettings()
+    DownloadFormatSettings(showHelp = false)
     Material3SettingsGroup(
         title = stringResource(R.string.folder_audio_settings),
         items = listOf(
             Material3SettingsItem(
                 icon = painterResource(R.drawable.storage),
                 title = { Text(stringResource(R.string.folder_audio_choose)) },
-                description = { Text(if (tree.isBlank()) stringResource(R.string.folder_audio_choose_hint) else stringResource(R.string.folder_audio_ready)) },
                 onClick = { picker.launch(tree.takeIf(String::isNotBlank)?.let(Uri::parse)) },
             ),
         ),
     )
-    Text(stringResource(R.string.folder_audio_native), modifier = Modifier.padding(12.dp))
-    if (jobs.isNotEmpty()) Text(stringResource(R.string.folder_audio_recent), modifier = Modifier.padding(12.dp))
+}
+
+@Composable
+fun FolderAudioHistory() {
+    val context = LocalContext.current
+    val manager = remember { WorkManager.getInstance(context) }
+    var jobs by remember { mutableStateOf<List<WorkInfo>>(emptyList()) }
+    LaunchedEffect(manager) {
+        while (isActive) {
+            jobs = withContext(Dispatchers.IO) { manager.getWorkInfosByTag(FolderAudioDownloads.TAG).get() }
+            delay(1500)
+        }
+    }
+    Text(stringResource(R.string.folder_audio_recent), modifier = Modifier.padding(12.dp))
+    if (jobs.isEmpty()) Text(stringResource(R.string.download_history_empty), modifier = Modifier.padding(12.dp))
     jobs.sortedByDescending { work -> work.tags.firstOrNull { it.startsWith("audio-created:") }?.substringAfter(':')?.toLongOrNull() ?: 0L }.take(15).forEach { work ->
         Column(Modifier.fillMaxWidth().padding(12.dp)) {
             Text(work.tags.firstOrNull { it.startsWith(FolderAudioDownloads.TITLE_TAG) }?.removePrefix(FolderAudioDownloads.TITLE_TAG).orEmpty())
