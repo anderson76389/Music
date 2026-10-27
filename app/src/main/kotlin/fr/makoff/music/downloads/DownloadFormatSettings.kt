@@ -10,36 +10,47 @@ import fr.makoff.music.constants.ExternalDownloadFormatKey
 import fr.makoff.music.ui.component.EnumDialog
 import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
-import fr.makoff.music.utils.rememberEnumPreference
+import androidx.compose.ui.platform.LocalContext
+import androidx.datastore.preferences.core.emptyPreferences
+import fr.makoff.music.constants.UnifiedDownloadFormatKey
+import fr.makoff.music.utils.dataStore
+import fr.makoff.music.utils.safeDataStoreEdit
+import kotlinx.coroutines.launch
 
 @Composable
 fun DownloadFormatSettings() {
-    val (internal, setInternal) = rememberEnumPreference(InternalDownloadFormatKey, DownloadAudioFormat.BEST)
-    val (external, setExternal) = rememberEnumPreference(ExternalDownloadFormatKey, DownloadAudioFormat.BEST)
-    var editing by remember { mutableStateOf<Int?>(null) }
-    editing?.let { target ->
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val preferences by context.dataStore.data.collectAsState(initial = emptyPreferences())
+    val selected = preferences.selectedDownloadFormat()
+    var editing by remember { mutableStateOf(false) }
+    if (editing) {
         EnumDialog(
-            onDismiss = { editing = null },
+            onDismiss = { editing = false },
             onSelect = { value: DownloadAudioFormat ->
-                if (target == 0) setInternal(value) else setExternal(value)
-                editing = null
+                scope.launch {
+                    context.safeDataStoreEdit {
+                        it[UnifiedDownloadFormatKey] = value.name
+                        it[InternalDownloadFormatKey] = value.name
+                        it[ExternalDownloadFormatKey] = value.name
+                    }
+                }
+                editing = false
             },
-            title = stringResource(if (target == 0) R.string.download_format_internal else R.string.download_format_external),
-            current = if (target == 0) internal else external,
+            title = stringResource(R.string.download_format_unified),
+            current = selected,
             values = DownloadAudioFormat.entries.toList(),
             valueText = { stringResource(it.label) },
         )
     }
     Material3SettingsGroup(
         title = stringResource(R.string.audio_quality),
-        items = listOf(internal, external).mapIndexed { index, value ->
-            Material3SettingsItem(
-                icon = painterResource(R.drawable.download),
-                title = { Text(stringResource(if (index == 0) R.string.download_format_internal else R.string.download_format_external)) },
-                description = { Text(stringResource(value.label)) },
-                onClick = { editing = index },
-            )
-        },
+        items = listOf(Material3SettingsItem(
+            icon = painterResource(R.drawable.download),
+            title = { Text(stringResource(R.string.download_format_unified)) },
+            description = { Text(stringResource(selected.label)) },
+            onClick = { editing = true },
+        )),
     )
-    Text(stringResource(R.string.download_format_help))
+    Text(stringResource(R.string.download_format_unified_help))
 }

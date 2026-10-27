@@ -27,7 +27,7 @@ import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.innertube.models.SongItem
 import fr.makoff.music.innertubex.extraction.ContentHints
 import fr.makoff.music.constants.AudioQuality
-import fr.makoff.music.constants.InternalDownloadFormatKey
+import fr.makoff.music.downloads.selectedDownloadFormat
 import fr.makoff.music.downloads.DownloadAudioFormat
 import fr.makoff.music.db.MusicDatabase
 import fr.makoff.music.db.entities.AlbumEntity
@@ -39,7 +39,6 @@ import fr.makoff.music.di.PlayerCache
 import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.models.toMediaMetadata
 import fr.makoff.music.utils.InnerTubeXPlayer
-import fr.makoff.music.utils.enumPreference
 import fr.makoff.music.utils.dataStore
 import fr.makoff.music.utils.get
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -77,7 +76,6 @@ constructor(
 ) {
     private val TAG = "DownloadUtil"
     private val connectivityManager = context.getSystemService<ConnectivityManager>()!!
-    private val downloadFormat by enumPreference(context, InternalDownloadFormatKey, DownloadAudioFormat.BEST)
     private val songUrlCache = StreamUrlCache()
     private val streamHttpClient =
         OkHttpClient.Builder()
@@ -267,7 +265,7 @@ constructor(
                 val header = ByteArray(12).also { bytes -> staging.inputStream().use { it.read(bytes) } }
                 when {
                     header.take(4) == listOf(0x1a.toByte(), 0x45.toByte(), 0xdf.toByte(), 0xa3.toByte()) -> "webm"
-                    header.take(4).toByteArray().toString(Charsets.US_ASCII) == "OggS" -> "ogg"
+                    header.take(4).toByteArray().toString(Charsets.US_ASCII) == "OggS" -> if (mime == "audio/opus") "opus" else "ogg"
                     header.drop(4).take(4).toByteArray().toString(Charsets.US_ASCII) == "ftyp" -> "m4a"
                     mime == "audio/mpeg" -> "mp3"
                     header.take(4).toByteArray().toString(Charsets.US_ASCII) == "fLaC" || mime == "audio/flac" -> "flac"
@@ -368,7 +366,7 @@ constructor(
                 // New/retried downloads must not mix bytes from a previous quality or container.
                 downloadCache.removeResource(mediaMetadata.id)
                 songUrlCache.invalidate(mediaMetadata.id)
-                val selectedFormat = requestedFormat ?: downloadFormat
+                val selectedFormat = requestedFormat ?: context.selectedDownloadFormat()
                 val request =
                     DownloadRequest
                         .Builder(mediaMetadata.id, mediaMetadata.id.toUri().buildUpon()

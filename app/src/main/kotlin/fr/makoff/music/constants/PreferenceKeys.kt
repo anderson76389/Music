@@ -95,6 +95,7 @@ val DismissedStandaloneUpdateKey = stringPreferencesKey("dismissedStandaloneUpda
 val DismissedKmpUpdateKey = stringPreferencesKey("dismissedKmpUpdate")
 val UpdateNotificationsEnabledKey = booleanPreferencesKey("updateNotifications")
 
+val UnifiedDownloadFormatKey = stringPreferencesKey("unifiedDownloadFormat")
 val InternalDownloadFormatKey = stringPreferencesKey("internalDownloadFormat")
 val ExternalDownloadFormatKey = stringPreferencesKey("externalDownloadFormat")
 

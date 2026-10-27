@@ -17,7 +17,9 @@ for p in (r/'app').rglob('*'):
     if p.suffix in ('.kt', '.xml', '.kts', '.pro') and not any(part in ('test', 'androidTest') for part in p.parts):
         assert 'discord' not in p.read_text().lower(), p
 assert 'audioQuality = AudioQuality.HIGH' in (k/'playback/DownloadUtil.kt').read_text()
-assert 'InternalDownloadFormatKey, DownloadAudioFormat.BEST' in (k/'playback/DownloadUtil.kt').read_text()
+assert 'context.selectedDownloadFormat()' in (k/'playback/DownloadUtil.kt').read_text()
+assert 'context.selectedDownloadFormat()' in (k/'downloads/FolderAudioDownload.kt').read_text()
+assert '?: DownloadAudioFormat.BEST' in (k/'downloads/DownloadAudioFormat.kt').read_text()
 assert 'defaultValue = AudioQuality.HIGH' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 print('PASS: Discord absent from application; high-quality defaults for player and downloads')
 

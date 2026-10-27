@@ -50,7 +50,7 @@ object FolderAudioDownloads {
     fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
         require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
         val downloads = downloadUtil(context)
-        val format = DownloadAudioFormat.parse(context.dataStore.get(fr.makoff.music.constants.ExternalDownloadFormatKey, DownloadAudioFormat.BEST.name))
+        val format = context.selectedDownloadFormat()
         downloads.download(media, requestedFormat = format)
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
             .setInputData(workDataOf(

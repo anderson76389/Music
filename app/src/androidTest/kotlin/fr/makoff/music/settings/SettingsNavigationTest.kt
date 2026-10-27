@@ -353,7 +353,7 @@ class SettingsNavigationTest {
             device.wait(Until.findObject(By.desc(label(R.string.account))), 10000)!!.click()
             open(R.string.settings)
             open(R.string.storage)
-            open(R.string.download_format_external)
+            open(R.string.download_format_unified)
             SystemClock.sleep(700)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-selection-readable.png")
             device.pressBack()
@@ -627,22 +627,23 @@ class SettingsNavigationTest {
                 }
                 R.string.storage -> {
                     toggleAndRestore(R.string.enable_song_cache, EnableSongCacheKey, true)
-                    for ((title, key) in listOf(R.string.download_format_internal to InternalDownloadFormatKey,
-                        R.string.download_format_external to ExternalDownloadFormatKey)) {
-                        val original = runBlocking { context.dataStore.data.first()[key] }
-                        try {
-                            for (format in fr.makoff.music.downloads.DownloadAudioFormat.entries) {
-                                open(title)
-                                open(format.label)
-                                awaitPreference("download format ${format.name}") { context.dataStore.data.first()[key] == format.name }
+                    val keys = listOf(UnifiedDownloadFormatKey, InternalDownloadFormatKey, ExternalDownloadFormatKey)
+                    val original = runBlocking { context.dataStore.data.first() }
+                    try {
+                        for (format in fr.makoff.music.downloads.DownloadAudioFormat.entries) {
+                            open(R.string.download_format_unified)
+                            open(format.label)
+                            awaitPreference("unified download format ${format.name}") {
+                                val prefs = context.dataStore.data.first()
+                                keys.all { prefs[it] == format.name }
                             }
-                        } finally {
-                            runBlocking { context.dataStore.edit { prefs ->
-                                original?.let { prefs[key] = it } ?: prefs.remove(key)
-                            } }
                         }
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs -> keys.forEach { key ->
+                            original[key]?.let { prefs[key] = it } ?: prefs.remove(key)
+                        } } }
                     }
-                    println("DOWNLOAD_FORMAT_SETTINGS_OK: internal and external BEST/M4A/FLAC persisted")
+                    println("DOWNLOAD_FORMAT_SETTINGS_OK: unified BEST/M4A/FLAC selection updates both download paths")
                 }
             }
             device.pressBack()

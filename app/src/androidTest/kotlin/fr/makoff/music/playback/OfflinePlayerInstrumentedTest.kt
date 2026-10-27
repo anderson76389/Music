@@ -127,6 +127,7 @@ class OfflinePlayerInstrumentedTest {
                 thumbnailUrl = android.net.Uri.fromFile(artwork).toString())
         }
         var sharedUri: android.net.Uri? = null
+        val extraSharedUris = mutableListOf<android.net.Uri>()
         var bound = false
         try {
             context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -140,16 +141,19 @@ class OfflinePlayerInstrumentedTest {
             await("Production player not ready") { active.isPlayerReady.value }
             val audio = audioFixture()
             println("PLAYER_STAGE: caching AAC/M4A fixtures")
-            for (track in tracks) {
+            val opus = android.util.Base64.decode(
+                instrumentation.context.assets.open("audio/player-opus.webm.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+            for ((index, track) in tracks.withIndex()) {
+                val bytes = if (index == 1) opus else audio
                 active.database.insert(track)
-                val hole = active.downloadCache.startReadWrite(track.id, 0, audio.size.toLong())
+                val hole = active.downloadCache.startReadWrite(track.id, 0, bytes.size.toLong())
                 try {
-                    val file = active.downloadCache.startFile(track.id, 0, audio.size.toLong())
-                    file.writeBytes(audio)
-                    active.downloadCache.commitFile(file, audio.size.toLong())
+                    val file = active.downloadCache.startFile(track.id, 0, bytes.size.toLong())
+                    file.writeBytes(bytes)
+                    active.downloadCache.commitFile(file, bytes.size.toLong())
                 } finally { active.downloadCache.releaseHoleSpan(hole) }
                 val mutations = ContentMetadataMutations()
-                ContentMetadataMutations.setContentLength(mutations, audio.size.toLong())
+                ContentMetadataMutations.setContentLength(mutations, bytes.size.toLong())
                 active.downloadCache.applyContentMetadataMutations(track.id, mutations)
             }
             // Migrate one real private download into a shared SAF file while offline.
@@ -172,6 +176,28 @@ class OfflinePlayerInstrumentedTest {
             val external = fr.makoff.music.downloads.saveAudioToTree(context, tree, flac, "${first.id}.flac")
             sharedUri = external
             active.downloadUtil.registerExternalAudio(first, external, flac.length())
+            // Exercise the same completed-cache -> export -> shared offline reference path for Opus and M4A.
+            for ((index, format) in listOf(1 to fr.makoff.music.downloads.DownloadAudioFormat.BEST,
+                2 to fr.makoff.music.downloads.DownloadAudioFormat.M4A)) {
+                val track = tracks[index]
+                val length = if (index == 1) opus.size.toLong() else audio.size.toLong()
+                val nativeRequest = androidx.media3.exoplayer.offline.DownloadRequest.Builder(track.id, android.net.Uri.parse(track.id))
+                    .setCustomCacheKey(track.id).build()
+                val nativeCompleted = androidx.media3.exoplayer.offline.Download(nativeRequest,
+                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, length, 0, 0)
+                (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(nativeCompleted)
+                active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to nativeCompleted)
+                val stage = active.downloadUtil.stageExistingAudio(track.id, directory)!!
+                val exported = fr.makoff.music.downloads.YtDlpAudioEngine.reuse(context, stage, format, directory, "offline-$index")!!
+                assertEquals(if (index == 1) "opus" else "m4a", exported.extension)
+                // Retain compatibility with the .ogg documents produced by previous versions.
+                val uri = fr.makoff.music.downloads.saveAudioToTree(context, tree, exported,
+                    "${track.id}.${if (index == 1) "ogg" else "m4a"}")
+                extraSharedUris += uri
+                active.downloadUtil.registerExternalAudio(track, uri, exported.length())
+                assertTrue(active.downloadCache.getCachedSpans(track.id).isEmpty())
+                assertArrayEquals(exported.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+            }
             directory.deleteRecursively()
             assertTrue("Private copy was not removed", active.downloadCache.getCachedSpans(first.id).isEmpty())
             assertEquals(external, active.downloadUtil.externalAudioUri(first.id))
@@ -182,6 +208,25 @@ class OfflinePlayerInstrumentedTest {
             println("PLAYER_STAGE: fixtures and local metadata ready")
             val controller = main { PlayerConnection(context, binder, active.database, scope) }
             connection = controller
+            for (index in listOf(1, 2)) {
+                main { active.playQueue(ListQueue("Formats exportés", listOf(tracks[index].toMediaItem())), playWhenReady = true) }
+                await("Shared format $index did not decode: ${main { active.player.playerError }}") {
+                    main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
+                }
+                await("Shared format $index rendered no audio") {
+                    main { active.player.isPlaying && active.player.currentPosition > 200 &&
+                        (active.player.audioDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 }
+                }
+                main { active.player.seekTo(8000) }
+                await("Shared format $index cannot seek") {
+                    main { active.player.currentPosition in 7900..11000 && active.player.playbackState == Player.STATE_READY }
+                }
+                assertNull(main { active.player.playerError })
+                main { active.player.pause() }
+                assertTrue(active.downloadCache.getCachedSpans(tracks[index].id).isEmpty())
+                assertTrue(active.playerCache.getCachedSpans(tracks[index].id).isEmpty())
+                println("SHARED_FORMAT_PLAYBACK_OK: ${if (index == 1) "Ogg/Opus" else "M4A"}; public file, no network, real rendered buffers and seek")
+            }
             main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
             await("Shared FLAC did not decode: ${main { active.player.playerError }}") {
                 main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
@@ -330,7 +375,7 @@ class OfflinePlayerInstrumentedTest {
             assertEquals("Changing quality lost shared download", sharedUri, active.downloadUtil.externalAudioUri(tracks[0].id))
             assertTrue("Playback recreated private download bytes", active.downloadCache.getCachedSpans(tracks[0].id).isEmpty())
             assertTrue("Playback recreated streaming cache bytes", active.playerCache.getCachedSpans(tracks[0].id).isEmpty())
-            assertTrue("Changing quality erased another private download", active.downloadCache.isCached(tracks[1].id, 0, audio.size.toLong()))
+            assertTrue("Changing quality erased another private download", active.downloadCache.isCached(tracks[3].id, 0, audio.size.toLong()))
             main { controller.play() }
             await("Playback after quality change failed") { main { active.player.isPlaying } }
             val volume = device.wait(Until.findObject(By.desc(context.getString(R.string.player_volume))), 10000)
@@ -394,7 +439,9 @@ class OfflinePlayerInstrumentedTest {
                 active.downloadCache.removeResource(track.id)
                 active.database.song(track.id).first()?.let { active.database.delete(it.song) }
             } }
-            sharedUri?.let { runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            (extraSharedUris + listOfNotNull(sharedUri)).forEach { uri ->
+                runCatching { android.provider.DocumentsContract.deleteDocument(context.contentResolver, uri) }
+            }
             artwork.delete()
             if (bound) context.unbindService(binding)
             device.pressBack()

@@ -18,6 +18,20 @@ class FolderAudioNameTest {
         assertEquals("Album", collectionFolder("\u202eAlbum\u200b", "album-id"))
         assertFalse(collectionFolder("..", "album-id").contains('/'))
     }
+    @Test fun unifiedFormatPreservesAnExplicitLegacyChoice() {
+        val prefs = androidx.datastore.preferences.core.mutablePreferencesOf()
+        prefs[fr.makoff.music.constants.InternalDownloadFormatKey] = "FLAC"
+        prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "BEST"
+        assertEquals(DownloadAudioFormat.FLAC, prefs.selectedDownloadFormat())
+        prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "M4A"
+        assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
+        prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "BEST"
+        assertEquals(DownloadAudioFormat.BEST, prefs.selectedDownloadFormat())
+        for (format in DownloadAudioFormat.entries) {
+            prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = format.name
+            assertEquals(format, prefs.selectedDownloadFormat())
+        }
+    }
     @Test fun cookiesAreDomainScopedAndCannotInjectJarRows() {
         val jar = youtubeCookieJar("SID=secret; invalid=bad\n.evil.com; SAPISID=ok")
         assertTrue(jar.contains(".youtube.com\tTRUE\t/\tTRUE\t0\tSID\tsecret"))
