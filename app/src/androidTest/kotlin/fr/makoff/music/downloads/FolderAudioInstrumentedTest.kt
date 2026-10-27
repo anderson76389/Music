@@ -138,6 +138,9 @@ class FolderAudioInstrumentedTest {
             downloads.registerExternalAudio(shared, uri!!, source.length())
             assertEquals(0, downloads.clearDownloads(deleteExportedFiles = true))
             assertFalse("Opt-in public file deletion", requireNotNull(DocumentFile.fromSingleUri(context, uri!!)).exists())
+            assertTrue("Deleted audio must actually be unavailable for reading", runCatching {
+                context.contentResolver.openAssetFileDescriptor(uri!!, "r")?.use { it.length }
+            }.isFailure)
             assertFalse(requireNotNull(downloads.database.songEntity(sharedId)).isDownloaded)
             assertTrue("Library and likes retained", requireNotNull(downloads.database.songEntity(sharedId)).liked)
             println("CLEAR_DOWNLOADS_OK: native bytes and index removed, shared reference removed, public-file choice honored, library and likes kept, auto-like cannot restore cleared audio")

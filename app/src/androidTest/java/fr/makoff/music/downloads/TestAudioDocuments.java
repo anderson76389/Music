@@ -43,6 +43,7 @@ public final class TestAudioDocuments extends ContentProvider {
         File[] files = "children".equals(uri.getLastPathSegment()) ? file(uri).listFiles() : new File[]{file(uri)};
         if (files == null) files = new File[0];
         for (File f : files) {
+            if (!f.exists()) continue;
             Object[] values = new Object[columns.length];
             for (int i = 0; i < columns.length; i++) {
                 switch (columns[i]) {
