@@ -18,22 +18,32 @@ import java.util.concurrent.TimeUnit
 
 /** Write portable tags and cover art without decoding/re-encoding the audio packets. */
 internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File): File {
-    val cover = media.thumbnailUrl?.takeIf { it.isNotBlank() }?.let { url ->
+    val thumbnailUrls = buildList {
+        media.thumbnailUrl?.takeIf { it.isNotBlank() }?.let(::add)
+        if (media.id.matches(Regex("[A-Za-z0-9_-]{11}"))) add("https://i.ytimg.com/vi/${media.id}/hqdefault.jpg")
+    }.distinct()
+    var cover: Cover? = null
+    for (url in thumbnailUrls) {
         try {
             val result = context.imageLoader.execute(ImageRequest.Builder(context).data(url)
-                .size(512).allowHardware(false).build()) as? SuccessResult
-            result?.image?.toBitmap()?.let { bitmap ->
-                var bytes = ByteArray(0)
-                for (quality in listOf(85, 65, 40)) {
-                    bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, quality, it) }.toByteArray()
-                    if (bytes.size <= 64000) break
+                .size(512).allowHardware(false).build()) as? SuccessResult ?: continue
+            var bitmap = result.image.toBitmap()
+            while (true) {
+                val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
+                if (bytes.size in 1..64000) {
+                    cover = Cover(bytes, bitmap.width, bitmap.height)
+                    break
                 }
-                bytes.takeIf { it.size in 1..64000 }?.let { Cover(it, bitmap.width, bitmap.height) }
+                if (maxOf(bitmap.width, bitmap.height) <= 64) break
+                bitmap = Bitmap.createScaledBitmap(bitmap, (bitmap.width / 2).coerceAtLeast(1),
+                    (bitmap.height / 2).coerceAtLeast(1), true)
             }
+            if (cover != null) break
         } catch (cancelled: kotlinx.coroutines.CancellationException) {
             throw cancelled
-        } catch (_: Exception) { null }
+        } catch (_: Exception) { /* Artwork failure must not discard completed audio. */ }
     }
+    val artwork = cover
     return runInterruptible(Dispatchers.IO) {
         try {
             YtDlpAudioEngine.initialize(context)
@@ -44,12 +54,12 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         val ogg = source.extension.lowercase() in setOf("ogg", "opus")
         val args = mutableListOf(File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so").absolutePath,
             "-nostdin", "-y", "-loglevel", "error", "-i", source.absolutePath)
-        if (cover != null && !ogg) {
-            val image = File(outputDir, "cover.jpg").apply { writeBytes(cover.bytes) }
+        if (artwork != null && !ogg) {
+            val image = File(outputDir, "cover.jpg").apply { writeBytes(artwork.bytes) }
             args += listOf("-i", image.absolutePath)
         }
         args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", "-1")
-        if (cover != null && !ogg) args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
+        if (artwork != null && !ogg) args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
         fun tag(key: String, value: String?) {
             value?.replace("\u0000", "")?.take(4096)?.takeIf { it.isNotBlank() }?.let { args += listOf("-metadata", "$key=$it") }
         }
@@ -57,16 +67,18 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         tag("artist", media.artists.joinToString { it.name })
         tag("album", media.album?.title)
         if (track > 0) tag("track", track.toString())
-        if (cover != null && ogg) {
+        if (artwork != null && ogg) {
             val picture = ByteArrayOutputStream()
             DataOutputStream(picture).use { data ->
                 data.writeInt(3)
                 val mime = "image/jpeg".toByteArray(Charsets.US_ASCII)
                 data.writeInt(mime.size); data.write(mime); data.writeInt(0)
-                data.writeInt(cover.width); data.writeInt(cover.height); data.writeInt(24); data.writeInt(0)
-                data.writeInt(cover.bytes.size); data.write(cover.bytes)
+                data.writeInt(artwork.width); data.writeInt(artwork.height); data.writeInt(24); data.writeInt(0)
+                data.writeInt(artwork.bytes.size); data.write(artwork.bytes)
             }
-            tag("METADATA_BLOCK_PICTURE", android.util.Base64.encodeToString(picture.toByteArray(), android.util.Base64.NO_WRAP))
+            // Binary artwork is already bounded above; the text-tag limit would corrupt its Base64.
+            args += listOf("-metadata", "METADATA_BLOCK_PICTURE=" +
+                android.util.Base64.encodeToString(picture.toByteArray(), android.util.Base64.NO_WRAP))
         }
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")

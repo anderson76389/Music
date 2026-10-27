@@ -530,6 +530,13 @@ class SettingsNavigationTest {
                     device.waitForIdle()
                 }
                 R.string.player_and_audio -> {
+                    open(R.string.download_format_unified)
+                    findText(R.string.download_format_m4a)
+                    findText(R.string.download_format_flac)
+                    findText(R.string.download_format_best)
+                    device.pressBack()
+                    device.waitForIdle()
+                    println("PLAYER_DOWNLOAD_FORMAT_OK: BEST/M4A/FLAC chooser reachable in Player and audio")
                     toggleAndRestore(R.string.crossfade, CrossfadeEnabledKey, false)
                     val crossfadeBefore = runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] }
                     try {

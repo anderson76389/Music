@@ -40,8 +40,10 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun exportedAudioContainsPortableTagsAndEmbeddedCover() = runBlocking {
         val root = File(context.cacheDir, "metadata-${UUID.randomUUID()}").apply { mkdirs() }
         val cover = File(root, "cover.jpg")
-        val bitmap = android.graphics.Bitmap.createBitmap(128, 128, android.graphics.Bitmap.Config.ARGB_8888)
-        bitmap.eraseColor(android.graphics.Color.RED)
+        val bitmap = android.graphics.Bitmap.createBitmap(512, 512, android.graphics.Bitmap.Config.ARGB_8888)
+        val random = java.util.Random(42)
+        bitmap.setPixels(IntArray(512 * 512) { android.graphics.Color.rgb(random.nextInt(256),
+            random.nextInt(256), random.nextInt(256)) }, 0, 512, 0, 0, 512, 512)
         cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
         bitmap.recycle()
         val title = "Title with 'quotes' and % signs"
@@ -67,10 +69,15 @@ class FolderAudioInstrumentedTest {
                         assertEquals("Audio artist", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST))
                         assertEquals("Audio album", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM))
                         assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.substringBefore('/'))
-                        assertTrue("Embedded cover for ${tagged.extension}", retriever.embeddedPicture?.isNotEmpty() == true)
+                        val picture = requireNotNull(retriever.embeddedPicture) { "Embedded cover for ${tagged.extension}" }
+                        assertTrue("Realistic artwork must exceed the former text-tag limit", picture.size > 4096)
+                        assertTrue("Artwork remains within the process argument limit", picture.size <= 64000)
+                        val decoded = android.graphics.BitmapFactory.decodeByteArray(picture, 0, picture.size)
+                        assertNotNull("Complete, decodable cover for ${tagged.extension}", decoded)
+                        decoded?.recycle()
                     } finally { retriever.release() }
                 } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
-                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, embedded cover and unchanged audio")
+                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, complete photographic-size cover and unchanged audio")
             }
         } finally { root.deleteRecursively() }
     }

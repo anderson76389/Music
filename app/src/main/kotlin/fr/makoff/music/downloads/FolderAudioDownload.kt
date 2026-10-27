@@ -228,6 +228,23 @@ internal suspend fun saveAudioToTree(context: Context, tree: Uri, source: File, 
         } ?: throw IOException("Cannot open document")
         currentCoroutineContext().ensureActive()
         if (!document.renameTo(finalName)) throw IOException("Document provider cannot finalize file")
+        // SAF writes do not always notify Android's audio index after the final rename.
+        if (document.uri.authority == "com.android.externalstorage.documents") runCatching {
+            val parts = android.provider.DocumentsContract.getDocumentId(document.uri).split(':', limit = 2)
+            if (parts.size == 2) {
+                val root = if (Build.VERSION.SDK_INT >= 30) {
+                    context.getSystemService(android.os.storage.StorageManager::class.java).storageVolumes
+                        .firstOrNull { (parts[0] == "primary" && it.isPrimary) || it.uuid.equals(parts[0], ignoreCase = true) }?.directory
+                } else if (parts[0] == "primary") android.os.Environment.getExternalStorageDirectory() else null
+                root?.canonicalFile?.let { volume ->
+                    val file = File(volume, parts[1]).canonicalFile
+                    if (file.path.startsWith(volume.path + File.separator)) {
+                        android.media.MediaScannerConnection.scanFile(context, arrayOf(file.path),
+                            arrayOf(audioMime(source.extension)), null)
+                    }
+                }
+            }
+        }
         document.uri
     } catch (error: Throwable) {
         runCatching { document.delete() }

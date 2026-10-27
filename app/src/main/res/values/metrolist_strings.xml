@@ -854,7 +854,7 @@
     <string name="folder_collection_description">Hors ligne dans l’application et fichiers dans %1$s / %2$s.</string>
     <string name="folder_collection_queued">%1$d pistes ajoutées à la file d’export</string>
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
-    <string name="download_format_unified">Format des téléchargements</string>
+    <string name="download_format_unified">Qualité et format des téléchargements</string>
     <string name="download_format_unified_help">Un seul choix pour le fichier du téléphone et la lecture hors ligne. M4A recherche la meilleure source AAC disponible ; FLAC crée un vrai fichier FLAC sans restaurer les détails perdus dans la source YouTube ; Meilleure qualité conserve le meilleur codec disponible, notamment Opus dans un fichier audio .opus. Ce choix concerne les prochains téléchargements. Les fichiers déjà présents sont conservés.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>
     <string name="download_format_external">Format des fichiers exportés</string>

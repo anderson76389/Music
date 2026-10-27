@@ -33,6 +33,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import fr.makoff.music.downloads.DownloadFormatSettings
 import fr.makoff.music.BuildConfig
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.R
@@ -271,6 +272,8 @@ fun PlayerSettings(
                 )
             )
         )
+
+        DownloadFormatSettings()
 
         Material3SettingsGroup(
             title = stringResource(R.string.player),
