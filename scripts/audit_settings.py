@@ -4,7 +4,15 @@ import re
 r = Path(__file__).resolve().parents[1]
 k = r / 'app/src/main/kotlin/fr/makoff/music'
 nav = (k/'ui/screens/NavigationBuilder.kt').read_text()
-routes = set(re.findall(r'composable\((?:route\s*=\s*)?"([^"]+)"', nav))
+routes = set(re.findall(r'composable\(\s*(?:route\s*=\s*)?"([^"]+)"', nav))
+def valid_route(route):
+    return any(re.fullmatch('/'.join('[^/]+' if part.startswith('{') and part.endswith('}')
+                                    else re.escape(part) for part in template.split('/')), route)
+               for template in routes)
+assert 'auto_playlist/{playlist}' in routes
+assert valid_route('auto_playlist/downloaded')
+assert not valid_route('auto_playlist/downloaded/extra')
+assert not valid_route('settings/absent')
 for removed in ('settings/about', 'settings/integrations', 'settings/integrations/lastfm', 'settings/ai', 'settings/integrations/listen_together'):
     assert removed not in routes, removed
 for p in (r/'app/src/main/kotlin').rglob('*.kt'):
@@ -13,7 +21,7 @@ for p in (r/'app/src/main/kotlin').rglob('*.kt'):
 for p in sorted((k/'ui/screens/settings').rglob('*.kt')):
     s = p.read_text()
     for route in re.findall(r'navigate\("([^"$]+)"\)', s):
-        assert route in routes, (p, route)
+        assert valid_route(route), (p, route)
     assert not re.search(r'(?:onClick|onCheckedChange)\s*=\s*\{\s*\}', s), p
     actions = len(re.findall(r'\b(?:onClick|onCheckedChange|onValueChange|onDone)\s*=', s))
     print(f'{p.name}: {actions} action bindings; static destinations valid')
