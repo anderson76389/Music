@@ -66,7 +66,7 @@ class FolderAudioInstrumentedTest {
                         assertEquals(title, retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE))
                         assertEquals("Audio artist", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST))
                         assertEquals("Audio album", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM))
-                        assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER))
+                        assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.substringBefore('/'))
                         assertTrue("Embedded cover for ${tagged.extension}", retriever.embeddedPicture?.isNotEmpty() == true)
                     } finally { retriever.release() }
                 } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
@@ -124,7 +124,16 @@ class FolderAudioInstrumentedTest {
             assertNotNull("A like must automatically create a public audio file", exported)
             assertEquals(exported, downloads.externalAudioUri(id))
             assertTrue(requireNotNull(downloads.database.songEntity(id)).isDownloaded)
-            assertArrayEquals(bytes, context.contentResolver.openInputStream(exported!!)!!.use { it.readBytes() })
+            val taggedLiked = File(context.cacheDir, "tagged-liked-$id.m4a")
+            try {
+                taggedLiked.writeBytes(context.contentResolver.openInputStream(exported!!)!!.use { it.readBytes() })
+                assertArrayEquals("Automatic export must keep the same encoded audio", audioPackets(source), audioPackets(taggedLiked))
+                val tags = android.media.MediaMetadataRetriever()
+                try {
+                    tags.setDataSource(taggedLiked.absolutePath)
+                    assertEquals(media.title, tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE))
+                } finally { tags.release() }
+            } finally { taggedLiked.delete() }
             val likedFolder = requireNotNull(DocumentFile.fromTreeUri(context, tree)?.findFile(AutoLikedDownloads.FOLDER))
             assertTrue(likedFolder.listFiles().any { it.uri == exported })
             val count = likedFolder.listFiles().size
