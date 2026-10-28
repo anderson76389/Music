@@ -58,6 +58,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -498,6 +501,7 @@ private fun ThumbnailItem(
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
+    val coverToggleLabel = stringResource(R.string.player_cover_toggle)
 
     Box(
         modifier = modifier
@@ -515,8 +519,13 @@ private fun ThumbnailItem(
                 // Render entire thumbnail item on separate hardware layer for smooth animations
                 compositingStrategy = CompositingStrategy.Offscreen
             }
-            .pointerInput(Unit) {
+            .pointerInput(item.mediaId, incrementalSeekSkipEnabled, layoutDirection) {
                 detectTapGestures(
+                    onTap = {
+                        if (item.mediaId == playerConnection.player.currentMediaItem?.mediaId) {
+                            playerConnection.togglePlayPause()
+                        }
+                    },
                     onDoubleTap = { offset ->
 
 
@@ -552,6 +561,13 @@ private fun ThumbnailItem(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
                 .clip(RoundedCornerShape(dimensions.cornerRadius))
+                .then(if (item.mediaId == currentMediaId) Modifier.semantics {
+                    contentDescription = coverToggleLabel
+                    onClick {
+                        playerConnection.togglePlayPause()
+                        true
+                    }
+                } else Modifier)
         ) {
             if (hidePlayerThumbnail) {
                 HiddenThumbnailPlaceholder(textBackgroundColor = textBackgroundColor)

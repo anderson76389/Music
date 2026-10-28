@@ -188,15 +188,15 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun exportedAudioContainsPortableTagsAndEmbeddedCover() = runBlocking {
         val root = File(context.cacheDir, "metadata-${UUID.randomUUID()}").apply { mkdirs() }
         val cover = File(root, "cover.jpg")
-        val bitmap = android.graphics.Bitmap.createBitmap(512, 288, android.graphics.Bitmap.Config.ARGB_8888)
+        val bitmap = android.graphics.Bitmap.createBitmap(1024, 576, android.graphics.Bitmap.Config.ARGB_8888)
         val random = java.util.Random(42)
-        bitmap.setPixels(IntArray(512 * 288) { index ->
+        bitmap.setPixels(IntArray(1024 * 576) { index ->
             when {
-                index % 512 < 48 -> android.graphics.Color.RED
-                index % 512 >= 464 -> android.graphics.Color.BLUE
+                index % 1024 < 96 -> android.graphics.Color.RED
+                index % 1024 >= 928 -> android.graphics.Color.BLUE
                 else -> android.graphics.Color.rgb(random.nextInt(256), random.nextInt(256), random.nextInt(256))
             }
-        }, 0, 512, 0, 0, 512, 288)
+        }, 0, 1024, 0, 0, 1024, 576)
         cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
         bitmap.recycle()
         val title = "Title with 'quotes' and % signs"
@@ -223,11 +223,12 @@ class FolderAudioInstrumentedTest {
                         assertEquals("Audio album", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM))
                         assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.substringBefore('/'))
                         val picture = requireNotNull(retriever.embeddedPicture) { "Embedded cover for ${tagged.extension}" }
-                        assertTrue("Realistic artwork must exceed the former text-tag limit", picture.size > 4096)
-                        assertTrue("Artwork remains within the process argument limit", picture.size <= 64000)
+                        assertTrue("Detailed artwork must not be degraded to the old 64 KB limit", picture.size > 64000)
+                        assertTrue("Embedded artwork remains bounded", picture.size <= 2 * 1024 * 1024)
                         val decoded = android.graphics.BitmapFactory.decodeByteArray(picture, 0, picture.size)
                         assertNotNull("Complete, decodable cover for ${tagged.extension}", decoded)
                         requireNotNull(decoded)
+                        assertEquals("Detailed cover retains full source resolution", 1024, decoded.width)
                         assertEquals("Square canvas avoids viewer-side cropping", decoded.width, decoded.height)
                         assertTrue("Left edge retained", android.graphics.Color.red(decoded.getPixel(3, decoded.height / 2)) > 180)
                         assertTrue("Right edge retained", android.graphics.Color.blue(decoded.getPixel(decoded.width - 4, decoded.height / 2)) > 180)
@@ -235,7 +236,7 @@ class FolderAudioInstrumentedTest {
                         decoded.recycle()
                     } finally { retriever.release() }
                 } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
-                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, complete uncropped wide cover, both edges, letterbox and unchanged audio")
+                println("AUDIO_TAGS_OK: ${tagged.extension}; title, artist, album, full-resolution 1024px artwork above 64 KB, both edges, letterbox and unchanged audio")
             }
         } finally { root.deleteRecursively() }
     }

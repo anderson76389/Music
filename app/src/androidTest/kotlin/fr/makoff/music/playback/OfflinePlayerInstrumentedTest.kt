@@ -108,7 +108,7 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
@@ -300,6 +300,21 @@ class OfflinePlayerInstrumentedTest {
             clickDescription(R.string.player_pause)
             await("UI Pause did not stop playback") { main { !active.player.playWhenReady } }
             println("PLAYER_UI_OK: cached AAC/M4A decoded; real UI play/pause and rendered audio buffers")
+            clickDescription(R.string.player_cover_toggle)
+            await("Cover tap must start actual playback") { main { active.player.isPlaying } }
+            clickDescription(R.string.player_cover_toggle)
+            await("Cover tap must pause actual playback") { main { !active.player.playWhenReady } }
+            main { controller.seekTo(8000) }
+            await("Cover double-tap seek setup") { main { active.player.currentPosition in 7800..8200 } }
+            val cover = requireNotNull(freshControlBounds(context.getString(R.string.player_cover_toggle)))
+            val tapX = cover.left + cover.width() * 3 / 4
+            device.click(tapX, cover.centerY())
+            android.os.SystemClock.sleep(80)
+            device.click(tapX, cover.centerY())
+            await("Cover double-tap must keep forward seeking") { main { active.player.currentPosition in 12500..13500 } }
+            assertFalse("Double-tap must not toggle playback", main { active.player.playWhenReady })
+            println("PLAYER_COVER_TAP_OK: single taps play and pause; double tap seeks without toggling; original button still works")
+
 
             main { controller.seekTo(8000) }
             await("Seek failed") { main { active.player.currentPosition in 7800..8200 } }

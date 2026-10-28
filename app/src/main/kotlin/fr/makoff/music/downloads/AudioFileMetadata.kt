@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import coil3.imageLoader
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
+import coil3.request.CachePolicy
 import coil3.request.allowHardware
 import coil3.toBitmap
 import fr.makoff.music.models.MediaMetadata
@@ -23,7 +24,8 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
     for (url in thumbnailUrls) {
         try {
             val result = context.imageLoader.execute(ImageRequest.Builder(context).data(url)
-                .size(1024).scale(coil3.size.Scale.FIT).allowHardware(false).build()) as? SuccessResult ?: continue
+                .size(1024).scale(coil3.size.Scale.FIT).precision(coil3.size.Precision.EXACT)
+                .memoryCachePolicy(CachePolicy.DISABLED).allowHardware(false).build()) as? SuccessResult ?: continue
             val original = result.image.toBitmap()
             val side = maxOf(original.width, original.height)
             var bitmap = if (original.width == original.height) original else {
@@ -35,8 +37,8 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
                 }
             }
             while (true) {
-                val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 85, it) }.toByteArray()
-                if (bytes.size in 1..64000) {
+                val bytes = ByteArrayOutputStream().also { bitmap.compress(Bitmap.CompressFormat.JPEG, 92, it) }.toByteArray()
+                if (bytes.size in 1..MAX_COVER_BYTES) {
                     cover = Cover(bytes, bitmap.width, bitmap.height)
                     break
                 }
@@ -64,15 +66,6 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             val image = File(outputDir, "cover.jpg").apply { writeBytes(artwork.bytes) }
             args += listOf("-i", image.absolutePath)
         }
-        args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", "-1")
-        if (artwork != null && !ogg) args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
-        fun tag(key: String, value: String?) {
-            value?.replace("\u0000", "")?.take(4096)?.takeIf { it.isNotBlank() }?.let { args += listOf("-metadata", "$key=$it") }
-        }
-        tag("title", media.title)
-        tag("artist", media.artists.joinToString { it.name })
-        tag("album", media.album?.title)
-        if (track > 0) tag("track", track.toString())
         if (artwork != null && ogg) {
             val picture = ByteArrayOutputStream()
             DataOutputStream(picture).use { data ->
@@ -82,10 +75,22 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
                 data.writeInt(artwork.width); data.writeInt(artwork.height); data.writeInt(24); data.writeInt(0)
                 data.writeInt(artwork.bytes.size); data.write(artwork.bytes)
             }
-            // Binary artwork is already bounded above; the text-tag limit would corrupt its Base64.
-            args += listOf("-metadata", "METADATA_BLOCK_PICTURE=" +
-                android.util.Base64.encodeToString(picture.toByteArray(), android.util.Base64.NO_WRAP))
+            // A metadata file keeps full-size artwork outside Android's per-argument size limit.
+            val metadata = File(outputDir, "cover.ffmetadata").apply {
+                writeText(";FFMETADATA1\nMETADATA_BLOCK_PICTURE=" +
+                    android.util.Base64.encodeToString(picture.toByteArray(), android.util.Base64.NO_WRAP) + "\n")
+            }
+            args += listOf("-f", "ffmetadata", "-i", metadata.absolutePath)
         }
+        args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", if (artwork != null && ogg) "1" else "-1")
+        if (artwork != null && !ogg) args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
+        fun tag(key: String, value: String?) {
+            value?.replace("\u0000", "")?.take(4096)?.takeIf { it.isNotBlank() }?.let { args += listOf("-metadata", "$key=$it") }
+        }
+        tag("title", media.title)
+        tag("artist", media.artists.joinToString { it.name })
+        tag("album", media.album?.title)
+        if (track > 0) tag("track", track.toString())
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
         val builder = ProcessBuilder(args).redirectErrorStream(true).redirectOutput(File(outputDir, "ffmpeg.log"))
@@ -107,6 +112,7 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
 }
 
 private data class Cover(val bytes: ByteArray, val width: Int, val height: Int)
+private const val MAX_COVER_BYTES = 2 * 1024 * 1024
 
 internal fun exportArtworkUrls(thumbnail: String?, videoId: String): List<String> = buildList {
     thumbnail?.takeIf { it.isNotBlank() }?.let { url ->
