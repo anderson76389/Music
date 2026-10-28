@@ -735,6 +735,16 @@ class SettingsNavigationTest {
                             .map { it.id.toString() }.toSet()
                     }
                     assertTrue("Missing-file history fixture exists", history.isNotEmpty())
+                    // Restore restarts the app and revokes this test provider's transient grant.
+                    // Real picker folders have persisted grants; renew the fixture before testing the button.
+                    val testPackage = instrumentation.context.packageName
+                    device.executeShellCommand("am start -n $testPackage/fr.makoff.music.downloads.GrantAudioTreeActivity")
+                    val tree = android.provider.DocumentsContract.buildTreeDocumentUri("$testPackage.foldertest", "root")
+                    awaitPreference("Fixture folder permission restored after backup restart") {
+                        context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(),
+                            Intent.FLAG_GRANT_READ_URI_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED
+                    }
+                    device.waitForIdle()
                     open(R.string.download_missing_clean)
                     awaitPreference("Actual cleanup button must persist removal") {
                         context.dataStore.data.first()[fr.makoff.music.downloads.HiddenDownloadHistory].orEmpty().containsAll(history)
