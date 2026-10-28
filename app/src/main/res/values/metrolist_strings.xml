@@ -911,4 +911,5 @@
     <string name="appearance_player_section">Lecteur plein écran</string>
     <string name="appearance_gestures_section">Gestes et commandes</string>
     <string name="playback_quality_high_help">Élevée : sélectionne le débit maximal des formats audio accessibles pour ce titre et cette session YouTube, y compris sur les données mobiles. Les titres déjà téléchargés conservent leur format d’origine.</string>
+    <string name="history_minimum_listen">Écoute minimale pour l’historique</string>
 </resources>

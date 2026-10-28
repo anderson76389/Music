@@ -988,10 +988,10 @@ fun PlayerSettings(
             additionalListenItems = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.history),
-                    title = { Text(stringResource(R.string.history_duration)) },
+                    title = { Text(stringResource(R.string.history_minimum_listen)) },
                     description = {
                         Column {
-                            Text(historyDuration.roundToInt().toString())
+                            Text(pluralStringResource(R.plurals.seconds, historyDuration.roundToInt(), historyDuration.roundToInt()))
                             Slider(
                                 value = historyDuration,
                                 onValueChange = onHistoryDurationChange,
