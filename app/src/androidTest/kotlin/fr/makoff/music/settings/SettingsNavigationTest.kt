@@ -728,6 +728,20 @@ class SettingsNavigationTest {
                     device.executeShellCommand("screencap -p /data/local/tmp/download-history-covers.png")
                     context.filesDir.listFiles()?.filter { it.name.startsWith("history-liked-cover-") }?.forEach { it.delete() }
                     println("DOWNLOAD_HISTORY_COVER_OK: real local artwork rendered beside its title using completed-work metadata")
+                    val history = runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+                        androidx.work.WorkManager.getInstance(context).getWorkInfosByTag(fr.makoff.music.downloads.FolderAudioDownloads.TAG).get()
+                            .filter { it.tags.contains(fr.makoff.music.downloads.FolderAudioDownloads.TITLE_TAG + title) }
+                            .map { it.id.toString() }.toSet()
+                    }
+                    assertTrue("Missing-file history fixture exists", history.isNotEmpty())
+                    open(R.string.download_missing_clean)
+                    awaitPreference("Actual cleanup button must persist removal") {
+                        context.dataStore.data.first()[fr.makoff.music.downloads.HiddenDownloadHistory].orEmpty().containsAll(history)
+                    }
+                    awaitPreference("Missing song must disappear from actual screen") { visibleControls().none { it.text == title } }
+                    device.executeShellCommand("screencap -p /data/local/tmp/download-history-cleaned.png")
+                    println("DOWNLOAD_CLEANUP_BUTTON_OK: actual UI action hides missing exported songs and persists history cleanup")
+
                 }
                 R.string.storage -> {
                     findText(R.string.action_backup)

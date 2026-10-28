@@ -65,7 +65,7 @@ for variant in foss gms; do
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
     adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true
     adb pull /data/local/tmp/glass-home-enabled.png smoke-results/ || true
-    for capture in download-history-covers glass-home-light glass-home-dark glass-settings-light glass-settings-dark glass-library-fr glass-account-readable glass-selection-readable; do
+    for capture in download-history-covers download-history-cleaned glass-home-light glass-home-dark glass-settings-light glass-settings-dark glass-library-fr glass-account-readable glass-selection-readable; do
       adb pull "/data/local/tmp/$capture.png" smoke-results/ || true
     done
     adb logcat -d > smoke-results/settings-navigation-logcat.txt
