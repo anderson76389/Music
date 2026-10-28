@@ -52,7 +52,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-private fun persistFolder(context: android.content.Context, uri: Uri) {
+internal fun persistFolder(context: android.content.Context, uri: Uri) {
     context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION)
     check(DocumentFile.fromTreeUri(context, uri)?.canWrite() == true)
 }
@@ -60,40 +60,24 @@ private fun persistFolder(context: android.content.Context, uri: Uri) {
 @Composable
 fun rememberFolderAudioItem(media: MediaMetadata, downloadInLiked: Boolean = false): Material3MenuItemData {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    val (tree) = rememberPreference(FolderAudioTreeKey, "")
-    fun enqueue(uri: Uri) {
+    val requestDownload = rememberAudioDownloadAction { uri, format ->
         (context.applicationContext as fr.makoff.music.App).applicationScope.launch(Dispatchers.Main.immediate) {
             runCatching {
                 withContext(Dispatchers.IO) {
                     FolderAudioDownloads.enqueue(context, media, uri,
-                        if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER) else emptyList())
+                        if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER) else emptyList(),
+                        requestedFormat = format)
                 }
             }
                 .onSuccess { Toast.makeText(context, R.string.folder_audio_queued, Toast.LENGTH_SHORT).show() }
                 .onFailure { Toast.makeText(context, R.string.folder_audio_invalid, Toast.LENGTH_LONG).show() }
         }
     }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) scope.launch {
-            try {
-                withContext(Dispatchers.IO) { persistFolder(context, uri) }
-                if (context.safeDataStoreEdit { it[FolderAudioTreeKey] = uri.toString() }) enqueue(uri)
-                else Toast.makeText(context, R.string.folder_audio_access_error, Toast.LENGTH_LONG).show()
-            } catch (_: Exception) {
-                Toast.makeText(context, R.string.folder_audio_access_error, Toast.LENGTH_LONG).show()
-            }
-        }
-    }
     return Material3MenuItemData(
         title = { Text(stringResource(R.string.action_download)) },
         description = { Text(stringResource(R.string.folder_audio_description)) },
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
-        onClick = {
-            val uri = tree.takeIf(String::isNotBlank)?.let(Uri::parse)
-            val permitted = uri != null && runCatching { DocumentFile.fromTreeUri(context, uri)?.canWrite() == true }.getOrDefault(false)
-            if (permitted) enqueue(requireNotNull(uri)) else picker.launch(uri)
-        },
+        onClick = requestDownload,
     )
 }
 
@@ -221,9 +205,8 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
     downloadInLiked: Boolean = false, load: suspend () -> List<MediaMetadata>): Material3MenuItemData {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val (tree) = rememberPreference(FolderAudioTreeKey, "")
     var loading by remember { mutableStateOf(false) }
-    fun enqueue(uri: Uri) {
+    fun enqueue(uri: Uri, format: DownloadAudioFormat) {
         if (loading) return
         loading = true
         scope.launch {
@@ -234,7 +217,7 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
                 val folders = if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER)
                     else collectionAudioFolders(kind, title, id)
                 withContext(Dispatchers.IO) {
-                    tracks.forEachIndexed { index, media -> FolderAudioDownloads.enqueue(context, media, uri, folders, index + 1) }
+                    tracks.forEachIndexed { index, media -> FolderAudioDownloads.enqueue(context, media, uri, folders, index + 1, requestedFormat = format) }
                 }
                 Toast.makeText(context, context.getString(R.string.folder_collection_queued, tracks.size), Toast.LENGTH_LONG).show()
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -244,24 +227,11 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
             } finally { loading = false }
         }
     }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        if (uri != null) scope.launch {
-            try {
-                withContext(Dispatchers.IO) { persistFolder(context, uri) }
-                if (context.safeDataStoreEdit { it[FolderAudioTreeKey] = uri.toString() }) enqueue(uri)
-            } catch (_: Exception) { Toast.makeText(context, R.string.folder_audio_access_error, Toast.LENGTH_LONG).show() }
-        }
-    }
+    val requestDownload = rememberAudioDownloadAction { uri, format -> enqueue(uri, format) }
     return Material3MenuItemData(
         title = { Text(stringResource(if (loading) R.string.folder_audio_waiting else R.string.action_download)) },
         description = { Text(stringResource(R.string.folder_collection_description, kind, title)) },
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
-        onClick = {
-            if (!loading) {
-                val uri = tree.takeIf(String::isNotBlank)?.let(Uri::parse)
-                if (uri != null && runCatching { DocumentFile.fromTreeUri(context, uri)?.canWrite() == true }.getOrDefault(false)) enqueue(uri)
-                else picker.launch(uri)
-            }
-        },
+        onClick = { if (!loading) requestDownload() },
     )
 }

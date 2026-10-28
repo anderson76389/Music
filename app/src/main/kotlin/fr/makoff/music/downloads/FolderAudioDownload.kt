@@ -47,13 +47,14 @@ object FolderAudioDownloads {
         FolderDownloadDependencies::class.java).downloadUtil()
     private val videoId = Regex("[A-Za-z0-9_-]{11}")
 
-    fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0) {
+    fun enqueue(context: Context, media: MediaMetadata, tree: Uri, folders: List<String> = emptyList(), track: Int = 0,
+        requestedFormat: DownloadAudioFormat? = null) {
         require(videoId.matches(media.id)) { "Invalid YouTube video identifier" }
         val downloads = downloadUtil(context)
         val liked = downloads.database.getSongByIdBlocking(media.id)?.song?.liked == true
-        val destination = audioDestinationFolders(media, folders, liked)
+        val destination = audioDestinationFolders(folders, liked)
         val position = if (destination == listOf(AutoLikedDownloads.FOLDER)) 0 else track
-        val format = context.selectedDownloadFormat()
+        val format = requestedFormat ?: context.selectedDownloadFormat()
         downloads.download(media, requestedFormat = format)
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()
             .setInputData(workDataOf(
@@ -282,7 +283,10 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val staged = downloads.stageExistingAudio(videoId, directory)
                     ?: throw IOException("Completed offline audio is unavailable")
                 val raw = YtDlpAudioEngine.reuse(applicationContext, staged, format, directory, id.toString())
-                    ?: throw IOException("Requested audio format is unavailable")
+                    ?: PlaybackAudioEngine.download(applicationContext, videoId, directory, id.toString(),
+                        applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""),
+                        format = format, isExplicit = media.explicit,
+                        progress = { })
                 val source = tagAudioFile(applicationContext, raw, media, inputData.getInt("track", 0), directory)
                 exporting = true
                 setProgress(workDataOf("copying" to true))
@@ -406,10 +410,9 @@ internal fun collectionAudioFolders(kind: String, title: String, id: String): Li
     if (kind == "Playlists" && isLikedPlaylist(id)) listOf(AutoLikedDownloads.FOLDER)
     else listOf(kind, collectionFolder(title, id))
 
-internal fun audioDestinationFolders(media: MediaMetadata, folders: List<String>, liked: Boolean): List<String> = when {
+internal fun audioDestinationFolders(folders: List<String>, liked: Boolean): List<String> = when {
     folders == listOf(AutoLikedDownloads.FOLDER) -> folders
     liked && (folders.isEmpty() || folders.firstOrNull() == "Sélections") -> listOf(AutoLikedDownloads.FOLDER)
     folders.isNotEmpty() -> folders
-    media.album != null -> listOf("Albums", collectionFolder(media.album.title, media.album.id))
-    else -> listOf("Titres")
+    else -> listOf("Audio")
 }

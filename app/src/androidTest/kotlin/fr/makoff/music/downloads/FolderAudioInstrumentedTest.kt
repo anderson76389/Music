@@ -1,6 +1,9 @@
 package fr.makoff.music.downloads
 
 import androidx.datastore.preferences.core.edit
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 import fr.makoff.music.utils.dataStore
 import kotlinx.coroutines.flow.first
 import android.provider.DocumentsContract
@@ -34,6 +37,141 @@ class FolderAudioInstrumentedTest {
                 android.content.Intent.FLAG_GRANT_WRITE_URI_PERMISSION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
             check(android.os.SystemClock.elapsedRealtime() < deadline) { "Test document tree grant missing: $launch" }
             Thread.sleep(50)
+        }
+    }
+
+    @Test(timeout = 180000) fun downloadPopupChoosesRealFilesAndSingleSongsUseAudioFolder() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val preferences = context.dataStore.data.first()
+        val device = androidx.test.uiautomator.UiDevice.getInstance(instrumentation)
+        val sourceFiles = mutableListOf<File>()
+        val documents = mutableListOf<android.net.Uri>()
+        val ids = mutableListOf<String>()
+        var activity: fr.makoff.music.MainActivity? = null
+        fun click(id: Int) {
+            val text = context.getString(id)
+            var node = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(text)), 2000)
+            repeat(5) {
+                if (node == null) {
+                    device.swipe(device.displayWidth / 2, device.displayHeight * 7 / 10,
+                        device.displayWidth / 2, device.displayHeight * 4 / 10, 35)
+                    node = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(text)), 1000)
+                }
+            }
+            val bounds = device.findObjects(androidx.test.uiautomator.By.text(text))
+                .filter { it.isEnabled && it.visibleBounds.width() > 0 }
+                .maxByOrNull { it.visibleBounds.centerY() }?.visibleBounds
+                ?: requireNotNull(node) { "Missing download popup control: $text" }.visibleBounds
+            assertTrue(device.click(bounds.centerX(), bounds.centerY()))
+            device.waitForIdle()
+        }
+        try {
+            context.dataStore.edit {
+                it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false
+                it[fr.makoff.music.constants.FolderAudioTreeKey] = tree.toString()
+                it[fr.makoff.music.constants.UnifiedDownloadFormatKey] = DownloadAudioFormat.BEST.name
+            }
+            context.startActivity(android.content.Intent(context, fr.makoff.music.MainActivity::class.java)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            val activityDeadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (activity == null && android.os.SystemClock.elapsedRealtime() < activityDeadline) {
+                instrumentation.runOnMainSync {
+                    activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                        .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                        .filterIsInstance<fr.makoff.music.MainActivity>().firstOrNull()
+                }
+                kotlinx.coroutines.delay(100)
+            }
+            assertNotNull("Production activity opens", activity)
+            for ((index, format) in (DownloadAudioFormat.entries + DownloadAudioFormat.M4A).withIndex()) {
+                val id = UUID.randomUUID().toString().replace("-", "").take(11)
+                ids += id
+                val albumTitle = "Album popup $id"
+                val media = fr.makoff.music.models.MediaMetadata(id, "Popup format $id", emptyList(), 1,
+                    album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle))
+                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val source = File(context.cacheDir, "popup-$id.$asset").apply {
+                    writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
+                }
+                sourceFiles += source
+                val original = saveAudioToTree(context, tree, source, "popup-source-$id.${source.extension}")
+                documents += original
+                downloads.registerExternalAudio(media, original, source.length())
+                val collection = index == 3
+                instrumentation.runOnMainSync {
+                    activity!!.setContent {
+                        androidx.compose.material3.MaterialTheme {
+                            val item = if (collection) rememberFolderCollectionItem("Playlists", "Popup playlist $id", id) { listOf(media) }
+                                else rememberFolderAudioItem(media)
+                            androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(32.dp)) {
+                                androidx.compose.material3.TextButton(onClick = { item.onClick?.invoke() }) { item.title() }
+                            }
+                        }
+                    }
+                }
+                click(fr.makoff.music.R.string.action_download)
+                assertTrue("Quality popup appears before work starts", device.wait(androidx.test.uiautomator.Until.hasObject(
+                    androidx.test.uiautomator.By.text(context.getString(fr.makoff.music.R.string.download_choose_quality))), 5000))
+                assertTrue("Opening the popup must not queue a download", androidx.work.WorkManager.getInstance(context)
+                    .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
+                if (index == 0) {
+                    click(android.R.string.cancel)
+                    assertTrue("Cancel must not queue a download", androidx.work.WorkManager.getInstance(context)
+                        .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
+                    click(fr.makoff.music.R.string.action_download)
+                }
+                click(format.label)
+                click(fr.makoff.music.R.string.action_download)
+                // Change the default immediately: the confirmed request must retain its own choice.
+                context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
+                    if (format == DownloadAudioFormat.FLAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.FLAC.name }
+                var completed: androidx.work.WorkInfo? = null
+                val deadline = android.os.SystemClock.elapsedRealtime() + 45000
+                while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
+                    completed = androidx.work.WorkManager.getInstance(context).getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id)
+                        .get().firstOrNull { it.state.isFinished }
+                    kotlinx.coroutines.delay(100)
+                }
+                assertEquals("Confirmed format exports successfully", androidx.work.WorkInfo.State.SUCCEEDED, completed?.state)
+                val uri = android.net.Uri.parse(requireNotNull(completed!!.outputData.getString("uri")))
+                documents += uri
+                val root = requireNotNull(DocumentFile.fromTreeUri(context, tree))
+                val folder = if (collection) root.findFile("Playlists")?.findFile("Popup playlist $id") else root.findFile("Audio")
+                assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
+                assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
+                val expectedMime = when (format) {
+                    DownloadAudioFormat.BEST -> "audio/ogg"
+                    DownloadAudioFormat.M4A -> "audio/mp4"
+                    DownloadAudioFormat.FLAC -> "audio/flac"
+                }
+                assertEquals(expectedMime, completed.outputData.getString("mime"))
+                val extractor = android.media.MediaExtractor()
+                try {
+                    extractor.setDataSource(context, uri, null)
+                    val track = extractor.getTrackFormat(0)
+                    val actual = context.contentResolver.openInputStream(uri)!!.use {
+                        sourceAudioMime(it, requireNotNull(track.getString(android.media.MediaFormat.KEY_MIME)))
+                    }
+                    assertEquals(when (format) {
+                        DownloadAudioFormat.BEST -> "audio/opus"
+                        DownloadAudioFormat.M4A -> "audio/mp4a-latm"
+                        DownloadAudioFormat.FLAC -> "audio/flac"
+                    }, actual)
+                } finally { extractor.release() }
+                assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
+                println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${if (collection) "playlist" else "Audio"} folder and shared offline source")
+            }
+        } finally {
+            ids.forEach { id ->
+                androidx.work.WorkManager.getInstance(context).cancelAllWorkByTag(FolderAudioDownloads.SONG_TAG + id).result.get()
+                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(id)
+                downloads.downloads.value = downloads.downloads.value - id
+                downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
+            }
+            documents.forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
+            sourceFiles.forEach { it.delete() }
+            context.dataStore.updateData { preferences }
+            instrumentation.runOnMainSync { activity?.finish() }
         }
     }
 

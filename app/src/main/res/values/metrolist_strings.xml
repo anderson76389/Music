@@ -912,4 +912,8 @@
     <string name="appearance_gestures_section">Gestes et commandes</string>
     <string name="playback_quality_high_help">Élevée : sélectionne le débit maximal des formats audio accessibles pour ce titre et cette session YouTube, y compris sur les données mobiles. Les titres déjà téléchargés conservent leur format d’origine.</string>
     <string name="history_minimum_listen">Écoute minimale pour l’historique</string>
+    <string name="download_choose_quality">Qualité du téléchargement</string>
+    <string name="download_choice_best_help">Meilleur flux audio disponible pour ce titre et votre session YouTube, sans conversion avec perte supplémentaire.</string>
+    <string name="download_choice_m4a_help">Meilleur flux AAC/M4A disponible, conservé en M4A. Aucune reconversion depuis Opus.</string>
+    <string name="download_choice_flac_help">Meilleur flux disponible converti en FLAC. La source YouTube reste compressée avec perte : le FLAC ne restitue pas les détails perdus.</string>
 </resources>
