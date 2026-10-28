@@ -111,6 +111,7 @@ class OfflinePlayerInstrumentedTest {
             AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
+        context.dataStore.edit { it[DarkModeKey] = fr.makoff.music.ui.screens.settings.DarkMode.OFF.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -290,6 +291,14 @@ class OfflinePlayerInstrumentedTest {
                 freshControlBounds(context.getString(R.string.next)) != null
             }
             instrumentation.waitForIdleSync()
+            main {
+                val activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                    .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                    .filterIsInstance<MainActivity>().first()
+                val bars = androidx.core.view.WindowCompat.getInsetsController(activity.window, activity.window.decorView)
+                assertFalse("Dark glass player must use light status icons", bars.isAppearanceLightStatusBars)
+                assertFalse("Dark glass player must use a light navigation indicator", bars.isAppearanceLightNavigationBars)
+            }
             delay(1200)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()
@@ -537,6 +546,7 @@ class OfflinePlayerInstrumentedTest {
             context.dataStore.edit { prefs ->
                 keys.forEach { key -> before[key]?.let { prefs[key] = it } ?: prefs.remove(key) }
                 before[AudioQualityKey]?.let { prefs[AudioQualityKey] = it } ?: prefs.remove(AudioQualityKey)
+                before[DarkModeKey]?.let { prefs[DarkModeKey] = it } ?: prefs.remove(DarkModeKey)
             }
         }
     }

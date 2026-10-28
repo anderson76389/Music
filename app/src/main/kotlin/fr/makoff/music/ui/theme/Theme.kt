@@ -66,11 +66,13 @@ fun MusicTheme(
         if (!liquidGlassEnabled) {
             baseColorScheme.pureBlack(darkTheme && pureBlack)
         } else {
-            val accent = if (themeColor == DefaultThemeColor) Color(0xFFFA2D55) else themeColor
+            val defaultAccent = themeColor == DefaultThemeColor || themeColor == Color(0xFFFA2D55)
+            val accent = if (defaultAccent) Color(0xFFFA2D55) else baseColorScheme.primary
+            val onAccent = if (defaultAccent) Color.White else baseColorScheme.onPrimary
             baseColorScheme.copy(
-                primary = accent, onPrimary = Color.White,
+                primary = accent, onPrimary = onAccent,
                 primaryContainer = accent.copy(alpha = 0.12f), onPrimaryContainer = accent,
-                secondary = accent, onSecondary = Color.White,
+                secondary = accent, onSecondary = onAccent,
                 secondaryContainer = accent.copy(alpha = 0.1f), onSecondaryContainer = accent,
                 onSurface = if (darkTheme) Color(0xFFF5F5F7) else Color(0xFF1C1C1E),
                 onBackground = if (darkTheme) Color(0xFFF5F5F7) else Color(0xFF1C1C1E),

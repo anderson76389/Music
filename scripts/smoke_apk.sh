@@ -26,6 +26,9 @@ for variant in foss gms; do
   fi
   if [ "$variant" = gms ] && [ -d apk-tests ]; then
     adb install apk-tests/*.apk
+    timeout 140s adb shell am instrument -w -r -e class fr.makoff.music.settings.ThemePaletteInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/theme-palette-tests.txt
+    grep -Fq 'OK (1 test)' smoke-results/theme-palette-tests.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/theme-palette-tests.txt
     curl -fL --retry 3 https://github.com/OxygenCobalt/Auxio/releases/download/v4.1.5/Auxio_v4.1.5.apk -o auxio.apk
     echo 'ec3ec539aaac978283d3512af01ce26276959e75e831666231070ce9eb8a7b72  auxio.apk' | sha256sum -c -
     adb install auxio.apk
