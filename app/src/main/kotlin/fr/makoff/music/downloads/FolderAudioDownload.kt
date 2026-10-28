@@ -182,9 +182,9 @@ internal fun youtubeCookieJar(cookie: String): String = buildString {
     }
 }
 
-internal fun audioFileName(title: String, artist: String, id: String, extension: String): String {
+internal fun audioFileName(title: String, extension: String): String {
     val ext = extension.lowercase().takeIf { it.matches(Regex("[a-z0-9]{1,8}")) } ?: "audio"
-    val stem = readableAudioName(listOf(artist, title).filter { it.isNotBlank() }.joinToString(" - ")).ifBlank { "Audio" }
+    val stem = readableAudioName(title).ifBlank { "Audio" }
     return "$stem.$ext"
 }
 
@@ -290,8 +290,7 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                 val source = tagAudioFile(applicationContext, raw, media, inputData.getInt("track", 0), directory)
                 exporting = true
                 setProgress(workDataOf("copying" to true))
-                val track = inputData.getInt("track", 0)
-                val name = (if (track > 0) "%03d - ".format(java.util.Locale.ROOT, track) else "") + audioFileName(title, inputData.getString("artist").orEmpty(), videoId, source.extension)
+                val name = audioFileName(title, source.extension)
                 val uri = saveAudioToTree(applicationContext, tree, source, name, inputData.getStringArray("folders")?.toList().orEmpty())
                 currentCoroutineContext().ensureActive()
                 // Removing a completed native download during export must not restore it.

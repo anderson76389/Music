@@ -68,8 +68,8 @@ fun Modifier.liquidGlass(
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
-            tint(surface.copy(alpha = if (dark) 0.40f else 0.34f))
-            optics(blurRadius = 18.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
+            tint(surface.copy(alpha = if (dark) 0.48f else 0.42f))
+            optics(blurRadius = 22.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
                 refractionHeightFraction = 0.28f, depth = 0.45f)
             specularIntensity(if (!showBorder) 0f else if (dark) 0.52f else 0.72f)
             edgeSoftness(1.dp)
@@ -78,7 +78,8 @@ fun Modifier.liquidGlass(
             chromaticAberrationStrength(0.025f)
         }
     }
-    if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
+    val legibilityTint = surface.copy(alpha = if (dark) 0.08f else 0.10f)
+    if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).background(legibilityTint)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
             Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = if (dark) 0.28f else 0.6f)))
@@ -86,6 +87,6 @@ fun Modifier.liquidGlass(
     val glass = shadow(8.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.12f),
         spotColor = Color.Black.copy(alpha = 0.16f))
         .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
-    val panel = if (readable) glass.background(surface.copy(alpha = 0.96f)) else glass
+    val panel = glass.background(if (readable) surface.copy(alpha = 0.96f) else legibilityTint)
     return if (showBorder) panel.border(0.8.dp, rim, shape) else panel
 }

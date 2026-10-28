@@ -26,7 +26,7 @@ class FolderAudioNameTest {
     }
 
     @Test fun namesCannotEscapeTheChosenFolder() {
-        val name = audioFileName("../../a/b\n:c*?", "../artiste", "BaW_jenozKc", "webm")
+        val name = audioFileName("../../a/b\n:c*?", "webm")
         assertFalse(name.contains('/'))
         assertFalse(name.contains('\\'))
         assertFalse(name.contains('\n'))
@@ -55,9 +55,9 @@ class FolderAudioNameTest {
         }
     }
     @Test fun readableFileNamesKeepLongTitlesAndNoTechnicalIdentifier() {
-        assertEquals("Scott James - W.opus", audioFileName("W", "Scott James", "zkHICAwAI4E", "opus"))
+        assertEquals("W.opus", audioFileName("W", "opus"))
         val title = "You Are Working In Silence With The Full Original Title"
-        assertEquals("Cinematic Focus - $title.m4a", audioFileName(title, "Cinematic Focus", "1cMhZX3tfqM", "m4a"))
+        assertEquals("$title.m4a", audioFileName(title, "m4a"))
     }
     @Test fun cookiesAreDomainScopedAndCannotInjectJarRows() {
         val jar = youtubeCookieJar("SID=secret; invalid=bad\n.evil.com; SAPISID=ok")
@@ -66,7 +66,7 @@ class FolderAudioNameTest {
         assertTrue(jar.contains("SAPISID\tok"))
     }
     @Test fun utf8NamesStayWithinFilesystemLimits() {
-        val name = audioFileName("🎵".repeat(200), "artiste", "BaW_jenozKc", "m4a")
+        val name = audioFileName("🎵".repeat(200), "m4a")
         assertTrue(name.toByteArray(Charsets.UTF_8).size < 255)
         assertEquals("audio/mp4", audioMime("m4a"))
         assertEquals("audio/webm", audioMime("webm"))
