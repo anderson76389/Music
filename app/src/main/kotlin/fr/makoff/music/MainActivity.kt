@@ -658,7 +658,10 @@ class MainActivity : FragmentActivity() {
                 val (forceBottomNav) = rememberPreference(ForceBottomNavBarKey, defaultValue = false)
                 val (slimNav) = rememberPreference(SlimNavBarKey, defaultValue = false)
                 val (useNewMiniPlayerDesign) = rememberPreference(UseNewMiniPlayerDesignKey, defaultValue = true)
-                val (defaultOpenTabInt) = rememberPreference(DefaultOpenTabKey, defaultValue = NavigationTab.HOME.name)
+                // Apply the opening tab on a fresh launch, without replacing the current navigation graph.
+                val defaultOpenTabInt = rememberSaveable {
+                    this@MainActivity.dataStore.get(DefaultOpenTabKey, NavigationTab.HOME.name)
+                }
                 val defaultOpenTab = remember(defaultOpenTabInt) {
                     try {
                         NavigationTab.valueOf(defaultOpenTabInt)
