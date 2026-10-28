@@ -52,6 +52,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import coil3.disk.DiskCache
+import coil3.disk.directory
 import coil3.SingletonImageLoader
 import coil3.annotation.DelicateCoilApi
 import coil3.annotation.ExperimentalCoilApi
@@ -80,6 +82,17 @@ import kotlinx.coroutines.launch
 import okio.ByteString.Companion.encodeUtf8
 import java.io.File
 import kotlin.math.roundToInt
+
+private fun clearImageDiskCaches(context: android.content.Context, active: DiskCache?) {
+    active?.clear()
+    // Older disabled-cache builds could still create Coil's default image_cache directory.
+    for (name in listOf("coil", "image_cache")) {
+        val directory = context.cacheDir.resolve(name)
+        if (!directory.isDirectory || active?.directory?.toFile()?.canonicalFile == directory.canonicalFile) continue
+        val legacy = DiskCache.Builder().directory(directory).maxSizeBytes(1).build()
+        try { legacy.clear() } finally { legacy.shutdown() }
+    }
+}
 
 @OptIn(ExperimentalCoilApi::class, ExperimentalMaterial3Api::class, DelicateCoilApi::class)
 @Composable
@@ -148,7 +161,7 @@ fun StorageSettings(
         if ((imageDiskCache?.maxSize ?: 0L) != desired) {
             val previous = imageLoader
             imageLoader = withContext(Dispatchers.IO) {
-                if (desired == 0L) previous.diskCache?.clear()
+                if (desired == 0L) clearImageDiskCaches(context, previous.diskCache)
                 previous.diskCache?.shutdown()
                 SingletonImageLoader.reset()
                 context.imageLoader
@@ -231,7 +244,7 @@ fun StorageSettings(
             onDismiss = { clearImageCacheDialog = false },
             onConfirm = {
                 coroutineScope.launch(Dispatchers.IO) {
-                    imageDiskCache?.clear()
+                    clearImageDiskCaches(context, imageDiskCache)
                     imageLoader.memoryCache?.clear()
                 }
                 clearImageCacheDialog = false

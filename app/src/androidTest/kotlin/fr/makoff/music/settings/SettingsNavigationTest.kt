@@ -1,5 +1,6 @@
 package fr.makoff.music.settings
 
+import coil3.disk.directory
 import coil3.imageLoader
 import android.app.Activity
 import android.content.Intent
@@ -803,7 +804,18 @@ class SettingsNavigationTest {
             editor.metadata.toFile().writeText("test")
             editor.commit()
             assertNotNull(disk.openSnapshot(key)?.also { it.close() })
+            val legacy = coil3.disk.DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
+                .maxSizeBytes(1024 * 1024).build()
+            val legacyEditor = requireNotNull(legacy.openEditor(key))
+            legacyEditor.data.toFile().writeBytes(ByteArray(1024) { 1 })
+            legacyEditor.metadata.toFile().writeText("legacy")
+            legacyEditor.commit(); legacy.shutdown()
             open(R.string.clear_image_cache); open(android.R.string.ok)
+            val legacyCheck = coil3.disk.DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
+                .maxSizeBytes(1024 * 1024).build()
+            try { assertNull("Old default image-cache entries also cleared", legacyCheck.openSnapshot(key)) }
+            finally { legacyCheck.shutdown() }
+
             awaitPreference("Clear image button must remove real disk entry") { disk.openSnapshot(key)?.also { it.close() } == null }
             val hole = downloads.playerCache.startReadWrite(key, 0, 1024)
             try {
