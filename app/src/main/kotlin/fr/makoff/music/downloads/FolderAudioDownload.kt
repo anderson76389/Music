@@ -53,7 +53,7 @@ object FolderAudioDownloads {
         val downloads = downloadUtil(context)
         val liked = downloads.database.getSongByIdBlocking(media.id)?.song?.liked == true
         val destination = audioDestinationFolders(folders, liked)
-        val position = if (destination == listOf(AutoLikedDownloads.FOLDER)) 0 else track
+        val position = if (destination == listOf(AutoLikedDownloads.FOLDER) || destination == listOf("Audio")) 0 else track
         val format = requestedFormat ?: context.selectedDownloadFormat()
         downloads.download(media, requestedFormat = format)
         val request = OneTimeWorkRequestBuilder<FolderAudioWorker>()

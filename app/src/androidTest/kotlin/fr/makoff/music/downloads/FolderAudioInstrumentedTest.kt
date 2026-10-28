@@ -83,7 +83,7 @@ class FolderAudioInstrumentedTest {
                 kotlinx.coroutines.delay(100)
             }
             assertNotNull("Production activity opens", activity)
-            for ((index, format) in (DownloadAudioFormat.entries + DownloadAudioFormat.M4A).withIndex()) {
+            for ((index, format) in (DownloadAudioFormat.entries + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
                 val id = UUID.randomUUID().toString().replace("-", "").take(11)
                 ids += id
                 val albumTitle = "Album popup $id"
@@ -97,11 +97,11 @@ class FolderAudioInstrumentedTest {
                 val original = saveAudioToTree(context, tree, source, "popup-source-$id.${source.extension}")
                 documents += original
                 downloads.registerExternalAudio(media, original, source.length())
-                val collection = index == 3
+                val collection = index >= 3
                 instrumentation.runOnMainSync {
                     activity!!.setContent {
                         androidx.compose.material3.MaterialTheme {
-                            val item = if (collection) rememberFolderCollectionItem("Playlists", "Popup playlist $id", id) { listOf(media) }
+                            val item = if (collection) rememberFolderCollectionItem(if (index == 4) "Sélections" else "Playlists", "Popup playlist $id", id) { listOf(media) }
                                 else rememberFolderAudioItem(media)
                             androidx.compose.foundation.layout.Column(androidx.compose.ui.Modifier.padding(32.dp)) {
                                 androidx.compose.material3.TextButton(onClick = { item.onClick?.invoke() }) { item.title() }
@@ -136,9 +136,11 @@ class FolderAudioInstrumentedTest {
                 val uri = android.net.Uri.parse(requireNotNull(completed!!.outputData.getString("uri")))
                 documents += uri
                 val root = requireNotNull(DocumentFile.fromTreeUri(context, tree))
-                val folder = if (collection) root.findFile("Playlists")?.findFile("Popup playlist $id") else root.findFile("Audio")
+                val folder = if (index == 3) root.findFile("Playlists")?.findFile("Popup playlist $id") else root.findFile("Audio")
                 assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
                 assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
+                if (index != 3) assertFalse("Individual audio must not have a collection track prefix",
+                    completed.outputData.getString("name").orEmpty().startsWith("001 - "))
                 val expectedMime = when (format) {
                     DownloadAudioFormat.BEST -> "audio/ogg"
                     DownloadAudioFormat.M4A -> "audio/mp4"
@@ -159,7 +161,7 @@ class FolderAudioInstrumentedTest {
                     }, actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
-                println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${if (collection) "playlist" else "Audio"} folder and shared offline source")
+                println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${if (index == 3) "playlist" else "Audio"} folder and shared offline source")
             }
         } finally {
             ids.forEach { id ->

@@ -215,6 +215,7 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
                 check(tracks.isNotEmpty())
                 require(tracks.all { it.id.matches(Regex("[A-Za-z0-9_-]{11}")) })
                 val folders = if (downloadInLiked) listOf(AutoLikedDownloads.FOLDER)
+                    else if (kind == "Sélections" && tracks.size == 1) emptyList()
                     else collectionAudioFolders(kind, title, id)
                 withContext(Dispatchers.IO) {
                     tracks.forEachIndexed { index, media -> FolderAudioDownloads.enqueue(context, media, uri, folders, index + 1, requestedFormat = format) }
