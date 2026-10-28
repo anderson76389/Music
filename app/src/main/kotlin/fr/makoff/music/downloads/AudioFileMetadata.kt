@@ -91,7 +91,11 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         tag("title", media.title)
         tag("artist", media.artists.joinToString { it.name })
         tag("album", media.album?.title)
-        releaseYear?.takeIf { it in 1..9999 }?.let { tag("date", it.toString().padStart(4, '0')) }
+        releaseYear?.takeIf { it in 1..9999 }?.let {
+            val year = it.toString().padStart(4, '0')
+            tag("date", year)
+            tag("year", year)
+        }
         if (track > 0) tag("track", track.toString())
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
