@@ -26,6 +26,20 @@ for variant in foss gms; do
   fi
   if [ "$variant" = gms ] && [ -d apk-tests ]; then
     adb install apk-tests/*.apk
+    curl -fL --retry 3 https://github.com/OxygenCobalt/Auxio/releases/download/v4.1.5/Auxio_v4.1.5.apk -o auxio.apk
+    echo 'ec3ec539aaac978283d3512af01ce26276959e75e831666231070ce9eb8a7b72  auxio.apk' | sha256sum -c -
+    adb install auxio.apk
+    if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
+      adb shell pm grant org.oxycblt.auxio android.permission.READ_MEDIA_AUDIO
+    else
+      adb shell pm grant org.oxycblt.auxio android.permission.READ_EXTERNAL_STORAGE
+    fi
+    timeout 260s adb shell am instrument -w -r -e class fr.makoff.music.downloads.AuxioExportCompatibilityTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/auxio-export-tests.txt
+    adb logcat -d > smoke-results/auxio-export-logcat.txt
+    adb exec-out screencap -p > smoke-results/auxio-export.png
+    grep -Eq 'OK \(1 test\)' smoke-results/auxio-export-tests.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/auxio-export-tests.txt
+    adb shell am force-stop org.oxycblt.auxio
     timeout 300s adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
     adb pull /data/local/tmp/download-quality-popup.png smoke-results/ || true
     adb logcat -d > smoke-results/folder-audio-logcat.txt
