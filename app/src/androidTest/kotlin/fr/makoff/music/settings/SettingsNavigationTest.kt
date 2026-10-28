@@ -805,17 +805,16 @@ class SettingsNavigationTest {
             editor.commit()
             assertNotNull(disk.openSnapshot(key)?.also { it.close() })
             val legacy = coil3.disk.DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
-                .maxSizeBytes(1024 * 1024).build()
+                .maxSizeBytes(1024L * 1024).build()
             val legacyEditor = requireNotNull(legacy.openEditor(key))
             legacyEditor.data.toFile().writeBytes(ByteArray(1024) { 1 })
             legacyEditor.metadata.toFile().writeText("legacy")
-            legacyEditor.commit(); legacy.shutdown()
+            legacyEditor.commit()
+            val legacySnapshot = requireNotNull(legacy.openSnapshot(key))
+            val legacyData = legacySnapshot.data.toFile()
+            legacySnapshot.close(); legacy.shutdown()
             open(R.string.clear_image_cache); open(android.R.string.ok)
-            val legacyCheck = coil3.disk.DiskCache.Builder().directory(context.cacheDir.resolve("image_cache"))
-                .maxSizeBytes(1024 * 1024).build()
-            try { assertNull("Old default image-cache entries also cleared", legacyCheck.openSnapshot(key)) }
-            finally { legacyCheck.shutdown() }
-
+            awaitPreference("Old default cache bytes must also be removed") { !legacyData.exists() }
             awaitPreference("Clear image button must remove real disk entry") { disk.openSnapshot(key)?.also { it.close() } == null }
             val hole = downloads.playerCache.startReadWrite(key, 0, 1024)
             try {
