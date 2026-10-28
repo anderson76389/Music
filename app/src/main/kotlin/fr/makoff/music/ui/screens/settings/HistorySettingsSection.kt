@@ -37,7 +37,7 @@ import fr.makoff.music.utils.rememberPreference
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HistorySettingsSection() {
+fun HistorySettingsSection(additionalListenItems: List<Material3SettingsItem> = emptyList()) {
     val database = LocalDatabase.current
     val (pauseListenHistory, onPauseListenHistoryChange) = rememberPreference(
         key = PauseListenHistoryKey,
@@ -124,7 +124,7 @@ fun HistorySettingsSection() {
 
         Material3SettingsGroup(
             title = stringResource(R.string.listen_history),
-            items = listOf(
+            items = additionalListenItems + listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.history),
                     title = { Text(stringResource(R.string.pause_listen_history)) },

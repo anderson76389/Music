@@ -441,7 +441,10 @@ class OfflinePlayerInstrumentedTest {
             cacheAudio(active.playerCache, tracks[3].id, audio)
             context.dataStore.edit { it[SkipSilenceKey] = false; it[AudioQualityKey] = AudioQuality.LOW.name }
             await("Quality change must clear queued streaming bytes") { active.playerCache.getCachedSpans(tracks[3].id).isEmpty() }
-            println("PLAYER_QUALITY_CACHE_OK: queued streaming cache cleared; completed shared/private downloads kept")
+            cacheAudio(active.playerCache, tracks[3].id, audio)
+            context.dataStore.edit { it[AudioQualityKey] = AudioQuality.HIGH.name }
+            await("High quality must discard previous lower-quality streaming bytes") { active.playerCache.getCachedSpans(tracks[3].id).isEmpty() }
+            println("PLAYER_QUALITY_CACHE_OK: LOW then HIGH clears queued streaming bytes; completed shared/private downloads kept")
             assertEquals("Changing quality lost shared download", sharedUri, active.downloadUtil.externalAudioUri(tracks[0].id))
             assertTrue("Playback recreated private download bytes", active.downloadCache.getCachedSpans(tracks[0].id).isEmpty())
             assertTrue("Playback recreated streaming cache bytes", active.playerCache.getCachedSpans(tracks[0].id).isEmpty())

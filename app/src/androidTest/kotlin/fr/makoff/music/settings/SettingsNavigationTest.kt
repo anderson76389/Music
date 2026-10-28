@@ -528,6 +528,10 @@ class SettingsNavigationTest {
                 R.string.appearance -> {
                     toggleAndRestore(R.string.liquid_glass_theme, LiquidGlassEnabledKey, false)
                     println("GLASS_SWITCH_OK: enabled and disabled from settings, preference persisted")
+                    listOf(R.string.theme, R.string.appearance_display_section, R.string.appearance_navigation_section,
+                        R.string.appearance_player_section, R.string.mini_player, R.string.appearance_gestures_section,
+                        R.string.auto_playlists).forEach { findText(it) }
+                    println("APPEARANCE_SECTIONS_OK: theme, display, navigation, full player, mini player, gestures and playlists accessible")
                     listOf(
                         Triple(R.string.enable_high_refresh_rate, EnableHighRefreshRateKey, true),
                         Triple(R.string.enable_landscape_scaling, EnableLandscapeScalingKey, false),
@@ -601,6 +605,19 @@ class SettingsNavigationTest {
                     device.pressBack()
                     device.waitForIdle()
                     println("PLAYER_DOWNLOAD_FORMAT_OK: BEST/M4A/FLAC chooser reachable in Player and audio")
+                    listOf(R.string.player_audio_quality_section, R.string.player_transitions_section,
+                        R.string.player_queue_section, R.string.player_shuffle_section, R.string.player_behavior_section,
+                        R.string.player_devices_section, R.string.download_quality_settings,
+                        R.string.listen_history, R.string.search_history).forEach { findText(it) }
+                    val qualityBefore = runBlocking { context.dataStore.data.first()[AudioQualityKey] }
+                    try {
+                        open(R.string.audio_quality); open(R.string.audio_quality_high)
+                        awaitPreference("High playback quality selected") { context.dataStore.data.first()[AudioQualityKey] == AudioQuality.HIGH.name }
+                        findText(R.string.playback_quality_high_help)
+                        println("PLAYER_SECTIONS_OK: all playback groups accessible; HIGH selector persists and explains source/offline limits")
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs -> qualityBefore?.let { prefs[AudioQualityKey] = it } ?: prefs.remove(AudioQualityKey) } }
+                    }
                     toggleAndRestore(R.string.crossfade, CrossfadeEnabledKey, false)
                     val crossfadeBefore = runBlocking { context.dataStore.data.first()[CrossfadeEnabledKey] }
                     try {

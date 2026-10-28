@@ -48,7 +48,7 @@ assert 'R.string.changelog' not in settings
 assert 'settings/android_auto' not in settings
 assert 'settings/android_auto' in content
 assert 'settings/privacy' not in routes
-assert 'HistorySettingsSection()' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
+assert 'HistorySettingsSection(' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 assert 'clearListenHistory()' in history and 'clearSearchHistory()' in history
 assert 'DisableScreenshotKey' not in (k/'MainActivity.kt').read_text()
 print('PASS: removed settings absent; Android Auto reachable from Content')
@@ -94,3 +94,13 @@ positions = [content_source.index('title = stringResource(R.string.' + name + ')
 assert positions == sorted(positions)
 assert 'title = "Wrapped"' not in content_source
 print('PASS: Content section order and translated headings')
+
+for screen, headings in {
+    'PlayerSettings.kt': ['player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section', 'player_devices_section'],
+    'AppearanceSettings.kt': ['theme', 'appearance_display_section', 'appearance_navigation_section', 'appearance_player_section', 'mini_player', 'appearance_gestures_section', 'auto_playlists'],
+}.items():
+    source = (k/'ui/screens/settings'/screen).read_text()
+    groups = re.findall(r'Material3SettingsGroup\(\s*title = stringResource\(R.string.(\w+)\)', source)
+    assert groups == headings, (screen, groups)
+    assert 'title = stringResource(R.string.misc)' not in source
+    print(f'PASS: {screen} coherent section order and headings')

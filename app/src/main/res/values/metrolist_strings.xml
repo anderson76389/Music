@@ -900,4 +900,15 @@
     <string name="content_top_length">Nombre de titres du classement</string>
     <string name="appearance_managed_by_glass">Géré par Liquid Glass. Ce réglage devient disponible quand ce thème est désactivé.</string>
     <string name="clear_image_cache_actual_help">Supprime les images mises en cache. Elles seront rechargées quand elles seront disponibles en ligne. Les fichiers audio et leurs pochettes intégrées sont conservés.</string>
+    <string name="player_audio_quality_section">Qualité et traitement audio</string>
+    <string name="player_transitions_section">Transitions et navigation dans les titres</string>
+    <string name="player_queue_section">File d’attente et recommandations</string>
+    <string name="player_shuffle_section">Lecture aléatoire et répétition</string>
+    <string name="player_behavior_section">Comportement du lecteur</string>
+    <string name="player_devices_section">Appareils et diffusion</string>
+    <string name="appearance_display_section">Affichage et fluidité</string>
+    <string name="appearance_navigation_section">Navigation et bibliothèque</string>
+    <string name="appearance_player_section">Lecteur plein écran</string>
+    <string name="appearance_gestures_section">Gestes et commandes</string>
+    <string name="playback_quality_high_help">Élevée : sélectionne le débit maximal des formats audio accessibles pour ce titre et cette session YouTube, y compris sur les données mobiles. Les titres déjà téléchargés conservent leur format d’origine.</string>
 </resources>
