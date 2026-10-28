@@ -560,12 +560,12 @@ class SettingsNavigationTest {
                             }
                         }
                         val choices = listOf(
-                            Triple(R.string.player_background_style, R.string.gradient, PlayerBackgroundStyleKey to "GRADIENT"),
-                            Triple(R.string.mini_player_background_style, R.string.gradient, MiniPlayerBackgroundStyleKey to "GRADIENT"),
-                            Triple(R.string.player_buttons_style, R.string.primary_color_style, PlayerButtonsStyleKey to "PRIMARY"),
-                            Triple(R.string.default_open_tab, R.string.filter_library, DefaultOpenTabKey to "LIBRARY"),
-                            Triple(R.string.default_lib_chips, R.string.albums, ChipSortTypeKey to "ALBUMS"),
-                            Triple(R.string.grid_cell_size, R.string.big, GridItemsSizeKey to "BIG"),
+                            Triple(R.string.player_background_style, R.string.gradient, kotlin.Pair(PlayerBackgroundStyleKey, "GRADIENT")),
+                            Triple(R.string.mini_player_background_style, R.string.gradient, kotlin.Pair(MiniPlayerBackgroundStyleKey, "GRADIENT")),
+                            Triple(R.string.player_buttons_style, R.string.primary_color_style, kotlin.Pair(PlayerButtonsStyleKey, "PRIMARY")),
+                            Triple(R.string.default_open_tab, R.string.filter_library, kotlin.Pair(DefaultOpenTabKey, "LIBRARY")),
+                            Triple(R.string.default_lib_chips, R.string.albums, kotlin.Pair(ChipSortTypeKey, "ALBUMS")),
+                            Triple(R.string.grid_cell_size, R.string.big, kotlin.Pair(GridItemsSizeKey, "BIG")),
                         )
                         for ((row, choice, preference) in choices) {
                             open(row); open(choice)
