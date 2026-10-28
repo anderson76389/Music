@@ -79,3 +79,18 @@ for key in sorted(player_keys):
     assert consumers, ('Player setting without production consumer', key)
     print(f'PLAYER_SETTING: {key} -> {", ".join(consumers)}')
 print(f'PASS: all {len(player_keys)} Player/audio preferences have production consumers; runtime/hardware checks remain separate')
+
+for screen in ('AppearanceSettings.kt', 'StorageSettings.kt', 'ContentSettings.kt'):
+    source = (k/'ui/screens/settings'/screen).read_text()
+    keys = set(re.findall(r'remember(?:Enum)?Preference\(\s*(?:key\s*=\s*)?(\w+)', source))
+    # RespectAgentPositioning is a dormant legacy binding without a visible control.
+    for key in keys - {'RespectAgentPositioningKey'}:
+        assert any(re.search(r'\b' + key + r'\b', '\n'.join(line for line in text.splitlines() if not line.startswith('import ')))
+                   for path, text in sources if path.name != 'PreferenceKeys.kt'), (screen, key)
+    print(f'PASS: {screen} preferences have production consumers (runtime coverage checked separately)')
+content_source = (k/'ui/screens/settings/ContentSettings.kt').read_text()
+headings = ['content_locale_section', 'content_home_section', 'content_filters_section', 'playlists', 'artist_page_settings', 'content_statistics_section', 'content_devices_section', 'content_network_section']
+positions = [content_source.index('title = stringResource(R.string.' + name + ')') for name in headings]
+assert positions == sorted(positions)
+assert 'title = "Wrapped"' not in content_source
+print('PASS: Content section order and translated headings')

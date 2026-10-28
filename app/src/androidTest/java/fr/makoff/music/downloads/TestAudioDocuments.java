@@ -38,6 +38,10 @@ public final class TestAudioDocuments extends ContentProvider {
         return file(uri).isDirectory() ? DocumentsContract.Document.MIME_TYPE_DIR : "audio/wav";
     }
     @Override public Cursor query(Uri uri, String[] projection, String selection, String[] args, String sort) {
+        File requested = file(uri);
+        if (!requested.exists() && requested.getName().startsWith("query-null")) return null;
+        if (!requested.exists() && requested.getName().startsWith("query-error")) throw new IllegalArgumentException("Document missing");
+        if (requested.getName().startsWith("query-denied")) throw new SecurityException("Access denied");
         String[] columns = projection != null ? projection : new String[]{"document_id", "_display_name", "mime_type", "flags", "_size"};
         MatrixCursor cursor = new MatrixCursor(columns);
         File[] files = "children".equals(uri.getLastPathSegment()) ? file(uri).listFiles() : new File[]{file(uri)};

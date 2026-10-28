@@ -153,7 +153,6 @@ fun AppearanceSettings(
     }
     val onEnableDynamicIconChange: (Boolean) -> Unit = { newValue ->
         onEnableDynamicIconPrefChange(newValue)
-        IconUtils.setIcon(iconContext, newValue)
     }
     val (enableHighRefreshRate, onEnableHighRefreshRateChange) =
         rememberPreference(
@@ -876,7 +875,7 @@ fun AppearanceSettings(
                                 Text(
                                     text = stringResource(R.string.mini_player_background_style),
                                     color =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (!useNewMiniPlayerDesign || liquidGlassEnabled) {
                                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                         } else {
                                             MaterialTheme.colorScheme.onSurface
@@ -886,7 +885,9 @@ fun AppearanceSettings(
                             description = {
                                 Text(
                                     text =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (liquidGlassEnabled) {
+                                            stringResource(R.string.appearance_managed_by_glass)
+                                        } else if (!useNewMiniPlayerDesign) {
                                             stringResource(R.string.mini_player_background_not_available)
                                         } else {
                                             when (miniPlayerBackground) {
@@ -898,14 +899,15 @@ fun AppearanceSettings(
                                             }
                                         },
                                     color =
-                                        if (!useNewMiniPlayerDesign) {
+                                        if (!useNewMiniPlayerDesign || liquidGlassEnabled) {
                                             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                                         } else {
                                             MaterialTheme.colorScheme.onSurfaceVariant
                                         },
                                 )
                             },
-                            onClick = { if (useNewMiniPlayerDesign) showMiniPlayerBackgroundDialog = true },
+                            enabled = useNewMiniPlayerDesign && !liquidGlassEnabled,
+                            onClick = { if (useNewMiniPlayerDesign && !liquidGlassEnabled) showMiniPlayerBackgroundDialog = true },
                         ),
                     )
                 },
@@ -943,8 +945,9 @@ fun AppearanceSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.gradient),
                         title = { Text(stringResource(R.string.player_background_style)) },
+                        enabled = !liquidGlassEnabled,
                         description = {
-                            Text(
+                            if (liquidGlassEnabled) Text(stringResource(R.string.appearance_managed_by_glass)) else Text(
                                 when (playerBackground) {
                                     PlayerBackgroundStyle.DEFAULT -> stringResource(R.string.follow_theme)
                                     PlayerBackgroundStyle.GRADIENT -> stringResource(R.string.gradient)
@@ -1001,8 +1004,9 @@ fun AppearanceSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.palette),
                         title = { Text(stringResource(R.string.player_buttons_style)) },
+                        enabled = !liquidGlassEnabled,
                         description = {
-                            Text(
+                            if (liquidGlassEnabled) Text(stringResource(R.string.appearance_managed_by_glass)) else Text(
                                 when (playerButtonsStyle) {
                                     PlayerButtonsStyle.DEFAULT -> stringResource(R.string.default_style)
                                     PlayerButtonsStyle.PRIMARY -> stringResource(R.string.primary_color_style)
@@ -1015,8 +1019,9 @@ fun AppearanceSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.sliders),
                         title = { Text(stringResource(R.string.player_slider_style)) },
+                        enabled = !liquidGlassEnabled,
                         description = {
-                            Text(
+                            if (liquidGlassEnabled) Text(stringResource(R.string.appearance_managed_by_glass)) else Text(
                                 when (sliderStyle) {
                                     SliderStyle.DEFAULT -> {
                                         stringResource(R.string.default_)

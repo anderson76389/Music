@@ -23,7 +23,16 @@ internal fun documentIsMissing(context: Context, uri: Uri): Boolean = runCatchin
     val projection = arrayOf(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
     val rootAvailable = context.contentResolver.query(root, projection, null, null, null)?.use { it.moveToFirst() } == true
     if (!rootAvailable) return false
-    context.contentResolver.query(uri, projection, null, null, null)?.use { !it.moveToFirst() } == true
+    val row = runCatching { context.contentResolver.query(uri, projection, null, null, null)?.use { it.moveToFirst() } }.getOrNull()
+    if (row == false) return true
+    if (row == true) return false
+    try {
+        context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { }
+        false
+    } catch (_: java.io.FileNotFoundException) {
+        true
+    }
+
 }.getOrDefault(false)
 
 internal suspend fun cleanMissingDownloads(context: Context, downloads: DownloadUtil): Int = withContext(Dispatchers.IO) {
@@ -31,9 +40,13 @@ internal suspend fun cleanMissingDownloads(context: Context, downloads: Download
     val jobs = manager.getWorkInfosByTag(FolderAudioDownloads.TAG).get()
     val previouslyHidden = context.dataStore.data.first()[HiddenDownloadHistory].orEmpty()
     val missingJobs = jobs.filter { work ->
-        work.id.toString() !in previouslyHidden && work.state == WorkInfo.State.SUCCEEDED && work.outputData.getString("uri")?.let {
-            documentIsMissing(context, Uri.parse(it))
-        } == true
+        work.id.toString() !in previouslyHidden && when (work.state) {
+            WorkInfo.State.FAILED, WorkInfo.State.CANCELLED -> true
+            WorkInfo.State.SUCCEEDED -> work.outputData.getString("uri")?.let {
+                documentIsMissing(context, Uri.parse(it))
+            } == true
+            else -> false
+        }
     }
     val missingSongs = downloads.downloads.value.values.filter { download ->
         download.state == Download.STATE_COMPLETED && if (download.request.uri.scheme == "content") {
@@ -44,10 +57,12 @@ internal suspend fun cleanMissingDownloads(context: Context, downloads: Download
         }
     }
     val ids = missingSongs.map { it.request.id }.toSet()
+    val historyIds = missingJobs.flatMap { it.tags }.filter { it.startsWith(FolderAudioDownloads.SONG_TAG) }
+        .map { it.removePrefix(FolderAudioDownloads.SONG_TAG) }.toSet()
     context.dataStore.edit { prefs ->
         val existing = prefs[HiddenDownloadHistory].orEmpty().intersect(jobs.map { it.id.toString() }.toSet())
         prefs[HiddenDownloadHistory] = existing + missingJobs.map { it.id.toString() }
-        prefs[AutoLikedDownloads.SKIPPED] = prefs[AutoLikedDownloads.SKIPPED].orEmpty() + ids
+        prefs[AutoLikedDownloads.SKIPPED] = prefs[AutoLikedDownloads.SKIPPED].orEmpty() + ids + historyIds
     }
     val removed = missingSongs.count { downloads.forgetMissingDownload(it) }
     removed + missingJobs.count { work ->

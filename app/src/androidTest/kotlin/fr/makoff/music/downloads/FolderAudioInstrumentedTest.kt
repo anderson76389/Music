@@ -157,6 +157,95 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 60000) fun cleanupHandlesAndroidProviderErrorsAndFailedHistory() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val before = context.dataStore.data.first()
+        val manager = androidx.work.WorkManager.getInstance(context)
+        val requests = mutableListOf<java.util.UUID>()
+        try {
+            val root = requireNotNull(DocumentFile.fromTreeUri(context, tree))
+            for (prefix in listOf("query-null", "query-error", "query-denied")) {
+                val document = requireNotNull(root.createFile("audio/mp4", "$prefix-${UUID.randomUUID()}.m4a"))
+                if (prefix != "query-denied") {
+                    DocumentsContract.deleteDocument(context.contentResolver, document.uri)
+                    assertTrue("Deleted file with $prefix must be recognized", documentIsMissing(context, document.uri))
+                } else {
+                    assertFalse("Permission errors must not remove entries", documentIsMissing(context, document.uri))
+                    DocumentsContract.deleteDocument(context.contentResolver, document.uri)
+                }
+            }
+            val failed = androidx.work.OneTimeWorkRequestBuilder<FolderAudioWorker>()
+                .setInputData(androidx.work.workDataOf("tree" to tree.toString(), "videoId" to "invalid"))
+                .addTag(FolderAudioDownloads.TAG).build()
+            val cancelled = androidx.work.OneTimeWorkRequestBuilder<FolderAudioWorker>()
+                .setInitialDelay(1, java.util.concurrent.TimeUnit.DAYS).addTag(FolderAudioDownloads.TAG).build()
+            val active = androidx.work.OneTimeWorkRequestBuilder<FolderAudioWorker>()
+                .setInitialDelay(1, java.util.concurrent.TimeUnit.DAYS).addTag(FolderAudioDownloads.TAG).build()
+            requests += listOf(failed.id, cancelled.id, active.id)
+            manager.enqueue(listOf(failed, cancelled, active)).result.get()
+            manager.cancelWorkById(cancelled.id).result.get()
+            val deadline = android.os.SystemClock.elapsedRealtime() + 20000
+            while (manager.getWorkInfoById(failed.id).get()?.state != androidx.work.WorkInfo.State.FAILED) {
+                check(android.os.SystemClock.elapsedRealtime() < deadline)
+                kotlinx.coroutines.delay(50)
+            }
+            cleanMissingDownloads(context, downloads)
+            val hidden = context.dataStore.data.first()[HiddenDownloadHistory].orEmpty()
+            assertTrue(failed.id.toString() in hidden)
+            assertTrue(cancelled.id.toString() in hidden)
+            assertFalse(active.id.toString() in hidden)
+            println("ANDROID_PROVIDER_CLEANUP_OK: null cursors and provider exceptions handled; denied documents and active downloads preserved; failed/cancelled history removed")
+        } finally {
+            requests.forEach { manager.cancelWorkById(it).result.get() }
+            context.dataStore.updateData { before }
+        }
+    }
+
+    @Test(timeout = 60000) fun cacheLimitsApplyImmediatelyAndKeepOfflineAudio() = runBlocking {
+        val downloads = FolderAudioDownloads.downloadUtil(context)
+        val before = context.dataStore.data.first()
+        val privateKeys = downloads.downloadCache.keys.toSet()
+        val directory = File(context.cacheDir, "cache-limit-${UUID.randomUUID()}")
+        val evictor = fr.makoff.music.playback.ResizableCacheEvictor(4096)
+        val cache = androidx.media3.datasource.cache.SimpleCache(directory, evictor, downloads.databaseProvider)
+        fun write(target: androidx.media3.datasource.cache.Cache, key: String) {
+            val hole = target.startReadWrite(key, 0, 1024)
+            try {
+                val file = target.startFile(key, 0, 1024)
+                file.writeBytes(ByteArray(1024) { 1 })
+                target.commitFile(file, 1024)
+            } finally { target.releaseHoleSpan(hole) }
+        }
+        val key = "resize-${UUID.randomUUID()}"
+        try {
+            write(cache, "old"); Thread.sleep(5); write(cache, "recent")
+            evictor.resize(cache, 1024)
+            assertTrue(cache.getCachedSpans("old").isEmpty())
+            assertTrue(cache.isCached("recent", 0, 1024))
+            evictor.resize(cache, 0)
+            assertEquals(0L, cache.cacheSpace)
+            evictor.resize(cache, Long.MAX_VALUE)
+            write(cache, "unlimited")
+            assertEquals(1024L, cache.cacheSpace)
+            context.dataStore.edit { it[fr.makoff.music.constants.MaxSongCacheSizeKey] = 128 }
+            kotlinx.coroutines.delay(300)
+            write(downloads.playerCache, key)
+            assertTrue(downloads.playerCache.isCached(key, 0, 1024))
+            context.dataStore.edit { it[fr.makoff.music.constants.MaxSongCacheSizeKey] = 0 }
+            val deadline = android.os.SystemClock.elapsedRealtime() + 10000
+            while (downloads.playerCache.getCachedSpans(key).isNotEmpty()) {
+                check(android.os.SystemClock.elapsedRealtime() < deadline) { "Production streaming cache did not resize" }
+                kotlinx.coroutines.delay(50)
+            }
+            assertEquals(privateKeys, downloads.downloadCache.keys)
+            println("LIVE_CACHE_LIMIT_OK: real LRU trimming, disabled/unlimited modes and live production preference; offline cache untouched")
+        } finally {
+            cache.release(); directory.deleteRecursively()
+            downloads.playerCache.removeResource(key)
+            context.dataStore.updateData { before }
+        }
+    }
+
     @Test(timeout = 90000) fun missingDownloadCleanupKeepsReadableFilesAndLibrary() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val before = context.dataStore.data.first()
@@ -241,7 +330,7 @@ class FolderAudioInstrumentedTest {
         image.eraseColor(android.graphics.Color.BLUE)
         cover.outputStream().use { image.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
         image.recycle()
-        val media = fr.makoff.music.models.MediaMetadata(id, "Liked album routing test", emptyList(), 1,
+        val media = fr.makoff.music.models.MediaMetadata(id, "Liked album routing test", emptyList(), 1, explicit = true,
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("album-$id", "Album $id"))
         val source = File(context.cacheDir, "manual-liked-$id.m4a").apply { writeBytes(android.util.Base64.decode(
@@ -276,6 +365,8 @@ class FolderAudioInstrumentedTest {
             assertEquals(exported, downloads.externalAudioUri(id))
             assertEquals(android.net.Uri.fromFile(cover).toString(), completed.outputData.getString("thumbnail"))
             assertEquals(exported.toString(), context.dataStore.data.first()[AutoLikedDownloads.documentKey(tree.toString(), id)])
+            assertTrue(requireNotNull(downloads.database.songEntity(id)).explicit)
+            println("EXPLICIT_OFFLINE_EXPORT_OK: explicitly marked audio exports and remains available offline")
             succeeded = true
             println("MANUAL_LIKED_FOLDER_OK: manual download with album metadata exports to J'aime, keeps offline reference and history thumbnail")
         } finally {

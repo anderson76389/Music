@@ -891,4 +891,13 @@
     <string name="download_missing_clean">Supprimer les téléchargements disparus</string>
     <string name="download_missing_cleaned">Références supprimées : %1$d</string>
     <string name="download_missing_error">Impossible de terminer le nettoyage. Réessayez.</string>
+    <string name="content_locale_section">Langues et région</string>
+    <string name="content_home_section">Accueil et recommandations</string>
+    <string name="content_filters_section">Filtres de contenu</string>
+    <string name="content_statistics_section">Statistiques et classements</string>
+    <string name="content_devices_section">Appareils connectés</string>
+    <string name="content_network_section">Réseau et proxy</string>
+    <string name="content_top_length">Nombre de titres du classement</string>
+    <string name="appearance_managed_by_glass">Géré par Liquid Glass. Ce réglage devient disponible quand ce thème est désactivé.</string>
+    <string name="clear_image_cache_actual_help">Supprime les images mises en cache. Elles seront rechargées quand elles seront disponibles en ligne. Les fichiers audio et leurs pochettes intégrées sont conservés.</string>
 </resources>

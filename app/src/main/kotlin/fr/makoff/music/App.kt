@@ -99,9 +99,12 @@ class App :
                 .onFailure { Timber.e(it, "Could not clean removed playback features") }
         }
 
-        // Pre-read Coil cache size on background to avoid runBlocking in newImageLoader
-        applicationScope.launch(Dispatchers.IO) {
-            cachedCoilCacheSize = dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
+        applicationScope.launch {
+            dataStore.data.map { it[fr.makoff.music.constants.EnableDynamicIconKey] ?: true }
+                .distinctUntilChanged().collect { enabled ->
+                    runCatching { fr.makoff.music.utils.IconUtils.setIcon(this@App, enabled) }
+                        .onFailure { Timber.e(it, "Could not apply launcher icon preference") }
+                }
         }
 
         applicationScope.launch {
@@ -286,11 +289,8 @@ class App :
         }
     }
 
-    @Volatile
-    private var cachedCoilCacheSize: Int? = null
-
     override fun newImageLoader(context: PlatformContext): ImageLoader {
-        val cacheSize = cachedCoilCacheSize ?: runBlocking {
+        val cacheSize = runBlocking(Dispatchers.IO) {
             dataStore.data.map { it[MaxImageCacheSizeKey] ?: 512 }.first()
         }
         return ImageLoader

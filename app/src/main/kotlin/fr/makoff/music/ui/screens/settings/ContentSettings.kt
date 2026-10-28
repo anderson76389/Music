@@ -389,11 +389,11 @@ fun ContentSettings(
     }
 
     if (showTopLengthDialog) {
-        var tempLength by rememberSaveable { mutableFloatStateOf(lengthTop.toFloat()) }
+        var tempLength by rememberSaveable { mutableFloatStateOf(lengthTop.toFloatOrNull()?.coerceIn(1f, 100f) ?: 50f) }
 
         AlertDialog(
             onDismissRequest = { showTopLengthDialog = false },
-            title = { Text(stringResource(R.string.top_length)) },
+            title = { Text(stringResource(R.string.content_top_length)) },
             text = {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -429,13 +429,33 @@ fun ContentSettings(
             .padding(horizontal = 16.dp),
     ) {
         Material3SettingsGroup(
-            title = stringResource(R.string.general),
+            title = stringResource(R.string.content_locale_section),
             items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.ic_android_auto),
-                    title = { Text(stringResource(R.string.android_auto)) },
-                    onClick = { navController.navigate("settings/android_auto") }
-                ),
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.language),
+                        title = { Text(stringResource(R.string.app_language)) },
+                        onClick = {
+                            context.startActivity(
+                                Intent(
+                                    Settings.ACTION_APP_LOCALE_SETTINGS,
+                                    "package:${context.packageName}".toUri()
+                                )
+                            )
+                        }
+                    )
+                } else {
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.language),
+                        title = { Text(stringResource(R.string.app_language)) },
+                        description = {
+                            Text(
+                                LanguageCodeToName.getOrElse(appLanguage) { stringResource(R.string.system_default) }
+                            )
+                        },
+                        onClick = { showAppLanguageDialog = true }
+                    )
+                },
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content_language)) },
@@ -455,7 +475,57 @@ fun ContentSettings(
                         )
                     },
                     onClick = { showContentCountryDialog = true }
+                )
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.content_home_section),
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.home_outlined),
+                    title = { Text(stringResource(R.string.set_quick_picks)) },
+                    description = {
+                        Text(
+                            when (quickPicks) {
+                                QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
+                                QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
+                            }
+                        )
+                    },
+                    onClick = { showQuickPicksDialog = true }
                 ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.shuffle),
+                    title = { Text(stringResource(R.string.randomize_home_order)) },
+                    description = { Text(stringResource(R.string.randomize_home_order_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = randomizeHomeOrder,
+                            onCheckedChange = onRandomizeHomeOrderChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (randomizeHomeOrder) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onRandomizeHomeOrderChange(!randomizeHomeOrder) }
+                )
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.content_filters_section),
+            items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.explicit),
                     title = { Text(stringResource(R.string.hide_explicit)) },
@@ -516,7 +586,7 @@ fun ContentSettings(
                     },
                     onClick = { onHideYoutubeShortsChange(!hideYoutubeShorts) }
                 )
-            )
+            ),
         )
 
         Spacer(modifier = Modifier.height(27.dp))
@@ -611,40 +681,75 @@ fun ContentSettings(
         Spacer(modifier = Modifier.height(27.dp))
 
         Material3SettingsGroup(
-            title = stringResource(R.string.app_language),
+            title = stringResource(R.string.content_statistics_section),
             items = listOf(
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.language),
-                        title = { Text(stringResource(R.string.app_language)) },
-                        onClick = {
-                            context.startActivity(
-                                Intent(
-                                    Settings.ACTION_APP_LOCALE_SETTINGS,
-                                    "package:${context.packageName}".toUri()
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.trending_up),
+                    title = { Text(stringResource(R.string.show_wrapped_card)) },
+                    trailingContent = {
+                        Switch(
+                            checked = showWrappedCard,
+                            onCheckedChange = onShowWrappedCardChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (showWrappedCard) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
                                 )
-                            )
-                        }
-                    )
-                } else {
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.language),
-                        title = { Text(stringResource(R.string.app_language)) },
-                        description = {
-                            Text(
-                                LanguageCodeToName.getOrElse(appLanguage) { stringResource(R.string.system_default) }
-                            )
-                        },
-                        onClick = { showAppLanguageDialog = true }
-                    )
-                }
-            )
+                            }
+                        )
+                    },
+                    onClick = { onShowWrappedCardChange(!showWrappedCard) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.stats),
+                    title = { Text(stringResource(R.string.show_most_stats_playlists)) },
+                    description = { Text(stringResource(R.string.show_most_stats_playlists_desc)) },
+                    trailingContent = {
+                        Switch(
+                            checked = showMostStatsPlaylists,
+                            onCheckedChange = onShowMostStatsPlaylistsChange,
+                            thumbContent = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = if (showMostStatsPlaylists) R.drawable.check else R.drawable.close
+                                    ),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(SwitchDefaults.IconSize)
+                                )
+                            }
+                        )
+                    },
+                    onClick = { onShowMostStatsPlaylistsChange(!showMostStatsPlaylists) }
+                ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.trending_up),
+                    title = { Text(stringResource(R.string.content_top_length)) },
+                    description = { Text(lengthTop) },
+                    onClick = { showTopLengthDialog = true }
+                )
+            ),
         )
 
         Spacer(modifier = Modifier.height(27.dp))
 
         Material3SettingsGroup(
-            title = stringResource(R.string.proxy),
+            title = stringResource(R.string.content_devices_section),
+            items = listOf(
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.ic_android_auto),
+                    title = { Text(stringResource(R.string.android_auto)) },
+                    onClick = { navController.navigate("settings/android_auto") }
+                )
+            ),
+        )
+
+        Spacer(modifier = Modifier.height(27.dp))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.content_network_section),
             items = buildList {
                 add(
                     Material3SettingsItem(
@@ -678,103 +783,6 @@ fun ContentSettings(
                     )
                 }
             }
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = "Wrapped",
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.stats),
-                    title = { Text(stringResource(R.string.show_most_stats_playlists)) },
-                    description = { Text(stringResource(R.string.show_most_stats_playlists_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = showMostStatsPlaylists,
-                            onCheckedChange = onShowMostStatsPlaylistsChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (showMostStatsPlaylists) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onShowMostStatsPlaylistsChange(!showMostStatsPlaylists) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.trending_up),
-                    title = { Text(stringResource(R.string.show_wrapped_card)) },
-                    trailingContent = {
-                        Switch(
-                            checked = showWrappedCard,
-                            onCheckedChange = onShowWrappedCardChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (showWrappedCard) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onShowWrappedCardChange(!showWrappedCard) }
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(27.dp))
-
-        Material3SettingsGroup(
-            title = stringResource(R.string.misc),
-            items = listOf(
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.shuffle),
-                    title = { Text(stringResource(R.string.randomize_home_order)) },
-                    description = { Text(stringResource(R.string.randomize_home_order_desc)) },
-                    trailingContent = {
-                        Switch(
-                            checked = randomizeHomeOrder,
-                            onCheckedChange = onRandomizeHomeOrderChange,
-                            thumbContent = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = if (randomizeHomeOrder) R.drawable.check else R.drawable.close
-                                    ),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(SwitchDefaults.IconSize)
-                                )
-                            }
-                        )
-                    },
-                    onClick = { onRandomizeHomeOrderChange(!randomizeHomeOrder) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.trending_up),
-                    title = { Text(stringResource(R.string.top_length)) },
-                    description = { Text(lengthTop) },
-                    onClick = { showTopLengthDialog = true }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.home_outlined),
-                    title = { Text(stringResource(R.string.set_quick_picks)) },
-                    description = {
-                        Text(
-                            when (quickPicks) {
-                                QuickPicks.QUICK_PICKS -> stringResource(R.string.quick_picks)
-                                QuickPicks.LAST_LISTEN -> stringResource(R.string.last_song_listened)
-                            }
-                        )
-                    },
-                    onClick = { showQuickPicksDialog = true }
-                )
-            )
         )
         Spacer(modifier = Modifier.height(16.dp))
     }

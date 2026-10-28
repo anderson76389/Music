@@ -3159,17 +3159,19 @@ class MusicService :
         }
     }
 
-    private fun createCacheDataSource(includeDownloads: Boolean = true): CacheDataSource.Factory {
-        val streaming = CacheDataSource.Factory().setCache(playerCache)
-            .setUpstreamDataSourceFactory(DefaultDataSource.Factory(this,
-                OkHttpDataSource.Factory(OkHttpClient.Builder().proxy(YouTube.proxy)
-                    .proxyAuthenticator { _, response ->
-                        YouTube.proxyAuth?.let { auth -> response.request.newBuilder()
-                            .header("Proxy-Authorization", auth).build() } ?: response.request
-                    }.build())))
-        return if (includeDownloads) CacheDataSource.Factory().setCache(downloadCache)
-            .setUpstreamDataSourceFactory(streaming).setCacheWriteDataSinkFactory(null)
-            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR) else streaming
+    private fun createCacheDataSource(includeDownloads: Boolean = true): DataSource.Factory = DataSource.Factory {
+        val network = DefaultDataSource.Factory(this,
+            OkHttpDataSource.Factory(OkHttpClient.Builder().proxy(YouTube.proxy)
+                .proxyAuthenticator { _, response ->
+                    YouTube.proxyAuth?.let { auth -> response.request.newBuilder()
+                        .header("Proxy-Authorization", auth).build() } ?: response.request
+                }.build()))
+        val useStreamingCache = dataStore.get(EnableSongCacheKey, true) && dataStore.get(fr.makoff.music.constants.MaxSongCacheSizeKey, 1024) != 0
+        val upstream: DataSource.Factory = if (useStreamingCache) CacheDataSource.Factory().setCache(playerCache)
+            .setUpstreamDataSourceFactory(network) else network
+        (if (includeDownloads) CacheDataSource.Factory().setCache(downloadCache)
+            .setUpstreamDataSourceFactory(upstream).setCacheWriteDataSinkFactory(null)
+            .setFlags(FLAG_IGNORE_CACHE_ON_ERROR) else upstream).createDataSource()
     }
 
     private var isSilenceSkipping = false

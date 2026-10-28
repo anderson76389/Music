@@ -1,5 +1,6 @@
 package fr.makoff.music.settings
 
+import coil3.imageLoader
 import android.app.Activity
 import android.content.Intent
 import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
@@ -472,7 +473,7 @@ class SettingsNavigationTest {
         }
     }
 
-    @Test(timeout = 540000) fun settingsRoutesAndPlayerPreferences() {
+    @Test(timeout = 900000) fun settingsRoutesAndPlayerPreferences() {
         assertEquals("Apple Music", context.applicationInfo.loadLabel(context.packageManager).toString())
         context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
         val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 20000)
@@ -526,6 +527,66 @@ class SettingsNavigationTest {
                 R.string.appearance -> {
                     toggleAndRestore(R.string.liquid_glass_theme, LiquidGlassEnabledKey, false)
                     println("GLASS_SWITCH_OK: enabled and disabled from settings, preference persisted")
+                    listOf(
+                        Triple(R.string.enable_high_refresh_rate, EnableHighRefreshRateKey, true),
+                        Triple(R.string.enable_landscape_scaling, EnableLandscapeScalingKey, false),
+                        Triple(R.string.new_mini_player_design, UseNewMiniPlayerDesignKey, true),
+                        Triple(R.string.new_player_design, UseNewPlayerDesignKey, true),
+                        Triple(R.string.hide_player_thumbnail, HidePlayerThumbnailKey, false),
+                        Triple(R.string.crop_album_art, CropAlbumArtKey, false),
+                        Triple(R.string.enable_swipe_thumbnail, SwipeThumbnailKey, true),
+                        Triple(R.string.swipe_song_to_add, SwipeToSongKey, false),
+                        Triple(R.string.swipe_song_to_remove, SwipeToRemoveSongKey, false),
+                        Triple(R.string.force_bottom_navbar, ForceBottomNavBarKey, false),
+                        Triple(R.string.slim_navbar, SlimNavBarKey, false),
+                        Triple(R.string.show_liked_playlist, ShowLikedPlaylistKey, true),
+                        Triple(R.string.show_downloaded_playlist, ShowDownloadedPlaylistKey, true),
+                        Triple(R.string.show_top_playlist, ShowTopPlaylistKey, true),
+                        Triple(R.string.show_cached_playlist, ShowCachedPlaylistKey, true),
+                        Triple(R.string.show_uploaded_playlist, ShowUploadedPlaylistKey, true),
+                    ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
+                    if (android.os.Build.VERSION.SDK_INT >= 31) {
+                        toggleAndRestore(R.string.enable_dynamic_theme, DynamicThemeKey, true)
+                    }
+                    val appearanceBefore = runBlocking { context.dataStore.data.first() }
+                    try {
+                        val alias = android.content.ComponentName(context, "fr.makoff.music.MainActivityAlias")
+                        for (enabled in listOf(!(appearanceBefore[EnableDynamicIconKey] ?: true), appearanceBefore[EnableDynamicIconKey] ?: true)) {
+                            open(R.string.enable_dynamic_icon)
+                            awaitPreference("Icon preference changed") { context.dataStore.data.first()[EnableDynamicIconKey] == enabled }
+                            awaitPreference("Launcher alias must actually change") {
+                                context.packageManager.getComponentEnabledSetting(alias) == if (enabled)
+                                    android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED else android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED
+                            }
+                        }
+                        val choices = listOf(
+                            Triple(R.string.player_background_style, R.string.gradient, PlayerBackgroundStyleKey to "GRADIENT"),
+                            Triple(R.string.mini_player_background_style, R.string.gradient, MiniPlayerBackgroundStyleKey to "GRADIENT"),
+                            Triple(R.string.player_buttons_style, R.string.primary_color_style, PlayerButtonsStyleKey to "PRIMARY"),
+                            Triple(R.string.default_open_tab, R.string.filter_library, DefaultOpenTabKey to "LIBRARY"),
+                            Triple(R.string.default_lib_chips, R.string.albums, ChipSortTypeKey to "ALBUMS"),
+                            Triple(R.string.grid_cell_size, R.string.big, GridItemsSizeKey to "BIG"),
+                        )
+                        for ((row, choice, preference) in choices) {
+                            open(row); open(choice)
+                            awaitPreference("Appearance selection ${preference.first.name}") {
+                                context.dataStore.data.first()[preference.first] == preference.second
+                            }
+                        }
+                        open(R.string.player_slider_style); open(R.string.slim)
+                        awaitPreference("Slim slider selected") { context.dataStore.data.first()[SliderStyleKey] == "SLIM" }
+                        open(R.string.display_density); findText(DensityScale.NATIVE.label); device.pressBack()
+                        open(R.string.swipe_sensitivity); open(android.R.string.cancel)
+                        println("APPEARANCE_ACTIONS_OK: all visible switches, six selectors, slider style, density and sensitivity dialogs; actual launcher alias change")
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs ->
+                            for (key in listOf(PlayerBackgroundStyleKey, MiniPlayerBackgroundStyleKey, PlayerButtonsStyleKey, DefaultOpenTabKey, ChipSortTypeKey, GridItemsSizeKey, SliderStyleKey)) {
+                                appearanceBefore[key]?.let { prefs[key] = it } ?: prefs.remove(key)
+                            }
+                            appearanceBefore[EnableDynamicIconKey]?.let { prefs[EnableDynamicIconKey] = it } ?: prefs.remove(EnableDynamicIconKey)
+                            appearanceBefore[SquigglySliderKey]?.let { prefs[SquigglySliderKey] = it } ?: prefs.remove(SquigglySliderKey)
+                        } }
+                    }
                     open(R.string.theme_colors)
                     device.pressBack()
                     device.waitForIdle()
@@ -628,6 +689,10 @@ class SettingsNavigationTest {
                     device.pressBack()
                     device.waitForIdle()
                     println("SETTINGS_ANDROID_AUTO_OK: content route opens Android Auto")
+                    listOf(R.string.content_locale_section, R.string.content_home_section, R.string.content_filters_section,
+                        R.string.playlists, R.string.artist_page_settings, R.string.content_statistics_section,
+                        R.string.content_devices_section, R.string.content_network_section).forEach { findText(it) }
+                    println("CONTENT_SECTIONS_OK: languages, home, filters, playlists, artists, statistics, devices and network accessible")
                     listOf(
                     Triple(R.string.hide_explicit, HideExplicitKey, false),
                     Triple(R.string.hide_video_songs, HideVideoSongsKey, false),
@@ -708,4 +773,44 @@ class SettingsNavigationTest {
         }
         assertNoRemovedEntries()
     }
+    @Test(timeout = 180000) fun storageCacheActionsReallyClearAndReconfigure() = runBlocking {
+        val before = context.dataStore.data.first()
+        val downloads = fr.makoff.music.downloads.FolderAudioDownloads.downloadUtil(context)
+        val key = "storage-ui-cache"
+        try {
+            context.dataStore.edit { it[MaxImageCacheSizeKey] = 128; it[MaxSongCacheSizeKey] = 128 }
+            context.startActivity(Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
+            val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 15000)
+            assertNotNull(account); account!!.click(); open(R.string.settings); open(R.string.storage)
+            awaitPreference("Live image cache selected") { context.imageLoader.diskCache?.maxSize == 128L * 1024 * 1024 }
+            val disk = requireNotNull(context.imageLoader.diskCache)
+            val editor = requireNotNull(disk.openEditor(key))
+            editor.data.toFile().writeBytes(ByteArray(2048) { 1 })
+            editor.metadata.toFile().writeText("test")
+            editor.commit()
+            assertNotNull(disk.openSnapshot(key)?.also { it.close() })
+            open(R.string.clear_image_cache); open(android.R.string.ok)
+            awaitPreference("Clear image button must remove real disk entry") { disk.openSnapshot(key)?.also { it.close() } == null }
+            val hole = downloads.playerCache.startReadWrite(key, 0, 1024)
+            try {
+                val file = downloads.playerCache.startFile(key, 0, 1024)
+                file.writeBytes(ByteArray(1024) { 1 }); downloads.playerCache.commitFile(file, 1024)
+            } finally { downloads.playerCache.releaseHoleSpan(hole) }
+            open(R.string.clear_song_cache); open(android.R.string.ok)
+            awaitPreference("Clear audio button must remove real cache bytes") { downloads.playerCache.getCachedSpans(key).isEmpty() }
+            context.dataStore.edit { it[MaxImageCacheSizeKey] = 0 }
+            awaitPreference("Image disk cache disabled") { context.imageLoader.diskCache == null }
+            findText(R.string.downloaded_songs)
+            findText(R.string.action_backup)
+            context.dataStore.edit { it[MaxImageCacheSizeKey] = 256 }
+            awaitPreference("Image disk cache enabled with new limit") { context.imageLoader.diskCache?.maxSize == 256L * 1024 * 1024 }
+            findText(R.string.clear_image_cache)
+            println("STORAGE_REAL_ACTIONS_OK: image/audio clear buttons erase real entries; image cache 0 keeps Storage visible; 256 MB applies without restart")
+        } finally {
+            downloads.playerCache.removeResource(key)
+            context.dataStore.updateData { before }
+            resumedMainActivity()?.let { activity -> instrumentation.runOnMainSync { activity.finish() } }
+        }
+    }
+
 }

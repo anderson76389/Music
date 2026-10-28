@@ -60,7 +60,7 @@ for variant in foss gms; do
     grep -Eq 'OK \(1 test\)' smoke-results/restore-verify.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/restore-verify.txt
     adb logcat -d > smoke-results/backup-restore-logcat.txt
-    timeout 660s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
+    timeout 1200s adb shell am instrument -w -r -e class fr.makoff.music.settings.SettingsNavigationTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/settings-navigation-tests.txt
     adb pull /data/local/tmp/settings-failure.png smoke-results/ || true
     adb pull /data/local/tmp/settings-glass.png smoke-results/ || true
     adb pull /data/local/tmp/glass-settings-enabled.png smoke-results/ || true

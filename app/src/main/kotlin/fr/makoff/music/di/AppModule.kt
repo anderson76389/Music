@@ -9,7 +9,11 @@ import android.content.Context
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.Cache
-import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import fr.makoff.music.playback.ResizableCacheEvictor
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.launch
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import fr.makoff.music.constants.MaxSongCacheSizeKey
@@ -68,17 +72,18 @@ object AppModule {
     fun providePlayerCache(
         @ApplicationContext context: Context,
         databaseProvider: DatabaseProvider,
+        @ApplicationScope scope: CoroutineScope,
     ): Cache {
         val cacheSize = context.dataStore[MaxSongCacheSizeKey] ?: 1024
-        val evictor = when (cacheSize) {
-            -1 -> NoOpCacheEvictor()
-            else -> LeastRecentlyUsedCacheEvictor(cacheSize * 1024 * 1024L)
+        fun limit(size: Int) = if (size == -1) Long.MAX_VALUE else size.coerceAtLeast(0) * 1024 * 1024L
+        val evictor = ResizableCacheEvictor(limit(cacheSize))
+        val cache = SimpleCache(context.filesDir.resolve("exoplayer"), evictor, databaseProvider)
+        scope.launch(Dispatchers.IO) {
+            context.dataStore.data.map { it[MaxSongCacheSizeKey] ?: 1024 }.distinctUntilChanged().collect {
+                evictor.resize(cache, limit(it))
+            }
         }
-        return SimpleCache(
-            context.filesDir.resolve("exoplayer"),
-            evictor,
-            databaseProvider,
-        )
+        return cache
     }
 
     @Singleton

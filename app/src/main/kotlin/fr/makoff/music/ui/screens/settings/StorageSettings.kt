@@ -71,6 +71,7 @@ import fr.makoff.music.ui.component.Material3SettingsItem
 import android.text.format.Formatter
 import fr.makoff.music.ui.utils.backToMain
 import fr.makoff.music.utils.rememberPreference
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -87,11 +88,11 @@ fun StorageSettings(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
-    val imageDiskCache = context.imageLoader.diskCache ?: return
-    val playerCache = LocalPlayerConnection.current?.service?.playerCache ?: return
-    val downloadCache = LocalPlayerConnection.current?.service?.downloadCache ?: return
-
     val downloads = remember(context) { FolderAudioDownloads.downloadUtil(context) }
+    var imageLoader by remember { mutableStateOf(context.imageLoader) }
+    val imageDiskCache = imageLoader.diskCache
+    val playerCache = downloads.playerCache
+    val downloadCache = downloads.downloadCache
     val downloadStates by downloads.downloads.collectAsState()
     val downloadedCount = downloadStates.values.count { it.state == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED }
     val coroutineScope = rememberCoroutineScope()
@@ -123,7 +124,7 @@ fun StorageSettings(
     var onConfirmAction by remember { mutableStateOf<() -> Unit>({}) }
 
     var imageCacheSize by remember {
-        androidx.compose.runtime.mutableLongStateOf(imageDiskCache.size)
+        androidx.compose.runtime.mutableLongStateOf(imageDiskCache?.size ?: 0L)
     }
     var playerCacheSize by remember {
         androidx.compose.runtime.mutableLongStateOf(tryOrNull { playerCache.cacheSpace } ?: 0)
@@ -133,35 +134,24 @@ fun StorageSettings(
     }
     val imageCacheProgress by animateFloatAsState(
         targetValue =
-            (imageCacheSize.toFloat() / (maxImageCacheSize * 1024 * 1024L)).coerceIn(
-                0f,
-                1f,
-            ),
+            if (maxImageCacheSize <= 0) 0f else (imageCacheSize.toFloat() / (maxImageCacheSize * 1024 * 1024L)).coerceIn(0f, 1f),
         label = "imageCacheProgress",
     )
     val playerCacheProgress by animateFloatAsState(
         targetValue =
-            (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(
-                0f,
-                1f,
-            ),
+            if (maxSongCacheSize <= 0) 0f else (playerCacheSize.toFloat() / (maxSongCacheSize * 1024 * 1024L)).coerceIn(0f, 1f),
         label = "playerCacheProgress",
     )
 
     LaunchedEffect(maxImageCacheSize) {
-        SingletonImageLoader.reset()
-        if (maxImageCacheSize == 0) {
-            coroutineScope.launch(Dispatchers.IO) {
-                imageDiskCache.clear()
-            }
-        }
-    }
-    LaunchedEffect(maxSongCacheSize) {
-        if (maxSongCacheSize == 0) {
-            coroutineScope.launch(Dispatchers.IO) {
-                playerCache.keys.forEach { key ->
-                    playerCache.removeResource(key)
-                }
+        val desired = maxImageCacheSize.coerceAtLeast(0) * 1024 * 1024L
+        if ((imageDiskCache?.maxSize ?: 0L) != desired) {
+            val previous = imageLoader
+            imageLoader = withContext(Dispatchers.IO) {
+                if (desired == 0L) previous.diskCache?.clear()
+                previous.diskCache?.shutdown()
+                SingletonImageLoader.reset()
+                context.imageLoader
             }
         }
     }
@@ -169,7 +159,7 @@ fun StorageSettings(
     LaunchedEffect(imageDiskCache) {
         while (isActive) {
             delay(500)
-            imageCacheSize = imageDiskCache.size
+            imageCacheSize = imageDiskCache?.size ?: 0L
         }
     }
     LaunchedEffect(playerCache) {
@@ -241,35 +231,14 @@ fun StorageSettings(
             onDismiss = { clearImageCacheDialog = false },
             onConfirm = {
                 coroutineScope.launch(Dispatchers.IO) {
-                    val urlsToPreserve = mutableSetOf<String>()
-                    val downloadedSongs =
-                        try {
-                            database.downloadedSongsByNameAsc().first()
-                        } catch (e: Exception) {
-                            emptyList()
-                        }
-                    downloadedSongs.forEach { song ->
-                        song.song.thumbnailUrl?.let { urlsToPreserve.add(it.encodeUtf8().sha256().hex()) }
-                        song.album?.thumbnailUrl?.let { urlsToPreserve.add(it.encodeUtf8().sha256().hex()) }
-                    }
-                    val directory = imageDiskCache.directory.toFile()
-                    if (directory.exists() && directory.isDirectory) {
-                        directory.listFiles()?.forEach { file ->
-                            if (file.isFile && !file.name.startsWith("journal")) {
-                                val isPreserved = urlsToPreserve.any { hash -> file.name.startsWith(hash) }
-                                if (!isPreserved) {
-                                    file.delete()
-                                }
-                            }
-                        }
-                    }
-                    imageDiskCache.clear()
+                    imageDiskCache?.clear()
+                    imageLoader.memoryCache?.clear()
                 }
                 clearImageCacheDialog = false
             },
             onCancel = { clearImageCacheDialog = false },
             content = {
-                Text(text = stringResource(R.string.clear_image_cache_dialog))
+                Text(text = stringResource(R.string.clear_image_cache_actual_help))
             },
         )
     }
@@ -391,7 +360,7 @@ fun StorageSettings(
                                 }
                             )
                             Slider(
-                                value = songCacheValues.indexOf(maxSongCacheSize).toFloat(),
+                                value = songCacheValues.indexOf(maxSongCacheSize).coerceAtLeast(0).toFloat(),
                                 enabled = enableSongCache,
                                 onValueChange = {
                                     val newValue = songCacheValues[it.roundToInt()]
@@ -464,7 +433,7 @@ fun StorageSettings(
                                         },
                                 )
                                 Slider(
-                                    value = imageCacheValues.indexOf(maxImageCacheSize).toFloat(),
+                                    value = imageCacheValues.indexOf(maxImageCacheSize).coerceAtLeast(0).toFloat(),
                                     onValueChange = {
                                         val newValue = imageCacheValues[it.roundToInt()]
                                         val newLimitInBytes = newValue * 1024 * 1024L
