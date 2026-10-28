@@ -306,6 +306,7 @@ class App :
                         .build()
                 }
                 if (cacheSize == 0) {
+                    diskCache(null)
                     diskCachePolicy(CachePolicy.DISABLED)
                 } else {
                     diskCache(
