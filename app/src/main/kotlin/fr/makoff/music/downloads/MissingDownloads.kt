@@ -65,7 +65,5 @@ internal suspend fun cleanMissingDownloads(context: Context, downloads: Download
         prefs[AutoLikedDownloads.SKIPPED] = prefs[AutoLikedDownloads.SKIPPED].orEmpty() + ids + historyIds
     }
     val removed = missingSongs.count { downloads.forgetMissingDownload(it) }
-    removed + missingJobs.count { work ->
-        work.tags.none { tag -> tag.startsWith(FolderAudioDownloads.SONG_TAG) && tag.removePrefix(FolderAudioDownloads.SONG_TAG) in ids }
-    }
+    removed + missingJobs.size
 }
