@@ -27,6 +27,7 @@ for variant in foss gms; do
   if [ "$variant" = gms ] && [ -d apk-tests ]; then
     adb install apk-tests/*.apk
     timeout 300s adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
+    adb pull /data/local/tmp/download-quality-popup.png smoke-results/ || true
     adb logcat -d > smoke-results/folder-audio-logcat.txt
     grep -Eq 'OK \([0-9]+ tests?\)' smoke-results/yt-dlp-saf-tests.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/yt-dlp-saf-tests.txt

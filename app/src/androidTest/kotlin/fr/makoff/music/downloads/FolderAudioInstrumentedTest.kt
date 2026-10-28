@@ -45,6 +45,12 @@ class FolderAudioInstrumentedTest {
         val preferences = context.dataStore.data.first()
         val device = androidx.test.uiautomator.UiDevice.getInstance(instrumentation)
         val sourceFiles = mutableListOf<File>()
+        val cover = File(context.cacheDir, "popup-cover-${UUID.randomUUID()}.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.BLUE)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 90, it) }
+        bitmap.recycle()
+        sourceFiles += cover
         val documents = mutableListOf<android.net.Uri>()
         val ids = mutableListOf<String>()
         var activity: fr.makoff.music.MainActivity? = null
@@ -88,7 +94,8 @@ class FolderAudioInstrumentedTest {
                 ids += id
                 val albumTitle = "Album popup $id"
                 val media = fr.makoff.music.models.MediaMetadata(id, "Popup format $id", emptyList(), 1,
-                    album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle))
+                    album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle),
+                    thumbnailUrl = android.net.Uri.fromFile(cover).toString())
                 val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
@@ -115,6 +122,7 @@ class FolderAudioInstrumentedTest {
                 assertTrue("Opening the popup must not queue a download", androidx.work.WorkManager.getInstance(context)
                     .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
                 if (index == 0) {
+                    device.executeShellCommand("screencap -p /data/local/tmp/download-quality-popup.png")
                     click(android.R.string.cancel)
                     assertTrue("Cancel must not queue a download", androidx.work.WorkManager.getInstance(context)
                         .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
