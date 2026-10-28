@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -80,7 +81,7 @@ fun DefaultDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
+            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
             shape = AlertDialogDefaults.shape,
             color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,
@@ -162,13 +163,14 @@ fun AccountSettingsDialog(
                             onTap = { onDismiss() }
                         )
                     },
-            contentAlignment = Alignment.TopCenter,
+            contentAlignment = Alignment.Center,
         ) {
             Surface(
                 modifier =
                     Modifier
+                        .padding(16.dp)
+                        .widthIn(max = 560.dp)
                         .fillMaxWidth()
-                        .padding(top = 72.dp, start = 16.dp, end = 16.dp)
                         .clip(RoundedCornerShape(28.dp))
                         .liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
                 shape = MaterialTheme.shapes.large,
@@ -254,7 +256,7 @@ fun ListDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier.padding(24.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
+            modifier = Modifier.padding(24.dp).widthIn(max = 560.dp).liquidGlass(RoundedCornerShape(28.dp), chrome = true, readable = true),
             shape = AlertDialogDefaults.shape,
             color = if (LocalLiquidGlassEnabled.current) Color.Transparent else AlertDialogDefaults.containerColor,
             tonalElevation = AlertDialogDefaults.TonalElevation,

@@ -18,7 +18,8 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /** Write portable tags and cover art without decoding/re-encoding the audio packets. */
-internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File): File {
+internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File,
+    releaseYear: Int? = media.album?.year): File {
     val thumbnailUrls = exportArtworkUrls(media.thumbnailUrl, media.id)
     var cover: Cover? = null
     for (url in thumbnailUrls) {
@@ -90,6 +91,7 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         tag("title", media.title)
         tag("artist", media.artists.joinToString { it.name })
         tag("album", media.album?.title)
+        releaseYear?.takeIf { it in 1..9999 }?.let { tag("date", it.toString().padStart(4, '0')) }
         if (track > 0) tag("track", track.toString())
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")

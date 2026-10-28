@@ -24,11 +24,10 @@ internal fun documentIsMissing(context: Context, uri: Uri): Boolean = runCatchin
     val rootAvailable = context.contentResolver.query(root, projection, null, null, null)?.use { it.moveToFirst() } == true
     if (!rootAvailable) return false
     val row = runCatching { context.contentResolver.query(uri, projection, null, null, null)?.use { it.moveToFirst() } }.getOrNull()
-    if (row == false) return true
-    if (row == true) return false
     try {
-        context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { }
-        false
+        // Some providers keep a cached row after deletion; verify the actual file too.
+        val readable = context.contentResolver.openAssetFileDescriptor(uri, "r")?.use { true } == true
+        !readable && row == false
     } catch (_: java.io.FileNotFoundException) {
         true
     }
@@ -48,15 +47,26 @@ internal suspend fun cleanMissingDownloads(context: Context, downloads: Download
             else -> false
         }
     }
+    val activeIds = jobs.filter { !it.state.isFinished }.flatMap { it.tags }
+        .filter { it.startsWith(FolderAudioDownloads.SONG_TAG) }
+        .map { it.removePrefix(FolderAudioDownloads.SONG_TAG) }.toSet()
     val missingSongs = downloads.downloads.value.values.filter { download ->
-        download.state == Download.STATE_COMPLETED && if (download.request.uri.scheme == "content") {
+        download.request.id !in activeIds && download.state == Download.STATE_COMPLETED && if (download.request.uri.scheme == "content") {
             documentIsMissing(context, download.request.uri)
         } else {
             val size = download.contentLength
-            size > 0 && !downloads.downloadCache.isCached(download.request.id, 0, size)
+            val key = download.request.customCacheKey ?: download.request.id
+            if (size > 0) !downloads.downloadCache.isCached(key, 0, size)
+            else downloads.downloadCache.getCachedSpans(key).isEmpty()
         }
     }
-    val ids = missingSongs.map { it.request.id }.toSet()
+    // A pruned index can leave the library's downloaded flag behind.
+    val staleSongs = (downloads.database.downloadedSongsByCreateDateAsc().first() +
+        downloads.database.downloadedPodcastEpisodesByCreateDateAsc().first()).filter {
+        it.id !in activeIds && it.id !in downloads.downloads.value &&
+            downloads.downloadManager.downloadIndex.getDownload(it.id) == null
+    }
+    val ids = missingSongs.map { it.request.id }.toSet() + staleSongs.map { it.id }
     val historyIds = missingJobs.flatMap { it.tags }.filter { it.startsWith(FolderAudioDownloads.SONG_TAG) }
         .map { it.removePrefix(FolderAudioDownloads.SONG_TAG) }.toSet()
     context.dataStore.edit { prefs ->
@@ -65,5 +75,9 @@ internal suspend fun cleanMissingDownloads(context: Context, downloads: Download
         prefs[AutoLikedDownloads.SKIPPED] = prefs[AutoLikedDownloads.SKIPPED].orEmpty() + ids + historyIds
     }
     val removed = missingSongs.count { downloads.forgetMissingDownload(it) }
-    removed + missingJobs.size
+    val staleRemoved = staleSongs.count {
+        if (it.id in downloads.downloads.value || downloads.downloadManager.downloadIndex.getDownload(it.id) != null) false
+        else { downloads.database.updateDownloadedInfo(it.id, false, null); true }
+    }
+    removed + staleRemoved + missingJobs.size
 }

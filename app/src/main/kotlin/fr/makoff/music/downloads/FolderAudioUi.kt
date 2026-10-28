@@ -133,6 +133,7 @@ fun FolderAudioHistory() {
         scope.launch {
             try {
                 val count = cleanMissingDownloads(context, FolderAudioDownloads.downloadUtil(context))
+                jobs = withContext(Dispatchers.IO) { manager.getWorkInfosByTag(FolderAudioDownloads.TAG).get() }
                 Toast.makeText(context, context.getString(R.string.download_missing_cleaned, count), Toast.LENGTH_LONG).show()
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled

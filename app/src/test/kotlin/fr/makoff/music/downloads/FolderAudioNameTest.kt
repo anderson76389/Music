@@ -2,8 +2,18 @@ package fr.makoff.music.downloads
 
 import org.junit.Assert.*
 import org.junit.Test
+import fr.makoff.music.models.toMediaMetadata
 
 class FolderAudioNameTest {
+    @Test fun albumYearSurvivesPlayerAndDownloadMetadataConversions() {
+        val song = fr.makoff.music.innertube.models.SongItem("BaW_jenozKc", "Title", emptyList(),
+            album = fr.makoff.music.innertube.models.Album("Album", "album-id", 2023), thumbnail = "")
+        val metadata = song.toMediaMetadata()
+        assertEquals(2023, metadata.album?.year)
+        assertEquals(2023, metadata.toYTItem().album?.year)
+        assertNull(song.copy(album = song.album!!.copy(year = null)).toMediaMetadata().album?.year)
+    }
+
     @Test fun likedDownloadsKeepTheirOwnFolderEvenWhenTheSongHasAnAlbum() {
         assertEquals(listOf("J'aime"), audioDestinationFolders(emptyList(), liked = true))
         assertEquals(listOf("J'aime"), audioDestinationFolders(listOf("Sélections", "Titres"), liked = true))

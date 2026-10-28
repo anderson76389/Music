@@ -95,7 +95,7 @@ class FolderAudioInstrumentedTest {
                 val albumTitle = "Album popup $id"
                 val media = fr.makoff.music.models.MediaMetadata(id, "Popup format $id",
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
-                    album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle),
+                    album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
                 val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
@@ -181,6 +181,12 @@ class FolderAudioInstrumentedTest {
                     }, actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
+                val tags = android.media.MediaMetadataRetriever()
+                try {
+                    tags.setDataSource(context, uri)
+                    assertEquals("Release year survives the actual worker and playlist/album exports", "2023",
+                        tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR))
+                } finally { tags.release() }
                 println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${when (index) { 3 -> "playlist"; 5 -> "album"; else -> "Audio" }} folder and shared offline source")
             }
         } finally {
@@ -215,7 +221,7 @@ class FolderAudioInstrumentedTest {
         val media = fr.makoff.music.models.MediaMetadata("BaW_jenozKc", title,
             listOf(fr.makoff.music.models.MediaMetadata.Artist("test", "Audio artist")), 1,
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
-            album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album"))
+            album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album", 2023))
         try {
             for (format in DownloadAudioFormat.entries) {
                 val dir = File(root, format.name).apply { mkdirs() }
@@ -233,6 +239,8 @@ class FolderAudioInstrumentedTest {
                         assertEquals(title, retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_TITLE))
                         assertEquals("Audio artist", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ARTIST))
                         assertEquals("Audio album", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_ALBUM))
+                        assertEquals("Portable release year for ${tagged.extension}", "2023",
+                            retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR))
                         assertEquals("2", retriever.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_CD_TRACK_NUMBER)?.substringBefore('/'))
                         val picture = requireNotNull(retriever.embeddedPicture) { "Embedded cover for ${tagged.extension}" }
                         assertTrue("Detailed artwork must not be degraded to the old 64 KB limit", picture.size > 64000)
@@ -325,7 +333,7 @@ class FolderAudioInstrumentedTest {
         val requests = mutableListOf<java.util.UUID>()
         try {
             val root = requireNotNull(DocumentFile.fromTreeUri(context, tree))
-            for (prefix in listOf("query-null", "query-error", "query-denied")) {
+            for (prefix in listOf("query-null", "query-error", "query-stale", "query-denied")) {
                 val document = requireNotNull(root.createFile("audio/mp4", "$prefix-${UUID.randomUUID()}.m4a"))
                 if (prefix != "query-denied") {
                     DocumentsContract.deleteDocument(context.contentResolver, document.uri)
@@ -409,8 +417,9 @@ class FolderAudioInstrumentedTest {
 
     @Test(timeout = 90000) fun missingDownloadCleanupKeepsReadableFilesAndLibrary() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
+        var activity: fr.makoff.music.MainActivity? = null
         val before = context.dataStore.data.first()
-        val tracks = (0..3).map { index -> fr.makoff.music.models.MediaMetadata(
+        val tracks = (0..4).map { index -> fr.makoff.music.models.MediaMetadata(
             UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1) }
         val source = File(context.cacheDir, "missing-cleanup.m4a").apply { writeBytes(android.util.Base64.decode(
             instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
@@ -440,7 +449,9 @@ class FolderAudioInstrumentedTest {
             assertTrue(documentIsMissing(context, exported))
             assertFalse("Unavailable provider must be preserved", documentIsMissing(context,
                 android.net.Uri.parse("content://missing.invalid/tree/root/document/deleted")))
-            for ((index, track) in tracks.withIndex().filter { it.index >= 2 }) {
+            downloads.database.insert(tracks[4])
+            downloads.database.updateDownloadedInfo(tracks[4].id, true, java.time.LocalDateTime.now())
+            for ((index, track) in tracks.withIndex().filter { it.index in 2..3 }) {
                 downloads.database.insert(track)
                 if (index == 3) {
                     val hole = downloads.downloadCache.startReadWrite(track.id, 0, source.length())
@@ -453,15 +464,48 @@ class FolderAudioInstrumentedTest {
                 val request = androidx.media3.exoplayer.offline.DownloadRequest.Builder(track.id, android.net.Uri.parse(track.id))
                     .setCustomCacheKey(track.id).build()
                 val completed = androidx.media3.exoplayer.offline.Download(request,
-                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, source.length(), 0, 0)
+                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1,
+                    if (index == 2) -1L else source.length(), 0, 0)
                 (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(completed)
                 downloads.downloads.value = downloads.downloads.value + (track.id to completed)
                 downloads.database.updateDownloadedInfo(track.id, true, java.time.LocalDateTime.now())
             }
-            assertTrue(cleanMissingDownloads(context, downloads) >= 2)
+            context.startActivity(android.content.Intent(context, fr.makoff.music.MainActivity::class.java)
+                .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
+            val activityDeadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (activity == null && android.os.SystemClock.elapsedRealtime() < activityDeadline) {
+                instrumentation.runOnMainSync {
+                    activity = androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry.getInstance()
+                        .getActivitiesInStage(androidx.test.runner.lifecycle.Stage.RESUMED)
+                        .filterIsInstance<fr.makoff.music.MainActivity>().firstOrNull()
+                }
+                kotlinx.coroutines.delay(100)
+            }
+            instrumentation.runOnMainSync {
+                requireNotNull(activity).setContent {
+                    androidx.compose.runtime.CompositionLocalProvider(fr.makoff.music.LocalDatabase provides downloads.database) {
+                        androidx.compose.material3.MaterialTheme {
+                            androidx.compose.foundation.layout.Column { FolderAudioHistory() }
+                        }
+                    }
+                }
+            }
+            val device = androidx.test.uiautomator.UiDevice.getInstance(instrumentation)
+            val button = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(
+                context.getString(fr.makoff.music.R.string.download_missing_clean))), 10000)
+            assertNotNull("Real cleanup button is visible", button)
+            button!!.click()
+            val cleanedDeadline = android.os.SystemClock.elapsedRealtime() + 15000
+            while (downloads.database.songEntity(missing.id)?.isDownloaded == true ||
+                downloads.database.songEntity(tracks[4].id)?.isDownloaded == true) {
+                check(android.os.SystemClock.elapsedRealtime() < cleanedDeadline) { "Cleanup button did not remove missing entries" }
+                kotlinx.coroutines.delay(100)
+            }
             assertNull(downloads.downloads.value[missing.id])
             assertNull(downloads.downloadManager.downloadIndex.getDownload(tracks[2].id))
             assertFalse(requireNotNull(downloads.database.songEntity(missing.id)).isDownloaded)
+            assertFalse("Stale library flag without any index entry is cleared",
+                requireNotNull(downloads.database.songEntity(tracks[4].id)).isDownloaded)
             assertTrue("Like and library metadata retained", requireNotNull(downloads.database.songEntity(missing.id)).liked)
             assertTrue(missing.id in context.dataStore.data.first()[AutoLikedDownloads.SKIPPED].orEmpty())
             assertTrue(work.id.toString() in context.dataStore.data.first()[HiddenDownloadHistory].orEmpty())
@@ -478,6 +522,7 @@ class FolderAudioInstrumentedTest {
                 downloads.database.songEntity(track.id)?.let { downloads.database.delete(it) }
             }
             source.delete()
+            instrumentation.runOnMainSync { activity?.finish() }
             context.dataStore.updateData { before }
         }
     }

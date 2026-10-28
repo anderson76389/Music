@@ -18,6 +18,7 @@ data class Artist(
 data class Album(
     val name: String,
     val id: String,
+    val year: Int? = null,
 )
 
 data class SongItem(

@@ -59,7 +59,7 @@ data class AlbumPage(
                 artists = artists,
                 album =
                     album?.let {
-                        Album(it.title, it.browseId)
+                        Album(it.title, it.browseId, it.year)
                     } ?: renderer.flexColumns.getOrNull(2)?.musicResponsiveListItemFlexColumnRenderer?.text?.runs?.firstOrNull()?.let {
                         Album(
                             name = it.text,

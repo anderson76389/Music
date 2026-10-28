@@ -56,6 +56,7 @@ data class MediaMetadata(
     data class Album(
         val id: String,
         val title: String,
+        val year: Int? = null,
     ) : Serializable {
         companion object {
             private const val serialVersionUID: Long = -7306862722420269406L
@@ -85,7 +86,7 @@ data class MediaMetadata(
         id = id,
         title = title,
         artists = artists.map { fr.makoff.music.innertube.models.Artist(name = it.name, id = it.id) },
-        album = album?.let { fr.makoff.music.innertube.models.Album(name = it.title, id = it.id) },
+        album = album?.let { fr.makoff.music.innertube.models.Album(name = it.title, id = it.id, year = it.year) },
         duration = duration,
         musicVideoType = musicVideoType,
         thumbnail = thumbnailUrl ?: "",
@@ -114,6 +115,7 @@ fun Song.toMediaMetadata() =
             MediaMetadata.Album(
                 id = it.id,
                 title = it.title,
+                year = it.year,
             )
         } ?: song.albumId?.let { albumId ->
             MediaMetadata.Album(
@@ -150,6 +152,7 @@ fun SongItem.toMediaMetadata() =
             MediaMetadata.Album(
                 id = it.id,
                 title = it.name,
+                year = it.year,
             )
         },
         explicit = explicit,

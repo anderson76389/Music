@@ -68,6 +68,7 @@ object FolderAudioDownloads {
                 "thumbnail" to media.thumbnailUrl.orEmpty().take(1500),
                 "albumId" to media.album?.id.orEmpty().take(100),
                 "albumTitle" to media.album?.title.orEmpty().take(200),
+                "albumYear" to (media.album?.year ?: 0),
                 "explicit" to media.explicit,
                 "tree" to tree.toString(),
                 "folders" to destination.toTypedArray(),
@@ -287,7 +288,15 @@ class FolderAudioWorker(context: Context, parameters: WorkerParameters) : Corout
                         applicationContext.dataStore.get(fr.makoff.music.constants.InnerTubeCookieKey, ""),
                         format = format, isExplicit = media.explicit,
                         progress = { })
-                val source = tagAudioFile(applicationContext, raw, media, inputData.getInt("track", 0), directory)
+                val albumId = media.album?.id
+                val year = media.album?.year ?: inputData.getInt("albumYear", 0).takeIf { it > 0 }
+                    ?: albumId?.let { downloads.database.albumEntity(it)?.year }
+                    ?: albumId?.let {
+                        kotlinx.coroutines.withTimeoutOrNull(5000) {
+                            fr.makoff.music.innertube.YouTube.album(it, withSongs = false).getOrNull()?.album?.year
+                        }
+                    }
+                val source = tagAudioFile(applicationContext, raw, media, inputData.getInt("track", 0), directory, year)
                 exporting = true
                 setProgress(workDataOf("copying" to true))
                 val name = audioFileName(title, source.extension)
