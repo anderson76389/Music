@@ -14,6 +14,7 @@ import fr.makoff.music.innertube.models.MusicResponsiveListItemRenderer
 import fr.makoff.music.innertube.models.MusicShelfRenderer
 import fr.makoff.music.innertube.models.MusicTwoRowItemRenderer
 import fr.makoff.music.innertube.models.PlaylistItem
+import fr.makoff.music.innertube.models.PlaylistPanelVideoRenderer
 import fr.makoff.music.innertube.models.PodcastItem
 import fr.makoff.music.innertube.models.Run
 import fr.makoff.music.innertube.models.Runs
@@ -80,6 +81,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import timber.log.Timber
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -2979,11 +2981,20 @@ object YouTube {
                     ?.runs
                     ?.firstOrNull()
                     ?.text
+            val wrapperDecoder = Json { ignoreUnknownKeys = true }
             val items =
                 playlistPanelRenderer.contents.mapNotNull { content ->
-                    content.playlistPanelVideoRenderer
-                        ?.let(NextPage::fromPlaylistPanelVideoRenderer)
-                        ?.let { it to content.playlistPanelVideoRenderer.selected }
+                    // Authenticated watch-next responses wrap the currently playing
+                    // item to carry its song/video counterpart. Keep that item in
+                    // the actual audio queue instead of silently dropping it.
+                    val renderer = content.playlistPanelVideoRenderer ?: runCatching {
+                        val primary = content.playlistPanelVideoWrapperRenderer
+                            ?.get("primaryRenderer") as? JsonObject
+                        primary?.get("playlistPanelVideoRenderer")
+                            ?.let { wrapperDecoder.decodeFromJsonElement<PlaylistPanelVideoRenderer>(it) }
+                    }.getOrNull()
+                    renderer?.let(NextPage::fromPlaylistPanelVideoRenderer)
+                        ?.let { it to renderer.selected }
                 }
             val songs = items.map { it.first }
             val currentIndex = items.indexOfFirst { it.second }.takeIf { it != -1 }
