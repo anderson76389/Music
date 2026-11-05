@@ -151,7 +151,10 @@ internal fun PlayerArtworkSwitcher(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            artwork(showModeBar)
+            // A shared top bar is always present in the expanded player,
+            // even when Son/Vidéo is hidden. Suppress the old thumbnail header
+            // and duplicate Cast icon in that same layout.
+            artwork(isExpanded)
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
