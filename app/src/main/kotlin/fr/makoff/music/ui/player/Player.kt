@@ -1515,12 +1515,22 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                                Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
+                                PlayerArtworkSwitcher(
+                                    videoId = mediaMetadata?.id,
+                                    isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                    isCasting = isCasting,
+                                    isExpanded = state.isExpanded,
+                                    isPlaying = isPlaying,
+                                    playerConnection = playerConnection,
                                     modifier = Modifier.animateContentSize(),
+                                ) {
+                                    Thumbnail(
+                                    sliderPositionProvider = sliderPositionProvider,
+                                    modifier = Modifier,
                                     isPlayerExpanded = isExpandedProvider,
                                     isLandscape = true,
                                 )
+                                }
 
                     }
 
@@ -1565,11 +1575,21 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                                Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
+                                PlayerArtworkSwitcher(
+                                    videoId = mediaMetadata?.id,
+                                    isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                    isCasting = isCasting,
+                                    isExpanded = state.isExpanded,
+                                    isPlaying = isPlaying,
+                                    playerConnection = playerConnection,
                                     modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
+                                ) {
+                                    Thumbnail(
+                                    sliderPositionProvider = sliderPositionProvider,
+                                    modifier = Modifier,
                                     isPlayerExpanded = isExpandedProvider,
                                 )
+                                }
 
                     }
 
