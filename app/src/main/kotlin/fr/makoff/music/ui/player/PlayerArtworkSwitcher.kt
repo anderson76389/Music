@@ -1,6 +1,6 @@
 package fr.makoff.music.ui.player
 
-import android.view.SurfaceView
+import android.view.TextureView
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -38,6 +38,7 @@ import fr.makoff.music.R
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.ui.theme.liquidGlass
 import fr.makoff.music.utils.InnerTubeXPlayer
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -125,9 +126,13 @@ private fun MusicVideoArtwork(
     var videoStream by remember(videoId) { mutableStateOf<InnerTubeXPlayer.VideoStream?>(null) }
 
     LaunchedEffect(videoId) {
-        val resolved = runCatching {
+        val resolved = try {
             withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(videoId) }
-        }.getOrNull()
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
         if (resolved == null) {
             onUnavailable()
         } else {
@@ -175,7 +180,7 @@ private fun VideoOnlySurface(
             }
     }
 
-    var videoReady by remember(videoPlayer) { mutableStateOf(false) }
+    var videoReady by remember(videoPlayer) { mutableStateOf(videoPlayer.playbackState == Player.STATE_READY) }
     DisposableEffect(videoPlayer) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
@@ -215,9 +220,9 @@ private fun VideoOnlySurface(
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val videoWidth = minOf(maxWidth, maxHeight * (16f / 9f))
         AndroidView(
-            factory = { SurfaceView(it) },
+            factory = { TextureView(it) },
             modifier = Modifier.size(videoWidth, videoWidth * (9f / 16f)),
-            update = { videoPlayer.setVideoSurfaceView(it) },
+            update = { videoPlayer.setVideoTextureView(it) },
         )
         if (!videoReady) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
