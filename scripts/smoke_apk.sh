@@ -51,12 +51,26 @@ for variant in foss gms; do
     adb logcat -d > smoke-results/restore-process-logcat.txt
     grep -Fq RESTORE_PREPARED smoke-results/restore-process-logcat.txt
     python3 scripts/ui_restore_probe.py "$package" | tee smoke-results/restore-ui.txt
-    for attempt in $(seq 1 30); do
-      adb logcat -d > smoke-results/restore-process-logcat.txt
-      if grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt; then break; fi
-      sleep 1
+    # Restoring a real backup restarts the app and can briefly interrupt ADB
+    # on API 35. With set -e, the former logcat command aborted the entire CI
+    # job on that transient disconnect, before checking the restore marker.
+    # Retry only the observation; NEVER report success without RESTORE_APPLY_OK.
+    restore_applied=0
+    for attempt in $(seq 1 90); do
+      if adb logcat -d > smoke-results/restore-process-logcat.txt 2> smoke-results/restore-adb-error.txt; then
+        if grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt; then
+          restore_applied=1
+          break
+        fi
+      else
+        echo "ADB indisponible après restauration (tentative $attempt/90)" >&2
+      fi
+      sleep 2
     done
-    grep -Fq RESTORE_APPLY_OK smoke-results/restore-process-logcat.txt
+    if [ "$restore_applied" -ne 1 ]; then
+      echo "::error::Restauration non confirmée : RESTORE_APPLY_OK introuvable après vérification ADB." >&2
+      exit 1
+    fi
     timeout 60s adb shell am instrument -w -r -e class fr.makoff.music.settings.BackupRestoreProbe#verifyAfterRestart "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/restore-verify.txt
     grep -Eq 'OK \(1 test\)' smoke-results/restore-verify.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/restore-verify.txt
