@@ -468,7 +468,7 @@ class MusicService :
             ?: YouTube.visitorData.takeIf { !it.isNullOrBlank() }
             ?: ""
 
-    private fun cacheKey(mediaId: String) = "${sessionKey}:$mediaId"
+    private fun cacheKey(mediaId: String) = "${sessionKey}:${YouTube.authUser}:${YouTube.cookie.orEmpty().hashCode()}:$mediaId"
 
     private val historyTrackingCache = Collections.synchronizedMap(
         object : LinkedHashMap<String, YouTubeListeningHistoryReporter.Tracking>(0, 0.75f, true) {
