@@ -1525,11 +1525,11 @@ fun BottomSheetPlayer(
                                     modifier = Modifier.animateContentSize(),
                                 ) {
                                     Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
-                                    modifier = Modifier,
-                                    isPlayerExpanded = isExpandedProvider,
-                                    isLandscape = true,
-                                )
+                                        sliderPositionProvider = sliderPositionProvider,
+                                        modifier = Modifier,
+                                            isPlayerExpanded = isExpandedProvider,
+                                        isLandscape = true,
+                                    )
                                 }
 
                     }
@@ -1585,10 +1585,10 @@ fun BottomSheetPlayer(
                                     modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
                                 ) {
                                     Thumbnail(
-                                    sliderPositionProvider = sliderPositionProvider,
-                                    modifier = Modifier,
-                                    isPlayerExpanded = isExpandedProvider,
-                                )
+                                        sliderPositionProvider = sliderPositionProvider,
+                                        modifier = Modifier,
+                                            isPlayerExpanded = isExpandedProvider,
+                                    )
                                 }
 
                     }
