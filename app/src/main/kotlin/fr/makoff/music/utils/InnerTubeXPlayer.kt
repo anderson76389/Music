@@ -53,6 +53,30 @@ object InnerTubeXPlayer {
 
     suspend fun prewarm() = bundle().extractor.prewarm()
 
+    /**
+     * Resolve the video-only track for a YouTube music video without modifying the
+     * audio-only playback session or queue. Signed URLs are deliberately not cached.
+     */
+    suspend fun resolveVideoStream(videoId: String): VideoStream? {
+        val stream = bundle().extractor.extract(
+            videoId = videoId,
+            hints = ContentHints(wantVideo = true, maxVideoHeight = 720)
+                .withStreamCapabilities(allowHls = false, allowSabr = false),
+            audioQuality = InnerTubeXAudioQuality.AUTO,
+            clientPlaybackNonce = generateClientPlaybackNonce(),
+        ) ?: return null
+        if (stream.sabrVideoBootstrap != null || stream.sabrBootstrap != null) return null
+        val url = stream.videoUrl?.takeIf { it.startsWith("https://") } ?: return null
+        val mimeType = stream.videoMimeType?.takeIf { it.startsWith("video/") } ?: return null
+        return VideoStream(url = url, mimeType = mimeType, headers = stream.headers)
+    }
+
+    data class VideoStream(
+        val url: String,
+        val mimeType: String,
+        val headers: Map<String, String>,
+    )
+
     suspend fun playerResponseForPlayback(
         videoId: String,
         playlistId: String? = null,
