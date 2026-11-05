@@ -1483,6 +1483,25 @@ fun BottomSheetPlayer(
             }
         }
 
+        // Reuse the real player menu for the YouTube Music-style top-bar
+        // action rather than creating a second, inconsistent overflow menu.
+        val onOpenModeMenu: () -> Unit = {
+            mediaMetadata?.let { selected ->
+                playerMenuState.show {
+                    PlayerMenu(
+                        mediaMetadata = selected,
+                        playerBottomSheetState = state,
+                        onShowDetailsDialog = {
+                            bottomSheetPageState.show {
+                                ShowMediaInfo(selected.id)
+                            }
+                        },
+                        onDismiss = playerMenuState::dismiss,
+                    )
+                }
+            }
+        }
+
         when (LocalConfiguration.current.orientation) {
             Configuration.ORIENTATION_LANDSCAPE -> {
                 // Calculate vertical padding like OuterTune
@@ -1515,22 +1534,30 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                                PlayerArtworkSwitcher(
-                                    videoId = mediaMetadata?.id,
-                                    isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                    isCasting = isCasting,
-                                    isExpanded = state.isExpanded,
-                                    isPlaying = isPlaying,
-                                    playerConnection = playerConnection,
-                                    modifier = Modifier.fillMaxSize().animateContentSize(),
-                                ) {
-                                    Thumbnail(
-                                        sliderPositionProvider = sliderPositionProvider,
-                                        modifier = Modifier.fillMaxSize(),
-                                            isPlayerExpanded = isExpandedProvider,
-                                        isLandscape = true,
-                                    )
-                                }
+                        CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
+                            PlayerArtworkSwitcher(
+                                videoId = mediaMetadata?.id,
+                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                isCasting = isCasting,
+                                isExpanded = state.isExpanded,
+                                isPlaying = isPlaying,
+                                playerConnection = playerConnection,
+                                modeTextColor = TextBackgroundColor,
+                                darkBackdrop = playerBackground != PlayerBackgroundStyle.DEFAULT,
+                                onCollapse = { state.collapseSoft() },
+                                onOpenMenu = onOpenModeMenu,
+                                isLandscape = true,
+                                modifier = Modifier.fillMaxSize(),
+                            ) { showModeBar ->
+                                Thumbnail(
+                                    sliderPositionProvider = sliderPositionProvider,
+                                    modifier = Modifier.fillMaxSize(),
+                                    isPlayerExpanded = isExpandedProvider,
+                                    isLandscape = true,
+                                    showPlayerModeBar = showModeBar,
+                                )
+                            }
+                        }
 
                     }
 
@@ -1575,21 +1602,28 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                                PlayerArtworkSwitcher(
-                                    videoId = mediaMetadata?.id,
-                                    isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                    isCasting = isCasting,
-                                    isExpanded = state.isExpanded,
-                                    isPlaying = isPlaying,
-                                    playerConnection = playerConnection,
-                                    modifier = Modifier.fillMaxSize().nestedScroll(state.preUpPostDownNestedScrollConnection),
-                                ) {
-                                    Thumbnail(
-                                        sliderPositionProvider = sliderPositionProvider,
-                                        modifier = Modifier.fillMaxSize(),
-                                            isPlayerExpanded = isExpandedProvider,
-                                    )
-                                }
+                        CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
+                            PlayerArtworkSwitcher(
+                                videoId = mediaMetadata?.id,
+                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                isCasting = isCasting,
+                                isExpanded = state.isExpanded,
+                                isPlaying = isPlaying,
+                                playerConnection = playerConnection,
+                                modeTextColor = TextBackgroundColor,
+                                darkBackdrop = playerBackground != PlayerBackgroundStyle.DEFAULT,
+                                onCollapse = { state.collapseSoft() },
+                                onOpenMenu = onOpenModeMenu,
+                                modifier = Modifier.fillMaxSize().nestedScroll(state.preUpPostDownNestedScrollConnection),
+                            ) { showModeBar ->
+                                Thumbnail(
+                                    sliderPositionProvider = sliderPositionProvider,
+                                    modifier = Modifier.fillMaxSize(),
+                                    isPlayerExpanded = isExpandedProvider,
+                                    showPlayerModeBar = showModeBar,
+                                )
+                            }
+                        }
 
                     }
 
