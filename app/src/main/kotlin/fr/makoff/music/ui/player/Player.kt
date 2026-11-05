@@ -1540,6 +1540,8 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
+                                songTitle = mediaMetadata?.title,
+                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
@@ -1610,6 +1612,8 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
+                                songTitle = mediaMetadata?.title,
+                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
