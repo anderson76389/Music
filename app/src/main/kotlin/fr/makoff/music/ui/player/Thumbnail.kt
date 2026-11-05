@@ -357,6 +357,11 @@ fun Thumbnail(
                     contentAlignment = Alignment.Center,
                     modifier = if (isLandscape) {
                         Modifier.weight(1f, false)
+                    } else if (showPlayerModeBar) {
+                        // Fill only the space remaining below the header. A
+                        // fillMaxSize child inside this Column would overflow
+                        // by the header height and clip the cover on phones.
+                        Modifier.weight(1f)
                     } else {
                         Modifier.fillMaxSize()
                     }
@@ -369,7 +374,9 @@ fun Thumbnail(
                             isLandscape = isLandscape,
                             cornerRadius = if (glass) 6.dp else ThumbnailCornerRadius,
                         )
-                        if (glass) {
+                        if (glass || showPlayerModeBar) {
+                            // Keep the entire cover visible even on short
+                            // devices, split screen and accessibility scaling.
                             calculated.copy(thumbnailSize = minOf(calculated.thumbnailSize, maxHeight).coerceAtLeast(1.dp))
                         } else {
                             calculated
