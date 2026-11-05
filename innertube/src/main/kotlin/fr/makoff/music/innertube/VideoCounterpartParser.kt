@@ -5,6 +5,7 @@ import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import fr.makoff.music.innertube.models.SongItem
 
 /**
  * Find an official Song/Video pairing in either /next or /music/get_queue.
@@ -59,6 +60,41 @@ internal object VideoCounterpartParser {
 
     private fun JsonObject.child(name: String) = this[name] as? JsonObject
     private fun JsonObject.string(name: String) = (this[name] as? JsonPrimitive)?.content
+
+    /**
+     * When YouTube omits the pairing metadata, accept a video only if Music
+     * labels it as video and both the song title and the original artist agree.
+     * This excludes similarly named covers, karaoke and unrelated recordings.
+     */
+    fun verifiedSearchVideo(
+        items: List<SongItem>,
+        currentVideoId: String,
+        originalTitle: String,
+        artist: String,
+    ): String? {
+        val title = normalized(originalTitle)
+        val artistName = normalized(artist)
+        if (title.isBlank() || artistName.isBlank()) return null
+        return items.firstOrNull { item ->
+            val videoTitle = normalized(item.title)
+            val artistMatches = item.artists.any { normalized(it.name) == artistName }
+            val titleIncludesArtist = videoTitle == "$artistName $title"
+            val titleMatches = videoTitle == title || titleIncludesArtist
+            isYouTubeId(item.id) &&
+                item.id != currentVideoId &&
+                item.isVideoSong &&
+                titleMatches &&
+                (artistMatches || titleIncludesArtist)
+        }?.id
+    }
+
+    private fun normalized(s: String): String =
+        s.lowercase()
+            .replace(Regex("(?i)\\b(?:official\\s+)?(?:music\\s+)?video\\b"), " ")
+            .replace(Regex("(?i)\\b(?:audio|visualizer)\\b"), " ")
+            .replace(Regex("[^\\p{L}\\p{N}]+"), " ")
+            .trim()
+            .replace(Regex("\\s+"), " ")
 
     fun isYouTubeId(id: String): Boolean =
         id.length == 11 && id.all { it.isLetterOrDigit() || it == '_' || it == '-' }
