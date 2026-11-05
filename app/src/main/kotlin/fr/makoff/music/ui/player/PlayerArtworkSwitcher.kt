@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -268,18 +269,22 @@ private fun PlayerModePills(
     modifier: Modifier = Modifier,
 ) {
     val glass = LocalLiquidGlassEnabled.current
+    val lightGlass = glass && MaterialTheme.colorScheme.surface.luminance() > 0.5f
+    // Light Liquid Glass chrome remains light even when the player uses a
+    // dark album gradient; use on-primary and on-surface colors in that case.
+    val darkPills = darkBackdrop && !lightGlass
     val shape = RoundedCornerShape(22.dp)
     val baseColor =
-        if (darkBackdrop) Color.Black.copy(alpha = 0.23f)
+        if (darkPills) Color.Black.copy(alpha = 0.23f)
         else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.09f)
     val selectedBackground =
-        if (darkBackdrop) Color.White.copy(alpha = 0.25f)
+        if (darkPills) Color.White.copy(alpha = 0.25f)
         else MaterialTheme.colorScheme.primary
     val selectedForeground =
-        if (darkBackdrop) Color.White
+        if (darkPills) Color.White
         else MaterialTheme.colorScheme.onPrimary
     val unselectedForeground =
-        if (darkBackdrop) Color.White.copy(alpha = 0.82f)
+        if (darkPills) Color.White.copy(alpha = 0.82f)
         else MaterialTheme.colorScheme.onSurfaceVariant
 
     Row(
@@ -291,7 +296,7 @@ private fun PlayerModePills(
                     // refraction but tint its chrome dark enough for white labels.
                     Modifier.liquidGlass(shape, chrome = true, showBorder = true)
                         .background(
-                            if (darkBackdrop) Color.Black.copy(alpha = 0.32f)
+                            if (darkPills) Color.Black.copy(alpha = 0.32f)
                             else Color.Transparent,
                             shape,
                         )
