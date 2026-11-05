@@ -120,6 +120,30 @@ for variant in foss gms; do
         exit 1
       fi
     done
+    # Exercise configuration changes on a near-square unfolded 120Hz-style
+    # display. This checks actual Activity recreation and theme animations
+    # without pretending that an emulator is a physical HONOR Magic V6.
+    adb logcat -c
+    adb shell wm size 1440x1320
+    adb shell wm density 320
+    adb shell am start -W -n "$package/fr.makoff.music.MainActivity" > smoke-results/foldable-unfolded-launch.txt
+    sleep 5
+    adb exec-out screencap -p > smoke-results/foldable-unfolded.png
+    adb shell dumpsys activity activities > smoke-results/foldable-unfolded-activities.txt
+    python3 scripts/check_resumed_activity.py "$package" smoke-results/foldable-unfolded-activities.txt
+    adb shell wm size 1080x2400
+    adb shell wm density 420
+    sleep 4
+    adb exec-out screencap -p > smoke-results/foldable-folded.png
+    adb shell dumpsys activity activities > smoke-results/foldable-folded-activities.txt
+    python3 scripts/check_resumed_activity.py "$package" smoke-results/foldable-folded-activities.txt
+    adb shell wm size reset
+    adb shell wm density reset
+    adb logcat -d > smoke-results/foldable-transitions-logcat.txt
+    if grep -Fq "Process: $package," smoke-results/foldable-transitions-logcat.txt; then
+      echo "::error::Crash during unfold/fold configuration change"
+      exit 1
+    fi
   fi
   adb shell am force-stop "$package"
 done

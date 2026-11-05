@@ -291,4 +291,5 @@
     <string name="theme_mode">Mode d’affichage</string>
     <string name="color_palette">Palette de couleurs</string>
     <string name="use_system_colors">Utiliser les couleurs du système</string>
+    <string name="pause_listen_history_desc">Empêche aussi l’envoi de la progression d’écoute vers votre compte YouTube Music connecté.</string>
 </resources>

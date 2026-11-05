@@ -128,6 +128,7 @@ fun HistorySettingsSection(additionalListenItems: List<Material3SettingsItem> = 
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.history),
                     title = { Text(stringResource(R.string.pause_listen_history)) },
+                    description = { Text(stringResource(R.string.pause_listen_history_desc)) },
                     trailingContent = {
                         Switch(
                             checked = pauseListenHistory,

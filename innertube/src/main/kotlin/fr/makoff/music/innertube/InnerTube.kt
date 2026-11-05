@@ -212,7 +212,41 @@ class InnerTube(
         cpn: String,
         playlistId: String?,
         client: YouTubeClient = YouTubeClient.WEB_REMIX,
-    ) = innerTubeX.registerPlayback(client, url, cpn, playlistId).requireSuccess("registerPlayback")
+        currentMediaTime: String? = null,
+        final: Boolean? = null,
+        format: Int? = null,
+    ) = innerTubeX.registerPlayback(
+        client = client,
+        url = url,
+        cpn = cpn,
+        playlistId = playlistId,
+        currentMediaTime = currentMediaTime,
+        final = final,
+        format = format,
+    ).requireSuccess("registerPlayback")
+
+    suspend fun registerWatchtime(
+        url: String,
+        cpn: String,
+        startTimes: String,
+        endTimes: String,
+        currentMediaTime: String,
+        realTime: String,
+        final: Boolean,
+        format: Int? = null,
+        client: YouTubeClient = YouTubeClient.WEB_REMIX,
+    ) = innerTubeX.registerWatchtimeWithSession(
+        client = client,
+        url = url,
+        cpn = cpn,
+        startTimes = startTimes,
+        endTimes = endTimes,
+        currentMediaTime = currentMediaTime,
+        realTime = realTime,
+        final = final,
+        format = format,
+        requestSession = innerTubeX.sessionSnapshot(),
+    ).requireSuccess("registerWatchtime")
 
     suspend fun browse(
         client: YouTubeClient,

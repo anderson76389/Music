@@ -2872,27 +2872,56 @@ object YouTube {
             innerTube.player(client, videoId, playlistId, signatureTimestamp, poToken).body<PlayerResponse>()
         }
 
+    /**
+     * YouTube uses the SAME client playback nonce for the initial playback ping
+     * and all watch-time segments. Earlier versions generated a new nonce only
+     * after the song had ended, which rarely registered active listening.
+     */
     suspend fun registerPlayback(
         playlistId: String? = null,
         playbackTracking: String,
+        cpn: String = generatePlaybackCpn(),
+        format: Int? = null,
     ) = runCatching {
-        val cpn =
-            (1..16)
-                .map {
-                    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"[
-                        Random.Default.nextInt(
-                            0,
-                            64,
-                        ),
-                    ]
-                }.joinToString("")
-
         innerTube.registerPlayback(
             url = playbackTracking,
             playlistId = playlistId,
             cpn = cpn,
+            format = format,
         )
     }
+
+    suspend fun registerWatchtime(
+        watchtimeTracking: String,
+        cpn: String,
+        startSeconds: Double,
+        endSeconds: Double,
+        currentSeconds: Double,
+        realSeconds: Double,
+        final: Boolean,
+        format: Int? = null,
+    ) = runCatching {
+        require(endSeconds >= startSeconds && startSeconds >= 0.0)
+        innerTube.registerWatchtime(
+            url = watchtimeTracking,
+            cpn = cpn,
+            startTimes = formatTrackingSeconds(startSeconds),
+            endTimes = formatTrackingSeconds(endSeconds),
+            currentMediaTime = formatTrackingSeconds(currentSeconds),
+            realTime = formatTrackingSeconds(realSeconds),
+            final = final,
+            format = format,
+        )
+    }
+
+    private fun formatTrackingSeconds(time: Double): String =
+        "%.3f".format(java.util.Locale.US, time.coerceAtLeast(0.0))
+
+    private fun generatePlaybackCpn(): String =
+        buildString(16) {
+            val chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_"
+            repeat(16) { append(chars[Random.Default.nextInt(chars.length)]) }
+        }
 
     /**
      * Resolve YouTube Music's explicit Song/Video pairing. The pair can be in
