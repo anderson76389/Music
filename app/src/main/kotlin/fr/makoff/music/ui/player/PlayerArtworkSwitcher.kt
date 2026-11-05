@@ -285,10 +285,21 @@ private fun PlayerModePills(
     Row(
         modifier = modifier
             .then(
-                if (glass) Modifier.liquidGlass(shape, chrome = true, showBorder = true)
-                else Modifier.clip(shape).background(baseColor).border(
-                    0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), shape,
-                ),
+                if (glass) {
+                    // Liquid Glass may be enabled with a LIGHT app theme while
+                    // the player uses its dark artwork gradient. Preserve glass
+                    // refraction but tint its chrome dark enough for white labels.
+                    Modifier.liquidGlass(shape, chrome = true, showBorder = true)
+                        .background(
+                            if (darkBackdrop) Color.Black.copy(alpha = 0.32f)
+                            else Color.Transparent,
+                            shape,
+                        )
+                } else {
+                    Modifier.clip(shape).background(baseColor).border(
+                        0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), shape,
+                    )
+                },
             )
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
