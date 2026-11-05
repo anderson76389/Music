@@ -330,7 +330,9 @@ fun Thumbnail(
             exit = fadeOut(),
             modifier = Modifier
                 .fillMaxSize()
-                .then(if (!isLandscape) Modifier.statusBarsPadding() else Modifier),
+                // PlayerArtworkSwitcher already owns the system-bar inset
+                // whenever its unified top bar is visible.
+                .then(if (!isLandscape && !showPlayerModeBar) Modifier.statusBarsPadding() else Modifier),
         ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
@@ -338,18 +340,15 @@ fun Thumbnail(
                 verticalArrangement = if (isLandscape) Arrangement.Center else Arrangement.Top
             ) {
                 // Now Playing header - hide in landscape mode
-                if (!isLandscape) {
-                    if (showPlayerModeBar) {
-                        // Reserve the same header space for the YouTube Music-style
-                        // mode controls without moving or covering the artwork.
-                        Spacer(Modifier.height(56.dp))
-                    } else {
-                        ThumbnailHeader(
-                            queueTitle = queueTitle,
-                            albumTitle = mediaMetadata?.album?.title,
-                            textColor = textBackgroundColor
-                        )
-                    }
+                // Only render the legacy title when no external player
+                // top bar is present (e.g. the sheet is collapsed). In the
+                // expanded player the single shared toolbar owns this area.
+                if (!isLandscape && !showPlayerModeBar) {
+                    ThumbnailHeader(
+                        queueTitle = queueTitle,
+                        albumTitle = mediaMetadata?.album?.title,
+                        textColor = textBackgroundColor
+                    )
                 }
 
                 // Thumbnail content
