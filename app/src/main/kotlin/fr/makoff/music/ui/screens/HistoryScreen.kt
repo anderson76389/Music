@@ -143,8 +143,12 @@ fun HistoryScreen(
             "SAPISID" in parseCookieString(innerTubeCookie)
         }
 
-    LaunchedEffect(isLoggedIn) {
-        viewModel.updateAccountHistoryAvailability(isLoggedIn)
+    // A Google account can change without ever leaving the logged-in state.
+    // Invalidate the previous account's history before loading the new one.
+    LaunchedEffect(innerTubeCookie, isLoggedIn) {
+        viewModel.updateAccountHistoryAvailability(
+            if (isLoggedIn) innerTubeCookie.hashCode() else null,
+        )
         if (isLoggedIn) viewModel.fetchRemoteHistory()
     }
 
