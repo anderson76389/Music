@@ -20,19 +20,19 @@ internal object VideoCounterpartParser {
 
     fun fromElement(root: JsonElement, currentVideoId: String): String? {
         if (!isYouTubeId(currentVideoId)) return null
-        return findWrappers(root).firstNotNullOfOrNull { wrapper ->
+        return findWrappers(root).firstNotNullOfOrNull wrapperLoop@{ wrapper ->
             val primary = wrapper.child("primaryRenderer")
                 ?.child("playlistPanelVideoRenderer")
-                ?: return@firstNotNullOfOrNull null
-            if (primary.string("videoId") != currentVideoId) return@firstNotNullOfOrNull null
+                ?: return@wrapperLoop null
+            if (primary.string("videoId") != currentVideoId) return@wrapperLoop null
 
             val counterparts = wrapper["counterpart"] as? JsonArray
-                ?: return@firstNotNullOfOrNull null
-            counterparts.firstNotNullOfOrNull { item ->
+                ?: return@wrapperLoop null
+            counterparts.firstNotNullOfOrNull counterpartLoop@{ item ->
                 val renderer = (item as? JsonObject)
                     ?.child("counterpartRenderer")
                     ?.child("playlistPanelVideoRenderer")
-                    ?: return@firstNotNullOfOrNull null
+                    ?: return@counterpartLoop null
                 val pairedId = renderer.string("videoId")
                 val pairedType = renderer.child("navigationEndpoint")
                     ?.child("watchEndpoint")
