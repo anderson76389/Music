@@ -77,6 +77,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import timber.log.Timber
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -2887,6 +2890,51 @@ object YouTube {
             cpn = cpn,
         )
     }
+
+    /**
+     * Return the actual song/video counterpart provided by YouTube Music.
+     * Unlike a title search, this cannot accidentally select a cover, live recording
+     * or unrelated fan upload. The counterpart is optional and may require login.
+     */
+    suspend fun videoCounterpart(videoId: String): Result<String?> =
+        runCatching {
+            val response = innerTube.next(
+                client = WEB_REMIX,
+                videoId = videoId,
+                playlistId = null,
+                playlistSetVideoId = null,
+                index = null,
+                params = null,
+            ).body<NextResponse>()
+            val entries = response.contents
+                .singleColumnMusicWatchNextResultsRenderer
+                ?.tabbedRenderer
+                ?.watchNextTabbedResultsRenderer
+                ?.tabs
+                ?.firstOrNull()
+                ?.tabRenderer
+                ?.content
+                ?.musicQueueRenderer
+                ?.content
+                ?.playlistPanelRenderer
+                ?.contents
+                .orEmpty()
+
+            entries.asSequence().mapNotNull { entry ->
+                val wrapper = entry.playlistPanelVideoWrapperRenderer ?: return@mapNotNull null
+                val primary = (wrapper["primaryRenderer"] as? JsonObject)
+                    ?.get("playlistPanelVideoRenderer") as? JsonObject
+                val primaryId = (primary?.get("videoId") as? JsonPrimitive)?.content
+                if (primaryId != null && primaryId != videoId) return@mapNotNull null
+
+                val counterparts = wrapper["counterpart"] as? JsonArray
+                val counterpart = counterparts?.firstOrNull() as? JsonObject
+                val renderer = (counterpart?.get("counterpartRenderer") as? JsonObject)
+                    ?.get("playlistPanelVideoRenderer") as? JsonObject
+                val counterpartId = (renderer?.get("videoId") as? JsonPrimitive)?.content
+                counterpartId?.takeIf { it.length == 11 && it != videoId }
+            }.firstOrNull()
+        }
 
     suspend fun next(
         endpoint: WatchEndpoint,
