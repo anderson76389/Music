@@ -140,9 +140,14 @@ internal class YouTubeListeningHistoryReporter(
 
     private suspend fun reportWatchtime(s: Session, isFinal: Boolean) {
         val url = s.tracking?.watchtimeUrl ?: return
-        val startMs = s.lastReportedPositionMs
         val endMs = s.lastPositionMs
-        if (endMs <= startMs + 1_000L) return
+        // A session still needs its final flag when the last periodic report
+        // already covered its full position. Repeat at most the last second,
+        // never an entire track or a seeked-over range.
+        val startMs = if (isFinal && endMs <= s.lastReportedPositionMs + 1_000L) {
+            (endMs - 1_000L).coerceAtLeast(0L)
+        } else s.lastReportedPositionMs
+        if (endMs <= startMs) return
         s.lastWatchtimeAttemptMs = s.lastObservedAtMs
         val success = sendWatchtime(
             url,
