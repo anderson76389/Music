@@ -1522,11 +1522,11 @@ fun BottomSheetPlayer(
                                     isExpanded = state.isExpanded,
                                     isPlaying = isPlaying,
                                     playerConnection = playerConnection,
-                                    modifier = Modifier.animateContentSize(),
+                                    modifier = Modifier.fillMaxSize().animateContentSize(),
                                 ) {
                                     Thumbnail(
                                         sliderPositionProvider = sliderPositionProvider,
-                                        modifier = Modifier,
+                                        modifier = Modifier.fillMaxSize(),
                                             isPlayerExpanded = isExpandedProvider,
                                         isLandscape = true,
                                     )
@@ -1582,11 +1582,11 @@ fun BottomSheetPlayer(
                                     isExpanded = state.isExpanded,
                                     isPlaying = isPlaying,
                                     playerConnection = playerConnection,
-                                    modifier = Modifier.nestedScroll(state.preUpPostDownNestedScrollConnection),
+                                    modifier = Modifier.fillMaxSize().nestedScroll(state.preUpPostDownNestedScrollConnection),
                                 ) {
                                     Thumbnail(
                                         sliderPositionProvider = sliderPositionProvider,
-                                        modifier = Modifier,
+                                        modifier = Modifier.fillMaxSize(),
                                             isPlayerExpanded = isExpandedProvider,
                                     )
                                 }
