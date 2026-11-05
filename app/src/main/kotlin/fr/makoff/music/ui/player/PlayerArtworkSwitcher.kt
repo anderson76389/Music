@@ -101,10 +101,12 @@ internal fun PlayerArtworkSwitcher(
     val videoLabel = stringResource(R.string.player_video_label)
     var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
     var showVideo by remember(videoId) { mutableStateOf(false) }
+    val isYouTubeTrack = videoId != null && videoId.length == 11 &&
+        videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Only use YouTube Music's official counterpart, not a guessed search result.
     LaunchedEffect(videoId, isVideoSong, isCasting, isExpanded) {
-        if (videoId.isNullOrBlank() || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+        if (!isYouTubeTrack || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
         companionVideoId = try {
             withContext(Dispatchers.IO) { YouTube.videoCounterpart(videoId).getOrNull() }
         } catch (cancelled: CancellationException) {
@@ -119,8 +121,6 @@ internal fun PlayerArtworkSwitcher(
     // Keep the top bar stable while the counterpart lookup runs. YouTube Music
     // displays the Video option disabled when no matching clip is available.
     // Local and external files keep the original Now Playing header.
-    val isYouTubeTrack = videoId != null && videoId.length == 11 &&
-        videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
     val showModeBar = isExpanded && !isCasting && isYouTubeTrack
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
