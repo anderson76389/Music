@@ -425,10 +425,18 @@ private fun VideoOnlySurface(
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val videoWidth = minOf(maxWidth, maxHeight * (16f / 9f))
         AndroidView(
-            factory = { context ->
-                TextureView(context).also(videoPlayer::setVideoTextureView)
-            },
+            factory = { TextureView(it) },
             modifier = Modifier.size(videoWidth, videoWidth * (9f / 16f)),
+            update = { textureView ->
+                // Compose reuses AndroidView when the selected track changes.
+                // Its factory is NOT called again, so attach every *new player*
+                // to the retained texture once, rather than leaving a black frame.
+                // Old players clear their surfaces in DisposableEffect.onDispose.
+                if (textureView.tag !== videoPlayer) {
+                    videoPlayer.setVideoTextureView(textureView)
+                    textureView.tag = videoPlayer
+                }
+            },
         )
         if (!videoReady) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
