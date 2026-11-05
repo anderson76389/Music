@@ -18,6 +18,7 @@ import fr.makoff.music.utils.reportException
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.isActive
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -43,16 +45,29 @@ constructor(
     // always lets listeners explicitly return to their private local history.
     var historySource = MutableStateFlow(HistorySource.LOCAL)
     private var sourceManuallySelected = false
+    private var activeAccountFingerprint: Int? = null
+    private var remoteFetchJob: Job? = null
 
     fun selectHistorySource(source: HistorySource) {
         sourceManuallySelected = true
         historySource.value = source
     }
 
-    fun updateAccountHistoryAvailability(loggedIn: Boolean) {
-        if (!loggedIn) {
+    /**
+     * Authentication is not a Boolean: switching between two signed-in Google
+     * accounts must also invalidate the old account's history and outstanding
+     * network requests. Never expose an earlier account's rows to the next one.
+     */
+    fun updateAccountHistoryAvailability(accountFingerprint: Int?) {
+        if (activeAccountFingerprint != accountFingerprint) {
+            remoteFetchJob?.cancel()
+            remoteFetchJob = null
+            historyPage.value = null
+            activeAccountFingerprint = accountFingerprint
+            sourceManuallySelected = false
+        }
+        if (accountFingerprint == null) {
             historySource.value = HistorySource.LOCAL
-            historyPage.value = null // Never expose a previous account's history.
         } else if (!sourceManuallySelected) {
             historySource.value = HistorySource.REMOTE
         }
@@ -107,11 +122,15 @@ constructor(
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     fun fetchRemoteHistory() {
-        viewModelScope.launch(Dispatchers.IO) {
+        val requestedAccount = activeAccountFingerprint ?: return
+        remoteFetchJob?.cancel()
+        remoteFetchJob = viewModelScope.launch(Dispatchers.IO) {
             YouTube.musicHistory().onSuccess {
-                historyPage.value = it
+                if (activeAccountFingerprint == requestedAccount && isActive) {
+                    historyPage.value = it
+                }
             }.onFailure {
-                reportException(it)
+                if (isActive) reportException(it)
             }
         }
     }
