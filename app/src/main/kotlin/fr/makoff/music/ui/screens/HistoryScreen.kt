@@ -143,6 +143,11 @@ fun HistoryScreen(
             "SAPISID" in parseCookieString(innerTubeCookie)
         }
 
+    LaunchedEffect(isLoggedIn) {
+        viewModel.updateAccountHistoryAvailability(isLoggedIn)
+        if (isLoggedIn) viewModel.fetchRemoteHistory()
+    }
+
     @Composable
     fun dateAgoToString(dateAgo: DateAgo): String =
         when (dateAgo) {
@@ -235,7 +240,7 @@ fun HistoryScreen(
                         },
                     currentValue = historySource,
                     onValueUpdate = {
-                        viewModel.historySource.value = it
+                        viewModel.selectHistorySource(it)
                         if (it == HistorySource.REMOTE) {
                             viewModel.fetchRemoteHistory()
                         }
