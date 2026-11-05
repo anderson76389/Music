@@ -39,12 +39,24 @@ constructor(
     @ApplicationContext private val context: Context,
     val database: MusicDatabase,
 ) : ViewModel() {
-    // Signed-in listeners expect the same timeline as the official YouTube
-    // Music app on their other devices. Local-only history stays available
-    // with the existing source chip.
-    var historySource = MutableStateFlow(
-        if (YouTube.cookie?.contains("SAPISID") == true) HistorySource.REMOTE else HistorySource.LOCAL,
-    )
+    // Account history is preferred when signed in, but the source chip
+    // always lets listeners explicitly return to their private local history.
+    var historySource = MutableStateFlow(HistorySource.LOCAL)
+    private var sourceManuallySelected = false
+
+    fun selectHistorySource(source: HistorySource) {
+        sourceManuallySelected = true
+        historySource.value = source
+    }
+
+    fun updateAccountHistoryAvailability(loggedIn: Boolean) {
+        if (!loggedIn) {
+            historySource.value = HistorySource.LOCAL
+            historyPage.value = null // Never expose a previous account's history.
+        } else if (!sourceManuallySelected) {
+            historySource.value = HistorySource.REMOTE
+        }
+    }
 
     private val today = LocalDate.now()
     private val thisMonday = today.with(DayOfWeek.MONDAY)
@@ -95,7 +107,8 @@ constructor(
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
     init {
-        fetchRemoteHistory()
+        // Fetch after the screen confirms an authenticated account. Doing it
+        // here could dispatch unauthenticated requests during app startup.
     }
 
     fun fetchRemoteHistory() {
