@@ -2,7 +2,6 @@ package fr.makoff.music.ui.player
 
 import android.view.TextureView
 import android.widget.Toast
-import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.component.CastButton
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
@@ -44,7 +43,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -60,7 +58,6 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.playback.PlayerConnection
-import fr.makoff.music.ui.theme.liquidGlass
 import fr.makoff.music.utils.InnerTubeXPlayer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -85,12 +82,13 @@ internal fun PlayerArtworkSwitcher(
     videoId: String?,
     isVideoSong: Boolean,
     isLocalOrUploaded: Boolean,
+    songTitle: String?,
+    artistNames: List<String>,
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
     playerConnection: PlayerConnection,
     modeTextColor: Color,
-    darkBackdrop: Boolean,
     onCollapse: () -> Unit,
     onOpenMenu: () -> Unit,
     isLandscape: Boolean = false,
@@ -107,10 +105,16 @@ internal fun PlayerArtworkSwitcher(
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Only use YouTube Music's official counterpart, not a guessed search result.
-    LaunchedEffect(videoId, isVideoSong, isLocalOrUploaded, isCasting, isExpanded) {
+    LaunchedEffect(videoId, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
         if (!isYouTubeTrack || isLocalOrUploaded || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
         companionVideoId = try {
-            withContext(Dispatchers.IO) { YouTube.videoCounterpart(videoId).getOrNull() }
+            withContext(Dispatchers.IO) {
+                YouTube.videoCounterpart(
+                    videoId = videoId!!,
+                    title = songTitle,
+                    artists = artistNames,
+                ).getOrNull()
+            }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -151,7 +155,6 @@ internal fun PlayerArtworkSwitcher(
             videoLabel = videoLabel,
             showVideo = showVideo,
             videoEnabled = canShowVideo,
-            darkBackdrop = darkBackdrop,
             modeTextColor = modeTextColor,
             onAudioClick = { showVideo = false },
             onVideoClick = { showVideo = true },
@@ -198,7 +201,6 @@ private fun PlayerModeTopBar(
     videoLabel: String,
     showVideo: Boolean,
     videoEnabled: Boolean,
-    darkBackdrop: Boolean,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -230,7 +232,6 @@ private fun PlayerModeTopBar(
             videoLabel = videoLabel,
             showVideo = showVideo,
             videoEnabled = videoEnabled,
-            darkBackdrop = darkBackdrop,
             onAudioClick = onAudioClick,
             onVideoClick = onVideoClick,
             modifier = Modifier.align(Alignment.Center),
@@ -264,49 +265,24 @@ private fun PlayerModePills(
     videoLabel: String,
     showVideo: Boolean,
     videoEnabled: Boolean,
-    darkBackdrop: Boolean,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val glass = LocalLiquidGlassEnabled.current
-    val lightGlass = glass && MaterialTheme.colorScheme.surface.luminance() > 0.5f
-    // Light Liquid Glass chrome remains light even when the player uses a
-    // dark album gradient; use on-primary and on-surface colors in that case.
-    val darkPills = darkBackdrop && !lightGlass
+    // Fixed YouTube Music-inspired palette: this toolbar MUST keep the
+    // same charcoal / peach appearance across light, dark, gradient, AMOLED
+    // and Liquid Glass app themes. The rest of the player remains themed.
     val shape = RoundedCornerShape(22.dp)
-    val baseColor =
-        if (darkPills) Color.Black.copy(alpha = 0.23f)
-        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.09f)
-    val selectedBackground =
-        if (darkPills) Color.White.copy(alpha = 0.25f)
-        else MaterialTheme.colorScheme.primary
-    val selectedForeground =
-        if (darkPills) Color.White
-        else MaterialTheme.colorScheme.onPrimary
-    val unselectedForeground =
-        if (darkPills) Color.White.copy(alpha = 0.82f)
-        else MaterialTheme.colorScheme.onSurfaceVariant
+    val barBackground = Color(0xFF30272B)
+    val selectedBackground = Color(0xFFF2A17E)
+    val selectedForeground = Color(0xFF251B1D)
+    val unselectedForeground = Color(0xFFF8F5F6)
 
     Row(
         modifier = modifier
-            .then(
-                if (glass) {
-                    // Liquid Glass may be enabled with a LIGHT app theme while
-                    // the player uses its dark artwork gradient. Preserve glass
-                    // refraction but tint its chrome dark enough for white labels.
-                    Modifier.liquidGlass(shape, chrome = true, showBorder = true)
-                        .background(
-                            if (darkPills) Color.Black.copy(alpha = 0.32f)
-                            else Color.Transparent,
-                            shape,
-                        )
-                } else {
-                    Modifier.clip(shape).background(baseColor).border(
-                        0.5.dp, MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f), shape,
-                    )
-                },
-            )
+            .clip(shape)
+            .background(barBackground)
+            .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
@@ -449,10 +425,18 @@ private fun VideoOnlySurface(
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val videoWidth = minOf(maxWidth, maxHeight * (16f / 9f))
         AndroidView(
-            factory = { context ->
-                TextureView(context).also(videoPlayer::setVideoTextureView)
-            },
+            factory = { TextureView(it) },
             modifier = Modifier.size(videoWidth, videoWidth * (9f / 16f)),
+            update = { textureView ->
+                // Compose reuses AndroidView when the selected track changes.
+                // Its factory is NOT called again, so attach every *new player*
+                // to the retained texture once, rather than leaving a black frame.
+                // Old players clear their surfaces in DisposableEffect.onDispose.
+                if (textureView.tag !== videoPlayer) {
+                    videoPlayer.setVideoTextureView(textureView)
+                    textureView.tag = videoPlayer
+                }
+            },
         )
         if (!videoReady) {
             CircularProgressIndicator(Modifier.align(Alignment.Center))
