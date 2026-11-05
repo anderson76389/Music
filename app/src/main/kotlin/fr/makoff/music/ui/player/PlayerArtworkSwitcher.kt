@@ -6,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.matchParentSize
 import androidx.compose.foundation.clickable
 import android.widget.Toast
 import fr.makoff.music.ui.component.CastButton
