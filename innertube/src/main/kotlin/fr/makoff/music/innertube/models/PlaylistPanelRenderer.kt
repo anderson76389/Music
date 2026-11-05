@@ -16,8 +16,8 @@ data class PlaylistPanelRenderer(
 ) {
     @Serializable
     data class Content(
-        val playlistPanelVideoRenderer: PlaylistPanelVideoRenderer?,
-        val automixPreviewVideoRenderer: AutomixPreviewVideoRenderer?,
+        val playlistPanelVideoRenderer: PlaylistPanelVideoRenderer? = null,
+        val automixPreviewVideoRenderer: AutomixPreviewVideoRenderer? = null,
         // YouTube Music's authenticated next response exposes the official
         // song/video companion in this wrapper. Keep the raw shape because
         // additional, nonessential endpoint fields change frequently.
