@@ -12,10 +12,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.drawable.DrawableCompat
@@ -36,6 +37,7 @@ import fr.makoff.music.utils.rememberPreference
 fun CastButton(
     modifier: Modifier = Modifier,
     tintColor: Color = MaterialTheme.colorScheme.onSurface,
+    buttonSize: Dp = 56.dp,
 ) {
     val context = LocalContext.current
     val playerConnection = LocalPlayerConnection.current
@@ -76,7 +78,7 @@ fun CastButton(
                         }
                     }
             },
-            modifier = modifier.size(56.dp),
+            modifier = modifier.size(buttonSize),
         )
     }
 }
