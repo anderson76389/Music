@@ -291,6 +291,21 @@ class OfflinePlayerInstrumentedTest {
             }
             instrumentation.waitForIdleSync()
             delay(1200)
+            // The external top bar is authoritative: no legacy "Now Playing"
+            // text may sit behind video/artwork, and an audio-only cached song
+            // must not advertise an unavailable Son / Vidéo switch.
+            assertNull(
+                "Old Now Playing heading must not overlap the player artwork",
+                device.findObject(By.text(context.getString(R.string.now_playing))),
+            )
+            assertNull(
+                "Son / Vidéo must be hidden without a real music video",
+                device.findObject(By.text(context.getString(R.string.player_video_label))),
+            )
+            assertNotNull(
+                "The compact player must still provide its collapse control",
+                device.findObject(By.desc(context.getString(R.string.player_collapse_label))),
+            )
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()
             clickDescription(R.string.play)
