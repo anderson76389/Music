@@ -72,6 +72,8 @@ class YouTubeListeningHistoryReporterTest {
         assertEquals(1, playCalls.size)
         assertTrue(watchCalls.any { it.final })
 
+        // The service samples every five seconds; a stalled ten-second sample is capped.
+        reporter.observe(sample(5_000, 30_000, song = "lmnopqrstuv"))
         reporter.observe(sample(10_000, 35_000, song = "lmnopqrstuv"))
         assertEquals(2, playCalls.size)
         assertFalse(playCalls[0].second == playCalls[1].second)
