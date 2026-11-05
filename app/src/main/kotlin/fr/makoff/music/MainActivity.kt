@@ -100,6 +100,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -1062,6 +1063,8 @@ class MainActivity : FragmentActivity() {
                         bottomBar = {
                             val currentBackStackEntry = navController.currentBackStackEntry // reads reactively outside remember
 
+                            val focusManager = LocalFocusManager.current
+                            val keyboardController = LocalSoftwareKeyboardController.current
                             val onNavItemClick: (Screens, Boolean) -> Unit =
                                 remember(
                                     navController,
@@ -1069,6 +1072,8 @@ class MainActivity : FragmentActivity() {
                                     topAppBarScrollBehavior,
                                     playerBottomSheetState,
                                     currentBackStackEntry,
+                                    focusManager,
+                                    keyboardController,
                                 ) {
                                     { screen: Screens, isSelected: Boolean ->
                                         if (playerBottomSheetState.isExpanded) {
@@ -1101,12 +1106,17 @@ class MainActivity : FragmentActivity() {
                                                 topAppBarScrollBehavior.state.resetHeightOffset()
                                             }
                                         } else {
+                                            if (screen != Screens.Search) {
+                                                focusManager.clearFocus(force = true)
+                                                keyboardController?.hide()
+                                            }
                                             navController.navigate(screen.route) {
                                                 popUpTo(navController.graph.startDestinationId) {
-                                                    saveState = true
+                                                    // Never restore a search-results stack when returning Home.
+                                                    saveState = screen != Screens.Home
                                                 }
                                                 launchSingleTop = true
-                                                restoreState = true
+                                                restoreState = screen != Screens.Home
                                             }
                                         }
                                     }
@@ -1218,8 +1228,10 @@ class MainActivity : FragmentActivity() {
                                 .nestedScroll(topAppBarScrollBehavior.nestedScrollConnection),
                     ) {
                         Row(Modifier.fillMaxSize()) {
+                            val focusManager = LocalFocusManager.current
+                            val keyboardController = LocalSoftwareKeyboardController.current
                             val onRailItemClick: (Screens, Boolean) -> Unit =
-                                remember(navController, coroutineScope, topAppBarScrollBehavior, playerBottomSheetState) {
+                                remember(navController, coroutineScope, topAppBarScrollBehavior, playerBottomSheetState, focusManager, keyboardController) {
                                     { screen: Screens, isSelected: Boolean ->
                                         if (playerBottomSheetState.isExpanded) {
                                             playerBottomSheetState.collapseSoft()
@@ -1231,12 +1243,17 @@ class MainActivity : FragmentActivity() {
                                                 topAppBarScrollBehavior.state.resetHeightOffset()
                                             }
                                         } else {
+                                            if (screen != Screens.Search) {
+                                                focusManager.clearFocus(force = true)
+                                                keyboardController?.hide()
+                                            }
                                             navController.navigate(screen.route) {
                                                 popUpTo(navController.graph.startDestinationId) {
-                                                    saveState = true
+                                                    // Never restore a search-results stack when returning Home.
+                                                    saveState = screen != Screens.Home
                                                 }
                                                 launchSingleTop = true
-                                                restoreState = true
+                                                restoreState = screen != Screens.Home
                                             }
                                         }
                                     }

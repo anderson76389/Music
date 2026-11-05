@@ -82,10 +82,12 @@ fun BoxScope.HideOnScrollFAB(
                 containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 contentColor = MaterialTheme.colorScheme.primary,
                 elevation = FloatingActionButtonDefaults.elevation(2.dp),
+                modifier = Modifier.size(48.dp),
             ) {
                 Icon(
                     painter = painterResource(icon),
                     contentDescription = null,
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }

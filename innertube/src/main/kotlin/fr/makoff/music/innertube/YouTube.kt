@@ -14,6 +14,7 @@ import fr.makoff.music.innertube.models.MusicResponsiveListItemRenderer
 import fr.makoff.music.innertube.models.MusicShelfRenderer
 import fr.makoff.music.innertube.models.MusicTwoRowItemRenderer
 import fr.makoff.music.innertube.models.PlaylistItem
+import fr.makoff.music.innertube.models.PlaylistPanelVideoRenderer
 import fr.makoff.music.innertube.models.PodcastItem
 import fr.makoff.music.innertube.models.Run
 import fr.makoff.music.innertube.models.Runs
@@ -77,6 +78,10 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
 import timber.log.Timber
 import java.io.FilterInputStream
 import java.io.InputStream
@@ -2888,6 +2893,51 @@ object YouTube {
         )
     }
 
+    /**
+     * Return the actual song/video counterpart provided by YouTube Music.
+     * Unlike a title search, this cannot accidentally select a cover, live recording
+     * or unrelated fan upload. The counterpart is optional and may require login.
+     */
+    suspend fun videoCounterpart(videoId: String): Result<String?> =
+        runCatching {
+            val response = innerTube.next(
+                client = WEB_REMIX,
+                videoId = videoId,
+                playlistId = null,
+                playlistSetVideoId = null,
+                index = null,
+                params = null,
+            ).body<NextResponse>()
+            val entries = response.contents
+                .singleColumnMusicWatchNextResultsRenderer
+                ?.tabbedRenderer
+                ?.watchNextTabbedResultsRenderer
+                ?.tabs
+                ?.firstOrNull()
+                ?.tabRenderer
+                ?.content
+                ?.musicQueueRenderer
+                ?.content
+                ?.playlistPanelRenderer
+                ?.contents
+                .orEmpty()
+
+            entries.asSequence().mapNotNull { entry ->
+                val wrapper = entry.playlistPanelVideoWrapperRenderer ?: return@mapNotNull null
+                val primary = (wrapper["primaryRenderer"] as? JsonObject)
+                    ?.get("playlistPanelVideoRenderer") as? JsonObject
+                val primaryId = (primary?.get("videoId") as? JsonPrimitive)?.content
+                if (primaryId != null && primaryId != videoId) return@mapNotNull null
+
+                val counterparts = wrapper["counterpart"] as? JsonArray
+                val counterpart = counterparts?.firstOrNull() as? JsonObject
+                val renderer = (counterpart?.get("counterpartRenderer") as? JsonObject)
+                    ?.get("playlistPanelVideoRenderer") as? JsonObject
+                val counterpartId = (renderer?.get("videoId") as? JsonPrimitive)?.content
+                counterpartId?.takeIf { it.length == 11 && it != videoId }
+            }.firstOrNull()
+        }
+
     suspend fun next(
         endpoint: WatchEndpoint,
         continuation: String? = null,
@@ -2931,11 +2981,21 @@ object YouTube {
                     ?.runs
                     ?.firstOrNull()
                     ?.text
+            val wrapperDecoder = Json { ignoreUnknownKeys = true }
             val items =
                 playlistPanelRenderer.contents.mapNotNull { content ->
-                    content.playlistPanelVideoRenderer
-                        ?.let(NextPage::fromPlaylistPanelVideoRenderer)
-                        ?.let { it to content.playlistPanelVideoRenderer.selected }
+                    // Authenticated watch-next responses wrap the currently playing
+                    // item to carry its song/video counterpart. Keep that item in
+                    // the actual audio queue instead of silently dropping it.
+                    val renderer = content.playlistPanelVideoRenderer ?: runCatching {
+                        val primary = content.playlistPanelVideoWrapperRenderer
+                            ?.get("primaryRenderer") as? JsonObject
+                        primary?.get("playlistPanelVideoRenderer")
+                            ?.let { wrapperDecoder.decodeFromJsonElement<PlaylistPanelVideoRenderer>(it) }
+                    }.getOrNull()
+                    renderer?.let { actual ->
+                        NextPage.fromPlaylistPanelVideoRenderer(actual)?.let { it to actual.selected }
+                    }
                 }
             val songs = items.map { it.first }
             val currentIndex = items.indexOfFirst { it.second }.takeIf { it != -1 }

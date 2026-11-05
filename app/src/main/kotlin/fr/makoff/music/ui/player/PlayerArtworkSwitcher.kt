@@ -5,11 +5,14 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -35,6 +39,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
+import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.ui.theme.liquidGlass
 import fr.makoff.music.utils.InnerTubeXPlayer
@@ -64,52 +69,84 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    val canShowVideo = !videoId.isNullOrBlank() && isVideoSong && !isCasting
+    var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
     var showVideo by remember(videoId) { mutableStateOf(false) }
 
+    // The YouTube Music watch-next endpoint sometimes provides a distinct official
+    // music-video ID for an album audio track. Do not guess from search results.
+    LaunchedEffect(videoId, isVideoSong, isCasting, isExpanded) {
+        if (videoId.isNullOrBlank() || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+        companionVideoId = try {
+            withContext(Dispatchers.IO) { YouTube.videoCounterpart(videoId).getOrNull() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    val clipVideoId = if (isVideoSong) videoId else companionVideoId
+    val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (showVideo && canShowVideo && isExpanded && videoId != null) {
-            MusicVideoArtwork(
-                videoId = videoId,
-                isPlaying = isPlaying,
-                playerConnection = playerConnection,
-                onUnavailable = {
-                    showVideo = false
-                    Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            artwork()
-        }
-
+    // YouTube Music-style mode selector sits ABOVE the artwork, never over the cover
+    // or the video. The thumbnail keeps its own gestures, header and Cast control.
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         if (canShowVideo && isExpanded) {
             Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 12.dp)
-                    .liquidGlass(RoundedCornerShape(24.dp), chrome = true),
+                    .padding(top = 8.dp, bottom = 10.dp)
+                    .liquidGlass(RoundedCornerShape(28.dp), chrome = true)
+                    .padding(3.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { showVideo = false }) {
-                    Text(
-                        coverLabel,
-                        color = if (!showVideo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (!showVideo) FontWeight.Bold else FontWeight.Normal,
-                    )
+                TextButton(
+                    onClick = { showVideo = false },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (!showVideo) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (!showVideo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Text(coverLabel, fontWeight = if (!showVideo) FontWeight.SemiBold else FontWeight.Normal)
                 }
-                TextButton(onClick = { showVideo = true }) {
-                    Text(
-                        videoLabel,
-                        color = if (showVideo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (showVideo) FontWeight.Bold else FontWeight.Normal,
-                    )
+                TextButton(
+                    onClick = { showVideo = true },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (showVideo) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (showVideo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Text(videoLabel, fontWeight = if (showVideo) FontWeight.SemiBold else FontWeight.Normal)
                 }
+            }
+        }
+
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (showVideo && canShowVideo && isExpanded && videoId != null && clipVideoId != null) {
+                MusicVideoArtwork(
+                    videoId = clipVideoId,
+                    audioId = videoId,
+                    isPlaying = isPlaying,
+                    playerConnection = playerConnection,
+                    onUnavailable = {
+                        showVideo = false
+                        Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                artwork()
             }
         }
     }
@@ -118,6 +155,7 @@ internal fun PlayerArtworkSwitcher(
 @Composable
 private fun MusicVideoArtwork(
     videoId: String,
+    audioId: String,
     isPlaying: Boolean,
     playerConnection: PlayerConnection,
     onUnavailable: () -> Unit,
@@ -147,6 +185,7 @@ private fun MusicVideoArtwork(
         } else {
             VideoOnlySurface(
                 videoId = videoId,
+                audioId = audioId,
                 stream = stream,
                 playerConnection = playerConnection,
                 isPlaying = isPlaying,
@@ -160,6 +199,7 @@ private fun MusicVideoArtwork(
 @Composable
 private fun VideoOnlySurface(
     videoId: String,
+    audioId: String,
     stream: InnerTubeXPlayer.VideoStream,
     playerConnection: PlayerConnection,
     isPlaying: Boolean,
@@ -201,10 +241,10 @@ private fun VideoOnlySurface(
         }
     }
 
-    LaunchedEffect(videoPlayer, videoId, isPlaying) {
+    LaunchedEffect(videoPlayer, audioId, isPlaying) {
         while (isActive) {
             val audioPlayer = runCatching { playerConnection.player }.getOrNull()
-            if (audioPlayer?.currentMediaItem?.mediaId == videoId) {
+            if (audioPlayer?.currentMediaItem?.mediaId == audioId) {
                 val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
                 if (abs(videoPlayer.currentPosition - audioPosition) > 700L) {
                     videoPlayer.seekTo(audioPosition)
