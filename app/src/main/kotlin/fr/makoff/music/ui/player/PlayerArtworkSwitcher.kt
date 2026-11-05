@@ -124,11 +124,30 @@ internal fun PlayerArtworkSwitcher(
     }
 
     val clipVideoId = if (isVideoSong) videoId else companionVideoId
-    // A candidate clip alone is not enough: if video extraction/playback fails,
-    // remember the failed ID for this song and remove the segment instead of
-    // leaving a permanently disabled button above the artwork.
+    // Do not advertise an unplayable clip. Resolve the actual signed video
+    // stream in the background ONLY while the full player is expanded, and
+    // reuse it on demand. This also avoids a duplicate network extraction
+    // each time the user switches between Son and Vidéo.
+    var availableVideoStream by remember(clipVideoId) {
+        mutableStateOf<InnerTubeXPlayer.VideoStream?>(null)
+    }
+    LaunchedEffect(clipVideoId, isExpanded, isCasting, isLocalOrUploaded) {
+        val id = clipVideoId
+        if (id.isNullOrBlank() || !isExpanded || isCasting || isLocalOrUploaded) {
+            availableVideoStream = null
+            return@LaunchedEffect
+        }
+        delay(250L) // avoid extraction storms when rapidly skipping tracks
+        availableVideoStream = try {
+            withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(id) }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+    }
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
-    val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting &&
+    val canShowVideo = availableVideoStream != null && !isCasting &&
         isYouTubeTrack && !isLocalOrUploaded && clipVideoId != unavailableClipId
     val showModeBar = isExpanded && canShowVideo
     LaunchedEffect(isExpanded, canShowVideo) {
@@ -137,9 +156,10 @@ internal fun PlayerArtworkSwitcher(
 
     val playerImage: @Composable () -> Unit = {
         if (showVideo && showModeBar && videoId != null && clipVideoId != null) {
-            MusicVideoArtwork(
+            VideoOnlySurface(
                 videoId = clipVideoId,
                 audioId = videoId,
+                stream = availableVideoStream!!,
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
@@ -313,50 +333,6 @@ private fun PlayerModePills(
                     maxLines = 1,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun MusicVideoArtwork(
-    videoId: String,
-    audioId: String,
-    isPlaying: Boolean,
-    playerConnection: PlayerConnection,
-    onUnavailable: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var videoStream by remember(videoId) { mutableStateOf<InnerTubeXPlayer.VideoStream?>(null) }
-
-    LaunchedEffect(videoId) {
-        val resolved = try {
-            withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(videoId) }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (_: Exception) {
-            null
-        }
-        if (resolved == null) {
-            onUnavailable()
-        } else {
-            videoStream = resolved
-        }
-    }
-
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        val stream = videoStream
-        if (stream == null) {
-            CircularProgressIndicator()
-        } else {
-            VideoOnlySurface(
-                videoId = videoId,
-                audioId = audioId,
-                stream = stream,
-                playerConnection = playerConnection,
-                isPlaying = isPlaying,
-                onUnavailable = onUnavailable,
-                modifier = Modifier.fillMaxSize(),
-            )
         }
     }
 }
