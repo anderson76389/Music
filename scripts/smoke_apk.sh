@@ -90,6 +90,12 @@ for variant in foss gms; do
     if ! grep -Eq 'OK \(1 test\)' smoke-results/youtube-live-test.txt; then
       echo "::warning::Le téléchargement YouTube réel n’a pas réussi depuis le réseau de l’émulateur ; voir youtube-live-test.txt."
     fi
+    # Online video diagnostic uses the SAME signed video extractor as the
+    # Son/Vidéo toggle. External YouTube networking must not block releases.
+    timeout 150s adb shell am instrument -w -r -e class fr.makoff.music.playback.YouTubeVideoLiveTest "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/youtube-video-live-test.txt || echo "Essai clip YouTube interrompu ou délai dépassé" >> smoke-results/youtube-video-live-test.txt
+    if ! grep -Fq 'VIDEO_STREAM_PROBE_OK' smoke-results/youtube-video-live-test.txt; then
+      echo "::warning::Clip vidéo YouTube non vérifié sur le réseau de l’émulateur ; voir youtube-video-live-test.txt."
+    fi
   fi
   if [ "$variant" = gms ] && [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -ge 33 ]; then
     # Inspect both appearances with animation enabled after deterministic functional tests.
