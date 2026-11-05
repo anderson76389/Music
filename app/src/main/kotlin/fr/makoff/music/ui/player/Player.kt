@@ -1538,6 +1538,8 @@ fun BottomSheetPlayer(
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
+                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
@@ -1606,6 +1608,8 @@ fun BottomSheetPlayer(
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
+                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
+                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
