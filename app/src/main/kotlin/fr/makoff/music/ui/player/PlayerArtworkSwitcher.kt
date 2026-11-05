@@ -119,7 +119,7 @@ internal fun PlayerArtworkSwitcher(
     // Keep the top bar stable while the counterpart lookup runs. YouTube Music
     // displays the Video option disabled when no matching clip is available.
     // Local and external files keep the original Now Playing header.
-    val isYouTubeTrack = videoId?.length == 11 &&
+    val isYouTubeTrack = videoId != null && videoId.length == 11 &&
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
     val showModeBar = isExpanded && !isCasting && isYouTubeTrack
     LaunchedEffect(isExpanded, canShowVideo) {
