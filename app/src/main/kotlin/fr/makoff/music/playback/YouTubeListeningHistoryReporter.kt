@@ -51,6 +51,8 @@ internal class YouTubeListeningHistoryReporter(
         var listenedMs: Long = 0L,
         var lastReportedListenedMs: Long = 0L,
         var playbackSent: Boolean = false,
+        var lastPlaybackAttemptMs: Long = 0L,
+        var lastWatchtimeAttemptMs: Long = 0L,
         var tracking: Tracking? = null,
     )
 
@@ -107,14 +109,21 @@ internal class YouTubeListeningHistoryReporter(
         s.lastPositionMs = positionMs
         if (sample.tracking != null) s.tracking = sample.tracking
 
-        if (!s.playbackSent && s.listenedMs >= 10_000L) {
+        if (!s.playbackSent && s.listenedMs >= 10_000L &&
+            (s.lastPlaybackAttemptMs == 0L ||
+                sample.elapsedRealtimeMs - s.lastPlaybackAttemptMs >= 60_000L)
+        ) {
             val url = s.tracking?.playbackUrl
             if (url != null) {
+                s.lastPlaybackAttemptMs = sample.elapsedRealtimeMs
                 s.playbackSent = sendPlayback(url, s.cpn, s.tracking?.format)
             }
         }
 
-        if (s.playbackSent && s.listenedMs - s.lastReportedListenedMs >= 15_000L) {
+        if (s.playbackSent && s.listenedMs - s.lastReportedListenedMs >= 15_000L &&
+            (s.lastWatchtimeAttemptMs == 0L ||
+                sample.elapsedRealtimeMs - s.lastWatchtimeAttemptMs >= 30_000L)
+        ) {
             reportWatchtime(s, isFinal = false)
         }
     }
@@ -134,6 +143,7 @@ internal class YouTubeListeningHistoryReporter(
         val startMs = s.lastReportedPositionMs
         val endMs = s.lastPositionMs
         if (endMs <= startMs + 1_000L) return
+        s.lastWatchtimeAttemptMs = s.lastObservedAtMs
         val success = sendWatchtime(
             url,
             s.cpn,
