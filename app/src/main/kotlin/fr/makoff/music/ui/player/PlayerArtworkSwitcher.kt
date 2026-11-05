@@ -7,6 +7,7 @@ import fr.makoff.music.ui.component.CastButton
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
@@ -115,7 +116,12 @@ internal fun PlayerArtworkSwitcher(
 
     val clipVideoId = if (isVideoSong) videoId else companionVideoId
     val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting
-    val showModeBar = canShowVideo && isExpanded
+    // Keep the top bar stable while the counterpart lookup runs. YouTube Music
+    // displays the Video option disabled when no matching clip is available.
+    // Local and external files keep the original Now Playing header.
+    val isYouTubeTrack = videoId?.length == 11 &&
+        videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
+    val showModeBar = isExpanded && !isCasting && isYouTubeTrack
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
     }
@@ -142,6 +148,7 @@ internal fun PlayerArtworkSwitcher(
             audioLabel = coverLabel,
             videoLabel = videoLabel,
             showVideo = showVideo,
+            videoEnabled = canShowVideo,
             darkBackdrop = darkBackdrop,
             modeTextColor = modeTextColor,
             onAudioClick = { showVideo = false },
@@ -188,6 +195,7 @@ private fun PlayerModeTopBar(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
+    videoEnabled: Boolean,
     darkBackdrop: Boolean,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
@@ -219,6 +227,7 @@ private fun PlayerModeTopBar(
             audioLabel = audioLabel,
             videoLabel = videoLabel,
             showVideo = showVideo,
+            videoEnabled = videoEnabled,
             darkBackdrop = darkBackdrop,
             onAudioClick = onAudioClick,
             onVideoClick = onVideoClick,
@@ -252,6 +261,7 @@ private fun PlayerModePills(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
+    videoEnabled: Boolean,
     darkBackdrop: Boolean,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -292,8 +302,10 @@ private fun PlayerModePills(
                     .defaultMinSize(minWidth = 48.dp)
                     .clip(RoundedCornerShape(19.dp))
                     .background(if (selected) selectedBackground else Color.Transparent)
+                    .alpha(if (video && !videoEnabled) 0.4f else 1f)
                     .selectable(
                         selected = selected,
+                        enabled = !video || videoEnabled,
                         role = Role.Tab,
                         onClick = if (video) onVideoClick else onAudioClick,
                     )
