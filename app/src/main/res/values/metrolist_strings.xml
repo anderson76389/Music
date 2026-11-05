@@ -917,7 +917,8 @@
     <string name="download_choice_m4a_help">Meilleur flux AAC/M4A disponible, conservé en M4A. Aucune reconversion depuis Opus.</string>
     <string name="download_choice_flac_help">Meilleur flux disponible converti en FLAC. La source YouTube reste compressée avec perte : le FLAC ne restitue pas les détails perdus.</string>
     <string name="player_cover_toggle">Pochette : lecture ou pause</string>
-    <string name="player_cover_label">Musique</string>
-    <string name="player_video_label">Clip</string>
+    <string name="player_cover_label">Son</string>
+    <string name="player_video_label">Vidéo</string>
     <string name="player_video_unavailable">Clip vidéo indisponible pour ce titre</string>
+    <string name="player_collapse_label">Réduire le lecteur</string>
 </resources>
