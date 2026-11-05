@@ -343,4 +343,5 @@
     <string name="new_version_available">New version available</string>
     <string name="translation_models">Translation Models</string>
     <string name="clear_translation_models">Clear translation models</string>
+    <string name="pause_listen_history_desc">Also prevents listening progress from being sent to your connected YouTube Music account.</string>
 </resources>
