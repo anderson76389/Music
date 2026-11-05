@@ -1,6 +1,13 @@
 package fr.makoff.music.ui.player
 
 import android.view.TextureView
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.matchParentSize
+import androidx.compose.foundation.clickable
 import android.widget.Toast
 import fr.makoff.music.ui.component.CastButton
 import androidx.compose.ui.res.painterResource
@@ -11,12 +18,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.defaultMinSize
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.border
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -123,11 +125,13 @@ internal fun PlayerArtworkSwitcher(
     }
 
     val clipVideoId = if (isVideoSong) videoId else companionVideoId
-    val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting
-    // Keep the top bar stable while the counterpart lookup runs. YouTube Music
-    // displays the Video option disabled when no matching clip is available.
-    // Local and external files keep the original Now Playing header.
-    val showModeBar = isExpanded && !isCasting && isYouTubeTrack && !isLocalOrUploaded
+    // A candidate clip alone is not enough: if video extraction/playback fails,
+    // remember the failed ID for this song and remove the segment instead of
+    // leaving a permanently disabled button above the artwork.
+    var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
+    val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting &&
+        isYouTubeTrack && !isLocalOrUploaded && clipVideoId != unavailableClipId
+    val showModeBar = isExpanded && canShowVideo
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
     }
@@ -140,6 +144,7 @@ internal fun PlayerArtworkSwitcher(
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
+                    unavailableClipId = clipVideoId
                     showVideo = false
                     Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
                 },
@@ -154,7 +159,7 @@ internal fun PlayerArtworkSwitcher(
             audioLabel = coverLabel,
             videoLabel = videoLabel,
             showVideo = showVideo,
-            videoEnabled = canShowVideo,
+            showModeSelector = showModeBar,
             modeTextColor = modeTextColor,
             onAudioClick = { showVideo = false },
             onVideoClick = { showVideo = true },
@@ -164,28 +169,21 @@ internal fun PlayerArtworkSwitcher(
         )
     }
 
-    if (isLandscape && showModeBar) {
-        Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-            // The landscape parent already accounts for the status-bar inset.
+    // Draw ONE shared top bar for both artwork and video. It owns the status
+    // inset in portrait, so "En cours de lecture" can never overlap a clip.
+    // Keep the same positioning across a song without a companion video.
+    Column(
+        modifier = modifier.then(if (isLandscape) Modifier else Modifier.statusBarsPadding()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        if (isExpanded) {
             topBar(Modifier.fillMaxWidth().padding(top = 4.dp))
-            Box(
-                modifier = Modifier.weight(1f).fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                playerImage()
-            }
         }
-    } else {
-        Box(modifier = modifier, contentAlignment = Alignment.Center) {
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
             playerImage()
-            if (showModeBar) {
-                topBar(
-                    Modifier
-                        .align(Alignment.TopCenter)
-                        .windowInsetsPadding(WindowInsets.statusBars.only(WindowInsetsSides.Top))
-                        .padding(top = 4.dp),
-                )
-            }
         }
     }
 }
@@ -200,7 +198,7 @@ private fun PlayerModeTopBar(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
-    videoEnabled: Boolean,
+    showModeSelector: Boolean,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -227,15 +225,18 @@ private fun PlayerModeTopBar(
             )
         }
 
-        PlayerModePills(
-            audioLabel = audioLabel,
-            videoLabel = videoLabel,
-            showVideo = showVideo,
-            videoEnabled = videoEnabled,
-            onAudioClick = onAudioClick,
-            onVideoClick = onVideoClick,
-            modifier = Modifier.align(Alignment.Center),
-        )
+        // The entire Son / Vidéo selector disappears for songs without a clip.
+        // Keep the down arrow, Cast and the player menu usable in all cases.
+        if (showModeSelector) {
+            PlayerModePills(
+                audioLabel = audioLabel,
+                videoLabel = videoLabel,
+                showVideo = showVideo,
+                onAudioClick = onAudioClick,
+                onVideoClick = onVideoClick,
+                modifier = Modifier.align(Alignment.Center),
+            )
+        }
 
         Row(
             modifier = Modifier.align(Alignment.CenterEnd),
@@ -264,7 +265,6 @@ private fun PlayerModePills(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
-    videoEnabled: Boolean,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -295,10 +295,8 @@ private fun PlayerModePills(
                     .defaultMinSize(minWidth = 48.dp)
                     .clip(RoundedCornerShape(19.dp))
                     .background(if (selected) selectedBackground else Color.Transparent)
-                    .alpha(if (video && !videoEnabled) 0.4f else 1f)
                     .selectable(
                         selected = selected,
-                        enabled = !video || videoEnabled,
                         role = Role.Tab,
                         onClick = if (video) onVideoClick else onAudioClick,
                     )
@@ -422,24 +420,67 @@ private fun VideoOnlySurface(
         }
     }
 
+    var controlsVisible by remember(videoPlayer) { mutableStateOf(false) }
+    LaunchedEffect(controlsVisible, isPlaying) {
+        if (controlsVisible && isPlaying) {
+            delay(2_500L)
+            controlsVisible = false
+        }
+    }
+    val playbackLabel = stringResource(if (isPlaying) R.string.player_pause else R.string.play)
+
     BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
         val videoWidth = minOf(maxWidth, maxHeight * (16f / 9f))
-        AndroidView(
-            factory = { TextureView(it) },
-            modifier = Modifier.size(videoWidth, videoWidth * (9f / 16f)),
-            update = { textureView ->
-                // Compose reuses AndroidView when the selected track changes.
-                // Its factory is NOT called again, so attach every *new player*
-                // to the retained texture once, rather than leaving a black frame.
-                // Old players clear their surfaces in DisposableEffect.onDispose.
-                if (textureView.tag !== videoPlayer) {
-                    videoPlayer.setVideoTextureView(textureView)
-                    textureView.tag = videoPlayer
+        Box(
+            modifier = Modifier
+                .size(videoWidth, videoWidth * (9f / 16f))
+                .clip(RoundedCornerShape(18.dp)),
+            contentAlignment = Alignment.Center,
+        ) {
+            AndroidView(
+                factory = { TextureView(it) },
+                modifier = Modifier.fillMaxSize(),
+                update = { textureView ->
+                    // Reconnect a reused TextureView to the NEW ExoPlayer when
+                    // changing tracks, otherwise the clip can remain black.
+                    if (textureView.tag !== videoPlayer) {
+                        videoPlayer.setVideoTextureView(textureView)
+                        textureView.tag = videoPlayer
+                    }
+                },
+            )
+            // A transparent touch target ABOVE the Android view ensures one tap
+            // really pauses/resumes the underlying audio service. The video-only
+            // session remains muted and follows the service; no duplicate sound.
+            Box(
+                Modifier.matchParentSize().clickable(onClickLabel = playbackLabel) {
+                    playerConnection.togglePlayPause()
+                    controlsVisible = true
+                },
+            )
+            AnimatedVisibility(
+                visible = videoReady && (!isPlaying || controlsVisible),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                IconButton(
+                    onClick = {
+                        playerConnection.togglePlayPause()
+                        controlsVisible = true
+                    },
+                    modifier = Modifier
+                        .size(60.dp)
+                        .background(Color.Black.copy(alpha = 0.46f), CircleShape),
+                ) {
+                    Icon(
+                        painter = painterResource(if (isPlaying) R.drawable.pause else R.drawable.play),
+                        contentDescription = playbackLabel,
+                        tint = Color.White,
+                        modifier = Modifier.size(32.dp),
+                    )
                 }
-            },
-        )
-        if (!videoReady) {
-            CircularProgressIndicator(Modifier.align(Alignment.Center))
+            }
+            if (!videoReady) CircularProgressIndicator()
         }
     }
 }
