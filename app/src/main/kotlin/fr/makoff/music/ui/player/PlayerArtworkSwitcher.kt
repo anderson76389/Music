@@ -84,6 +84,7 @@ import kotlin.math.abs
 internal fun PlayerArtworkSwitcher(
     videoId: String?,
     isVideoSong: Boolean,
+    isLocalOrUploaded: Boolean,
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
@@ -106,8 +107,8 @@ internal fun PlayerArtworkSwitcher(
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Only use YouTube Music's official counterpart, not a guessed search result.
-    LaunchedEffect(videoId, isVideoSong, isCasting, isExpanded) {
-        if (!isYouTubeTrack || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+    LaunchedEffect(videoId, isVideoSong, isLocalOrUploaded, isCasting, isExpanded) {
+        if (!isYouTubeTrack || isLocalOrUploaded || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
         companionVideoId = try {
             withContext(Dispatchers.IO) { YouTube.videoCounterpart(videoId).getOrNull() }
         } catch (cancelled: CancellationException) {
@@ -122,7 +123,7 @@ internal fun PlayerArtworkSwitcher(
     // Keep the top bar stable while the counterpart lookup runs. YouTube Music
     // displays the Video option disabled when no matching clip is available.
     // Local and external files keep the original Now Playing header.
-    val showModeBar = isExpanded && !isCasting && isYouTubeTrack
+    val showModeBar = isExpanded && !isCasting && isYouTubeTrack && !isLocalOrUploaded
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
     }
