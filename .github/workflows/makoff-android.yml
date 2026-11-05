@@ -102,7 +102,11 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 4096 -feature -Vulkan
+          # Android Emulator >=36.4 deprecated swiftshader_indirect. On Android 15,
+          # it repeatedly lost GLES color buffers and killed the emulator process
+          # during long UI tests. Use the supported ANGLE/SwiftShader software
+          # renderer and leave more host RAM for the graphics backend.
+          emulator-options: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim -camera-back none -memory 3072 -feature -Vulkan
           script: bash scripts/smoke_apk.sh
       - name: Conserver les preuves et journaux de démarrage
         if: always()
