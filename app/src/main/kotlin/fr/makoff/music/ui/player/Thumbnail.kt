@@ -54,6 +54,7 @@ import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
@@ -227,6 +228,8 @@ fun Thumbnail(
     )
 
     val glass = LocalLiquidGlassEnabled.current
+    val config = LocalConfiguration.current
+    val unfoldedCanvas = config.screenWidthDp >= 600 && config.screenHeightDp >= 560
     val playerBackground = if (glass) PlayerBackgroundStyle.GRADIENT else selectedPlayerBackground
 
     // Pre-calculate text color based on background style
@@ -300,11 +303,14 @@ fun Thumbnail(
     var seekDirection by remember { mutableStateOf("") }
 
     Box(
-        modifier = modifier
-            .graphicsLayer {
-                // Use hardware layer for entire Thumbnail to ensure smooth 120Hz animations
+        modifier = modifier.then(
+            if (unfoldedCanvas) Modifier
+            else Modifier.graphicsLayer {
+                // Avoid an extra full-screen GPU framebuffer on the large
+                // foldable display. Small-screen drawing stays unchanged.
                 compositingStrategy = CompositingStrategy.Offscreen
-            }
+            },
+        ),
     ) {
         // Error view
         AnimatedVisibility(
@@ -514,6 +520,8 @@ private fun ThumbnailItem(
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
+    val config = LocalConfiguration.current
+    val unfoldedCanvas = config.screenWidthDp >= 600 && config.screenHeightDp >= 560
     var skipMultiplier by remember { mutableIntStateOf(1) }
     var lastTapTime by remember { mutableLongStateOf(0L) }
     val coverToggleLabel = stringResource(R.string.player_cover_toggle)
@@ -530,10 +538,12 @@ private fun ThumbnailItem(
                 }
             )
             .padding(horizontal = PlayerHorizontalPadding)
-            .graphicsLayer {
-                // Render entire thumbnail item on separate hardware layer for smooth animations
-                compositingStrategy = CompositingStrategy.Offscreen
-            }
+            .then(
+                if (unfoldedCanvas) Modifier
+                else Modifier.graphicsLayer {
+                    compositingStrategy = CompositingStrategy.Offscreen
+                },
+            )
             .pointerInput(item.mediaId, incrementalSeekSkipEnabled, layoutDirection) {
                 detectTapGestures(
                     onTap = {
