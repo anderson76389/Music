@@ -39,6 +39,7 @@ import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
+import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.ui.theme.liquidGlass
 import fr.makoff.music.utils.InnerTubeXPlayer
@@ -68,9 +69,24 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    val canShowVideo = !videoId.isNullOrBlank() && isVideoSong && !isCasting
+    var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
     var showVideo by remember(videoId) { mutableStateOf(false) }
 
+    // The YouTube Music watch-next endpoint sometimes provides a distinct official
+    // music-video ID for an album audio track. Do not guess from search results.
+    LaunchedEffect(videoId, isVideoSong, isCasting, isExpanded) {
+        if (videoId.isNullOrBlank() || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+        companionVideoId = try {
+            withContext(Dispatchers.IO) { YouTube.videoCounterpart(videoId).getOrNull() }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    val clipVideoId = if (isVideoSong) videoId else companionVideoId
+    val canShowVideo = !clipVideoId.isNullOrBlank() && !isCasting
     LaunchedEffect(isExpanded, canShowVideo) {
         if (!isExpanded || !canShowVideo) showVideo = false
     }
@@ -117,9 +133,10 @@ internal fun PlayerArtworkSwitcher(
             modifier = Modifier.weight(1f).fillMaxWidth(),
             contentAlignment = Alignment.Center,
         ) {
-            if (showVideo && canShowVideo && isExpanded && videoId != null) {
+            if (showVideo && canShowVideo && isExpanded && videoId != null && clipVideoId != null) {
                 MusicVideoArtwork(
-                    videoId = videoId,
+                    videoId = clipVideoId,
+                    audioId = videoId,
                     isPlaying = isPlaying,
                     playerConnection = playerConnection,
                     onUnavailable = {
@@ -138,6 +155,7 @@ internal fun PlayerArtworkSwitcher(
 @Composable
 private fun MusicVideoArtwork(
     videoId: String,
+    audioId: String,
     isPlaying: Boolean,
     playerConnection: PlayerConnection,
     onUnavailable: () -> Unit,
@@ -167,6 +185,7 @@ private fun MusicVideoArtwork(
         } else {
             VideoOnlySurface(
                 videoId = videoId,
+                audioId = audioId,
                 stream = stream,
                 playerConnection = playerConnection,
                 isPlaying = isPlaying,
@@ -180,6 +199,7 @@ private fun MusicVideoArtwork(
 @Composable
 private fun VideoOnlySurface(
     videoId: String,
+    audioId: String,
     stream: InnerTubeXPlayer.VideoStream,
     playerConnection: PlayerConnection,
     isPlaying: Boolean,
@@ -221,10 +241,10 @@ private fun VideoOnlySurface(
         }
     }
 
-    LaunchedEffect(videoPlayer, videoId, isPlaying) {
+    LaunchedEffect(videoPlayer, audioId, isPlaying) {
         while (isActive) {
             val audioPlayer = runCatching { playerConnection.player }.getOrNull()
-            if (audioPlayer?.currentMediaItem?.mediaId == videoId) {
+            if (audioPlayer?.currentMediaItem?.mediaId == audioId) {
                 val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
                 if (abs(videoPlayer.currentPosition - audioPosition) > 700L) {
                     videoPlayer.seekTo(audioPosition)
