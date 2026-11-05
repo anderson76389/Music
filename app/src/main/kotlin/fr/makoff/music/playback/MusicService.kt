@@ -32,6 +32,7 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
+import android.os.SystemClock
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.datastore.preferences.core.Preferences
@@ -125,6 +126,7 @@ import fr.makoff.music.constants.MediaSessionConstants.CommandToggleRepeatMode
 import fr.makoff.music.constants.MediaSessionConstants.CommandToggleShuffle
 import fr.makoff.music.constants.MediaSessionConstants.CommandToggleStartRadio
 import fr.makoff.music.constants.PauseListenHistoryKey
+import fr.makoff.music.constants.YtmSyncKey
 import fr.makoff.music.constants.PauseOnMute
 import fr.makoff.music.constants.PersistentQueueKey
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
@@ -157,6 +159,7 @@ import fr.makoff.music.extensions.currentMetadata
 import fr.makoff.music.extensions.findNextMediaItemById
 import fr.makoff.music.extensions.mediaItems
 import fr.makoff.music.extensions.metadata
+import fr.makoff.music.extensions.isInternetConnected
 import fr.makoff.music.extensions.setOffloadEnabled
 import fr.makoff.music.extensions.toEnum
 import fr.makoff.music.extensions.toMediaItem
@@ -181,6 +184,7 @@ import fr.makoff.music.utils.SyncUtils
 import fr.makoff.music.utils.getArtistSeparator
 import fr.makoff.music.utils.joinToArtistString
 import fr.makoff.music.utils.InnerTubeXPlayer
+import fr.makoff.music.innertube.models.YouTubeClient
 import fr.makoff.music.utils.dataStore
 import fr.makoff.music.utils.get
 import fr.makoff.music.utils.reportException
@@ -466,12 +470,43 @@ class MusicService :
 
     private fun cacheKey(mediaId: String) = "${sessionKey}:$mediaId"
 
-    private val playbackUrlCache = Collections.synchronizedMap(
-        object : LinkedHashMap<String, String>(0, 0.75f, true) {
-            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, String>): Boolean {
-                return size > 500
-            }
+    private val historyTrackingCache = Collections.synchronizedMap(
+        object : LinkedHashMap<String, YouTubeListeningHistoryReporter.Tracking>(0, 0.75f, true) {
+            override fun removeEldestEntry(
+                eldest: MutableMap.MutableEntry<String, YouTubeListeningHistoryReporter.Tracking>,
+            ): Boolean = size > 350
         }
+    )
+
+    // A WEB_REMIX playback response provides account-bound statistics URLs even
+    // when the actual audio was served from a guest/embedded fallback client.
+    // Throttle authenticated lookups to avoid hammering YouTube during skips.
+    private val historyLookupAt = Collections.synchronizedMap(
+        object : LinkedHashMap<String, Long>(0, 0.75f, true) {
+            override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>): Boolean =
+                size > 350
+        }
+    )
+
+    private val youtubeHistoryReporter = YouTubeListeningHistoryReporter(
+        sendPlayback = { url, cpn, format ->
+            YouTube.registerPlayback(playbackTracking = url, cpn = cpn, format = format)
+                .onFailure { Timber.tag(TAG).w("YouTube history playback registration rejected") }
+                .isSuccess
+        },
+        sendWatchtime = { url, cpn, startSeconds, endSeconds, currentSeconds, realSeconds, final, format ->
+            YouTube.registerWatchtime(
+                watchtimeTracking = url,
+                cpn = cpn,
+                startSeconds = startSeconds,
+                endSeconds = endSeconds,
+                currentSeconds = currentSeconds,
+                realSeconds = realSeconds,
+                final = final,
+                format = format,
+            ).onFailure { Timber.tag(TAG).w("YouTube history watchtime registration rejected") }
+                .isSuccess
+        },
     )
 
     // Flag to bypass cache when quality changes - forces fresh stream fetch
@@ -615,6 +650,7 @@ class MusicService :
 
         playerInitialized.value = true
         Timber.tag(TAG).d("Player successfully initialized")
+        startYouTubeListeningHistoryReporting()
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
         setupAudioFocusRequest()
@@ -3409,8 +3445,17 @@ class MusicService :
                     expectedGeneration = cacheGeneration,
                 )
 
-                nonNullPlayback.playbackTracking?.videostatsPlaybackUrl?.baseUrl?.let {
-                    playbackUrlCache[cacheKey(mediaId)] = it
+                nonNullPlayback.playbackTracking?.let { tracking ->
+                    if (tracking.videostatsPlaybackUrl?.baseUrl != null ||
+                        tracking.videostatsWatchtimeUrl?.baseUrl != null
+                    ) {
+                        historyTrackingCache[cacheKey(mediaId)] =
+                            YouTubeListeningHistoryReporter.Tracking(
+                                playbackUrl = tracking.videostatsPlaybackUrl?.baseUrl,
+                                watchtimeUrl = tracking.videostatsWatchtimeUrl?.baseUrl,
+                                format = nonNullPlayback.format.itag,
+                            )
+                    }
                 }
 
                 return@ResolvingDataSource dataSpec.withResolvedStream(
@@ -3535,19 +3580,88 @@ class MusicService :
             }
         }
 
-        if (playbackStats.totalPlayTimeMs >= historyDurationMs) {
-            scope.launch(Dispatchers.IO) {
-                val playbackUrl =
-                    playbackUrlCache[cacheKey(mediaItem.mediaId)]
-                if (playbackUrl == null) {
-                    Timber.tag(TAG).w("No playback tracking URL available; skipping YouTube history registration")
-                    return@launch
+        // Do NOT send a one-off YouTube playback ping only after the track
+        // finishes: the active tracker reports genuine played time and progress
+        // throughout listening, using the same cpn. The local history above
+        // remains independent and retains its existing duration setting.
+    }
+
+    /**
+     * Observe the *actual* local ExoPlayer position on the main dispatcher,
+     * then do the private YouTube Music network reporting on IO. No per-frame
+     * Compose work, wake locks, WebView timers or additional media players.
+     */
+    private fun startYouTubeListeningHistoryReporting() {
+        scope.launch {
+            while (isActive) {
+                delay(5_000L)
+                val media = player.currentMediaItem
+                val metadata = media?.metadata
+                val videoId = media?.mediaId
+                val isLocalOrUploaded = metadata?.uploadEntityId != null ||
+                    media?.localConfiguration?.uri?.scheme in listOf("file", "content")
+                val account = buildString {
+                    append(YouTube.dataSyncId.orEmpty())
+                    append(':')
+                    append(YouTube.authUser)
+                    append(':')
+                    append(YouTube.cookie.orEmpty().hashCode())
                 }
-                YouTube
-                    .registerPlayback(null, playbackUrl)
-                    .onFailure {
-                        reportException(it)
+                val snapshot = YouTubeListeningHistoryReporter.Sample(
+                    mediaId = videoId,
+                    account = account,
+                    positionMs = player.currentPosition.coerceAtLeast(0L),
+                    elapsedRealtimeMs = SystemClock.elapsedRealtime(),
+                    isPlaying = player.isPlaying &&
+                        castConnectionHandler?.isCasting?.value != true && !isLocalOrUploaded,
+                    canSync = false,
+                    tracking = videoId?.let { historyTrackingCache[cacheKey(it)] },
+                )
+
+                withContext(Dispatchers.IO) {
+                    val syncAllowed = runCatching {
+                        dataStore.get(YtmSyncKey, true) &&
+                            !dataStore.get(PauseListenHistoryKey, false) &&
+                            !YouTube.cookie.isNullOrBlank() &&
+                            YouTube.cookie.orEmpty().contains("SAPISID") &&
+                            isInternetConnected()
+                    }.getOrDefault(false)
+
+                    var tracking = snapshot.tracking
+                    if (syncAllowed && snapshot.isPlaying && videoId != null &&
+                        YouTubeListeningHistoryReporter.isYouTubeVideoId(videoId) &&
+                        (tracking?.playbackUrl == null || tracking.watchtimeUrl == null)
+                    ) {
+                        val key = cacheKey(videoId)
+                        val now = SystemClock.elapsedRealtime()
+                        val last = historyLookupAt[key] ?: 0L
+                        if (last == 0L || now - last > 120_000L) {
+                            historyLookupAt[key] = now
+                            // Authentication is intentional here: the stream
+                            // extractor may use an unauthenticated playback
+                            // client, and its tracking URL may not record
+                            // history against the signed-in music account.
+                            val remote = kotlinx.coroutines.withTimeoutOrNull(8_000L) {
+                                YouTube.player(videoId = videoId, client = YouTubeClient.WEB_REMIX)
+                                    .getOrNull()
+                            }?.playbackTracking
+                            if (remote != null &&
+                                (remote.videostatsPlaybackUrl?.baseUrl != null ||
+                                 remote.videostatsWatchtimeUrl?.baseUrl != null)
+                            ) {
+                                tracking = YouTubeListeningHistoryReporter.Tracking(
+                                    playbackUrl = remote.videostatsPlaybackUrl?.baseUrl ?: tracking?.playbackUrl,
+                                    watchtimeUrl = remote.videostatsWatchtimeUrl?.baseUrl ?: tracking?.watchtimeUrl,
+                                    format = tracking?.format,
+                                )
+                                historyTrackingCache[key] = tracking!!
+                            }
+                        }
                     }
+                    youtubeHistoryReporter.observe(
+                        snapshot.copy(canSync = syncAllowed, tracking = tracking),
+                    )
+                }
             }
         }
     }
