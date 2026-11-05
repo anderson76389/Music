@@ -203,6 +203,7 @@ fun Thumbnail(
     modifier: Modifier = Modifier,
     isPlayerExpanded: () -> Boolean = { true },
     isLandscape: Boolean = false,
+    showPlayerModeBar: Boolean = false,
 ) {
     val playerConnection = LocalPlayerConnection.current ?: return
     val context = LocalContext.current
@@ -338,11 +339,17 @@ fun Thumbnail(
             ) {
                 // Now Playing header - hide in landscape mode
                 if (!isLandscape) {
-                    ThumbnailHeader(
-                        queueTitle = queueTitle,
-                        albumTitle = mediaMetadata?.album?.title,
-                        textColor = textBackgroundColor
-                    )
+                    if (showPlayerModeBar) {
+                        // Reserve the same header space for the YouTube Music-style
+                        // mode controls without moving or covering the artwork.
+                        Spacer(Modifier.height(56.dp))
+                    } else {
+                        ThumbnailHeader(
+                            queueTitle = queueTitle,
+                            albumTitle = mediaMetadata?.album?.title,
+                            textColor = textBackgroundColor
+                        )
+                    }
                 }
 
                 // Thumbnail content
@@ -411,7 +418,8 @@ fun Thumbnail(
                                 context = context,
                                 isLandscape = isLandscape,
                                 currentMediaId = mediaMetadata?.id,
-                                currentMediaThumbnail = mediaMetadata?.thumbnailUrl
+                                currentMediaThumbnail = mediaMetadata?.thumbnailUrl,
+                                showArtworkCastButton = !showPlayerModeBar,
                             )
                         }
                     }
@@ -496,6 +504,7 @@ private fun ThumbnailItem(
     isLandscape: Boolean = false,
     currentMediaId: String? = null,
     currentMediaThumbnail: String? = null,
+    showArtworkCastButton: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val incrementalSeekSkipEnabled by rememberPreference(SeekExtraSeconds, defaultValue = false)
@@ -584,13 +593,16 @@ private fun ThumbnailItem(
                 )
             }
 
-            // Cast button at top-right corner of thumbnail
-            CastButton(
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(8.dp),
-                tintColor = textBackgroundColor
-            )
+            // The official player mode bar already carries Cast. Keep the old
+            // artwork placement for tracks without a video counterpart.
+            if (showArtworkCastButton) {
+                CastButton(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                    tintColor = textBackgroundColor,
+                )
+            }
         }
     }
 }
