@@ -752,13 +752,46 @@ fun BottomSheetPlayer(
                                             1.0f to Color.Black,
                                         )
                                     }
-                                Box(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .alpha(backgroundAlpha)
-                                        .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                        .background(Color.Black.copy(alpha = 0.2f)),
-                                )
+                                // Apple Music-inspired artwork ambience: a low
+                                // resolution, softly blurred copy of THIS song's
+                                // cover sits behind the existing palette gradient.
+                                // Keep the dark color overlay so player controls
+                                // retain enough contrast in all supported themes.
+                                Box(Modifier.fillMaxSize().alpha(backgroundAlpha)) {
+                                    if (state.isExpanded && !mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
+                                        AsyncImage(
+                                            model = ImageRequest.Builder(context)
+                                                .data(mediaMetadata?.thumbnailUrl)
+                                                .size(120, 120)
+                                                .allowHardware(false)
+                                                .build(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .blur(if (glassMode) 90.dp else 110.dp)
+                                                .alpha(0.56f),
+                                        )
+                                    }
+                                    Box(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(Brush.verticalGradient(colorStops = gradientColorStops))
+                                            .alpha(if (glassMode) 0.83f else 0.78f),
+                                    )
+                                    Box(
+                                        Modifier
+                                            .fillMaxSize()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    listOf(
+                                                        Color.Black.copy(alpha = 0.12f),
+                                                        Color.Black.copy(alpha = 0.28f),
+                                                    ),
+                                                ),
+                                            ),
+                                    )
+                                }
                             }
                         }
                     }
