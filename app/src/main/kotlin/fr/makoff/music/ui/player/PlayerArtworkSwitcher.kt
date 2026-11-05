@@ -5,11 +5,14 @@ import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -71,45 +75,61 @@ internal fun PlayerArtworkSwitcher(
         if (!isExpanded || !canShowVideo) showVideo = false
     }
 
-    Box(modifier = modifier, contentAlignment = Alignment.Center) {
-        if (showVideo && canShowVideo && isExpanded && videoId != null) {
-            MusicVideoArtwork(
-                videoId = videoId,
-                isPlaying = isPlaying,
-                playerConnection = playerConnection,
-                onUnavailable = {
-                    showVideo = false
-                    Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
-                },
-                modifier = Modifier.fillMaxSize(),
-            )
-        } else {
-            artwork()
-        }
-
+    // YouTube Music-style mode selector sits ABOVE the artwork, never over the cover
+    // or the video. The thumbnail keeps its own gestures, header and Cast control.
+    Column(
+        modifier = modifier,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         if (canShowVideo && isExpanded) {
             Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 12.dp)
-                    .liquidGlass(RoundedCornerShape(24.dp), chrome = true),
+                    .padding(top = 8.dp, bottom = 10.dp)
+                    .liquidGlass(RoundedCornerShape(28.dp), chrome = true)
+                    .padding(3.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                TextButton(onClick = { showVideo = false }) {
-                    Text(
-                        coverLabel,
-                        color = if (!showVideo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (!showVideo) FontWeight.Bold else FontWeight.Normal,
-                    )
+                TextButton(
+                    onClick = { showVideo = false },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (!showVideo) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (!showVideo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Text(coverLabel, fontWeight = if (!showVideo) FontWeight.SemiBold else FontWeight.Normal)
                 }
-                TextButton(onClick = { showVideo = true }) {
-                    Text(
-                        videoLabel,
-                        color = if (showVideo) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                        fontWeight = if (showVideo) FontWeight.Bold else FontWeight.Normal,
-                    )
+                TextButton(
+                    onClick = { showVideo = true },
+                    shape = RoundedCornerShape(24.dp),
+                    colors = ButtonDefaults.textButtonColors(
+                        containerColor = if (showVideo) MaterialTheme.colorScheme.primary else Color.Transparent,
+                        contentColor = if (showVideo) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    ),
+                ) {
+                    Text(videoLabel, fontWeight = if (showVideo) FontWeight.SemiBold else FontWeight.Normal)
                 }
+            }
+        }
+
+        Box(
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            if (showVideo && canShowVideo && isExpanded && videoId != null) {
+                MusicVideoArtwork(
+                    videoId = videoId,
+                    isPlaying = isPlaying,
+                    playerConnection = playerConnection,
+                    onUnavailable = {
+                        showVideo = false
+                        Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            } else {
+                artwork()
             }
         }
     }
