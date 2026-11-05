@@ -73,6 +73,7 @@ import fr.makoff.music.innertubex.models.YouTubeClient.Companion.WEB
 import fr.makoff.music.innertubex.models.YouTubeClient.Companion.WEB_REMIX
 import io.ktor.client.call.body
 import io.ktor.client.statement.bodyAsText
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -2894,48 +2895,78 @@ object YouTube {
     }
 
     /**
-     * Return the actual song/video counterpart provided by YouTube Music.
-     * Unlike a title search, this cannot accidentally select a cover, live recording
-     * or unrelated fan upload. The counterpart is optional and may require login.
+     * Resolve YouTube Music's explicit Song/Video pairing. The pair can be in
+     * /next for a radio, or /music/get_queue for an album/playlist track.
+     *
+     * Some accounts do not receive either response field. In that case, use
+     * a Music video search only when its title AND artist match the song.
      */
-    suspend fun videoCounterpart(videoId: String): Result<String?> =
-        runCatching {
-            val response = innerTube.next(
-                client = WEB_REMIX,
-                videoId = videoId,
-                playlistId = null,
-                playlistSetVideoId = null,
-                index = null,
-                params = null,
-            ).body<NextResponse>()
-            val entries = response.contents
-                .singleColumnMusicWatchNextResultsRenderer
-                ?.tabbedRenderer
-                ?.watchNextTabbedResultsRenderer
-                ?.tabs
-                ?.firstOrNull()
-                ?.tabRenderer
-                ?.content
-                ?.musicQueueRenderer
-                ?.content
-                ?.playlistPanelRenderer
-                ?.contents
-                .orEmpty()
+    suspend fun videoCounterpart(
+        videoId: String,
+        title: String? = null,
+        artists: List<String> = emptyList(),
+    ): Result<String?> =
+        try {
+            if (!VideoCounterpartParser.isYouTubeId(videoId)) {
+                Result.success(null)
+            } else {
+                val fromNext = try {
+                    VideoCounterpartParser.fromResponse(
+                        innerTube.next(
+                            client = WEB_REMIX,
+                            videoId = videoId,
+                            playlistId = null,
+                            playlistSetVideoId = null,
+                            index = null,
+                            params = null,
+                        ).bodyAsText(),
+                        videoId,
+                    )
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (error: Exception) {
+                    Timber.w(error, "Song/Video pairing unavailable from /next")
+                    null
+                }
 
-            entries.asSequence().mapNotNull { entry ->
-                val wrapper = entry.playlistPanelVideoWrapperRenderer ?: return@mapNotNull null
-                val primary = (wrapper["primaryRenderer"] as? JsonObject)
-                    ?.get("playlistPanelVideoRenderer") as? JsonObject
-                val primaryId = (primary?.get("videoId") as? JsonPrimitive)?.content
-                if (primaryId != null && primaryId != videoId) return@mapNotNull null
+                val fromQueue = if (fromNext == null) {
+                    try {
+                        VideoCounterpartParser.fromResponse(
+                            innerTube.getQueue(
+                                client = WEB_REMIX,
+                                videoIds = listOf(videoId),
+                                playlistId = null,
+                            ).bodyAsText(),
+                            videoId,
+                        )
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (error: Exception) {
+                        Timber.w(error, "Song/Video pairing unavailable from /music/get_queue")
+                        null
+                    }
+                } else null
 
-                val counterparts = wrapper["counterpart"] as? JsonArray
-                val counterpart = counterparts?.firstOrNull() as? JsonObject
-                val renderer = (counterpart?.get("counterpartRenderer") as? JsonObject)
-                    ?.get("playlistPanelVideoRenderer") as? JsonObject
-                val counterpartId = (renderer?.get("videoId") as? JsonPrimitive)?.content
-                counterpartId?.takeIf { it.length == 11 && it != videoId }
-            }.firstOrNull()
+                val fromSearch = if (fromNext == null && fromQueue == null &&
+                    !title.isNullOrBlank() && artists.any { it.isNotBlank() }
+                ) {
+                    val artist = artists.first { it.isNotBlank() }
+                    val results = search(
+                        query = "$artist $title official music video",
+                        filter = SearchFilter.FILTER_VIDEO,
+                        recordSearchHistory = false,
+                    ).getOrNull()
+                    results?.items
+                        ?.filterIsInstance<SongItem>()
+                        ?.let { VideoCounterpartParser.verifiedSearchVideo(it, videoId, title, artist) }
+                } else null
+
+                Result.success(fromNext ?: fromQueue ?: fromSearch)
+            }
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (error: Exception) {
+            Result.failure(error)
         }
 
     suspend fun next(
