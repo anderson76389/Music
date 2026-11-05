@@ -106,11 +106,6 @@ constructor(
                     }
             }.stateIn(viewModelScope, SharingStarted.Lazily, emptyMap())
 
-    init {
-        // Fetch after the screen confirms an authenticated account. Doing it
-        // here could dispatch unauthenticated requests during app startup.
-    }
-
     fun fetchRemoteHistory() {
         viewModelScope.launch(Dispatchers.IO) {
             YouTube.musicHistory().onSuccess {
