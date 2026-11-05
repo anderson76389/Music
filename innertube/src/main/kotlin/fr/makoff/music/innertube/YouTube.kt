@@ -2993,8 +2993,9 @@ object YouTube {
                         primary?.get("playlistPanelVideoRenderer")
                             ?.let { wrapperDecoder.decodeFromJsonElement<PlaylistPanelVideoRenderer>(it) }
                     }.getOrNull()
-                    renderer?.let(NextPage::fromPlaylistPanelVideoRenderer)
-                        ?.let { it to renderer.selected }
+                    renderer?.let { actual ->
+                        NextPage.fromPlaylistPanelVideoRenderer(actual)?.let { it to actual.selected }
+                    }
                 }
             val songs = items.map { it.first }
             val currentIndex = items.indexOfFirst { it.second }.takeIf { it != -1 }
