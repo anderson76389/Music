@@ -400,6 +400,17 @@ fun BottomSheetPlayer(
     }
 
     val glassMode = LocalLiquidGlassEnabled.current
+    val playerConfiguration = LocalConfiguration.current
+    // Magic V6 internal display is nearly square and may still be PORTRAIT.
+    // Choose layout by available dp on BOTH axes, not by orientation alone.
+    val twoPanePlayer = PlayerLayoutPolicy.useTwoPane(
+        isLandscape = playerConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE,
+        widthDp = playerConfiguration.screenWidthDp,
+        heightDp = playerConfiguration.screenHeightDp,
+    )
+    val artworkBlurRadius = PlayerLayoutPolicy.artworkBlurRadiusDp(
+        playerConfiguration.screenWidthDp, playerConfiguration.screenHeightDp,
+    ).dp
     val defaultGradientColors = if (glassMode) listOf(Color(0xFF242426), Color(0xFF1C1C1E))
         else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
@@ -716,7 +727,7 @@ fun BottomSheetPlayer(
                                         modifier =
                                             Modifier
                                                 .fillMaxSize()
-                                                .blur(if (useDarkTheme) 150.dp else 100.dp),
+                                                .blur(if (twoPanePlayer) 64.dp else if (useDarkTheme) 120.dp else 96.dp),
                                     )
                                     Box(
                                         modifier =
@@ -769,7 +780,7 @@ fun BottomSheetPlayer(
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier
                                                 .fillMaxSize()
-                                                .blur(if (glassMode) 90.dp else 110.dp)
+                                                .blur(artworkBlurRadius)
                                                 .alpha(0.56f),
                                         )
                                     }
@@ -1535,8 +1546,8 @@ fun BottomSheetPlayer(
             }
         }
 
-        when (LocalConfiguration.current.orientation) {
-            Configuration.ORIENTATION_LANDSCAPE -> {
+        when {
+            twoPanePlayer -> {
                 // Calculate vertical padding like OuterTune
                 val density = LocalDensity.current
                 val verticalPadding =
