@@ -33,7 +33,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,13 +46,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
@@ -139,7 +138,9 @@ internal fun PlayerArtworkSwitcher(
             availableVideoStream = null
             return@LaunchedEffect
         }
-        delay(250L) // avoid extraction storms when rapidly skipping tracks
+        // Cancellation on track changes prevents stale clip extraction from winning.
+        // The resolved stream is reused to prepare the muted video player
+        // before the user presses the Vidéo button.
         availableVideoStream = try {
             withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(id) }
         } catch (cancelled: CancellationException) {
@@ -149,10 +150,71 @@ internal fun PlayerArtworkSwitcher(
         }
     }
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
-    val canShowVideo = availableVideoStream != null && !isCasting &&
-        isYouTubeTrack && !isLocalOrUploaded && clipVideoId != unavailableClipId
-    // Never reserve a Son/Vidéo bar for offline files or tracks without a playable clip.
-    // Restoring the classic header also avoids a second status-bar inset above the cover.
+    val playableStream = availableVideoStream.takeIf {
+        videoModeEnabled && isExpanded && !isCasting && !isLocalOrUploaded &&
+            clipVideoId != unavailableClipId
+    }
+
+    // Prepare once, as soon as the clip stream is known, instead of creating
+    // and buffering a second player on each tap of the Vidéo tab.
+    // Keep the hidden player PAUSED and MUTED. Only buffer a short window;
+    // releasing on collapse, source change or disabling this mode saves RAM,
+    // GPU work, bandwidth and battery on foldables.
+    val warmedVideoPlayer = remember(playableStream, clipVideoId) {
+        playableStream?.let { stream ->
+            val http = DefaultHttpDataSource.Factory()
+                .setDefaultRequestProperties(stream.headers)
+            ExoPlayer.Builder(context)
+                .setMediaSourceFactory(DefaultMediaSourceFactory(http))
+                .setLoadControl(
+                    DefaultLoadControl.Builder()
+                        .setBufferDurationsMs(2_000, 8_000, 250, 500)
+                        .build(),
+                )
+                .build()
+                .apply {
+                    volume = 0f
+                    playWhenReady = false
+                    setMediaItem(
+                        MediaItem.Builder()
+                            .setUri(stream.url)
+                            .setMimeType(stream.mimeType)
+                            .build(),
+                    )
+                    val position = runCatching { playerConnection.player.currentPosition }
+                        .getOrDefault(0L).coerceAtLeast(0L)
+                    seekTo(position)
+                    prepare()
+                }
+        }
+    }
+    DisposableEffect(warmedVideoPlayer) {
+        onDispose {
+            warmedVideoPlayer?.clearVideoSurface()
+            warmedVideoPlayer?.release()
+        }
+    }
+    var videoReady by remember(warmedVideoPlayer) {
+        mutableStateOf(warmedVideoPlayer?.playbackState == Player.STATE_READY)
+    }
+    DisposableEffect(warmedVideoPlayer, clipVideoId) {
+        val listener = object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                videoReady = playbackState == Player.STATE_READY
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                // A bad URL must never leave a misleading Vidéo button visible.
+                unavailableClipId = clipVideoId
+                showVideo = false
+            }
+        }
+        warmedVideoPlayer?.addListener(listener)
+        onDispose { warmedVideoPlayer?.removeListener(listener) }
+    }
+
+    val canShowVideo = videoReady && warmedVideoPlayer != null &&
+        isYouTubeTrack && clipVideoId != unavailableClipId
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
     LaunchedEffect(showModeBar) {
         if (!showModeBar) showVideo = false
@@ -163,7 +225,7 @@ internal fun PlayerArtworkSwitcher(
             VideoOnlySurface(
                 videoId = clipVideoId,
                 audioId = videoId,
-                stream = availableVideoStream!!,
+                videoPlayer = warmedVideoPlayer!!,
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
@@ -328,12 +390,13 @@ private fun PlayerModePills(
                     .padding(horizontal = 10.dp),
                 contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = label,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (selected) selectedForeground else unselectedForeground,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    maxLines = 1,
+                Icon(
+                    painter = painterResource(
+                        if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
+                    ),
+                    contentDescription = label,
+                    tint = if (selected) selectedForeground else unselectedForeground,
+                    modifier = Modifier.size(19.dp),
                 )
             }
         }
@@ -344,26 +407,14 @@ private fun PlayerModePills(
 private fun VideoOnlySurface(
     videoId: String,
     audioId: String,
-    stream: InnerTubeXPlayer.VideoStream,
+    videoPlayer: ExoPlayer,
     playerConnection: PlayerConnection,
     isPlaying: Boolean,
     onUnavailable: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val context = LocalContext.current
-    val videoPlayer = remember(stream) {
-        val http = DefaultHttpDataSource.Factory()
-            .setDefaultRequestProperties(stream.headers)
-        ExoPlayer.Builder(context)
-            .setMediaSourceFactory(DefaultMediaSourceFactory(http))
-            .build()
-            .apply {
-                volume = 0f // Never duplicate the service's audio track.
-                setMediaItem(MediaItem.Builder().setUri(stream.url).setMimeType(stream.mimeType).build())
-                prepare()
-            }
-    }
-
+    // The stream is already resolved and the muted ExoPlayer is already
+    // prepared above. Switching tabs only attaches its TextureView.
     var videoReady by remember(videoPlayer) { mutableStateOf(videoPlayer.playbackState == Player.STATE_READY) }
     DisposableEffect(videoPlayer) {
         val listener = object : Player.Listener {
@@ -378,13 +429,6 @@ private fun VideoOnlySurface(
         videoPlayer.addListener(listener)
         onDispose { videoPlayer.removeListener(listener) }
     }
-    DisposableEffect(videoPlayer) {
-        onDispose {
-            videoPlayer.clearVideoSurface()
-            videoPlayer.release()
-        }
-    }
-
     LaunchedEffect(videoPlayer, audioId, isPlaying) {
         while (isActive) {
             val audioPlayer = runCatching { playerConnection.player }.getOrNull()
