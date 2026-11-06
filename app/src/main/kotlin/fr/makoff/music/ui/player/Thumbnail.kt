@@ -372,7 +372,7 @@ fun Thumbnail(
                     }
                 ) {
                     // Calculate dimensions once per size change, considering landscape mode
-                    val dimensions = remember(maxWidth, maxHeight, isLandscape, glass) {
+                    val dimensions = remember(maxWidth, maxHeight, isLandscape, glass, showPlayerModeBar) {
                         val calculated = calculateThumbnailDimensions(
                             containerWidth = maxWidth,
                             containerHeight = maxHeight,
