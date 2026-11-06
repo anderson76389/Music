@@ -81,6 +81,7 @@ import kotlin.math.abs
 @Composable
 internal fun PlayerArtworkSwitcher(
     videoId: String?,
+    videoModeEnabled: Boolean,
     isVideoSong: Boolean,
     isLocalOrUploaded: Boolean,
     songTitle: String?,
@@ -106,8 +107,9 @@ internal fun PlayerArtworkSwitcher(
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Only use YouTube Music's official counterpart, not a guessed search result.
-    LaunchedEffect(videoId, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
-        if (!isYouTubeTrack || isLocalOrUploaded || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+    LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
+        companionVideoId = null
+        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
         companionVideoId = try {
             withContext(Dispatchers.IO) {
                 YouTube.videoCounterpart(
@@ -131,9 +133,9 @@ internal fun PlayerArtworkSwitcher(
     var availableVideoStream by remember(clipVideoId) {
         mutableStateOf<InnerTubeXPlayer.VideoStream?>(null)
     }
-    LaunchedEffect(clipVideoId, isExpanded, isCasting, isLocalOrUploaded) {
+    LaunchedEffect(clipVideoId, videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded) {
         val id = clipVideoId
-        if (id.isNullOrBlank() || !isExpanded || isCasting || isLocalOrUploaded) {
+        if (!videoModeEnabled || id.isNullOrBlank() || !isExpanded || isCasting || isLocalOrUploaded) {
             availableVideoStream = null
             return@LaunchedEffect
         }
@@ -149,9 +151,11 @@ internal fun PlayerArtworkSwitcher(
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
     val canShowVideo = availableVideoStream != null && !isCasting &&
         isYouTubeTrack && !isLocalOrUploaded && clipVideoId != unavailableClipId
-    val showModeBar = isExpanded && canShowVideo
-    LaunchedEffect(isExpanded, canShowVideo) {
-        if (!isExpanded || !canShowVideo) showVideo = false
+    // Never reserve a Son/Vidéo bar for offline files or tracks without a playable clip.
+    // Restoring the classic header also avoids a second status-bar inset above the cover.
+    val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
+    LaunchedEffect(showModeBar) {
+        if (!showModeBar) showVideo = false
     }
 
     val playerImage: @Composable () -> Unit = {
@@ -170,10 +174,9 @@ internal fun PlayerArtworkSwitcher(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            // A shared top bar is always present in the expanded player,
-            // even when Son/Vidéo is hidden. Suppress the old thumbnail header
-            // and duplicate Cast icon in that same layout.
-            artwork(isExpanded)
+            // With Son/Vidéo disabled or no clip, Thumbnail owns the original
+            // "En cours de lecture" header and its status-bar inset.
+            artwork(showModeBar)
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
@@ -191,14 +194,14 @@ internal fun PlayerArtworkSwitcher(
         )
     }
 
-    // Draw ONE shared top bar for both artwork and video. It owns the status
-    // inset in portrait, so "En cours de lecture" can never overlap a clip.
-    // Keep the same positioning across a song without a companion video.
+    // Only the actual Son/Vidéo bar owns the portrait system inset.
+    // Otherwise Thumbnail restores the legacy header and handles its inset
+    // itself. Never show both headers over each other or above a video.
     Column(
-        modifier = modifier.then(if (isLandscape) Modifier else Modifier.statusBarsPadding()),
+        modifier = modifier.then(if (isLandscape || !showModeBar) Modifier else Modifier.statusBarsPadding()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (isExpanded) {
+        if (showModeBar) {
             topBar(Modifier.fillMaxWidth().padding(top = 4.dp))
         }
         Box(
