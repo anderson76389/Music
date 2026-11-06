@@ -33,6 +33,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -47,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -238,9 +240,9 @@ internal fun PlayerArtworkSwitcher(
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            // With Son/Vidéo disabled or no clip, Thumbnail owns the original
-            // "En cours de lecture" header and its status-bar inset.
-            artwork(showModeBar)
+            // A single top bar owns the entire expanded player header.
+            // Thumbnail must not draw a second "En cours de lecture" label or Cast.
+            artwork(isExpanded)
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
@@ -261,14 +263,14 @@ internal fun PlayerArtworkSwitcher(
         )
     }
 
-    // Only the actual Son/Vidéo bar owns the portrait system inset.
-    // Otherwise Thumbnail restores the legacy header and handles its inset
-    // itself. Never show both headers over each other or above a video.
+    // One header at a time: Son/Vidéo when a clip is buffered, otherwise
+    // "En cours de lecture" in the exact same reserved position.
+    // The status inset applies once, regardless of display mode.
     Column(
-        modifier = modifier.then(if (isLandscape || !showModeBar) Modifier else Modifier.statusBarsPadding()),
+        modifier = modifier.then(if (isLandscape) Modifier else Modifier.statusBarsPadding()),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        if (showModeBar) {
+        if (isExpanded) {
             topBar(Modifier.fillMaxWidth().padding(top = 4.dp))
         }
         Box(
@@ -327,6 +329,15 @@ private fun PlayerModeTopBar(
                 onAudioClick = onAudioClick,
                 onVideoClick = onVideoClick,
                 modifier = Modifier.align(Alignment.Center),
+            )
+        } else {
+            Text(
+                text = stringResource(R.string.now_playing),
+                style = MaterialTheme.typography.labelMedium,
+                color = modeTextColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.align(Alignment.Center).padding(horizontal = 86.dp),
             )
         }
 
