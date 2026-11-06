@@ -919,6 +919,8 @@
     <string name="player_cover_toggle">Pochette : lecture ou pause</string>
     <string name="player_cover_label">Son</string>
     <string name="player_video_label">Vidéo</string>
+    <string name="player_video_mode_setting">Mode Son / Vidéo</string>
+    <string name="player_video_mode_setting_desc">Afficher Son / Vidéo seulement si un clip lisible existe. Désactivé : retrouver « En cours de lecture » sans charger de vidéo.</string>
     <string name="player_video_unavailable">Clip vidéo indisponible pour ce titre</string>
     <string name="player_collapse_label">Réduire le lecteur</string>
 </resources>
