@@ -256,7 +256,20 @@ internal fun PlayerArtworkSwitcher(
                 warmedVideoPlayer?.playWhenReady = false
                 showVideo = false
             },
-            onVideoClick = { showVideo = true },
+            onVideoClick = {
+                warmedVideoPlayer?.let { player ->
+                    // Seek and start the already-buffered video before the
+                    // AndroidView is attached, rather than waiting for the
+                    // first 350 ms synchronisation poll.
+                    val audioPosition = runCatching { playerConnection.player.currentPosition }
+                        .getOrDefault(0L).coerceAtLeast(0L)
+                    if (abs(player.currentPosition - audioPosition) > 700L) {
+                        player.seekTo(audioPosition)
+                    }
+                    player.playWhenReady = isPlaying
+                }
+                showVideo = true
+            },
             onCollapse = onCollapse,
             onOpenMenu = onOpenMenu,
             modifier = barModifier,
