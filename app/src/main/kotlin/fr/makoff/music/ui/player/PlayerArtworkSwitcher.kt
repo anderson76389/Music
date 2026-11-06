@@ -194,13 +194,15 @@ internal fun PlayerArtworkSwitcher(
             warmedVideoPlayer?.release()
         }
     }
-    var videoReady by remember(warmedVideoPlayer) {
+    // Once prebuffering reaches READY, keep the button available through
+    // brief video rebuffers and seeks instead of flickering back to the cover.
+    var hasPreparedVideo by remember(warmedVideoPlayer) {
         mutableStateOf(warmedVideoPlayer?.playbackState == Player.STATE_READY)
     }
     DisposableEffect(warmedVideoPlayer, clipVideoId) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
-                videoReady = playbackState == Player.STATE_READY
+                if (playbackState == Player.STATE_READY) hasPreparedVideo = true
             }
 
             override fun onPlayerError(error: PlaybackException) {
@@ -213,7 +215,7 @@ internal fun PlayerArtworkSwitcher(
         onDispose { warmedVideoPlayer?.removeListener(listener) }
     }
 
-    val canShowVideo = videoReady && warmedVideoPlayer != null &&
+    val canShowVideo = hasPreparedVideo && warmedVideoPlayer != null &&
         isYouTubeTrack && clipVideoId != unavailableClipId
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
     LaunchedEffect(showModeBar) {
@@ -248,7 +250,10 @@ internal fun PlayerArtworkSwitcher(
             showVideo = showVideo,
             showModeSelector = showModeBar,
             modeTextColor = modeTextColor,
-            onAudioClick = { showVideo = false },
+            onAudioClick = {
+                warmedVideoPlayer?.playWhenReady = false
+                showVideo = false
+            },
             onVideoClick = { showVideo = true },
             onCollapse = onCollapse,
             onOpenMenu = onOpenMenu,
@@ -429,6 +434,12 @@ private fun VideoOnlySurface(
         videoPlayer.addListener(listener)
         onDispose { videoPlayer.removeListener(listener) }
     }
+    // Stop decoding as soon as the visible video surface disappears.
+    // Keep the preloaded player alive for a quick return to Vidéo.
+    DisposableEffect(videoPlayer) {
+        onDispose { videoPlayer.playWhenReady = false }
+    }
+
     LaunchedEffect(videoPlayer, audioId, isPlaying) {
         while (isActive) {
             val audioPlayer = runCatching { playerConnection.player }.getOrNull()
