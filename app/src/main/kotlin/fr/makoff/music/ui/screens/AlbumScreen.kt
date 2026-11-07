@@ -299,7 +299,7 @@ fun AlbumScreen(
                                 val album = albumWithSongs.album
                                 syncUtils.bookmarkAlbum(
                                     albumId = album.id,
-                                    remotePlaylistId = album.playlistId,
+                                    remotePlaylistId = album.playlistId ?: playlistId.takeIf { it.isNotBlank() },
                                     liked = album.bookmarkedAt == null,
                                 )
                                 database.query {
