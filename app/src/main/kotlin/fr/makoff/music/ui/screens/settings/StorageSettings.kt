@@ -117,7 +117,7 @@ fun StorageSettings(
     )
     val (maxSongCacheSize, onMaxSongCacheSizeChange) = rememberPreference(
         key = MaxSongCacheSizeKey,
-        defaultValue = 1024
+        defaultValue = 10240
     )
     val (enableSongCache, onEnableSongCacheChange) = rememberPreference(
         key = EnableSongCacheKey,
@@ -363,7 +363,7 @@ fun StorageSettings(
                     enabled = enableSongCache,
                     description = {
                         val songCacheValues =
-                            remember { listOf(0, 128, 256, 512, 1024, 2048, 4096, 8192, -1) }
+                            remember { listOf(0, 128, 256, 512, 1024, 2048, 4096, 8192, 10240, -1) }
                         Column {
                             Text(
                                 text = when (maxSongCacheSize) {
