@@ -152,7 +152,11 @@ internal fun PlayerArtworkSwitcher(
 
     // A direct video stream is a valid video for the *same* audio queue item;
     // never substitute an unverified search result.
-    val clipVideoId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
+    // The first signed URL can be unavailable even when the actual music
+    // video is playable. Try the same YouTube item after an unavailable paired
+    // clip, without inventing a search match or retrying one bad ID forever.
+    var failedClipIds by remember(videoId) { mutableStateOf(emptySet<String>()) }
+    val preferredClipId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
         originalId = videoId,
         isYouTubeTrack = isYouTubeTrack,
         isLocalOrUploaded = isLocalOrUploaded,
@@ -160,6 +164,12 @@ internal fun PlayerArtworkSwitcher(
         pairedId = companionVideoId,
         counterpartLookupDone = counterpartLookupDone,
     )
+    val clipVideoId = when {
+        preferredClipId != null && preferredClipId !in failedClipIds -> preferredClipId
+        isYouTubeTrack && !isLocalOrUploaded && videoId != null &&
+            videoId !in failedClipIds && counterpartLookupDone -> videoId
+        else -> null
+    }
     // Do not advertise an unplayable clip. Resolve the actual signed video
     // stream in the background ONLY while the full player is expanded, and
     // reuse it on demand. This also avoids a duplicate network extraction
@@ -187,14 +197,14 @@ internal fun PlayerArtworkSwitcher(
         videoStreamLookupFinished = true
         if (availableVideoStream != null) {
             onPlayableClipResolved(id)
-        } else if (knownPlayableClipId == id) {
-            onPlayableClipInvalidated(id)
+        } else {
+            failedClipIds = failedClipIds + id
+            if (knownPlayableClipId == id) onPlayableClipInvalidated(id)
         }
     }
-    var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
     val playableStream = availableVideoStream.takeIf {
         videoModeEnabled && isExpanded && !isCasting && !isLocalOrUploaded &&
-            clipVideoId != unavailableClipId
+            clipVideoId != null && clipVideoId !in failedClipIds
     }
 
     // Prepare once, as soon as the clip stream is known, instead of creating
@@ -242,9 +252,10 @@ internal fun PlayerArtworkSwitcher(
     DisposableEffect(warmedVideoPlayer, clipVideoId) {
         val listener = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                unavailableClipId = clipVideoId
-                clipVideoId?.let(onPlayableClipInvalidated)
-                onShowVideoChange(false)
+                clipVideoId?.let { id ->
+                    failedClipIds = failedClipIds + id
+                    onPlayableClipInvalidated(id)
+                }
             }
         }
         warmedVideoPlayer?.addListener(listener)
@@ -258,7 +269,7 @@ internal fun PlayerArtworkSwitcher(
     val canShowVideo = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = isYouTubeTrack,
         clipId = clipVideoId,
-        unavailableClipId = unavailableClipId,
+        unavailableClipId = if (clipVideoId in failedClipIds) clipVideoId else null,
         hasResolvedStream = playableStream != null,
         hasOfficialPair = hasPairedVideo,
         streamLookupFinished = videoStreamLookupFinished,
@@ -280,7 +291,9 @@ internal fun PlayerArtworkSwitcher(
     LaunchedEffect(showVideo, clipVideoId, videoStreamLookupFinished, showModeBar) {
         // Keep the user's video choice while a rotated layout re-resolves its
         // stream. Reset only after a completed, unsuccessful lookup.
-        if (showVideo && clipVideoId != null && videoStreamLookupFinished && !showModeBar) {
+        if (showVideo && videoStreamLookupFinished && !showModeBar &&
+            (clipVideoId == null || (clipVideoId == videoId && videoId in failedClipIds))
+        ) {
             onShowVideoChange(false)
         }
     }
@@ -296,10 +309,16 @@ internal fun PlayerArtworkSwitcher(
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
-                    unavailableClipId = clipVideoId
-                    clipVideoId?.let(onPlayableClipInvalidated)
-                    onShowVideoChange(false)
-                    Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    clipVideoId.let { id ->
+                        failedClipIds = failedClipIds + id
+                        onPlayableClipInvalidated(id)
+                    }
+                    // Keep the choice while trying the same-track video fallback;
+                    // close video only when there is no other playable candidate.
+                    if (clipVideoId == videoId) {
+                        onShowVideoChange(false)
+                        Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier.fillMaxSize(),
             )
