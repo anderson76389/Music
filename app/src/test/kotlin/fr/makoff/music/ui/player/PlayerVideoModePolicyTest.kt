@@ -15,6 +15,20 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.showSelector(false, true, false))
     }
 
+    @Test fun missingPairFallsBackToTheSameYouTubeItemOnlyAfterLookup() {
+        val id = "abcdefghijk"
+        assertTrue(PlayerVideoModePolicy.candidateVideoId(id, true, false, false, null, true) == id)
+        assertFalse(PlayerVideoModePolicy.candidateVideoId(id, true, false, false, null, false) != null)
+        assertTrue(PlayerVideoModePolicy.candidateVideoId(id, true, false, true, null, false) == id)
+        assertTrue(PlayerVideoModePolicy.candidateVideoId(id, true, false, false, "lmnopqrstuv", true) == "lmnopqrstuv")
+        assertTrue(PlayerVideoModePolicy.candidateVideoId(id, true, true, true, null, true) == null)
+        assertTrue(PlayerVideoModePolicy.candidateVideoId(null, false, false, false, null, true) == null)
+    }
+
+    @Test fun selectorNoLongerRequiresPrebufferingOnceStreamIsAvailable() {
+        assertTrue(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = true))
+    }
+
     @Test fun collapsedPlayerNeverShowsVideoModeControls() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }
