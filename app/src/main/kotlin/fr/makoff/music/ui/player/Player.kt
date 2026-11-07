@@ -434,6 +434,8 @@ fun BottomSheetPlayer(
 
     val glassMode = LocalLiquidGlassEnabled.current
     val playerConfiguration = LocalConfiguration.current
+    val wideVideoLandscape = videoModeActive &&
+        playerConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
     // Magic V6 internal display is nearly square and may still be PORTRAIT.
     // Choose layout by available dp on BOTH axes, not by orientation alone.
     val twoPanePlayer = PlayerLayoutPolicy.useTwoPane(
@@ -1584,7 +1586,7 @@ fun BottomSheetPlayer(
                         contentAlignment = Alignment.Center,
                         modifier =
                             Modifier
-                                .weight(1f)
+                                .weight(if (wideVideoLandscape) 1.4f else 1f)
                                 .nestedScroll(state.preUpPostDownNestedScrollConnection),
                     ) {
                         // Remember lambdas to prevent unnecessary recomposition
@@ -1630,7 +1632,7 @@ fun BottomSheetPlayer(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(1f, false)
+                                .weight(if (wideVideoLandscape) 0.9f else 1f, false)
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
