@@ -29,6 +29,19 @@ class PlayerVideoModePolicyTest {
         assertTrue(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = true))
     }
 
+    @Test fun officialClipShowsButtonsBeforeItsStreamFinishesLoading() {
+        assertTrue(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", null, false, true, false))
+        assertTrue(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", null, true, true, true))
+    }
+
+    @Test fun missingOrUnplayableClipsDoNotDisplayFakeButtons() {
+        assertFalse(PlayerVideoModePolicy.clipSelectable(true, null, null, false, false, false))
+        assertFalse(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", null, false, false, false))
+        assertFalse(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", null, false, true, true))
+        assertFalse(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", "abcdefghijk", true, true, true))
+        assertFalse(PlayerVideoModePolicy.clipSelectable(false, "abcdefghijk", null, true, true, true))
+    }
+
     @Test fun screenStaysAwakeOnlyForExpandedVideoNotAudioOrCast() {
         assertTrue(PlayerVideoModePolicy.videoModeActive(true, true, true, false))
         assertFalse(PlayerVideoModePolicy.videoModeActive(false, true, true, false))
