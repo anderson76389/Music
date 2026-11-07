@@ -1551,6 +1551,7 @@ class SyncUtils @Inject constructor(
                                 localPlaylists.add(playlistEntity)
                                 Timber.d("syncSavedPlaylists: Created new playlist ${playlist.title} (${playlist.id})")
                             } else {
+                                val playlistRowId = playlistEntity.id
                                 val shouldBookmark = acceptRemoteBookmark("playlist", playlist.id, remoteLiked = true)
                                 // The list loaded before the network request is stale
                                 // if a user tapped the heart while sync was in flight.
