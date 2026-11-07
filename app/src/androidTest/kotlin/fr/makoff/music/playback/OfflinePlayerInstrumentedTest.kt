@@ -310,11 +310,13 @@ class OfflinePlayerInstrumentedTest {
             )
             val headerTitle = device.findObjects(By.text(tracks[0].title))
                 .minByOrNull { it.visibleBounds.top }
-            assertNotNull("The scrolling song title must be restored beneath Now Playing", headerTitle)
+            val titleBounds = requireNotNull(headerTitle) {
+                "The scrolling song title must be restored beneath Now Playing"
+            }.visibleBounds
+            val headingBounds = requireNotNull(heading).visibleBounds
             assertTrue(
                 "Song title must stay below Now Playing and above artwork",
-                requireNotNull(headerTitle).visibleBounds.top >= heading.visibleBounds.bottom &&
-                    headerTitle.visibleBounds.bottom <= coverBounds.top,
+                titleBounds.top >= headingBounds.bottom && titleBounds.bottom <= coverBounds.top,
             )
             assertNull(
                 "An audio-only track must never display a video selector",
