@@ -48,6 +48,7 @@ import androidx.media3.exoplayer.offline.Download
 import androidx.media3.exoplayer.offline.DownloadService
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.LocalDatabase
+import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.LocalDownloadUtil
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -87,6 +88,7 @@ fun PlaylistMenu(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val dbPlaylist by database.playlist(playlist.id).collectAsStateWithLifecycle(initialValue = playlist)
@@ -243,7 +245,7 @@ fun PlaylistMenu(
                             // First toggle the like using the same logic as the like button
                             if (playlist.playlist.bookmarkedAt != null) {
                                 // Using the same toggleLike() method that's used in the like button
-                                update(playlist.playlist.toggleLike())
+                                update(playlist.playlist.localToggleLike())
                             }
                             // Then delete the playlist
                             delete(playlist.playlist)
@@ -266,8 +268,9 @@ fun PlaylistMenu(
             if (playlist.playlist.isEditable != true) {
                 IconButton(
                     onClick = {
-                        database.query {
-                            dbPlaylist?.playlist?.toggleLike()?.let { update(it) }
+                        dbPlaylist?.playlist?.let { selected ->
+                            selected.browseId?.let { syncUtils.bookmarkPlaylist(it, selected.bookmarkedAt == null) }
+                            database.query { update(selected.localToggleLike()) }
                         }
                     },
                 ) {

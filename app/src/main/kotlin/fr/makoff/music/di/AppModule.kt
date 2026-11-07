@@ -6,6 +6,7 @@
 package fr.makoff.music.di
 
 import android.content.Context
+import androidx.datastore.preferences.core.edit
 import androidx.media3.database.DatabaseProvider
 import androidx.media3.database.StandaloneDatabaseProvider
 import androidx.media3.datasource.cache.Cache
@@ -17,6 +18,7 @@ import kotlinx.coroutines.launch
 import androidx.media3.datasource.cache.NoOpCacheEvictor
 import androidx.media3.datasource.cache.SimpleCache
 import fr.makoff.music.constants.MaxSongCacheSizeKey
+import fr.makoff.music.constants.SongCache10GbMigrationDoneKey
 import fr.makoff.music.db.InternalDatabase
 import fr.makoff.music.db.MusicDatabase
 import fr.makoff.music.utils.dataStore
@@ -74,12 +76,28 @@ object AppModule {
         databaseProvider: DatabaseProvider,
         @ApplicationScope scope: CoroutineScope,
     ): Cache {
-        val cacheSize = context.dataStore[MaxSongCacheSizeKey] ?: 1024
-        fun limit(size: Int) = if (size == -1) Long.MAX_VALUE else size.coerceAtLeast(0) * 1024 * 1024L
+        // 10 GiB is a real on-disk ExoPlayer streaming cache limit, not only a UI label.
+        // Migrate the old 1 GiB default once; never overwrite the user's later choice.
+        val selectedSize = context.dataStore[MaxSongCacheSizeKey]
+        val migrated = context.dataStore[SongCache10GbMigrationDoneKey] ?: false
+        val cacheSize = if (!migrated && (selectedSize == null || selectedSize == 1024)) {
+            10240
+        } else {
+            selectedSize ?: 10240
+        }
+        fun limit(size: Int) = if (size == -1) Long.MAX_VALUE else size.coerceAtLeast(0).toLong() * 1024L * 1024L
         val evictor = ResizableCacheEvictor(limit(cacheSize))
         val cache = SimpleCache(context.filesDir.resolve("exoplayer"), evictor, databaseProvider)
         scope.launch(Dispatchers.IO) {
-            context.dataStore.data.map { it[MaxSongCacheSizeKey] ?: 1024 }.distinctUntilChanged().collect {
+            context.dataStore.edit { prefs ->
+                if (prefs[SongCache10GbMigrationDoneKey] != true) {
+                    if (prefs[MaxSongCacheSizeKey] == null || prefs[MaxSongCacheSizeKey] == 1024) {
+                        prefs[MaxSongCacheSizeKey] = 10240
+                    }
+                    prefs[SongCache10GbMigrationDoneKey] = true
+                }
+            }
+            context.dataStore.data.map { it[MaxSongCacheSizeKey] ?: 10240 }.distinctUntilChanged().collect {
                 evictor.resize(cache, limit(it))
             }
         }

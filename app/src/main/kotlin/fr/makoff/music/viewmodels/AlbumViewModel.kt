@@ -43,18 +43,27 @@ constructor(
                 .onSuccess {
                     playlistId.value = it.album.playlistId
                     otherVersions.value = it.otherVersions
-                    database.transaction {
-                        if (album == null) {
+                    // Read the latest row inside the transaction. Using the album
+                    // snapshot obtained BEFORE the network request can overwrite a
+                    // user's new bookmarkedAt if they liked the album meanwhile.
+                    database.withTransaction {
+                        val current = albumEntity(albumId)
+                        if (current == null) {
                             insert(it)
                         } else {
-                            update(album.album, it, album.artists)
+                            update(current, it)
                         }
                     }
                 }.onFailure {
                     reportException(it)
                     if (it.message?.contains("NOT_FOUND") == true) {
-                        database.query {
-                            album?.album?.let(::delete)
+                        // A transiently unavailable YouTube page is not a reason
+                        // to erase a locally saved album. Check the latest row,
+                        // not the pre-request snapshot.
+                        database.withTransaction {
+                            albumEntity(albumId)?.takeIf {
+                                it.bookmarkedAt == null && !it.isLocal
+                            }?.let(::delete)
                         }
                     }
                 }

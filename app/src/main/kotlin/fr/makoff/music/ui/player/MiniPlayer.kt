@@ -87,6 +87,7 @@ import androidx.compose.ui.unit.sp
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import fr.makoff.music.LocalDatabase
+import fr.makoff.music.LocalNavController
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
 import fr.makoff.music.constants.CropAlbumArtKey
@@ -97,7 +98,6 @@ import fr.makoff.music.constants.SwipeSensitivityKey
 import fr.makoff.music.constants.SwipeThumbnailKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewMiniPlayerDesignKey
-import fr.makoff.music.db.entities.ArtistEntity
 import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.playback.CastConnectionHandler
 import fr.makoff.music.playback.PlayerConnection
@@ -464,12 +464,10 @@ private fun NewMiniPlayer(
                     Spacer(modifier = Modifier.width(12.dp))
                 }
 
-// Subscribe button - isolated composable
-                mediaMetadata?.artists?.firstOrNull()?.id?.let { artistId ->
-                    SubscribeButton(
+// Artist icon opens the artist page (following artists is managed there).
+                mediaMetadata?.artists?.firstOrNull()?.id?.takeIf { it.isNotBlank() }?.let { artistId ->
+                    ArtistProfileButton(
                         artistId = artistId,
-                        metadata = mediaMetadata!!,
-                        primaryColor = primaryColor,
                         outlineColor = outlineColor,
                         onSurfaceColor = onSurfaceColor,
                     )
@@ -1004,55 +1002,29 @@ private fun LegacyMiniMediaInfo(
 // ============================================================================
 
 @Composable
-private fun SubscribeButton(
+private fun ArtistProfileButton(
     artistId: String,
-    metadata: MediaMetadata,
-    primaryColor: Color,
     outlineColor: Color,
     onSurfaceColor: Color,
 ) {
-    val database = LocalDatabase.current
-    val libraryArtist by database.artist(artistId).collectAsStateWithLifecycle(initialValue = null)
-    val isSubscribed = libraryArtist?.artist?.bookmarkedAt != null
-
-
+    val navController = LocalNavController.current
+    val openProfile = stringResource(R.string.mini_player_open_artist)
     Box(
         contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
-                    shape = CircleShape,
-                ).background(
-                    color = if (isSubscribed) primaryColor.copy(alpha = 0.1f) else Color.Transparent,
-                    shape = CircleShape,
-                ).clickable {
-                    database.transaction {
-                        val artist = libraryArtist?.artist
-                        if (artist != null) {
-                            update(artist.toggleLike())
-                        } else {
-                            metadata.artists.firstOrNull()?.let { artistInfo ->
-                                insert(
-                                    ArtistEntity(
-                                        id = artistInfo.id ?: "",
-                                        name = artistInfo.name,
-                                        channelId = null,
-                                        thumbnailUrl = null,
-                                    ).toggleLike(),
-                                )
-                            }
-                        }
-                    }
-                },
+        modifier = Modifier
+            .size(40.dp)
+            .clip(CircleShape)
+            .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
+            .clickable(onClickLabel = openProfile) {
+                navController.navigate("artist/$artistId") {
+                    launchSingleTop = true
+                }
+            },
     ) {
         Icon(
-            painter = painterResource(if (isSubscribed) R.drawable.subscribed else R.drawable.subscribe),
-            contentDescription = null,
-            tint = if (isSubscribed) primaryColor else onSurfaceColor.copy(alpha = 0.7f),
+            painter = painterResource(R.drawable.person),
+            contentDescription = openProfile,
+            tint = onSurfaceColor.copy(alpha = 0.85f),
             modifier = Modifier.size(20.dp),
         )
     }

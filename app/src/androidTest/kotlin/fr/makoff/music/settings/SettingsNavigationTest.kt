@@ -14,6 +14,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.MainActivity
+import fr.makoff.music.BuildConfig
 import fr.makoff.music.R
 import fr.makoff.music.constants.*
 import androidx.datastore.preferences.core.Preferences
@@ -514,7 +515,8 @@ class SettingsNavigationTest {
 
         val screens = listOf(
             R.string.appearance to R.string.theme,
-            R.string.player_and_audio to R.string.audio_quality,
+            R.string.settings_player_entry to R.string.player_video_mode_setting,
+            R.string.settings_audio_entry to R.string.audio_quality,
             R.string.content to R.string.content_language,
             R.string.storage to R.string.downloaded_songs,
             R.string.download_settings to R.string.folder_audio_recent,
@@ -596,7 +598,39 @@ class SettingsNavigationTest {
                     device.pressBack()
                     device.waitForIdle()
                 }
-                R.string.player_and_audio -> {
+                R.string.settings_player_entry -> {
+                    listOf(
+                        R.string.player_queue_section,
+                        R.string.player_shuffle_section,
+                        R.string.player_behavior_section,
+                        R.string.player_devices_section,
+                    ).forEach { findText(it) }
+                    toggleAndRestore(R.string.player_video_mode_setting, PlayerVideoModeEnabledKey, true)
+                    listOf(
+                        Triple(R.string.google_cast, EnableGoogleCastKey, true),
+                        Triple(R.string.persistent_queue, PersistentQueueKey, true),
+                        Triple(R.string.auto_load_more, AutoLoadMoreKey, true),
+                        Triple(R.string.auto_radio_queue, AutoRadioQueueKey, true),
+                        Triple(R.string.autoplay, AutoplayKey, true),
+                        Triple(R.string.disable_load_more_when_repeat_all, DisableLoadMoreWhenRepeatAllKey, false),
+                        Triple(R.string.enable_similar_content, SimilarContent, true),
+                        Triple(R.string.persistent_shuffle_title, PersistentShuffleAcrossQueuesKey, false),
+                        Triple(R.string.remember_shuffle_and_repeat, RememberShuffleAndRepeatKey, true),
+                        Triple(R.string.shuffle_playlist_first, ShufflePlaylistFirstKey, false),
+                        Triple(R.string.prevent_duplicate_tracks_in_queue, PreventDuplicateTracksInQueueKey, false),
+                        Triple(R.string.auto_skip_next_on_error, AutoSkipNextOnErrorKey, false),
+                        Triple(R.string.stop_music_on_task_clear, StopMusicOnTaskClearKey, false),
+                        Triple(R.string.pause_music_when_media_is_muted, PauseOnMute, false),
+                        Triple(R.string.resume_on_bluetooth_connect, ResumeOnBluetoothConnectKey, false),
+                        Triple(R.string.keep_screen_on_when_player_is_expanded, KeepScreenOn, false),
+                    ).forEach { (id, key, default) ->
+                        if (id != R.string.google_cast || BuildConfig.CAST_AVAILABLE) {
+                            toggleAndRestore(id, key, default)
+                        }
+                    }
+                    println("PLAYER_SECTIONS_OK: video mode, queue, shuffle, behavior and devices")
+                }
+                R.string.settings_audio_entry -> {
                     assertFalse("Download-format helper paragraph removed", device.hasObject(By.text(label(R.string.download_format_unified_help))))
                     open(R.string.download_format_unified)
                     findText(R.string.download_format_m4a)
@@ -604,10 +638,9 @@ class SettingsNavigationTest {
                     findText(R.string.download_format_best)
                     device.pressBack()
                     device.waitForIdle()
-                    println("PLAYER_DOWNLOAD_FORMAT_OK: BEST/M4A/FLAC chooser reachable in Player and audio")
+                    println("AUDIO_DOWNLOAD_FORMAT_OK: BEST/M4A/FLAC chooser reachable in Audio")
                     listOf(R.string.player_audio_quality_section, R.string.player_transitions_section,
-                        R.string.player_queue_section, R.string.player_shuffle_section, R.string.player_behavior_section,
-                        R.string.player_devices_section, R.string.download_quality_settings,
+                        R.string.download_quality_settings,
                         R.string.listen_history, R.string.search_history).forEach { findText(it) }
                     val qualityBefore = runBlocking { context.dataStore.data.first()[AudioQualityKey] }
                     try {
@@ -638,27 +671,11 @@ class SettingsNavigationTest {
                         Triple(R.string.audio_offload, AudioOffload, false),
                         Triple(R.string.varispeed, VarispeedKey, false),
                         Triple(R.string.audio_track_playback_params, AudioTrackPlaybackParamsKey, true),
-                        Triple(R.string.google_cast, EnableGoogleCastKey, true),
-
                         Triple(R.string.auto_download_on_like, AutoDownloadOnLikeKey, false),
                         Triple(R.string.skip_silence, SkipSilenceKey, false),
                         Triple(R.string.audio_normalization, AudioNormalizationKey, true),
                         Triple(R.string.seek_seconds_addup, SeekExtraSeconds, false),
-                        Triple(R.string.persistent_queue, PersistentQueueKey, true),
-                        Triple(R.string.auto_load_more, AutoLoadMoreKey, true),
-                        Triple(R.string.auto_radio_queue, AutoRadioQueueKey, true),
-                        Triple(R.string.autoplay, AutoplayKey, true),
-                        Triple(R.string.disable_load_more_when_repeat_all, DisableLoadMoreWhenRepeatAllKey, false),
-                        Triple(R.string.enable_similar_content, SimilarContent, true),
-                        Triple(R.string.persistent_shuffle_title, PersistentShuffleAcrossQueuesKey, false),
-                        Triple(R.string.remember_shuffle_and_repeat, RememberShuffleAndRepeatKey, true),
-                        Triple(R.string.shuffle_playlist_first, ShufflePlaylistFirstKey, false),
-                        Triple(R.string.prevent_duplicate_tracks_in_queue, PreventDuplicateTracksInQueueKey, false),
-                        Triple(R.string.auto_skip_next_on_error, AutoSkipNextOnErrorKey, false),
-                        Triple(R.string.stop_music_on_task_clear, StopMusicOnTaskClearKey, false),
-                        Triple(R.string.pause_music_when_media_is_muted, PauseOnMute, false),
-                        Triple(R.string.resume_on_bluetooth_connect, ResumeOnBluetoothConnectKey, false),
-                        Triple(R.string.keep_screen_on_when_player_is_expanded, KeepScreenOn, false),
+
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
                     val originalQuality = runBlocking { context.dataStore.data.first()[AudioQualityKey] }
                     try {

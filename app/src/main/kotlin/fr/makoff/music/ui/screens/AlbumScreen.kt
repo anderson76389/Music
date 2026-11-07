@@ -75,6 +75,7 @@ import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalDownloadUtil
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
+import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.R
 import fr.makoff.music.constants.HideExplicitKey
 import fr.makoff.music.constants.HideVideoSongsKey
@@ -105,6 +106,7 @@ fun AlbumScreen(
     val context = LocalContext.current
     val menuState = LocalMenuState.current
     val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val haptic = LocalHapticFeedback.current
     val coroutineScope = rememberCoroutineScope()
     val playerConnection = LocalPlayerConnection.current ?: return
@@ -294,8 +296,14 @@ fun AlbumScreen(
                         // Like Button - Smaller secondary button
                         Surface(
                             onClick = {
+                                val album = albumWithSongs.album
+                                syncUtils.bookmarkAlbum(
+                                    albumId = album.id,
+                                    remotePlaylistId = album.playlistId ?: playlistId.takeIf { it.isNotBlank() },
+                                    liked = album.bookmarkedAt == null,
+                                )
                                 database.query {
-                                    update(albumWithSongs.album.toggleLike())
+                                    update(album.localToggleLike())
                                 }
                             },
                             shape = CircleShape,

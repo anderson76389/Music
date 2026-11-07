@@ -58,6 +58,7 @@ import fr.makoff.music.constants.LoudnessLevel
 import fr.makoff.music.constants.LoudnessLevelKey
 import fr.makoff.music.constants.PauseOnMute
 import fr.makoff.music.constants.PersistentQueueKey
+import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
 import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
@@ -80,11 +81,17 @@ import fr.makoff.music.utils.rememberPreference
 import kotlin.math.roundToInt
 import fr.makoff.music.ui.utils.getLoudnessLevelLabel
 
+enum class PlayerSettingsTab { PLAYER, AUDIO }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PlayerSettings(
-    navController: NavController
+    navController: NavController,
+    section: PlayerSettingsTab = PlayerSettingsTab.PLAYER,
 ) {
+    val (playerVideoModeEnabled, onPlayerVideoModeEnabledChange) = rememberPreference(
+        PlayerVideoModeEnabledKey, defaultValue = true,
+    )
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
         defaultValue = AudioQuality.HIGH
@@ -273,6 +280,37 @@ fun PlayerSettings(
             )
         )
 
+        if (section == PlayerSettingsTab.PLAYER) {
+            Material3SettingsGroup(
+                title = stringResource(R.string.settings_player_entry),
+                items = listOf(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.slow_motion_video),
+                        title = { Text(stringResource(R.string.player_video_mode_setting)) },
+                        description = { Text(stringResource(R.string.player_video_mode_setting_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = playerVideoModeEnabled,
+                                onCheckedChange = onPlayerVideoModeEnabledChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            if (playerVideoModeEnabled) R.drawable.check else R.drawable.close,
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                },
+                            )
+                        },
+                        onClick = { onPlayerVideoModeEnabledChange(!playerVideoModeEnabled) },
+                    )
+                ),
+            )
+            Spacer(modifier = Modifier.height(27.dp))
+        }
+
+        if (section == PlayerSettingsTab.AUDIO) {
         Material3SettingsGroup(
             title = stringResource(R.string.player_audio_quality_section),
             items = buildList {
@@ -557,6 +595,8 @@ fun PlayerSettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        }
+        if (section == PlayerSettingsTab.PLAYER) {
         Material3SettingsGroup(
             title = stringResource(R.string.player_queue_section),
             items = buildList {
@@ -955,6 +995,8 @@ fun PlayerSettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
+        }
+        if (section == PlayerSettingsTab.AUDIO) {
         DownloadFormatSettings(
             showHelp = false,
             additionalItems = listOf(
@@ -1002,11 +1044,17 @@ fun PlayerSettings(
                 ),
             ),
         )
+        }
         Spacer(modifier = Modifier.height(16.dp))
     }
 
     TopAppBar(
-        title = { Text(stringResource(R.string.player_and_audio)) },
+        title = {
+            Text(stringResource(
+                if (section == PlayerSettingsTab.PLAYER) R.string.settings_player_entry
+                else R.string.settings_audio_entry
+            ))
+        },
         navigationIcon = {
             IconButton(
                 onClick = navController::navigateUp,

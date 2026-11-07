@@ -54,6 +54,10 @@ import javax.inject.Singleton
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/** Apply a remote bookmark only after it matches the user's most recent local intent. */
+internal fun remoteBookmarkMatchesIntent(pending: Boolean?, remoteLiked: Boolean): Boolean =
+    pending == null || pending == remoteLiked
+
 sealed class SyncOperation {
     data object FullSync : SyncOperation()
     data object LikedSongs : SyncOperation()
@@ -68,6 +72,7 @@ sealed class SyncOperation {
     data object AutoSyncPlaylists : SyncOperation()
     data class SinglePlaylist(val browseId: String, val playlistId: String) : SyncOperation()
     data class LikeSong(val song: SongEntity) : SyncOperation()
+    data class LikeCollection(val browseId: String, val liked: Boolean) : SyncOperation()
     data class SubscribeChannel(val channelId: String, val subscribe: Boolean) : SyncOperation()
     data class SavePodcast(val podcastId: String, val save: Boolean) : SyncOperation()
     data class SaveEpisode(val episodeId: String, val save: Boolean, val setVideoId: String?) : SyncOperation()
@@ -235,6 +240,25 @@ class SyncUtils @Inject constructor(
     @Volatile private var cachedLastSyncEpoch: Long = 0L
     private val playlistsBeingModified = ConcurrentHashMap<String, AtomicInteger>()
     private val playlistEditMutex = Mutex()
+    // Local intent survives app restarts and YouTube Music's eventually-consistent
+    // library responses. Never undo an explicit local bookmark until the remote
+    // listing actually confirms the same state.
+    private val pendingBookmarks = context.getSharedPreferences("pending_collection_bookmarks", Context.MODE_PRIVATE)
+    private fun pendingKey(type: String, id: String): String =
+        "$type:${YouTube.authUser}:${YouTube.cookie.orEmpty().hashCode()}:$id"
+
+    private fun markBookmarkIntent(type: String, id: String, liked: Boolean) {
+        pendingBookmarks.edit().putBoolean(pendingKey(type, id), liked).apply()
+    }
+
+    private fun acceptRemoteBookmark(type: String, id: String, remoteLiked: Boolean): Boolean {
+        val key = pendingKey(type, id)
+        if (!pendingBookmarks.contains(key)) return true
+        val desired = pendingBookmarks.getBoolean(key, false)
+        if (!remoteBookmarkMatchesIntent(desired, remoteLiked)) return false
+        pendingBookmarks.edit().remove(key).apply()
+        return true
+    }
     private var lastPlaylistEditAtMs = 0L
 
     companion object {
@@ -246,7 +270,11 @@ class SyncUtils @Inject constructor(
         private const val SNAPSHOT_LIKED_SONGS = "sync_snapshot_liked_songs"
         private const val SNAPSHOT_LIBRARY_SONGS = "sync_snapshot_library_songs"
         private const val SNAPSHOT_LIKED_ALBUMS = "sync_snapshot_liked_albums"
-        private val SYNC_SNAPSHOTS = listOf(SNAPSHOT_LIKED_SONGS, SNAPSHOT_LIBRARY_SONGS, SNAPSHOT_LIKED_ALBUMS)
+        private const val SNAPSHOT_SAVED_PLAYLISTS = "sync_snapshot_saved_playlists"
+        private val SYNC_SNAPSHOTS = listOf(
+            SNAPSHOT_LIKED_SONGS, SNAPSHOT_LIBRARY_SONGS,
+            SNAPSHOT_LIKED_ALBUMS, SNAPSHOT_SAVED_PLAYLISTS,
+        )
     }
 
     // Remote IDs seen by the last complete sync, used to tell remote removals from local-only additions.
@@ -353,6 +381,7 @@ class SyncUtils @Inject constructor(
         is SyncOperation.SinglePlaylist -> "playlist:$browseId"
         SyncOperation.ClearPodcastData -> "clearPodcastData"
         is SyncOperation.LikeSong,
+        is SyncOperation.LikeCollection,
         is SyncOperation.SubscribeChannel,
         is SyncOperation.SavePodcast,
         is SyncOperation.SaveEpisode,
@@ -390,6 +419,7 @@ class SyncUtils @Inject constructor(
             is SyncOperation.AutoSyncPlaylists -> executeSyncAutoSyncPlaylists()
             is SyncOperation.SinglePlaylist -> executeSyncPlaylist(operation.browseId, operation.playlistId)
             is SyncOperation.LikeSong -> executeLikeSong(operation.song)
+            is SyncOperation.LikeCollection -> executeLikeCollection(operation.browseId, operation.liked)
             is SyncOperation.SubscribeChannel -> executeSubscribeChannel(operation.channelId, operation.subscribe)
             is SyncOperation.SavePodcast -> executeSavePodcast(operation.podcastId, operation.save)
             is SyncOperation.SaveEpisode -> executeSaveEpisode(operation.episodeId, operation.save, operation.setVideoId)
@@ -478,6 +508,18 @@ class SyncUtils @Inject constructor(
 
     fun likeSong(s: SongEntity) {
         enqueue(SyncOperation.LikeSong(s))
+    }
+
+    fun bookmarkAlbum(albumId: String, remotePlaylistId: String?, liked: Boolean) {
+        markBookmarkIntent("album", albumId, liked)
+        remotePlaylistId?.takeIf { it.isNotBlank() }?.let {
+            enqueue(SyncOperation.LikeCollection(it, liked))
+        }
+    }
+
+    fun bookmarkPlaylist(browseId: String, liked: Boolean) {
+        markBookmarkIntent("playlist", browseId, liked)
+        enqueue(SyncOperation.LikeCollection(browseId, liked))
     }
 
     fun subscribeChannel(channelId: String, subscribe: Boolean) {
@@ -699,6 +741,12 @@ class SyncUtils @Inject constructor(
         } catch (e: Exception) {
             Timber.e(e, "Error during full sync")
         }
+    }
+
+    private suspend fun executeLikeCollection(browseId: String, liked: Boolean) = withContext(Dispatchers.IO) {
+        if (!isLoggedIn()) return@withContext
+        withRetry { YouTube.likePlaylist(browseId, liked) }
+            .onFailure { Timber.e(it, "Failed to persist collection bookmark: $browseId") }
     }
 
     private suspend fun executeLikeSong(s: SongEntity) = withContext(Dispatchers.IO) {
@@ -973,7 +1021,9 @@ class SyncUtils @Inject constructor(
                     if (remoteIds.isNotEmpty()) {
                         val localAlbums = database.likedAlbumEntitiesByNameAsc()
                         val removed = idsRemovedRemotely(localAlbums.map { it.id }, readSyncSnapshot(SNAPSHOT_LIKED_ALBUMS), remoteIds)
-                        localAlbums.filter { it.id in removed }.forEach { album ->
+                        localAlbums.filter {
+                            it.id in removed && acceptRemoteBookmark("album", it.id, remoteLiked = false)
+                        }.forEach { album ->
                             try {
                                 database.update(album.localToggleLike())
                                 delay(DB_OPERATION_DELAY_MS)
@@ -988,14 +1038,22 @@ class SyncUtils @Inject constructor(
                         try {
                             val dbAlbum = database.albumEntity(album.id)
                             if (dbAlbum == null) {
+                                val shouldBookmark = acceptRemoteBookmark("album", album.id, remoteLiked = true)
                                 YouTube.album(album.browseId).onSuccess { albumPage ->
                                     database.insert(albumPage)
-                                    database.albumEntity(album.id)?.let { newDbAlbum ->
-                                        database.update(newDbAlbum.localToggleLike())
+                                    if (shouldBookmark) {
+                                        database.albumEntity(album.id)?.let { newDbAlbum ->
+                                            if (newDbAlbum.bookmarkedAt == null) {
+                                                database.update(newDbAlbum.localToggleLike())
+                                            }
+                                        }
                                     }
                                 }
-                            } else if (dbAlbum.bookmarkedAt == null) {
+                            } else if (dbAlbum.bookmarkedAt == null &&
+                                acceptRemoteBookmark("album", album.id, remoteLiked = true)) {
                                 database.update(dbAlbum.localToggleLike())
+                            } else if (dbAlbum.bookmarkedAt != null) {
+                                acceptRemoteBookmark("album", album.id, remoteLiked = true)
                             }
                             delay(DB_OPERATION_DELAY_MS)
                         } catch (e: Exception) {
@@ -1453,9 +1511,21 @@ class SyncUtils @Inject constructor(
                     executeCleanupDuplicatePlaylists()
 
                     val localPlaylists = database.playlistEntitiesByNameAsc().toMutableList()
-                    localPlaylists.filterNot { it.browseId in remoteIds }
-                        .filterNot { it.browseId == null }
-                        .forEach { playlist ->
+                    // Do not interpret a stale/partial server listing as an
+                    // unlike. Only remove a playlist previously confirmed in a
+                    // completed remote snapshot, never one just liked locally.
+                    val previouslySynced = readSyncSnapshot(SNAPSHOT_SAVED_PLAYLISTS)
+                    val removedIds = if (remoteIds.isNotEmpty()) {
+                        idsRemovedRemotely(
+                            localPlaylists.filter { it.bookmarkedAt != null }.mapNotNull { it.browseId },
+                            previouslySynced,
+                            remoteIds,
+                        )
+                    } else emptySet()
+                    localPlaylists.filter {
+                        it.browseId in removedIds && it.bookmarkedAt != null &&
+                            acceptRemoteBookmark("playlist", it.browseId!!, remoteLiked = false)
+                    }.forEach { playlist ->
                             try {
                                 database.update(playlist.localToggleLike())
                                 delay(DB_OPERATION_DELAY_MS)
@@ -1469,12 +1539,15 @@ class SyncUtils @Inject constructor(
                             var playlistEntity = localPlaylists.find { it.browseId == playlist.id }
 
                             if (playlistEntity == null) {
+                                val shouldBookmark = acceptRemoteBookmark(
+                                    "playlist", playlist.id, remoteLiked = true,
+                                )
                                 playlistEntity = PlaylistEntity(
                                     name = playlist.title,
                                     browseId = playlist.id,
                                     thumbnailUrl = playlist.thumbnail,
                                     isEditable = playlist.isEditable,
-                                    bookmarkedAt = LocalDateTime.now(),
+                                    bookmarkedAt = if (shouldBookmark) LocalDateTime.now() else null,
                                     remoteSongCount = playlist.songCountText?.let {
                                         Regex("""\d+""").find(it)?.value?.toIntOrNull()
                                     },
@@ -1486,7 +1559,23 @@ class SyncUtils @Inject constructor(
                                 localPlaylists.add(playlistEntity)
                                 Timber.d("syncSavedPlaylists: Created new playlist ${playlist.title} (${playlist.id})")
                             } else {
-                                database.update(playlistEntity, playlist)
+                                val playlistRowId = playlistEntity.id
+                                val shouldBookmark = acceptRemoteBookmark("playlist", playlist.id, remoteLiked = true)
+                                // The list loaded before the network request is stale
+                                // if a user tapped the heart while sync was in flight.
+                                // Always refresh the row inside a transaction before
+                                // updating metadata or changing its bookmark.
+                                database.withTransaction {
+                                    val current = database.playlistBlocking(playlistRowId)?.playlist
+                                    if (current != null) {
+                                        update(current, playlist)
+                                        if (current.bookmarkedAt == null && shouldBookmark) {
+                                            database.playlistBlocking(current.id)?.playlist?.let { refreshed ->
+                                                update(refreshed.localToggleLike())
+                                            }
+                                        }
+                                    }
+                                }
                                 Timber.d("syncSavedPlaylists: Updated existing playlist ${playlist.title} (${playlist.id})")
                             }
 
@@ -1502,6 +1591,7 @@ class SyncUtils @Inject constructor(
                         }
                     }
 
+                    if (remoteIds.isNotEmpty()) writeSyncSnapshot(SNAPSHOT_SAVED_PLAYLISTS, remoteIds)
                     Timber.d("Synced ${remotePlaylists.size} saved playlists")
                 } catch (e: Exception) {
                     Timber.e(e, "Error processing saved playlists")

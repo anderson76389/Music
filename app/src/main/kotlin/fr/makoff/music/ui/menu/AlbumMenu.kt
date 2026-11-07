@@ -69,6 +69,7 @@ import coil3.compose.AsyncImage
 import fr.makoff.music.LocalNavController
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.LocalDatabase
+import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.LocalDownloadUtil
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -104,6 +105,7 @@ fun AlbumMenu(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val scope = rememberCoroutineScope()
@@ -264,8 +266,10 @@ fun AlbumMenu(
         trailingContent = {
             IconButton(
                 onClick = {
+                    val selected = album.album
+                    syncUtils.bookmarkAlbum(selected.id, selected.playlistId, selected.bookmarkedAt == null)
                     database.query {
-                        update(album.album.toggleLike())
+                        update(selected.localToggleLike())
                     }
                 },
             ) {
