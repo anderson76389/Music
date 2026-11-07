@@ -4,6 +4,20 @@ package=${SMOKE_PACKAGE:-fr.makoff.music.debug}
 mkdir -p smoke-results
 # A disconnected emulator must fail with diagnostics instead of waiting indefinitely.
 adb() { command timeout --kill-after=5s 90s adb "$@"; }
+# Large foldable display changes can temporarily reset the emulator's ADB
+# transport even after all instrumented tests pass. Retry only those commands,
+# and keep the final activity/crash checks mandatory; persistent errors still fail.
+adb_retry() {
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if adb "$@"; then return 0; fi
+    echo "::warning::ADB temporarily unavailable after display change (attempt $attempt/5): $*" >&2
+    command timeout --kill-after=2s 12s adb wait-for-device >/dev/null 2>&1 || true
+    sleep 3
+  done
+  echo "::error::ADB command failed on every attempt: $*" >&2
+  return 1
+}
 for variant in foss gms; do
   apk=$(find "apk-$variant" -name '*.apk' -print -quit)
   test -n "$apk"
@@ -124,22 +138,25 @@ for variant in foss gms; do
     # display. This checks actual Activity recreation and theme animations
     # without pretending that an emulator is a physical HONOR Magic V6.
     adb logcat -c
-    adb shell wm size 1440x1320
-    adb shell wm density 320
-    adb shell am start -W -n "$package/fr.makoff.music.MainActivity" > smoke-results/foldable-unfolded-launch.txt
+    echo "FOLDABLE_STAGE: switching to unfolded display"
+    adb_retry shell wm size 1440x1320
+    adb_retry shell wm density 320
+    adb_retry shell am start -W -n "$package/fr.makoff.music.MainActivity" > smoke-results/foldable-unfolded-launch.txt
     sleep 5
-    adb exec-out screencap -p > smoke-results/foldable-unfolded.png
-    adb shell dumpsys activity activities > smoke-results/foldable-unfolded-activities.txt
+    adb_retry exec-out screencap -p > smoke-results/foldable-unfolded.png
+    adb_retry shell dumpsys activity activities > smoke-results/foldable-unfolded-activities.txt
     python3 scripts/check_resumed_activity.py "$package" smoke-results/foldable-unfolded-activities.txt
-    adb shell wm size 1080x2400
-    adb shell wm density 420
+    echo "FOLDABLE_STAGE: switching to folded display"
+    adb_retry shell wm size 1080x2400
+    adb_retry shell wm density 420
     sleep 4
-    adb exec-out screencap -p > smoke-results/foldable-folded.png
-    adb shell dumpsys activity activities > smoke-results/foldable-folded-activities.txt
+    adb_retry exec-out screencap -p > smoke-results/foldable-folded.png
+    adb_retry shell dumpsys activity activities > smoke-results/foldable-folded-activities.txt
     python3 scripts/check_resumed_activity.py "$package" smoke-results/foldable-folded-activities.txt
-    adb shell wm size reset
-    adb shell wm density reset
-    adb logcat -d > smoke-results/foldable-transitions-logcat.txt
+    echo "FOLDABLE_STAGE: restoring emulator display"
+    adb_retry shell wm size reset
+    adb_retry shell wm density reset
+    adb_retry logcat -d > smoke-results/foldable-transitions-logcat.txt
     if grep -Fq "Process: $package," smoke-results/foldable-transitions-logcat.txt; then
       echo "::error::Crash during unfold/fold configuration change"
       exit 1
