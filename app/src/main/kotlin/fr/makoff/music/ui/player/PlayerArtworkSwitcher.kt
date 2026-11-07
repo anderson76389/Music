@@ -241,7 +241,9 @@ internal fun PlayerArtworkSwitcher(
             (hasPairedVideo && !videoStreamLookupFinished))
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
-        if (!videoModeEnabled || !isExpanded || isCasting || isLocalOrUploaded || !isYouTubeTrack) {
+        // Do not erase the saved video choice just because an Activity is
+        // temporarily collapsed during portrait/landscape reconstruction.
+        if (!videoModeEnabled || isCasting || isLocalOrUploaded || !isYouTubeTrack) {
             onShowVideoChange(false)
         }
     }
