@@ -1,0 +1,11 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Video player / play pictogram. No proprietary bitmap assets. -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M4,4 L20,4 A3,3 0,0 1,23,7 L23,17 A3,3 0,0 1,20,20 L4,20 A3,3 0,0 1,1,17 L1,7 A3,3 0,0 1,4,4 Z M10,8 L17,12 L10,16 Z" />
+</vector>

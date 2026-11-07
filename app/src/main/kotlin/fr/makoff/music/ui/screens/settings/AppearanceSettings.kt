@@ -77,6 +77,7 @@ import fr.makoff.music.constants.PlayerBackgroundStyle
 import fr.makoff.music.constants.PlayerBackgroundStyleKey
 import fr.makoff.music.constants.PlayerButtonsStyle
 import fr.makoff.music.constants.PlayerButtonsStyleKey
+import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.RespectAgentPositioningKey
 import fr.makoff.music.constants.SelectedThemeColorKey
 import fr.makoff.music.constants.ShowCachedPlaylistKey
@@ -174,6 +175,11 @@ fun AppearanceSettings(
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
         rememberPreference(
             UseNewPlayerDesignKey,
+            defaultValue = true,
+        )
+    val (playerVideoModeEnabled, onPlayerVideoModeEnabledChange) =
+        rememberPreference(
+            PlayerVideoModeEnabledKey,
             defaultValue = true,
         )
     val (miniPlayerBackground, onMiniPlayerBackgroundChange) =
@@ -1049,6 +1055,29 @@ fun AppearanceSettings(
                             )
                         },
                         onClick = { onUseNewPlayerDesignChange(!useNewPlayerDesign) },
+                    ),
+                )
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.slow_motion_video),
+                        title = { Text(stringResource(R.string.player_video_mode_setting)) },
+                        description = { Text(stringResource(R.string.player_video_mode_setting_desc)) },
+                        trailingContent = {
+                            Switch(
+                                checked = playerVideoModeEnabled,
+                                onCheckedChange = onPlayerVideoModeEnabledChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (playerVideoModeEnabled) R.drawable.check else R.drawable.close,
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize),
+                                    )
+                                },
+                            )
+                        },
+                        onClick = { onPlayerVideoModeEnabledChange(!playerVideoModeEnabled) },
                     ),
                 )
                 add(

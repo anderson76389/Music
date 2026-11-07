@@ -108,9 +108,9 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds, PlayerVideoModeEnabledKey)
         val before = context.dataStore.data.first()
-        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
+        context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[PlayerVideoModeEnabledKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
         val binding = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName?, binder: IBinder?) {
@@ -291,20 +291,40 @@ class OfflinePlayerInstrumentedTest {
             }
             instrumentation.waitForIdleSync()
             delay(1200)
-            // The external top bar is authoritative: no legacy "Now Playing"
-            // text may sit behind video/artwork, and an audio-only cached song
-            // must not advertise an unavailable Son / Vidéo switch.
-            assertNull(
-                "Old Now Playing heading must not overlap the player artwork",
-                device.findObject(By.text(context.getString(R.string.now_playing))),
+            // An audio-only song shows ONE classic heading in the same reserved
+            // top bar: no duplicated title above the cover, and no fake video mode.
+            val heading = device.wait(
+                Until.findObject(By.text(context.getString(R.string.now_playing))),
+                5000,
+            )
+            assertNotNull("Classic En cours de lecture heading must be visible", heading)
+            val coverBounds = requireNotNull(freshControlBounds(context.getString(R.string.player_cover_toggle)))
+            assertTrue(
+                "Now Playing heading must remain above (not overlay) the cover",
+                requireNotNull(heading).visibleBounds.bottom <= coverBounds.top,
+            )
+            assertEquals(
+                "Only one Now Playing heading is allowed",
+                1,
+                device.findObjects(By.text(context.getString(R.string.now_playing))).size,
             )
             assertNull(
-                "Son / Vidéo must be hidden without a real music video",
-                device.findObject(By.text(context.getString(R.string.player_video_label))),
+                "An audio-only track must never display a video selector",
+                device.findObject(By.desc(context.getString(R.string.player_video_label))),
             )
             assertNotNull(
                 "The compact player must still provide its collapse control",
                 device.findObject(By.desc(context.getString(R.string.player_collapse_label))),
+            )
+            // Switching the preference off must keep the header and audio player
+            // working, while any video prefetch is cancelled.
+            context.dataStore.edit { it[PlayerVideoModeEnabledKey] = false }
+            await("Disabling video mode must restore the classic title") {
+                device.findObject(By.text(context.getString(R.string.now_playing))) != null
+            }
+            assertNull(
+                "Disabled video mode must not advertise Vidéo",
+                device.findObject(By.desc(context.getString(R.string.player_video_label))),
             )
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player.png")
             device.waitForIdle()

@@ -164,6 +164,7 @@ import fr.makoff.music.constants.SliderStyleKey
 import fr.makoff.music.constants.SquigglySliderKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewPlayerDesignKey
+import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.extensions.metadata
 import fr.makoff.music.extensions.togglePlayPause
 import fr.makoff.music.extensions.toggleRepeatMode
@@ -220,6 +221,7 @@ fun BottomSheetPlayer(
             UseNewPlayerDesignKey,
             defaultValue = true,
         )
+    val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
@@ -1581,6 +1583,7 @@ fun BottomSheetPlayer(
                         CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
+                                videoModeEnabled = playerVideoModeEnabled,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
@@ -1652,6 +1655,7 @@ fun BottomSheetPlayer(
                         CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
+                                videoModeEnabled = playerVideoModeEnabled,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
