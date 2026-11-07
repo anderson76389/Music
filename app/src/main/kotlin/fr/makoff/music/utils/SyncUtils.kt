@@ -259,6 +259,15 @@ class SyncUtils @Inject constructor(
         pendingBookmarks.edit().remove(key).apply()
         return true
     }
+
+    private fun confirmAbsentBookmarkIntents(type: String, remoteIds: Set<String>) {
+        val prefix = "$type:${YouTube.authUser}:${YouTube.cookie.orEmpty().hashCode()}:"
+        pendingBookmarks.all.keys
+            .filter { it.startsWith(prefix) }
+            .map { it.removePrefix(prefix) }
+            .filterNot(remoteIds::contains)
+            .forEach { acceptRemoteBookmark(type, it, remoteLiked = false) }
+    }
     private var lastPlaylistEditAtMs = 0L
 
     companion object {
@@ -507,13 +516,27 @@ class SyncUtils @Inject constructor(
     }
 
     fun likeSong(s: SongEntity) {
+        // A pending like protects a local heart from an older server snapshot.
+        markBookmarkIntent("song", s.id, s.liked)
         enqueue(SyncOperation.LikeSong(s))
     }
 
     fun bookmarkAlbum(albumId: String, remotePlaylistId: String?, liked: Boolean) {
         markBookmarkIntent("album", albumId, liked)
-        remotePlaylistId?.takeIf { it.isNotBlank() }?.let {
-            enqueue(SyncOperation.LikeCollection(it, liked))
+        if (!remotePlaylistId.isNullOrBlank()) {
+            enqueue(SyncOperation.LikeCollection(remotePlaylistId, liked))
+        } else {
+            // The user may like before the album's remote playlist ID arrives.
+            syncScope.launch {
+                val resolved = withRetry { YouTube.album(albumId) }
+                    .getOrNull()?.getOrNull()?.album?.playlistId
+                if (!resolved.isNullOrBlank()) {
+                    val desired = pendingBookmarks.getBoolean(pendingKey("album", albumId), liked)
+                    enqueue(SyncOperation.LikeCollection(resolved, desired))
+                } else {
+                    Timber.w("Album bookmark not yet sent: missing remote playlist ID for $albumId")
+                }
+            }
         }
     }
 
@@ -598,6 +621,7 @@ class SyncUtils @Inject constructor(
         Timber.d("[LOGOUT_CLEAR] Starting complete library data cleanup")
         try {
             SYNC_SNAPSHOTS.forEach { context.filesDir.resolve(it).delete() }
+            pendingBookmarks.edit().clear().apply()
 
             // Clear podcast data first (subscribed podcasts + saved episodes)
             Timber.d("[LOGOUT_CLEAR] Clearing podcast data")
@@ -841,6 +865,9 @@ class SyncUtils @Inject constructor(
                     val removed =
                         if (isComplete) {
                             idsRemovedRemotely(database.likedSongIds(), readSyncSnapshot(SNAPSHOT_LIKED_SONGS), remoteIds)
+                                .filterTo(mutableSetOf()) { id ->
+                                    acceptRemoteBookmark("song", id, remoteLiked = false)
+                                }
                         } else {
                             Timber.w("Liked-song response was incomplete (${remoteSongs.size}/$advertisedCount); skipping remote removals")
                             emptySet()
@@ -851,6 +878,9 @@ class SyncUtils @Inject constructor(
                     database.withTransaction {
                         removed.forEach { id -> songEntity(id)?.let { update(it.copy(liked = false, likedDate = null)) } }
                         remoteSongs.forEachIndexed { index, song ->
+                            if (!acceptRemoteBookmark("song", song.id, remoteLiked = true)) {
+                                return@forEachIndexed
+                            }
                             val dbSong = songEntity(song.id)
                             val timestamp = dbSong?.likedDate ?: now.minusSeconds(index.toLong())
                             val isVideoSong = song.isVideoSong
@@ -869,7 +899,10 @@ class SyncUtils @Inject constructor(
                         }
                     }
 
-                    if (isComplete) writeSyncSnapshot(SNAPSHOT_LIKED_SONGS, remoteIds)
+                    if (isComplete) {
+                        confirmAbsentBookmarkIntents("song", remoteIds)
+                        writeSyncSnapshot(SNAPSHOT_LIKED_SONGS, remoteIds)
+                    }
                     Timber.d("Synced ${remoteSongs.size} liked songs, removed ${removed.size}")
                 } catch (e: Exception) {
                     Timber.e(e, "Error processing liked songs")
@@ -1031,6 +1064,7 @@ class SyncUtils @Inject constructor(
                                 Timber.e(e, "Failed to update album: ${album.id}")
                             }
                         }
+                        confirmAbsentBookmarkIntents("album", remoteIds)
                         writeSyncSnapshot(SNAPSHOT_LIKED_ALBUMS, remoteIds)
                     }
 
@@ -1591,7 +1625,10 @@ class SyncUtils @Inject constructor(
                         }
                     }
 
-                    if (remoteIds.isNotEmpty()) writeSyncSnapshot(SNAPSHOT_SAVED_PLAYLISTS, remoteIds)
+                    if (remoteIds.isNotEmpty()) {
+                        confirmAbsentBookmarkIntents("playlist", remoteIds)
+                        writeSyncSnapshot(SNAPSHOT_SAVED_PLAYLISTS, remoteIds)
+                    }
                     Timber.d("Synced ${remotePlaylists.size} saved playlists")
                 } catch (e: Exception) {
                     Timber.e(e, "Error processing saved playlists")
