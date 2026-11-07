@@ -927,4 +927,8 @@
     <string name="settings_audio_entry">Audio</string>
     <string name="settings_audio_content_section">Audio et contenu</string>
     <string name="mini_player_open_artist">Voir le profil de l’artiste</string>
+    <string name="restart_app_recommended_title">Redémarrer l’application ?</string>
+    <string name="restart_app_recommended_message">Ce changement peut nécessiter un redémarrage pour être appliqué partout. Vous pouvez le faire maintenant ou plus tard.</string>
+    <string name="restart_app_now">Redémarrer</string>
+    <string name="restart_app_later">Plus tard</string>
 </resources>
