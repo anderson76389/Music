@@ -139,13 +139,14 @@ internal fun PlayerArtworkSwitcher(
 
     // A direct video stream is a valid video for the *same* audio queue item;
     // never substitute an unverified search result.
-    val clipVideoId = when {
-        !isYouTubeTrack || isLocalOrUploaded -> null
-        isVideoSong -> videoId
-        companionVideoId != null -> companionVideoId
-        counterpartLookupDone -> videoId
-        else -> null
-    }
+    val clipVideoId = PlayerVideoModePolicy.candidateVideoId(
+        originalId = videoId,
+        isYouTubeTrack = isYouTubeTrack,
+        isLocalOrUploaded = isLocalOrUploaded,
+        isVideoSong = isVideoSong,
+        pairedId = companionVideoId,
+        counterpartLookupDone = counterpartLookupDone,
+    )
     // Do not advertise an unplayable clip. Resolve the actual signed video
     // stream in the background ONLY while the full player is expanded, and
     // reuse it on demand. This also avoids a duplicate network extraction
