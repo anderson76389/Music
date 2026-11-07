@@ -271,7 +271,7 @@ internal fun PlayerArtworkSwitcher(
     val canShowVideo = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = isYouTubeTrack,
         clipId = clipVideoId,
-        unavailableClipId = if (clipVideoId in failedClipIds) clipVideoId else null,
+        unavailableClipId = clipVideoId?.takeIf { it in failedClipIds },
         hasResolvedStream = playableStream != null,
         hasOfficialPair = hasPairedVideo,
         streamLookupFinished = videoStreamLookupFinished,
