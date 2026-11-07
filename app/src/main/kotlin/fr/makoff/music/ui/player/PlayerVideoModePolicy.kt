@@ -11,6 +11,21 @@ internal object PlayerVideoModePolicy {
         hasPlayableClip: Boolean,
     ): Boolean = enabled && expanded && hasPlayableClip
 
+    /**
+     * A known official pairing may show Son/Vidéo while its URL is loading;
+     * unverified direct video fallback is shown only after stream extraction.
+     * Never advertise a clip that already failed to play.
+     */
+    fun clipSelectable(
+        youtubeTrack: Boolean,
+        clipId: String?,
+        unavailableClipId: String?,
+        hasResolvedStream: Boolean,
+        hasOfficialPair: Boolean,
+        streamLookupFinished: Boolean,
+    ): Boolean = youtubeTrack && clipId != null && clipId != unavailableClipId &&
+        (hasResolvedStream || (hasOfficialPair && !streamLookupFinished))
+
     /** Wake and permit sensor rotation only while the selected video is on
      * screen. Audio-only playback and Cast must not acquire these flags.
      */
