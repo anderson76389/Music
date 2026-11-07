@@ -42,6 +42,17 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.clipSelectable(false, "abcdefghijk", null, true, true, true))
     }
 
+    @Test fun pairedClipFailureAttemptsOriginalVideoWithoutInfiniteRetry() {
+        val original = "abcdefghijk"
+        val paired = "lmnopqrstuv"
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, emptySet()) == paired)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, setOf(paired)) == original)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, setOf(original, paired)) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, true, true, emptySet()) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, false, false, true, emptySet()) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, false, setOf(paired)) == null)
+    }
+
     @Test fun screenStaysAwakeOnlyForExpandedVideoNotAudioOrCast() {
         assertTrue(PlayerVideoModePolicy.videoModeActive(true, true, true, false))
         assertFalse(PlayerVideoModePolicy.videoModeActive(false, true, true, false))
