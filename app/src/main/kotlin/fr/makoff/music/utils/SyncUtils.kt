@@ -1038,10 +1038,15 @@ class SyncUtils @Inject constructor(
                         try {
                             val dbAlbum = database.albumEntity(album.id)
                             if (dbAlbum == null) {
+                                val shouldBookmark = acceptRemoteBookmark("album", album.id, remoteLiked = true)
                                 YouTube.album(album.browseId).onSuccess { albumPage ->
                                     database.insert(albumPage)
-                                    database.albumEntity(album.id)?.let { newDbAlbum ->
-                                        database.update(newDbAlbum.localToggleLike())
+                                    if (shouldBookmark) {
+                                        database.albumEntity(album.id)?.let { newDbAlbum ->
+                                            if (newDbAlbum.bookmarkedAt == null) {
+                                                database.update(newDbAlbum.localToggleLike())
+                                            }
+                                        }
                                     }
                                 }
                             } else if (dbAlbum.bookmarkedAt == null &&
@@ -1534,12 +1539,15 @@ class SyncUtils @Inject constructor(
                             var playlistEntity = localPlaylists.find { it.browseId == playlist.id }
 
                             if (playlistEntity == null) {
+                                val shouldBookmark = acceptRemoteBookmark(
+                                    "playlist", playlist.id, remoteLiked = true,
+                                )
                                 playlistEntity = PlaylistEntity(
                                     name = playlist.title,
                                     browseId = playlist.id,
                                     thumbnailUrl = playlist.thumbnail,
                                     isEditable = playlist.isEditable,
-                                    bookmarkedAt = LocalDateTime.now(),
+                                    bookmarkedAt = if (shouldBookmark) LocalDateTime.now() else null,
                                     remoteSongCount = playlist.songCountText?.let {
                                         Regex("""\d+""").find(it)?.value?.toIntOrNull()
                                     },
