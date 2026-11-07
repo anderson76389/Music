@@ -61,6 +61,7 @@ import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.LocalNavController
 import fr.makoff.music.innertube.models.AlbumItem
 import fr.makoff.music.LocalDatabase
+import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.LocalArtistNameAliases
 import fr.makoff.music.LocalDownloadUtil
 import fr.makoff.music.LocalPlayerConnection
@@ -94,6 +95,7 @@ fun YouTubeAlbumMenu(
     val navController = LocalNavController.current
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val album by database.albumWithSongs(albumItem.id).collectAsStateWithLifecycle(initialValue = null)
@@ -241,8 +243,9 @@ fun YouTubeAlbumMenu(
         trailingContent = {
             IconButton(
                 onClick = {
-                    database.query {
-                        album?.album?.toggleLike()?.let(::update)
+                    album?.album?.let { selected ->
+                        syncUtils.bookmarkAlbum(selected.id, selected.playlistId, selected.bookmarkedAt == null)
+                        database.query { update(selected.localToggleLike()) }
                     }
                 },
             ) {
