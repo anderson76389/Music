@@ -343,8 +343,12 @@ fun NavGraphBuilder.navigationBuilder(
         ContentSettings(navController)
     }
 
-composable("settings/player") {
-        PlayerSettings(navController)
+    composable("settings/player") {
+        PlayerSettings(navController, PlayerSettingsTab.PLAYER)
+    }
+
+    composable("settings/audio") {
+        PlayerSettings(navController, PlayerSettingsTab.AUDIO)
     }
 
     composable("settings/downloads") {
