@@ -322,7 +322,8 @@ fun BottomSheetPlayer(
         }
         onDispose {
             if (videoModeActive && activity != null && previousOrientation != null &&
-                activity.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+                activity.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR &&
+                !activity.isChangingConfigurations
             ) {
                 activity.requestedOrientation = previousOrientation
             }
@@ -331,8 +332,6 @@ fun BottomSheetPlayer(
 
     // The video surface stays awake even if audio is paused or buffering.
     // Respect the existing explicit Keep screen on preference for audio.
-    val keepScreenOn = isPlaying && isKeepScreenOn
-
     DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
         val window = (context as? android.app.Activity)?.window
         if (window != null && state.isExpanded) {
