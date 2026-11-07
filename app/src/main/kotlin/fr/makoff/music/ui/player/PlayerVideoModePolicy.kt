@@ -10,4 +10,22 @@ internal object PlayerVideoModePolicy {
         expanded: Boolean,
         hasPlayableClip: Boolean,
     ): Boolean = enabled && expanded && hasPlayableClip
+
+    /** Prefer YouTube Music's actual paired clip; otherwise probe the same
+     * item's video stream, but never an arbitrary unrelated video.
+     */
+    fun candidateVideoId(
+        originalId: String?,
+        isYouTubeTrack: Boolean,
+        isLocalOrUploaded: Boolean,
+        isVideoSong: Boolean,
+        pairedId: String?,
+        counterpartLookupDone: Boolean,
+    ): String? = when {
+        !isYouTubeTrack || isLocalOrUploaded -> null
+        isVideoSong -> originalId
+        pairedId != null -> pairedId
+        counterpartLookupDone -> originalId
+        else -> null
+    }
 }
