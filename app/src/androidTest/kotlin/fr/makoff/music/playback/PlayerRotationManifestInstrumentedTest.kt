@@ -1,9 +1,8 @@
 package fr.makoff.music.playback
 
 import android.content.ComponentName
-import android.content.Context
 import android.content.pm.ActivityInfo
-import androidx.test.core.app.ApplicationProvider
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import fr.makoff.music.MainActivity
 import org.junit.Assert.assertEquals
@@ -15,7 +14,7 @@ import org.junit.runner.RunWith
 class PlayerRotationManifestInstrumentedTest {
     @Test
     fun videoRotationAndFoldableResizePreserveMainActivity() {
-        val context = ApplicationProvider.getApplicationContext<Context>()
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
         val info = context.packageManager.getActivityInfo(
             ComponentName(context, MainActivity::class.java), 0,
         )
