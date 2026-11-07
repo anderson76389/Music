@@ -8,6 +8,7 @@ package fr.makoff.music.ui.player
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -209,6 +210,7 @@ fun BottomSheetPlayer(
     pureBlack: Boolean,
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val playerMenuState = remember { MenuState() }
     val playerGlass = remember { HazeState() }
@@ -319,7 +321,6 @@ fun BottomSheetPlayer(
     // Video alone enables device-sensor rotation (including with orientation
     // lock on). Returning to Son restores the previous Activity policy.
     DisposableEffect(videoModeActive) {
-        val activity = context as? android.app.Activity
         val previousOrientation = activity?.requestedOrientation
         if (videoModeActive && activity != null) {
             activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
@@ -337,7 +338,7 @@ fun BottomSheetPlayer(
     // The video surface stays awake even if audio is paused or buffering.
     // Respect the existing explicit Keep screen on preference for audio.
     DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
-        val window = (context as? android.app.Activity)?.window
+        val window = activity?.window
         if (window != null && state.isExpanded) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
 
