@@ -1605,7 +1605,7 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title,
+                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
                                 knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
                                 onCompanionVideoIdResolved = { pairedId ->
@@ -1685,7 +1685,7 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title,
+                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
                                 knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
                                 onCompanionVideoIdResolved = { pairedId ->
