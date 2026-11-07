@@ -93,10 +93,11 @@ internal fun PlayerArtworkSwitcher(
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
+    showVideo: Boolean,
+    onShowVideoChange: (Boolean) -> Unit,
     playerConnection: PlayerConnection,
     modeTextColor: Color,
     onCollapse: () -> Unit,
-    onOpenMenu: () -> Unit,
     isLandscape: Boolean = false,
     modifier: Modifier = Modifier,
     artwork: @Composable (Boolean) -> Unit,
@@ -107,7 +108,6 @@ internal fun PlayerArtworkSwitcher(
     val videoLabel = stringResource(R.string.player_video_label)
     var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
     var counterpartLookupDone by remember(videoId) { mutableStateOf(false) }
-    var showVideo by remember(videoId) { mutableStateOf(false) }
     val isYouTubeTrack = videoId != null && videoId.length == 11 &&
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
@@ -154,15 +154,16 @@ internal fun PlayerArtworkSwitcher(
     var availableVideoStream by remember(clipVideoId) {
         mutableStateOf<InnerTubeXPlayer.VideoStream?>(null)
     }
+    var videoStreamLookupFinished by remember(clipVideoId) { mutableStateOf(false) }
     LaunchedEffect(clipVideoId, videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded) {
         val id = clipVideoId
+        videoStreamLookupFinished = false
         if (!videoModeEnabled || id.isNullOrBlank() || !isExpanded || isCasting || isLocalOrUploaded) {
             availableVideoStream = null
             return@LaunchedEffect
         }
-        // Cancellation on track changes prevents stale clip extraction from winning.
-        // The resolved stream is reused to prepare the muted video player
-        // before the user presses the Vidéo button.
+        // Fetch the actual video stream once and prebuffer it. The mode buttons
+        // can already be shown for an official pair while this is still loading.
         availableVideoStream = try {
             withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(id) }
         } catch (cancelled: CancellationException) {
@@ -170,6 +171,7 @@ internal fun PlayerArtworkSwitcher(
         } catch (_: Exception) {
             null
         }
+        videoStreamLookupFinished = true
     }
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
     val playableStream = availableVideoStream.takeIf {
@@ -223,22 +225,38 @@ internal fun PlayerArtworkSwitcher(
         val listener = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 unavailableClipId = clipVideoId
-                showVideo = false
+                onShowVideoChange(false)
             }
         }
         warmedVideoPlayer?.addListener(listener)
         onDispose { warmedVideoPlayer?.removeListener(listener) }
     }
 
-    val canShowVideo = playableStream != null && warmedVideoPlayer != null &&
-        isYouTubeTrack && clipVideoId != unavailableClipId
+    // A verified YouTube Music pairing is enough to reveal Son/Vidéo:
+    // do NOT hide the buttons until the muted video player has finished
+    // preparing. A direct, unpaired track still needs a playable stream.
+    val hasPairedVideo = isVideoSong || companionVideoId != null
+    val canShowVideo = clipVideoId != null && clipVideoId != unavailableClipId &&
+        isYouTubeTrack && (playableStream != null ||
+            (hasPairedVideo && !videoStreamLookupFinished))
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
-    LaunchedEffect(showModeBar) {
-        if (!showModeBar) showVideo = false
+    LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
+        if (!videoModeEnabled || !isExpanded || isCasting || isLocalOrUploaded || !isYouTubeTrack) {
+            onShowVideoChange(false)
+        }
+    }
+    LaunchedEffect(showVideo, clipVideoId, videoStreamLookupFinished, showModeBar) {
+        // Keep the user's video choice while a rotated layout re-resolves its
+        // stream. Reset only after a completed, unsuccessful lookup.
+        if (showVideo && clipVideoId != null && videoStreamLookupFinished && !showModeBar) {
+            onShowVideoChange(false)
+        }
     }
 
     val playerImage: @Composable () -> Unit = {
-        if (showVideo && showModeBar && videoId != null && clipVideoId != null) {
+        if (showVideo && showModeBar && videoId != null && clipVideoId != null &&
+            warmedVideoPlayer != null
+        ) {
             VideoOnlySurface(
                 videoId = clipVideoId,
                 audioId = videoId,
@@ -247,11 +265,15 @@ internal fun PlayerArtworkSwitcher(
                 playerConnection = playerConnection,
                 onUnavailable = {
                     unavailableClipId = clipVideoId
-                    showVideo = false
+                    onShowVideoChange(false)
                     Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+        } else if (showVideo && showModeBar) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         } else {
             // A single top bar owns the entire expanded player header.
             // Thumbnail must not draw a second "En cours de lecture" label or Cast.
@@ -268,7 +290,7 @@ internal fun PlayerArtworkSwitcher(
             modeTextColor = modeTextColor,
             onAudioClick = {
                 warmedVideoPlayer?.playWhenReady = false
-                showVideo = false
+                onShowVideoChange(false)
             },
             onVideoClick = {
                 warmedVideoPlayer?.let { player ->
@@ -282,10 +304,9 @@ internal fun PlayerArtworkSwitcher(
                     }
                     player.playWhenReady = isPlaying
                 }
-                showVideo = true
+                onShowVideoChange(true)
             },
             onCollapse = onCollapse,
-            onOpenMenu = onOpenMenu,
             modifier = barModifier,
         )
     }
@@ -325,7 +346,6 @@ private fun PlayerModeTopBar(
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     onCollapse: () -> Unit,
-    onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Real horizontal allocation: the title OR the mode buttons gets only the
@@ -394,14 +414,6 @@ private fun PlayerModeTopBar(
             tintColor = modeTextColor,
             buttonSize = 40.dp,
         )
-        IconButton(onClick = onOpenMenu, modifier = Modifier.size(40.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.more_vert),
-                contentDescription = stringResource(R.string.more_options),
-                tint = modeTextColor,
-                modifier = Modifier.size(23.dp),
-            )
-        }
     }
 }
 
