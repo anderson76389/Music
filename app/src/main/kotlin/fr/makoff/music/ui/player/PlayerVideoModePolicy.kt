@@ -11,6 +11,16 @@ internal object PlayerVideoModePolicy {
         hasPlayableClip: Boolean,
     ): Boolean = enabled && expanded && hasPlayableClip
 
+    /** Wake and permit sensor rotation only while the selected video is on
+     * screen. Audio-only playback and Cast must not acquire these flags.
+     */
+    fun videoModeActive(
+        videoSelected: Boolean,
+        modeEnabled: Boolean,
+        expanded: Boolean,
+        casting: Boolean,
+    ): Boolean = videoSelected && modeEnabled && expanded && !casting
+
     /** Prefer YouTube Music's actual paired clip; otherwise probe the same
      * item's video stream, but never an arbitrary unrelated video.
      */
