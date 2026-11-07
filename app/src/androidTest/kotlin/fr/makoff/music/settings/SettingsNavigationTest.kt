@@ -14,6 +14,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.Until
 import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.MainActivity
+import fr.makoff.music.BuildConfig
 import fr.makoff.music.R
 import fr.makoff.music.constants.*
 import androidx.datastore.preferences.core.Preferences
