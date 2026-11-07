@@ -54,6 +54,10 @@ import javax.inject.Singleton
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
+/** Apply a remote bookmark only after it matches the user's most recent local intent. */
+internal fun remoteBookmarkMatchesIntent(pending: Boolean?, remoteLiked: Boolean): Boolean =
+    pending == null || pending == remoteLiked
+
 sealed class SyncOperation {
     data object FullSync : SyncOperation()
     data object LikedSongs : SyncOperation()
@@ -251,7 +255,7 @@ class SyncUtils @Inject constructor(
         val key = pendingKey(type, id)
         if (!pendingBookmarks.contains(key)) return true
         val desired = pendingBookmarks.getBoolean(key, false)
-        if (desired != remoteLiked) return false
+        if (!remoteBookmarkMatchesIntent(desired, remoteLiked)) return false
         pendingBookmarks.edit().remove(key).apply()
         return true
     }
