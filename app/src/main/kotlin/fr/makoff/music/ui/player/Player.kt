@@ -8,11 +8,13 @@ package fr.makoff.music.ui.player
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
@@ -208,6 +210,7 @@ fun BottomSheetPlayer(
     pureBlack: Boolean,
 ) {
     val context = LocalContext.current
+    val activity = LocalActivity.current
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
     val playerMenuState = remember { MenuState() }
     val playerGlass = remember { HazeState() }
@@ -258,47 +261,6 @@ fun BottomSheetPlayer(
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
-    val keepScreenOn = isPlaying && isKeepScreenOn
-
-    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
-        val window = (context as? android.app.Activity)?.window
-        if (window != null && state.isExpanded) {
-            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-
-            when (playerBackground) {
-                PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
-                    insetsController.isAppearanceLightStatusBars = false
-                }
-
-                PlayerBackgroundStyle.DEFAULT -> {
-                    insetsController.isAppearanceLightStatusBars = !useDarkTheme
-                }
-            }
-
-            if (isFullScreen && hideStatusBarOnFullscreen) {
-                insetsController.hide(WindowInsetsCompat.Type.statusBars())
-                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            } else {
-                insetsController.show(WindowInsetsCompat.Type.statusBars())
-            }
-
-            if (keepScreenOn && state.isExpanded) {
-                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            } else {
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
-        }
-
-        onDispose {
-            if (window != null) {
-                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
-                insetsController.isAppearanceLightStatusBars = !useDarkTheme
-                insetsController.show(WindowInsetsCompat.Type.statusBars())
-                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-            }
-        }
-    }
-
     BackHandler(enabled = state.isExpanded) {
         state.collapseSoft()
     }
@@ -338,6 +300,83 @@ fun BottomSheetPlayer(
             }
         }
     val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    // Keep the active video choice at the PLAYER level. Portrait and landscape
+    // render different artwork subtrees; state inside either one was being lost
+    // on every rotation. A saved track ID also survives Activity recreation.
+    var selectedVideoId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Save only the verified clip ID (never a temporary signed stream URL), so
+    // turning the phone can reuse the official Song/Video pairing immediately.
+    var verifiedVideoPairOwner by rememberSaveable { mutableStateOf<String?>(null) }
+    var verifiedVideoPairId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Store a successfully extracted clip's ID, not its expiring URL. This
+    // preserves the buttons for direct-video tracks across layout recreation.
+    var playableClipOwner by rememberSaveable { mutableStateOf<String?>(null) }
+    var playableClipId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    val videoModeActive = PlayerVideoModePolicy.videoModeActive(
+        selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
+    )
+    val keepScreenOn = (isPlaying && isKeepScreenOn) || videoModeActive
+
+    // Video alone enables device-sensor rotation (including with orientation
+    // lock on). Returning to Son restores the previous Activity policy.
+    DisposableEffect(videoModeActive) {
+        val previousOrientation = activity?.requestedOrientation
+        if (videoModeActive && activity != null) {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        }
+        onDispose {
+            if (videoModeActive && activity != null && previousOrientation != null &&
+                activity.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR &&
+                !activity.isChangingConfigurations
+            ) {
+                activity.requestedOrientation = previousOrientation
+            }
+        }
+    }
+
+    // The video surface stays awake even if audio is paused or buffering.
+    // Respect the existing explicit Keep screen on preference for audio.
+    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
+        val window = activity?.window
+        if (window != null && state.isExpanded) {
+            val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+
+            when (playerBackground) {
+                PlayerBackgroundStyle.BLUR, PlayerBackgroundStyle.GRADIENT -> {
+                    insetsController.isAppearanceLightStatusBars = false
+                }
+
+                PlayerBackgroundStyle.DEFAULT -> {
+                    insetsController.isAppearanceLightStatusBars = !useDarkTheme
+                }
+            }
+
+            if (isFullScreen && hideStatusBarOnFullscreen) {
+                insetsController.hide(WindowInsetsCompat.Type.statusBars())
+                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else {
+                insetsController.show(WindowInsetsCompat.Type.statusBars())
+            }
+
+            if (keepScreenOn && state.isExpanded) {
+                window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            } else {
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+
+        onDispose {
+            if (window != null) {
+                val insetsController = WindowCompat.getInsetsController(window, window.decorView)
+                insetsController.isAppearanceLightStatusBars = !useDarkTheme
+                insetsController.show(WindowInsetsCompat.Type.statusBars())
+                window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+            }
+        }
+    }
+
+
     val castPosition by castHandler?.castPosition?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
     val castDuration by castHandler?.castDuration?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
     val castIsPlaying by castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
@@ -403,6 +442,8 @@ fun BottomSheetPlayer(
 
     val glassMode = LocalLiquidGlassEnabled.current
     val playerConfiguration = LocalConfiguration.current
+    val wideVideoLandscape = videoModeActive &&
+        playerConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
     // Magic V6 internal display is nearly square and may still be PORTRAIT.
     // Choose layout by available dp on BOTH axes, not by orientation alone.
     val twoPanePlayer = PlayerLayoutPolicy.useTwoPane(
@@ -1529,25 +1570,6 @@ fun BottomSheetPlayer(
             }
         }
 
-        // Reuse the real player menu for the YouTube Music-style top-bar
-        // action rather than creating a second, inconsistent overflow menu.
-        val onOpenModeMenu: () -> Unit = {
-            mediaMetadata?.let { selected ->
-                playerMenuState.show {
-                    PlayerMenu(
-                        mediaMetadata = selected,
-                        playerBottomSheetState = state,
-                        onShowDetailsDialog = {
-                            bottomSheetPageState.show {
-                                ShowMediaInfo(selected.id)
-                            }
-                        },
-                        onDismiss = playerMenuState::dismiss,
-                    )
-                }
-            }
-        }
-
         when {
             twoPanePlayer -> {
                 // Calculate vertical padding like OuterTune
@@ -1572,7 +1594,7 @@ fun BottomSheetPlayer(
                         contentAlignment = Alignment.Center,
                         modifier =
                             Modifier
-                                .weight(1f)
+                                .weight(if (wideVideoLandscape) 1.4f else 1f)
                                 .nestedScroll(state.preUpPostDownNestedScrollConnection),
                     ) {
                         // Remember lambdas to prevent unnecessary recomposition
@@ -1587,15 +1609,34 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title,
+                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
+                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
+                                onCompanionVideoIdResolved = { pairedId ->
+                                    verifiedVideoPairOwner = mediaMetadata?.id
+                                    verifiedVideoPairId = pairedId
+                                },
+                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
+                                onPlayableClipResolved = { clipId ->
+                                    playableClipOwner = mediaMetadata?.id
+                                    playableClipId = clipId
+                                },
+                                onPlayableClipInvalidated = { failedId ->
+                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
+                                        playableClipOwner = null
+                                        playableClipId = null
+                                    }
+                                },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
+                                showVideo = selectedVideoForTrack,
+                                onShowVideoChange = { selected ->
+                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,
                                 onCollapse = { state.collapseSoft() },
-                                onOpenMenu = onOpenModeMenu,
                                 isLandscape = true,
                                 modifier = Modifier.fillMaxSize(),
                             ) { showModeBar ->
@@ -1615,7 +1656,7 @@ fun BottomSheetPlayer(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(1f, false)
+                                .weight(if (wideVideoLandscape) 0.9f else 1f, false)
                                 .animateContentSize()
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
@@ -1659,15 +1700,34 @@ fun BottomSheetPlayer(
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title,
+                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
+                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
+                                onCompanionVideoIdResolved = { pairedId ->
+                                    verifiedVideoPairOwner = mediaMetadata?.id
+                                    verifiedVideoPairId = pairedId
+                                },
+                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
+                                onPlayableClipResolved = { clipId ->
+                                    playableClipOwner = mediaMetadata?.id
+                                    playableClipId = clipId
+                                },
+                                onPlayableClipInvalidated = { failedId ->
+                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
+                                        playableClipOwner = null
+                                        playableClipId = null
+                                    }
+                                },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
+                                showVideo = selectedVideoForTrack,
+                                onShowVideoChange = { selected ->
+                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,
                                 onCollapse = { state.collapseSoft() },
-                                onOpenMenu = onOpenModeMenu,
                                 modifier = Modifier.fillMaxSize().nestedScroll(state.preUpPostDownNestedScrollConnection),
                             ) { showModeBar ->
                                 Thumbnail(

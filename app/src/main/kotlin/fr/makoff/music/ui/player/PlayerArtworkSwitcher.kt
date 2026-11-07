@@ -90,13 +90,19 @@ internal fun PlayerArtworkSwitcher(
     isLocalOrUploaded: Boolean,
     songTitle: String?,
     artistNames: List<String>,
+    knownCompanionVideoId: String?,
+    onCompanionVideoIdResolved: (String) -> Unit,
+    knownPlayableClipId: String?,
+    onPlayableClipResolved: (String) -> Unit,
+    onPlayableClipInvalidated: (String) -> Unit,
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
+    showVideo: Boolean,
+    onShowVideoChange: (Boolean) -> Unit,
     playerConnection: PlayerConnection,
     modeTextColor: Color,
     onCollapse: () -> Unit,
-    onOpenMenu: () -> Unit,
     isLandscape: Boolean = false,
     modifier: Modifier = Modifier,
     artwork: @Composable (Boolean) -> Unit,
@@ -105,23 +111,28 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
-    var counterpartLookupDone by remember(videoId) { mutableStateOf(false) }
-    var showVideo by remember(videoId) { mutableStateOf(false) }
+    var companionVideoId by remember(videoId, knownCompanionVideoId) {
+        mutableStateOf(knownCompanionVideoId)
+    }
+    var counterpartLookupDone by remember(videoId, knownCompanionVideoId) {
+        mutableStateOf(knownCompanionVideoId != null)
+    }
     val isYouTubeTrack = videoId != null && videoId.length == 11 &&
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Prefer the official Song/Video counterpart, but also check whether
     // the original YouTube item itself exposes a real video track.
     // Some YouTube Music responses omit both the pairing and video flag.
-    LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
-        companionVideoId = null
-        counterpartLookupDone = false
-        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isCasting || !isExpanded || isVideoSong) {
+    LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames, knownCompanionVideoId) {
+        companionVideoId = knownCompanionVideoId
+        counterpartLookupDone = knownCompanionVideoId != null
+        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isCasting || !isExpanded ||
+            isVideoSong || knownCompanionVideoId != null
+        ) {
             counterpartLookupDone = true
             return@LaunchedEffect
         }
-        companionVideoId = try {
+        val pairedId = try {
             withContext(Dispatchers.IO) {
                 YouTube.videoCounterpart(
                     videoId = videoId!!,
@@ -134,12 +145,14 @@ internal fun PlayerArtworkSwitcher(
         } catch (_: Exception) {
             null
         }
+        companionVideoId = pairedId
+        pairedId?.let(onCompanionVideoIdResolved)
         counterpartLookupDone = true
     }
 
     // A direct video stream is a valid video for the *same* audio queue item;
     // never substitute an unverified search result.
-    val clipVideoId = PlayerVideoModePolicy.candidateVideoId(
+    val clipVideoId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
         originalId = videoId,
         isYouTubeTrack = isYouTubeTrack,
         isLocalOrUploaded = isLocalOrUploaded,
@@ -154,21 +167,28 @@ internal fun PlayerArtworkSwitcher(
     var availableVideoStream by remember(clipVideoId) {
         mutableStateOf<InnerTubeXPlayer.VideoStream?>(null)
     }
+    var videoStreamLookupFinished by remember(clipVideoId) { mutableStateOf(false) }
     LaunchedEffect(clipVideoId, videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded) {
         val id = clipVideoId
+        videoStreamLookupFinished = false
         if (!videoModeEnabled || id.isNullOrBlank() || !isExpanded || isCasting || isLocalOrUploaded) {
             availableVideoStream = null
             return@LaunchedEffect
         }
-        // Cancellation on track changes prevents stale clip extraction from winning.
-        // The resolved stream is reused to prepare the muted video player
-        // before the user presses the Vidéo button.
+        // Fetch the actual video stream once and prebuffer it. The mode buttons
+        // can already be shown for an official pair while this is still loading.
         availableVideoStream = try {
             withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(id) }
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
             null
+        }
+        videoStreamLookupFinished = true
+        if (availableVideoStream != null) {
+            onPlayableClipResolved(id)
+        } else if (knownPlayableClipId == id) {
+            onPlayableClipInvalidated(id)
         }
     }
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
@@ -223,22 +243,52 @@ internal fun PlayerArtworkSwitcher(
         val listener = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 unavailableClipId = clipVideoId
-                showVideo = false
+                clipVideoId?.let(onPlayableClipInvalidated)
+                onShowVideoChange(false)
             }
         }
         warmedVideoPlayer?.addListener(listener)
         onDispose { warmedVideoPlayer?.removeListener(listener) }
     }
 
-    val canShowVideo = playableStream != null && warmedVideoPlayer != null &&
-        isYouTubeTrack && clipVideoId != unavailableClipId
-    val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
-    LaunchedEffect(showModeBar) {
-        if (!showModeBar) showVideo = false
+    // A verified YouTube Music pairing is enough to reveal Son/Vidéo:
+    // do NOT hide the buttons until the muted video player has finished
+    // preparing. A direct, unpaired track still needs a playable stream.
+    val hasPairedVideo = isVideoSong || companionVideoId != null || knownPlayableClipId != null
+    val canShowVideo = PlayerVideoModePolicy.clipSelectable(
+        youtubeTrack = isYouTubeTrack,
+        clipId = clipVideoId,
+        unavailableClipId = unavailableClipId,
+        hasResolvedStream = playableStream != null,
+        hasOfficialPair = hasPairedVideo,
+        streamLookupFinished = videoStreamLookupFinished,
+    )
+    val showModeBar = PlayerVideoModePolicy.showSelector(
+        videoModeEnabled, isExpanded,
+        canShowVideo && !isCasting && !isLocalOrUploaded,
+    )
+    LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
+        // Do not erase the saved video choice just because an Activity is
+        // temporarily collapsed during portrait/landscape reconstruction.
+        // The media metadata may temporarily be null while the Activity is
+        // rebuilt in landscape. A missing ID at that instant must not erase
+        // the user's saved video selection.
+        if (!videoModeEnabled || isCasting || isLocalOrUploaded) {
+            onShowVideoChange(false)
+        }
+    }
+    LaunchedEffect(showVideo, clipVideoId, videoStreamLookupFinished, showModeBar) {
+        // Keep the user's video choice while a rotated layout re-resolves its
+        // stream. Reset only after a completed, unsuccessful lookup.
+        if (showVideo && clipVideoId != null && videoStreamLookupFinished && !showModeBar) {
+            onShowVideoChange(false)
+        }
     }
 
     val playerImage: @Composable () -> Unit = {
-        if (showVideo && showModeBar && videoId != null && clipVideoId != null) {
+        if (showVideo && showModeBar && videoId != null && clipVideoId != null &&
+            warmedVideoPlayer != null
+        ) {
             VideoOnlySurface(
                 videoId = clipVideoId,
                 audioId = videoId,
@@ -247,11 +297,16 @@ internal fun PlayerArtworkSwitcher(
                 playerConnection = playerConnection,
                 onUnavailable = {
                     unavailableClipId = clipVideoId
-                    showVideo = false
+                    clipVideoId?.let(onPlayableClipInvalidated)
+                    onShowVideoChange(false)
                     Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
                 },
                 modifier = Modifier.fillMaxSize(),
             )
+        } else if (showVideo && showModeBar) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
+            }
         } else {
             // A single top bar owns the entire expanded player header.
             // Thumbnail must not draw a second "En cours de lecture" label or Cast.
@@ -268,7 +323,7 @@ internal fun PlayerArtworkSwitcher(
             modeTextColor = modeTextColor,
             onAudioClick = {
                 warmedVideoPlayer?.playWhenReady = false
-                showVideo = false
+                onShowVideoChange(false)
             },
             onVideoClick = {
                 warmedVideoPlayer?.let { player ->
@@ -282,10 +337,9 @@ internal fun PlayerArtworkSwitcher(
                     }
                     player.playWhenReady = isPlaying
                 }
-                showVideo = true
+                onShowVideoChange(true)
             },
             onCollapse = onCollapse,
-            onOpenMenu = onOpenMenu,
             modifier = barModifier,
         )
     }
@@ -294,7 +348,12 @@ internal fun PlayerArtworkSwitcher(
     // "En cours de lecture" in the exact same reserved position.
     // The status inset applies once, regardless of display mode.
     Column(
-        modifier = modifier.then(if (isLandscape) Modifier else Modifier.statusBarsPadding()),
+        // Expanded player: this unified header owns the system top inset.
+        // Collapsed player: Thumbnail owns its legacy inset instead. Applying
+        // both caused a doubled gap and misaligned "En cours de lecture".
+        modifier = modifier.then(
+            if (isLandscape || !isExpanded) Modifier else Modifier.statusBarsPadding(),
+        ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (isExpanded) {
@@ -325,7 +384,6 @@ private fun PlayerModeTopBar(
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     onCollapse: () -> Unit,
-    onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     // Real horizontal allocation: the title OR the mode buttons gets only the
@@ -376,8 +434,8 @@ private fun PlayerModeTopBar(
             songTitle?.takeIf { it.isNotBlank() }?.let { title ->
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = modeTextColor.copy(alpha = 0.82f),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = modeTextColor.copy(alpha = 0.92f),
                     maxLines = 1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
@@ -394,14 +452,6 @@ private fun PlayerModeTopBar(
             tintColor = modeTextColor,
             buttonSize = 40.dp,
         )
-        IconButton(onClick = onOpenMenu, modifier = Modifier.size(40.dp)) {
-            Icon(
-                painter = painterResource(R.drawable.more_vert),
-                contentDescription = stringResource(R.string.more_options),
-                tint = modeTextColor,
-                modifier = Modifier.size(23.dp),
-            )
-        }
     }
 }
 

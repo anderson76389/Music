@@ -318,6 +318,11 @@ class OfflinePlayerInstrumentedTest {
                 "Song title must stay below Now Playing and above artwork",
                 titleBounds.top >= headingBounds.bottom && titleBounds.bottom <= coverBounds.top,
             )
+            assertTrue(
+                "The duplicate three-dot menu must not appear above the cover",
+                device.findObjects(By.desc(context.getString(R.string.more_options)))
+                    .none { it.visibleBounds.top < coverBounds.top },
+            )
             assertNull(
                 "An audio-only track must never display a video selector",
                 device.findObject(By.desc(context.getString(R.string.player_video_label))),
