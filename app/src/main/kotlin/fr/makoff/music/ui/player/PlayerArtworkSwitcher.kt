@@ -291,8 +291,11 @@ internal fun PlayerArtworkSwitcher(
     LaunchedEffect(showVideo, clipVideoId, videoStreamLookupFinished, showModeBar) {
         // Keep the user's video choice while a rotated layout re-resolves its
         // stream. Reset only after a completed, unsuccessful lookup.
-        if (showVideo && videoStreamLookupFinished && !showModeBar &&
-            (clipVideoId == null || (clipVideoId == videoId && videoId in failedClipIds))
+        // If both the paired clip and the direct fallback have failed,
+        // restore audio mode instead of trapping the player on a spinner.
+        if (showVideo && !showModeBar &&
+            ((clipVideoId == null && counterpartLookupDone) ||
+                (clipVideoId == videoId && videoStreamLookupFinished))
         ) {
             onShowVideoChange(false)
         }
