@@ -1558,7 +1558,7 @@ class SyncUtils @Inject constructor(
                                 // Always refresh the row inside a transaction before
                                 // updating metadata or changing its bookmark.
                                 database.withTransaction {
-                                    val current = database.playlistBlocking(playlistEntity.id)?.playlist
+                                    val current = database.playlistBlocking(playlistRowId)?.playlist
                                     if (current != null) {
                                         update(current, playlist)
                                         if (current.bookmarkedAt == null && shouldBookmark) {
