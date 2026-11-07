@@ -92,6 +92,9 @@ internal fun PlayerArtworkSwitcher(
     artistNames: List<String>,
     knownCompanionVideoId: String?,
     onCompanionVideoIdResolved: (String) -> Unit,
+    knownPlayableClipId: String?,
+    onPlayableClipResolved: (String) -> Unit,
+    onPlayableClipInvalidated: (String) -> Unit,
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
@@ -149,7 +152,7 @@ internal fun PlayerArtworkSwitcher(
 
     // A direct video stream is a valid video for the *same* audio queue item;
     // never substitute an unverified search result.
-    val clipVideoId = PlayerVideoModePolicy.candidateVideoId(
+    val clipVideoId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
         originalId = videoId,
         isYouTubeTrack = isYouTubeTrack,
         isLocalOrUploaded = isLocalOrUploaded,
@@ -182,6 +185,11 @@ internal fun PlayerArtworkSwitcher(
             null
         }
         videoStreamLookupFinished = true
+        if (availableVideoStream != null) {
+            onPlayableClipResolved(id)
+        } else if (knownPlayableClipId == id) {
+            onPlayableClipInvalidated(id)
+        }
     }
     var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
     val playableStream = availableVideoStream.takeIf {
@@ -235,6 +243,7 @@ internal fun PlayerArtworkSwitcher(
         val listener = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
                 unavailableClipId = clipVideoId
+                clipVideoId?.let(onPlayableClipInvalidated)
                 onShowVideoChange(false)
             }
         }
@@ -245,7 +254,7 @@ internal fun PlayerArtworkSwitcher(
     // A verified YouTube Music pairing is enough to reveal Son/Vidéo:
     // do NOT hide the buttons until the muted video player has finished
     // preparing. A direct, unpaired track still needs a playable stream.
-    val hasPairedVideo = isVideoSong || companionVideoId != null
+    val hasPairedVideo = isVideoSong || companionVideoId != null || knownPlayableClipId != null
     val canShowVideo = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = isYouTubeTrack,
         clipId = clipVideoId,
@@ -285,6 +294,7 @@ internal fun PlayerArtworkSwitcher(
                 playerConnection = playerConnection,
                 onUnavailable = {
                     unavailableClipId = clipVideoId
+                    clipVideoId?.let(onPlayableClipInvalidated)
                     onShowVideoChange(false)
                     Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
                 },
