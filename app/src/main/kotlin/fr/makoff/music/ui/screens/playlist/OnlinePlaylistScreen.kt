@@ -619,11 +619,13 @@ private fun OnlinePlaylistHeader(
             // Like Button - Smaller secondary button
             Surface(
                 onClick = {
+                    val liked = dbPlaylist?.playlist?.bookmarkedAt == null
+                    syncUtils.bookmarkPlaylist(playlist.id, liked)
                     if (dbPlaylist != null) {
                         database.transaction {
                             val currentPlaylist = dbPlaylist.playlist
                             update(currentPlaylist, playlist)
-                            update(currentPlaylist.toggleLike())
+                            update(currentPlaylist.localToggleLike())
                         }
                     } else {
                         coroutineScope.launch(Dispatchers.IO) {
@@ -640,7 +642,7 @@ private fun OnlinePlaylistHeader(
                                     playEndpointParams = playlist.playEndpoint?.params,
                                     shuffleEndpointParams = playlist.shuffleEndpoint?.params,
                                     radioEndpointParams = playlist.radioEndpoint?.params,
-                                ).toggleLike()
+                                ).localToggleLike()
                             val songMetadata = songs.map { it.toMediaMetadata() }
                             database.withTransaction {
                                 insert(playlistEntity)
