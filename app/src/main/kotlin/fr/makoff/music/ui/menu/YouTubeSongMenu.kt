@@ -249,19 +249,23 @@ fun YouTubeSongMenu(
                             syncUtils.saveEpisode(song.id, shouldBeSaved, setVideoId)
                         }
                     } else {
-                        // Regular song: toggle like
-                        database.transaction {
-                            librarySong.let { librarySong ->
-                                val s: SongEntity
-                                if (librarySong == null) {
-                                    insert(song.toMediaMetadata(), SongEntity::toggleLike)
-                                    s = song.toMediaMetadata().toSongEntity().let(SongEntity::toggleLike)
+                        // One atomic local toggle, one queued remote operation.
+                        // Avoid SongEntity.toggleLike()'s own fire-and-forget
+                        // network call and stale librarySong snapshots.
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val updated = database.withTransaction {
+                                val current = songEntity(song.id)
+                                if (current != null) {
+                                    current.toggleLike(syncToYouTube = false)
+                                        .also(::update)
                                 } else {
-                                    s = librarySong.song.toggleLike()
-                                    update(s)
+                                    insert(song.toMediaMetadata()) {
+                                        it.toggleLike(syncToYouTube = false)
+                                    }
+                                    songEntity(song.id)
                                 }
-                                syncUtils.likeSong(s)
                             }
+                            updated?.let(syncUtils::likeSong)
                         }
                     }
                 },
