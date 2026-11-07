@@ -90,6 +90,8 @@ internal fun PlayerArtworkSwitcher(
     isLocalOrUploaded: Boolean,
     songTitle: String?,
     artistNames: List<String>,
+    knownCompanionVideoId: String?,
+    onCompanionVideoIdResolved: (String) -> Unit,
     isCasting: Boolean,
     isExpanded: Boolean,
     isPlaying: Boolean,
@@ -106,22 +108,28 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
-    var counterpartLookupDone by remember(videoId) { mutableStateOf(false) }
+    var companionVideoId by remember(videoId, knownCompanionVideoId) {
+        mutableStateOf(knownCompanionVideoId)
+    }
+    var counterpartLookupDone by remember(videoId, knownCompanionVideoId) {
+        mutableStateOf(knownCompanionVideoId != null)
+    }
     val isYouTubeTrack = videoId != null && videoId.length == 11 &&
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     // Prefer the official Song/Video counterpart, but also check whether
     // the original YouTube item itself exposes a real video track.
     // Some YouTube Music responses omit both the pairing and video flag.
-    LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
-        companionVideoId = null
-        counterpartLookupDone = false
-        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isCasting || !isExpanded || isVideoSong) {
+    LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames, knownCompanionVideoId) {
+        companionVideoId = knownCompanionVideoId
+        counterpartLookupDone = knownCompanionVideoId != null
+        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isCasting || !isExpanded ||
+            isVideoSong || knownCompanionVideoId != null
+        ) {
             counterpartLookupDone = true
             return@LaunchedEffect
         }
-        companionVideoId = try {
+        val pairedId = try {
             withContext(Dispatchers.IO) {
                 YouTube.videoCounterpart(
                     videoId = videoId!!,
@@ -134,6 +142,8 @@ internal fun PlayerArtworkSwitcher(
         } catch (_: Exception) {
             null
         }
+        companionVideoId = pairedId
+        pairedId?.let(onCompanionVideoIdResolved)
         counterpartLookupDone = true
     }
 
