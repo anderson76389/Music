@@ -246,9 +246,14 @@ internal fun PlayerArtworkSwitcher(
     // do NOT hide the buttons until the muted video player has finished
     // preparing. A direct, unpaired track still needs a playable stream.
     val hasPairedVideo = isVideoSong || companionVideoId != null
-    val canShowVideo = clipVideoId != null && clipVideoId != unavailableClipId &&
-        isYouTubeTrack && (playableStream != null ||
-            (hasPairedVideo && !videoStreamLookupFinished))
+    val canShowVideo = PlayerVideoModePolicy.clipSelectable(
+        youtubeTrack = isYouTubeTrack,
+        clipId = clipVideoId,
+        unavailableClipId = unavailableClipId,
+        hasResolvedStream = playableStream != null,
+        hasOfficialPair = hasPairedVideo,
+        streamLookupFinished = videoStreamLookupFinished,
+    )
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
