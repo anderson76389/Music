@@ -62,6 +62,7 @@ import fr.makoff.music.innertube.models.PlaylistItem
 import fr.makoff.music.innertube.models.SongItem
 import fr.makoff.music.innertube.utils.completed
 import fr.makoff.music.LocalDatabase
+import fr.makoff.music.LocalSyncUtils
 import fr.makoff.music.LocalArtistNameAliases
 import fr.makoff.music.LocalDownloadUtil
 import fr.makoff.music.LocalPlayerConnection
@@ -110,6 +111,7 @@ fun YouTubePlaylistMenu(
 ) {
     val context = LocalContext.current
     val database = LocalDatabase.current
+    val syncUtils = LocalSyncUtils.current
     val downloadUtil = LocalDownloadUtil.current
     val playerConnection = LocalPlayerConnection.current ?: return
     val dbPlaylist by database.playlistByBrowseId(playlist.id).collectAsStateWithLifecycle(initialValue = null)
@@ -157,6 +159,7 @@ fun YouTubePlaylistMenu(
                 IconButton(
                     onClick = {
                         val isCurrentlySaved = dbPlaylist?.playlist?.bookmarkedAt != null
+                        syncUtils.bookmarkPlaylist(playlist.id, !isCurrentlySaved)
                         if (dbPlaylist?.playlist == null) {
                             database.transaction {
                                 val playlistEntity =
@@ -172,14 +175,14 @@ fun YouTubePlaylistMenu(
                                         playEndpointParams = playlist.playEndpoint?.params,
                                         shuffleEndpointParams = playlist.shuffleEndpoint?.params,
                                         radioEndpointParams = playlist.radioEndpoint?.params,
-                                    ).toggleLike()
+                                    ).localToggleLike()
                                 insert(playlistEntity)
                             }
                         } else {
                             database.transaction {
                                 val currentPlaylist = dbPlaylist!!.playlist
                                 update(currentPlaylist, playlist)
-                                update(currentPlaylist.toggleLike())
+                                update(currentPlaylist.localToggleLike())
                             }
                         }
                         coroutineScope.launch(Dispatchers.IO) {
