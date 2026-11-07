@@ -923,4 +923,8 @@
     <string name="player_video_mode_setting_desc">Afficher Son / Vidéo seulement si un clip lisible existe. Désactivé : retrouver « En cours de lecture » sans charger de vidéo.</string>
     <string name="player_video_unavailable">Clip vidéo indisponible pour ce titre</string>
     <string name="player_collapse_label">Réduire le lecteur</string>
+    <string name="settings_player_entry">Lecteur</string>
+    <string name="settings_audio_entry">Audio</string>
+    <string name="settings_audio_content_section">Audio et contenu</string>
+    <string name="mini_player_open_artist">Voir le profil de l’artiste</string>
 </resources>
