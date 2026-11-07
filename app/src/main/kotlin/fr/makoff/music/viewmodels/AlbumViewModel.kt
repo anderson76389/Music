@@ -57,8 +57,13 @@ constructor(
                 }.onFailure {
                     reportException(it)
                     if (it.message?.contains("NOT_FOUND") == true) {
-                        database.query {
-                            album?.album?.let(::delete)
+                        // A transiently unavailable YouTube page is not a reason
+                        // to erase a locally saved album. Check the latest row,
+                        // not the pre-request snapshot.
+                        database.withTransaction {
+                            albumEntity(albumId)?.takeIf {
+                                it.bookmarkedAt == null && !it.isLocal
+                            }?.let(::delete)
                         }
                     }
                 }
