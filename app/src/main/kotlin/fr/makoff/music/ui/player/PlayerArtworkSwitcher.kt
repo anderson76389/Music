@@ -348,7 +348,12 @@ internal fun PlayerArtworkSwitcher(
     // "En cours de lecture" in the exact same reserved position.
     // The status inset applies once, regardless of display mode.
     Column(
-        modifier = modifier.then(if (isLandscape) Modifier else Modifier.statusBarsPadding()),
+        // Expanded player: this unified header owns the system top inset.
+        // Collapsed player: Thumbnail owns its legacy inset instead. Applying
+        // both caused a doubled gap and misaligned "En cours de lecture".
+        modifier = modifier.then(
+            if (isLandscape || !isExpanded) Modifier else Modifier.statusBarsPadding(),
+        ),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (isExpanded) {
