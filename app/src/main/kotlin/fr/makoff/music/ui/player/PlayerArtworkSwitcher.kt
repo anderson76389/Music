@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -49,6 +50,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
@@ -313,16 +315,18 @@ private fun PlayerModeTopBar(
     onOpenMenu: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Box(
+    // Real horizontal allocation: the title OR the mode buttons gets only the
+    // space between collapse and Cast/menu. No drawn-overlaid text/icons.
+    Row(
         modifier = modifier
             .fillMaxWidth()
             .height(52.dp)
             .padding(horizontal = 8.dp),
-        contentAlignment = Alignment.Center,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
         IconButton(
             onClick = onCollapse,
-            modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+            modifier = Modifier.size(48.dp),
         ) {
             Icon(
                 painter = painterResource(R.drawable.expand_more),
@@ -331,47 +335,43 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-
-        // The entire Son / Vidéo selector disappears for songs without a clip.
-        // Keep the down arrow, Cast and the player menu usable in all cases.
-        if (showModeSelector) {
-            PlayerModePills(
-                audioLabel = audioLabel,
-                videoLabel = videoLabel,
-                showVideo = showVideo,
-                onAudioClick = onAudioClick,
-                onVideoClick = onVideoClick,
-                modifier = Modifier.align(Alignment.Center),
-            )
-        } else {
-            Text(
-                text = stringResource(R.string.now_playing),
-                style = MaterialTheme.typography.labelMedium,
-                color = modeTextColor,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.align(Alignment.Center).padding(horizontal = 86.dp),
-            )
-        }
-
-        Row(
-            modifier = Modifier.align(Alignment.CenterEnd),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(0.dp),
+        Box(
+            modifier = Modifier.weight(1f),
+            contentAlignment = Alignment.Center,
         ) {
-            CastButton(
-                modifier = Modifier.size(40.dp),
-                tintColor = modeTextColor,
-                buttonSize = 40.dp,
-            )
-            IconButton(onClick = onOpenMenu, modifier = Modifier.size(48.dp)) {
-                Icon(
-                    painter = painterResource(R.drawable.more_vert),
-                    contentDescription = stringResource(R.string.more_options),
-                    tint = modeTextColor,
-                    modifier = Modifier.size(23.dp),
+            if (showModeSelector) {
+                PlayerModePills(
+                    audioLabel = audioLabel,
+                    videoLabel = videoLabel,
+                    showVideo = showVideo,
+                    onAudioClick = onAudioClick,
+                    onVideoClick = onVideoClick,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.now_playing),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = modeTextColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
+        }
+        CastButton(
+            modifier = Modifier.size(40.dp),
+            tintColor = modeTextColor,
+            buttonSize = 40.dp,
+        )
+        IconButton(onClick = onOpenMenu, modifier = Modifier.size(40.dp)) {
+            Icon(
+                painter = painterResource(R.drawable.more_vert),
+                contentDescription = stringResource(R.string.more_options),
+                tint = modeTextColor,
+                modifier = Modifier.size(23.dp),
+            )
         }
     }
 }
@@ -396,6 +396,7 @@ private fun PlayerModePills(
 
     Row(
         modifier = modifier
+            .widthIn(max = 140.dp)
             .clip(shape)
             .background(barBackground)
             .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)
@@ -407,8 +408,8 @@ private fun PlayerModePills(
             val selected = showVideo == video
             Box(
                 modifier = Modifier
+                    .weight(1f)
                     .height(30.dp)
-                    .defaultMinSize(minWidth = 48.dp)
                     .clip(RoundedCornerShape(19.dp))
                     .background(if (selected) selectedBackground else Color.Transparent)
                     .selectable(
