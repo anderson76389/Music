@@ -29,6 +29,14 @@ class PlayerVideoModePolicyTest {
         assertTrue(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = true))
     }
 
+    @Test fun screenStaysAwakeOnlyForExpandedVideoNotAudioOrCast() {
+        assertTrue(PlayerVideoModePolicy.videoModeActive(true, true, true, false))
+        assertFalse(PlayerVideoModePolicy.videoModeActive(false, true, true, false))
+        assertFalse(PlayerVideoModePolicy.videoModeActive(true, false, true, false))
+        assertFalse(PlayerVideoModePolicy.videoModeActive(true, true, false, false))
+        assertFalse(PlayerVideoModePolicy.videoModeActive(true, true, true, true))
+    }
+
     @Test fun collapsedPlayerNeverShowsVideoModeControls() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }
