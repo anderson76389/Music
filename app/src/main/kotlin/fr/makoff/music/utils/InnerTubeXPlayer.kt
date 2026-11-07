@@ -68,8 +68,9 @@ object InnerTubeXPlayer {
             audioQuality = InnerTubeXAudioQuality.AUTO,
             clientPlaybackNonce = generateClientPlaybackNonce(),
         ) ?: return null
-        // SABR requires an actual SABR engine, not a video-only HTTP URL.
-        if (stream.sabrVideoBootstrap != null || stream.sabrBootstrap != null) return null
+        // Prefer the resolved direct video URL even if the extractor also
+        // reports an unrelated SABR bootstrap for a different format. A SABR
+        // *only* result remains unsupported because it provides no videoUrl.
         val url = stream.videoUrl?.takeIf { it.startsWith("https://") } ?: return null
         val mimeType = when {
             stream.videoMimeType?.startsWith("video/") == true -> stream.videoMimeType
