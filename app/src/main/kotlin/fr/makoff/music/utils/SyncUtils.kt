@@ -1551,10 +1551,21 @@ class SyncUtils @Inject constructor(
                                 localPlaylists.add(playlistEntity)
                                 Timber.d("syncSavedPlaylists: Created new playlist ${playlist.title} (${playlist.id})")
                             } else {
-                                database.update(playlistEntity, playlist)
                                 val shouldBookmark = acceptRemoteBookmark("playlist", playlist.id, remoteLiked = true)
-                                if (playlistEntity.bookmarkedAt == null && shouldBookmark) {
-                                    database.update(playlistEntity.localToggleLike())
+                                // The list loaded before the network request is stale
+                                // if a user tapped the heart while sync was in flight.
+                                // Always refresh the row inside a transaction before
+                                // updating metadata or changing its bookmark.
+                                database.withTransaction {
+                                    val current = database.playlistBlocking(playlistEntity.id)?.playlist
+                                    if (current != null) {
+                                        update(current, playlist)
+                                        if (current.bookmarkedAt == null && shouldBookmark) {
+                                            database.playlistBlocking(current.id)?.playlist?.let { refreshed ->
+                                                update(refreshed.localToggleLike())
+                                            }
+                                        }
+                                    }
                                 }
                                 Timber.d("syncSavedPlaylists: Updated existing playlist ${playlist.title} (${playlist.id})")
                             }
