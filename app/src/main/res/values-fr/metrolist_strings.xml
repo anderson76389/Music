@@ -713,4 +713,8 @@
     <string name="update_available_message">Apple Music %s est prêt à être téléchargé.</string>
     <string name="update_action">Mettre à jour</string>
     <string name="force_bottom_navbar">Forcer l\'affichage de la barre de navigation inférieure</string>
+    <string name="settings_player_entry">Lecteur</string>
+    <string name="settings_audio_entry">Audio</string>
+    <string name="settings_audio_content_section">Audio et contenu</string>
+    <string name="mini_player_open_artist">Voir le profil de l’artiste</string>
 </resources>
