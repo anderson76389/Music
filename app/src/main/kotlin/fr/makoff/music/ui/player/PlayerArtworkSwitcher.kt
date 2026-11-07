@@ -434,8 +434,8 @@ private fun PlayerModeTopBar(
             songTitle?.takeIf { it.isNotBlank() }?.let { title ->
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = modeTextColor.copy(alpha = 0.82f),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = modeTextColor.copy(alpha = 0.92f),
                     maxLines = 1,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
