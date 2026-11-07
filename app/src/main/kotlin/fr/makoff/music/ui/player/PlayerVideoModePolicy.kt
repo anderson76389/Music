@@ -26,6 +26,23 @@ internal object PlayerVideoModePolicy {
     ): Boolean = youtubeTrack && clipId != null && clipId != unavailableClipId &&
         (hasResolvedStream || (hasOfficialPair && !streamLookupFinished))
 
+    /** Do not keep retrying a failed clip. For a valid YouTube song with an
+     * unavailable paired video, the original item may itself have a video stream.
+     */
+    fun bestClipId(
+        originalId: String?,
+        preferredId: String?,
+        youtubeTrack: Boolean,
+        localOrUploaded: Boolean,
+        counterpartLookupDone: Boolean,
+        failedIds: Set<String>,
+    ): String? = when {
+        !youtubeTrack || localOrUploaded -> null
+        preferredId != null && preferredId !in failedIds -> preferredId
+        counterpartLookupDone && originalId != null && originalId !in failedIds -> originalId
+        else -> null
+    }
+
     /** Wake and permit sensor rotation only while the selected video is on
      * screen. Audio-only playback and Cast must not acquire these flags.
      */
