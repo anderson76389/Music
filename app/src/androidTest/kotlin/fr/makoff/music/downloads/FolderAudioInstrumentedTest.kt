@@ -64,11 +64,33 @@ class FolderAudioInstrumentedTest {
                     node = device.wait(androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(text)), 1000)
                 }
             }
-            val bounds = device.findObjects(androidx.test.uiautomator.By.text(text))
-                .filter { it.isEnabled && it.visibleBounds.width() > 0 }
-                .maxByOrNull { it.visibleBounds.centerY() }?.visibleBounds
-                ?: requireNotNull(node) { "Missing download popup control: $text" }.visibleBounds
-            assertTrue(device.click(bounds.centerX(), bounds.centerY()))
+            // Compose replaces popup semantics nodes while drawing transitions.
+            // UiObject2 from an earlier snapshot may be stale by the time its
+            // enabled state is queried; reacquire the target instead of
+            // silently skipping the real user interaction.
+            var bounds: android.graphics.Rect? = null
+            repeat(8) {
+                if (bounds == null) {
+                    try {
+                        bounds = device.findObjects(androidx.test.uiautomator.By.text(text))
+                            .filter { it.isEnabled && it.visibleBounds.width() > 0 }
+                            .maxByOrNull { it.visibleBounds.centerY() }
+                            ?.visibleBounds
+                    } catch (_: androidx.test.uiautomator.StaleObjectException) {
+                        // The old virtual node disappeared; the next query is fresh.
+                    }
+                    if (bounds == null) Thread.sleep(100)
+                }
+            }
+            val target = bounds ?: run {
+                // Re-query after transitions; never reuse the stale 'node'.
+                val fresh = device.wait(
+                    androidx.test.uiautomator.Until.findObject(androidx.test.uiautomator.By.text(text)),
+                    3000,
+                )
+                requireNotNull(fresh) { "Missing download popup control: $text" }.visibleBounds
+            }
+            assertTrue(device.click(target.centerX(), target.centerY()))
             device.waitForIdle()
         }
         try {
