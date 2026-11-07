@@ -164,12 +164,14 @@ internal fun PlayerArtworkSwitcher(
         pairedId = companionVideoId,
         counterpartLookupDone = counterpartLookupDone,
     )
-    val clipVideoId = when {
-        preferredClipId != null && preferredClipId !in failedClipIds -> preferredClipId
-        isYouTubeTrack && !isLocalOrUploaded && videoId != null &&
-            videoId !in failedClipIds && counterpartLookupDone -> videoId
-        else -> null
-    }
+    val clipVideoId = PlayerVideoModePolicy.bestClipId(
+        originalId = videoId,
+        preferredId = preferredClipId,
+        youtubeTrack = isYouTubeTrack,
+        localOrUploaded = isLocalOrUploaded,
+        counterpartLookupDone = counterpartLookupDone,
+        failedIds = failedClipIds,
+    )
     // Do not advertise an unplayable clip. Resolve the actual signed video
     // stream in the background ONLY while the full player is expanded, and
     // reuse it on demand. This also avoids a duplicate network extraction
