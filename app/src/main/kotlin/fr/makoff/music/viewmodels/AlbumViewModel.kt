@@ -46,7 +46,7 @@ constructor(
                     // Read the latest row inside the transaction. Using the album
                     // snapshot obtained BEFORE the network request can overwrite a
                     // user's new bookmarkedAt if they liked the album meanwhile.
-                    database.transaction {
+                    database.withTransaction {
                         val current = albumEntity(albumId)
                         if (current == null) {
                             insert(it)
