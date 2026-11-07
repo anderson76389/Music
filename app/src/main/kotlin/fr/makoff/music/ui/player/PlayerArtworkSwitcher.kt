@@ -253,7 +253,10 @@ internal fun PlayerArtworkSwitcher(
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
         // temporarily collapsed during portrait/landscape reconstruction.
-        if (!videoModeEnabled || isCasting || isLocalOrUploaded || !isYouTubeTrack) {
+        // The media metadata may temporarily be null while the Activity is
+        // rebuilt in landscape. A missing ID at that instant must not erase
+        // the user's saved video selection.
+        if (!videoModeEnabled || isCasting || isLocalOrUploaded) {
             onShowVideoChange(false)
         }
     }
