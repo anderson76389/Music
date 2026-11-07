@@ -306,6 +306,10 @@ fun BottomSheetPlayer(
     // turning the phone can reuse the official Song/Video pairing immediately.
     var verifiedVideoPairOwner by rememberSaveable { mutableStateOf<String?>(null) }
     var verifiedVideoPairId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Store a successfully extracted clip's ID, not its expiring URL. This
+    // preserves the buttons for direct-video tracks across layout recreation.
+    var playableClipOwner by rememberSaveable { mutableStateOf<String?>(null) }
+    var playableClipId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
@@ -1611,6 +1615,17 @@ fun BottomSheetPlayer(
                                     verifiedVideoPairOwner = mediaMetadata?.id
                                     verifiedVideoPairId = pairedId
                                 },
+                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
+                                onPlayableClipResolved = { clipId ->
+                                    playableClipOwner = mediaMetadata?.id
+                                    playableClipId = clipId
+                                },
+                                onPlayableClipInvalidated = { failedId ->
+                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
+                                        playableClipOwner = null
+                                        playableClipId = null
+                                    }
+                                },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
@@ -1690,6 +1705,17 @@ fun BottomSheetPlayer(
                                 onCompanionVideoIdResolved = { pairedId ->
                                     verifiedVideoPairOwner = mediaMetadata?.id
                                     verifiedVideoPairId = pairedId
+                                },
+                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
+                                onPlayableClipResolved = { clipId ->
+                                    playableClipOwner = mediaMetadata?.id
+                                    playableClipId = clipId
+                                },
+                                onPlayableClipInvalidated = { failedId ->
+                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
+                                        playableClipOwner = null
+                                        playableClipId = null
+                                    }
                                 },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
