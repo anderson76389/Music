@@ -314,7 +314,7 @@ internal fun PlayerArtworkSwitcher(
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
-                    clipVideoId.let { id ->
+                    clipVideoId?.let { id ->
                         failedClipIds = failedClipIds + id
                         onPlayableClipInvalidated(id)
                     }
