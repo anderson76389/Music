@@ -9,6 +9,12 @@ import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -45,8 +51,14 @@ fun BoxScope.HideOnScrollFAB(
 ) {
     AnimatedVisibility(
         visible = visible && lazyListState.isScrollingUp(),
-        enter = slideInVertically { it },
-        exit = slideOutVertically { it },
+        // A short combined motion makes the two floating buttons behave as
+        // one group and avoids the abrupt full-height drop on scroll.
+        enter = fadeIn(tween(200)) +
+            scaleIn(initialScale = 0.92f, animationSpec = tween(250, easing = FastOutSlowInEasing)) +
+            slideInVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) { it / 5 },
+        exit = fadeOut(tween(160)) +
+            scaleOut(targetScale = 0.92f, animationSpec = tween(200, easing = FastOutSlowInEasing)) +
+            slideOutVertically(animationSpec = tween(200, easing = FastOutSlowInEasing)) { it / 5 },
         modifier =
         Modifier
             .align(Alignment.BottomEnd)
