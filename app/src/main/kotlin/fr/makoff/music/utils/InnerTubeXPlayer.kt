@@ -72,13 +72,23 @@ object InnerTubeXPlayer {
         // reports an unrelated SABR bootstrap for a different format. A SABR
         // *only* result remains unsupported because it provides no videoUrl.
         val url = stream.videoUrl?.takeIf { it.startsWith("https://") } ?: return null
-        val mimeType = when {
-            stream.videoMimeType?.startsWith("video/") == true -> stream.videoMimeType
-            stream.mimeType == "application/x-mpegURL" -> "application/x-mpegURL"
-            stream.mimeType == "application/vnd.apple.mpegurl" -> "application/x-mpegURL"
-            else -> null
-        } ?: return null
+        val mimeType = supportedVideoMimeType(stream.videoMimeType, stream.mimeType) ?: return null
         return VideoStream(url = url, mimeType = mimeType, headers = stream.headers)
+    }
+
+    /** Video streams can report HLS MIME in either extracted field. Treating
+     * 'application/vnd.apple.mpegurl' as unknown hid the video selector.
+     */
+    internal fun supportedVideoMimeType(videoMimeType: String?, sourceMimeType: String?): String? {
+        val video = videoMimeType?.substringBefore(';')?.trim()?.lowercase()
+        val source = sourceMimeType?.substringBefore(';')?.trim()?.lowercase()
+        return when {
+            video?.startsWith("video/") == true -> videoMimeType
+            video == "application/vnd.apple.mpegurl" || video == "application/x-mpegurl" ||
+                source == "application/vnd.apple.mpegurl" || source == "application/x-mpegurl" ->
+                "application/x-mpegURL"
+            else -> null
+        }
     }
 
     data class VideoStream(
