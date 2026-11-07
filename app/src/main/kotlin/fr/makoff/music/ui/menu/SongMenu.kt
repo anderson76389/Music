@@ -469,12 +469,18 @@ fun SongMenu(
                             }
                         }
                     } else {
-                        // Regular song: toggle like
-                        val s = song.song.toggleLike()
-                        database.query {
-                            update(s)
+                        // Read-and-toggle atomically: a rapid second tap must not
+                        // reuse stale Compose state. SyncUtils is the ONLY sender
+                        // of the corresponding YouTube Music like/unlike request.
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val updated = database.withTransaction {
+                                songEntity(song.id)?.let { current ->
+                                    current.toggleLike(syncToYouTube = false)
+                                        .also(::update)
+                                }
+                            }
+                            updated?.let(syncUtils::likeSong)
                         }
-                        syncUtils.likeSong(s)
                     }
                 },
             ) {

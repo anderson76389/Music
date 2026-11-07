@@ -101,6 +101,11 @@ fun ContentSettings(
     val (appLanguage, onAppLanguageChange) = rememberPreference(key = AppLanguageKey, defaultValue = SYSTEM_DEFAULT)
 
     val (contentLanguage, onContentLanguageChange) = rememberPreference(key = ContentLanguageKey, defaultValue = "system")
+    var showRestartRecommendation by rememberSaveable { mutableStateOf(false) }
+    RestartAppRecommendationDialog(
+        visible = showRestartRecommendation,
+        onDismiss = { showRestartRecommendation = false },
+    )
     val (contentCountry, onContentCountryChange) = rememberPreference(key = ContentCountryKey, defaultValue = "system")
     val (hideExplicit, onHideExplicitChange) = rememberPreference(key = HideExplicitKey, defaultValue = false)
     val (hideVideoSongs, onHideVideoSongsChange) = rememberPreference(key = HideVideoSongsKey, defaultValue = false)
@@ -280,7 +285,10 @@ fun ContentSettings(
         EnumDialog(
             onDismiss = { showContentLanguageDialog = false },
             onSelect = {
-                onContentLanguageChange(it)
+                if (contentLanguage != it) {
+                    onContentLanguageChange(it)
+                    showRestartRecommendation = true
+                }
                 showContentLanguageDialog = false
             },
             title = stringResource(R.string.content_language),
@@ -320,7 +328,10 @@ fun ContentSettings(
         EnumDialog(
             onDismiss = { showAppLanguageDialog = false },
             onSelect = {
-                onAppLanguageChange(it)
+                if (appLanguage != it) {
+                    onAppLanguageChange(it)
+                    showRestartRecommendation = true
+                }
                 showAppLanguageDialog = false
             },
             title = stringResource(R.string.app_language),

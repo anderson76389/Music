@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.border
@@ -25,7 +26,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -105,14 +106,21 @@ internal fun PlayerArtworkSwitcher(
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
     var companionVideoId by remember(videoId) { mutableStateOf<String?>(null) }
+    var counterpartLookupDone by remember(videoId) { mutableStateOf(false) }
     var showVideo by remember(videoId) { mutableStateOf(false) }
     val isYouTubeTrack = videoId != null && videoId.length == 11 &&
         videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
-    // Only use YouTube Music's official counterpart, not a guessed search result.
+    // Prefer the official Song/Video counterpart, but also check whether
+    // the original YouTube item itself exposes a real video track.
+    // Some YouTube Music responses omit both the pairing and video flag.
     LaunchedEffect(videoId, videoModeEnabled, isVideoSong, isLocalOrUploaded, isCasting, isExpanded, songTitle, artistNames) {
         companionVideoId = null
-        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isVideoSong || isCasting || !isExpanded) return@LaunchedEffect
+        counterpartLookupDone = false
+        if (!videoModeEnabled || !isYouTubeTrack || isLocalOrUploaded || isCasting || !isExpanded || isVideoSong) {
+            counterpartLookupDone = true
+            return@LaunchedEffect
+        }
         companionVideoId = try {
             withContext(Dispatchers.IO) {
                 YouTube.videoCounterpart(
@@ -126,9 +134,19 @@ internal fun PlayerArtworkSwitcher(
         } catch (_: Exception) {
             null
         }
+        counterpartLookupDone = true
     }
 
-    val clipVideoId = if (isVideoSong) videoId else companionVideoId
+    // A direct video stream is a valid video for the *same* audio queue item;
+    // never substitute an unverified search result.
+    val clipVideoId = PlayerVideoModePolicy.candidateVideoId(
+        originalId = videoId,
+        isYouTubeTrack = isYouTubeTrack,
+        isLocalOrUploaded = isLocalOrUploaded,
+        isVideoSong = isVideoSong,
+        pairedId = companionVideoId,
+        counterpartLookupDone = counterpartLookupDone,
+    )
     // Do not advertise an unplayable clip. Resolve the actual signed video
     // stream in the background ONLY while the full player is expanded, and
     // reuse it on demand. This also avoids a duplicate network extraction
@@ -198,19 +216,12 @@ internal fun PlayerArtworkSwitcher(
             warmedVideoPlayer?.release()
         }
     }
-    // Once prebuffering reaches READY, keep the button available through
-    // brief video rebuffers and seeks instead of flickering back to the cover.
-    var hasPreparedVideo by remember(warmedVideoPlayer) {
-        mutableStateOf(warmedVideoPlayer?.playbackState == Player.STATE_READY)
-    }
+    // The selector appears as soon as a valid stream was resolved.
+    // Waiting until ExoPlayer reaches READY used to hide Son/Vidéo entirely
+    // for slow connections; video buffering is now shown only on the video tab.
     DisposableEffect(warmedVideoPlayer, clipVideoId) {
         val listener = object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_READY) hasPreparedVideo = true
-            }
-
             override fun onPlayerError(error: PlaybackException) {
-                // A bad URL must never leave a misleading Vidéo button visible.
                 unavailableClipId = clipVideoId
                 showVideo = false
             }
@@ -219,7 +230,7 @@ internal fun PlayerArtworkSwitcher(
         onDispose { warmedVideoPlayer?.removeListener(listener) }
     }
 
-    val canShowVideo = hasPreparedVideo && warmedVideoPlayer != null &&
+    val canShowVideo = playableStream != null && warmedVideoPlayer != null &&
         isYouTubeTrack && clipVideoId != unavailableClipId
     val showModeBar = PlayerVideoModePolicy.showSelector(videoModeEnabled, isExpanded, canShowVideo)
     LaunchedEffect(showModeBar) {
@@ -251,6 +262,7 @@ internal fun PlayerArtworkSwitcher(
         PlayerModeTopBar(
             audioLabel = coverLabel,
             videoLabel = videoLabel,
+            songTitle = songTitle,
             showVideo = showVideo,
             showModeSelector = showModeBar,
             modeTextColor = modeTextColor,
@@ -306,6 +318,7 @@ internal fun PlayerArtworkSwitcher(
 private fun PlayerModeTopBar(
     audioLabel: String,
     videoLabel: String,
+    songTitle: String?,
     showVideo: Boolean,
     showModeSelector: Boolean,
     modeTextColor: Color,
@@ -320,7 +333,7 @@ private fun PlayerModeTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(66.dp)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -335,9 +348,10 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-        Box(
+        Column(
             modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
         ) {
             if (showModeSelector) {
                 PlayerModePills(
@@ -346,7 +360,7 @@ private fun PlayerModeTopBar(
                     showVideo = showVideo,
                     onAudioClick = onAudioClick,
                     onVideoClick = onVideoClick,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.width(140.dp),
                 )
             } else {
                 Text(
@@ -357,6 +371,21 @@ private fun PlayerModeTopBar(
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
+                )
+            }
+            songTitle?.takeIf { it.isNotBlank() }?.let { title ->
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = modeTextColor.copy(alpha = 0.82f),
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                        .basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            initialDelayMillis = 1400,
+                            velocity = 32.dp,
+                        ),
                 )
             }
         }
@@ -396,7 +425,6 @@ private fun PlayerModePills(
 
     Row(
         modifier = modifier
-            .widthIn(max = 140.dp)
             .clip(shape)
             .background(barBackground)
             .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)

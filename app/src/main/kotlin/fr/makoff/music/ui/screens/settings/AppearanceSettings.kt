@@ -266,6 +266,11 @@ fun AppearanceSettings(
 
     val (densityScale, onDensityScaleChange) = rememberPreference(DensityScaleKey, defaultValue = 1f)
     var showDensityScaleDialog by rememberSaveable { mutableStateOf(false) }
+    var showRestartRecommendation by rememberSaveable { mutableStateOf(false) }
+    RestartAppRecommendationDialog(
+        visible = showRestartRecommendation,
+        onDismiss = { showRestartRecommendation = false },
+    )
 
     val (swipeToSong, onSwipeToSongChange) =
         rememberPreference(
@@ -482,7 +487,10 @@ fun AppearanceSettings(
                             Modifier
                                 .fillMaxWidth()
                                 .clickable {
-                                    onDensityScaleChange(scale.value)
+                                    if (densityScale != scale.value) {
+                                        onDensityScaleChange(scale.value)
+                                        showRestartRecommendation = true
+                                    }
                                     showDensityScaleDialog = false
                                 }.padding(16.dp),
                         verticalAlignment = Alignment.CenterVertically,
