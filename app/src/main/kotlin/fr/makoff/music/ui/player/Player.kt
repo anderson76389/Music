@@ -302,6 +302,10 @@ fun BottomSheetPlayer(
     // render different artwork subtrees; state inside either one was being lost
     // on every rotation. A saved track ID also survives Activity recreation.
     var selectedVideoId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Save only the verified clip ID (never a temporary signed stream URL), so
+    // turning the phone can reuse the official Song/Video pairing immediately.
+    var verifiedVideoPairOwner by rememberSaveable { mutableStateOf<String?>(null) }
+    var verifiedVideoPairId by rememberSaveable { mutableStateOf<String?>(null) }
     val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
@@ -1603,6 +1607,11 @@ fun BottomSheetPlayer(
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
                                 songTitle = mediaMetadata?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
+                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
+                                onCompanionVideoIdResolved = { pairedId ->
+                                    verifiedVideoPairOwner = mediaMetadata?.id
+                                    verifiedVideoPairId = pairedId
+                                },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
@@ -1678,6 +1687,11 @@ fun BottomSheetPlayer(
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
                                 songTitle = mediaMetadata?.title,
                                 artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
+                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
+                                onCompanionVideoIdResolved = { pairedId ->
+                                    verifiedVideoPairOwner = mediaMetadata?.id
+                                    verifiedVideoPairId = pairedId
+                                },
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
