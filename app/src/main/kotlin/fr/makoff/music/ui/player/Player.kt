@@ -1594,7 +1594,7 @@ fun BottomSheetPlayer(
                         contentAlignment = Alignment.Center,
                         modifier =
                             Modifier
-                                .weight(if (wideVideoLandscape) 1.4f else 1f)
+                                .weight(if (wideVideoLandscape) 1.75f else 1f)
                                 .nestedScroll(state.preUpPostDownNestedScrollConnection),
                     ) {
                         // Remember lambdas to prevent unnecessary recomposition
@@ -1656,8 +1656,8 @@ fun BottomSheetPlayer(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier =
                             Modifier
-                                .weight(if (wideVideoLandscape) 0.9f else 1f, false)
-                                .animateContentSize()
+                                .weight(if (wideVideoLandscape) 0.75f else 1f, false)
+                                .then(if (wideVideoLandscape) Modifier else Modifier.animateContentSize())
                                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Top)),
                     ) {
                         Spacer(Modifier.weight(1f))
