@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -360,7 +360,7 @@ private fun PlayerModeTopBar(
                     showVideo = showVideo,
                     onAudioClick = onAudioClick,
                     onVideoClick = onVideoClick,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.width(140.dp),
                 )
             } else {
                 Text(
@@ -425,7 +425,6 @@ private fun PlayerModePills(
 
     Row(
         modifier = modifier
-            .widthIn(max = 140.dp)
             .clip(shape)
             .background(barBackground)
             .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)
