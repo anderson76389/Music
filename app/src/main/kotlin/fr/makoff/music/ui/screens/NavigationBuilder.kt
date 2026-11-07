@@ -48,6 +48,7 @@ import fr.makoff.music.ui.screens.settings.BackupAndRestore
 import fr.makoff.music.ui.screens.settings.ContentSettings
 import fr.makoff.music.ui.screens.settings.DarkMode
 import fr.makoff.music.ui.screens.settings.PlayerSettings
+import fr.makoff.music.ui.screens.settings.PlayerSettingsTab
 import fr.makoff.music.ui.screens.settings.SettingsScreen
 import fr.makoff.music.ui.screens.settings.DownloadsSettings
 import fr.makoff.music.ui.screens.settings.StorageSettings
