@@ -13,6 +13,7 @@ import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
+import android.content.pm.ActivityInfo
 import android.view.WindowManager
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
@@ -258,6 +259,74 @@ fun BottomSheetPlayer(
 
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val isKeepScreenOn by rememberPreference(KeepScreenOn, false)
+    BackHandler(enabled = state.isExpanded) {
+        state.collapseSoft()
+    }
+
+    val onBackgroundColor =
+        if (LocalLiquidGlassEnabled.current) Color.White else when (playerBackground) {
+            PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
+            else -> MaterialTheme.colorScheme.onSurface
+        }
+    val useBlackBackground =
+        remember(isSystemInDarkTheme, darkTheme, pureBlack) {
+            val useDarkTheme =
+                if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
+            useDarkTheme && pureBlack
+        }
+
+    val playbackState by playerConnection.playbackState.collectAsState()
+    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
+    val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
+    val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
+    val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
+    val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
+    val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
+    val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
+
+    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
+    val squigglySlider by rememberPreference(SquigglySliderKey, defaultValue = false)
+
+
+    // Cast state - safely access castConnectionHandler to prevent crashes during service lifecycle changes
+    val castHandler =
+        remember(playerConnection) {
+            try {
+                playerConnection.service.castConnectionHandler
+            } catch (e: Exception) {
+                null
+            }
+        }
+    val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    // Keep the active video choice at the PLAYER level. Portrait and landscape
+    // render different artwork subtrees; state inside either one was being lost
+    // on every rotation. A saved track ID also survives Activity recreation.
+    var selectedVideoId by rememberSaveable { mutableStateOf<String?>(null) }
+    val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    val videoModeActive = PlayerVideoModePolicy.videoModeActive(
+        selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
+    )
+    val keepScreenOn = (isPlaying && isKeepScreenOn) || videoModeActive
+
+    // Video alone enables device-sensor rotation (including with orientation
+    // lock on). Returning to Son restores the previous Activity policy.
+    DisposableEffect(videoModeActive) {
+        val activity = context as? android.app.Activity
+        val previousOrientation = activity?.requestedOrientation
+        if (videoModeActive && activity != null) {
+            activity.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+        }
+        onDispose {
+            if (videoModeActive && activity != null && previousOrientation != null &&
+                activity.requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR
+            ) {
+                activity.requestedOrientation = previousOrientation
+            }
+        }
+    }
+
+    // The video surface stays awake even if audio is paused or buffering.
+    // Respect the existing explicit Keep screen on preference for audio.
     val keepScreenOn = isPlaying && isKeepScreenOn
 
     DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
@@ -299,45 +368,7 @@ fun BottomSheetPlayer(
         }
     }
 
-    BackHandler(enabled = state.isExpanded) {
-        state.collapseSoft()
-    }
 
-    val onBackgroundColor =
-        if (LocalLiquidGlassEnabled.current) Color.White else when (playerBackground) {
-            PlayerBackgroundStyle.DEFAULT -> MaterialTheme.colorScheme.secondary
-            else -> MaterialTheme.colorScheme.onSurface
-        }
-    val useBlackBackground =
-        remember(isSystemInDarkTheme, darkTheme, pureBlack) {
-            val useDarkTheme =
-                if (darkTheme == DarkMode.AUTO) isSystemInDarkTheme else darkTheme == DarkMode.ON
-            useDarkTheme && pureBlack
-        }
-
-    val playbackState by playerConnection.playbackState.collectAsState()
-    val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
-    val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
-    val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
-    val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
-    val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
-    val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
-    val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
-
-    val sliderStyle by rememberEnumPreference(SliderStyleKey, SliderStyle.DEFAULT)
-    val squigglySlider by rememberPreference(SquigglySliderKey, defaultValue = false)
-
-
-    // Cast state - safely access castConnectionHandler to prevent crashes during service lifecycle changes
-    val castHandler =
-        remember(playerConnection) {
-            try {
-                playerConnection.service.castConnectionHandler
-            } catch (e: Exception) {
-                null
-            }
-        }
-    val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
     val castPosition by castHandler?.castPosition?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
     val castDuration by castHandler?.castDuration?.collectAsStateWithLifecycle() ?: remember { mutableLongStateOf(0L) }
     val castIsPlaying by castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
@@ -1529,25 +1560,6 @@ fun BottomSheetPlayer(
             }
         }
 
-        // Reuse the real player menu for the YouTube Music-style top-bar
-        // action rather than creating a second, inconsistent overflow menu.
-        val onOpenModeMenu: () -> Unit = {
-            mediaMetadata?.let { selected ->
-                playerMenuState.show {
-                    PlayerMenu(
-                        mediaMetadata = selected,
-                        playerBottomSheetState = state,
-                        onShowDetailsDialog = {
-                            bottomSheetPageState.show {
-                                ShowMediaInfo(selected.id)
-                            }
-                        },
-                        onDismiss = playerMenuState::dismiss,
-                    )
-                }
-            }
-        }
-
         when {
             twoPanePlayer -> {
                 // Calculate vertical padding like OuterTune
@@ -1592,10 +1604,13 @@ fun BottomSheetPlayer(
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
+                                showVideo = selectedVideoForTrack,
+                                onShowVideoChange = { selected ->
+                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,
                                 onCollapse = { state.collapseSoft() },
-                                onOpenMenu = onOpenModeMenu,
                                 isLandscape = true,
                                 modifier = Modifier.fillMaxSize(),
                             ) { showModeBar ->
@@ -1664,10 +1679,13 @@ fun BottomSheetPlayer(
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
+                                showVideo = selectedVideoForTrack,
+                                onShowVideoChange = { selected ->
+                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,
                                 onCollapse = { state.collapseSoft() },
-                                onOpenMenu = onOpenModeMenu,
                                 modifier = Modifier.fillMaxSize().nestedScroll(state.preUpPostDownNestedScrollConnection),
                             ) { showModeBar ->
                                 Thumbnail(
