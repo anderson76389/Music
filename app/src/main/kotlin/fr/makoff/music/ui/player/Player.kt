@@ -315,6 +315,61 @@ fun BottomSheetPlayer(
     // preserves the buttons for direct-video tracks across layout recreation.
     var playableClipOwner by rememberSaveable { mutableStateOf<String?>(null) }
     var playableClipId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Start clip discovery as soon as the song reaches the mini player.
+    // This subtree survives collapsing the expanded player, so neither the
+    // network probe nor the video prebuffer restarts on every reopen.
+    val activeVideoId = mediaMetadata?.id
+    val videoIsLocalOrUploaded = currentSong?.song?.isLocal == true ||
+        currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
+    val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
+    val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
+    var failedVideoClipIds by remember(activeVideoId) { mutableStateOf(emptySet<String>()) }
+    val videoPreview = rememberPlayerVideoPreview(
+        videoId = activeVideoId,
+        enabled = playerVideoModeEnabled,
+        isVideoSong = videoIsMusicClip,
+        localOrUploaded = videoIsLocalOrUploaded,
+        casting = isCasting,
+        title = mediaMetadata?.title ?: currentSong?.song?.title,
+        artists = videoArtistNames,
+        knownCompanionVideoId = if (verifiedVideoPairOwner == activeVideoId) verifiedVideoPairId else null,
+        knownPlayableClipId = if (playableClipOwner == activeVideoId) playableClipId else null,
+        failedClipIds = failedVideoClipIds,
+        onCompanionResolved = { paired ->
+            if (activeVideoId != null) {
+                verifiedVideoPairOwner = activeVideoId
+                verifiedVideoPairId = paired
+            }
+        },
+        onPlayableResolved = { clipId ->
+            if (activeVideoId != null) {
+                playableClipOwner = activeVideoId
+                playableClipId = clipId
+            }
+        },
+    )
+    val preparedVideoPlayer = rememberPreparedVideoPlayer(
+        clip = videoPreview.clip,
+        playerConnection = playerConnection,
+        onUnavailable = { clipId ->
+            if (videoPreview.clip?.id == clipId) {
+                failedVideoClipIds = failedVideoClipIds + clipId
+                if (playableClipOwner == activeVideoId && playableClipId == clipId) {
+                    playableClipOwner = null
+                    playableClipId = null
+                }
+            }
+        },
+    )
+    val onVideoClipUnavailable: (String) -> Unit = { clipId ->
+        if (videoPreview.clip?.id == clipId) {
+            failedVideoClipIds = failedVideoClipIds + clipId
+            if (playableClipOwner == activeVideoId && playableClipId == clipId) {
+                playableClipOwner = null
+                playableClipId = null
+            }
+        }
+    }
     val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
@@ -1622,27 +1677,10 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
-                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
-                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
-                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
-                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
-                                onCompanionVideoIdResolved = { pairedId ->
-                                    verifiedVideoPairOwner = mediaMetadata?.id
-                                    verifiedVideoPairId = pairedId
-                                },
-                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
-                                onPlayableClipResolved = { clipId ->
-                                    playableClipOwner = mediaMetadata?.id
-                                    playableClipId = clipId
-                                },
-                                onPlayableClipInvalidated = { failedId ->
-                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
-                                        playableClipOwner = null
-                                        playableClipId = null
-                                    }
-                                },
+                                videoPreview = videoPreview,
+                                videoPlayer = preparedVideoPlayer,
+                                thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                                onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
@@ -1716,27 +1754,10 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
-                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
-                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
-                                songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
-                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
-                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
-                                onCompanionVideoIdResolved = { pairedId ->
-                                    verifiedVideoPairOwner = mediaMetadata?.id
-                                    verifiedVideoPairId = pairedId
-                                },
-                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
-                                onPlayableClipResolved = { clipId ->
-                                    playableClipOwner = mediaMetadata?.id
-                                    playableClipId = clipId
-                                },
-                                onPlayableClipInvalidated = { failedId ->
-                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
-                                        playableClipOwner = null
-                                        playableClipId = null
-                                    }
-                                },
+                                videoPreview = videoPreview,
+                                videoPlayer = preparedVideoPlayer,
+                                thumbnailUrl = mediaMetadata?.thumbnailUrl,
+                                onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
                                 isExpanded = state.isExpanded,
                                 isPlaying = isPlaying,
