@@ -245,6 +245,7 @@ fun PlayerSettings(
                     PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
                     PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
                     PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
+                                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
                 }
             },
         )
@@ -341,6 +342,7 @@ fun PlayerSettings(
                                     PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
                                     PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
                                     PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
+                                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
                                 },
                             )
                         },
