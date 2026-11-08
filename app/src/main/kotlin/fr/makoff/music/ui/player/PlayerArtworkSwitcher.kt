@@ -16,7 +16,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.border
@@ -61,6 +60,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
+import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.utils.InnerTubeXPlayer
@@ -86,6 +86,8 @@ import kotlin.math.abs
 internal fun PlayerArtworkSwitcher(
     videoId: String?,
     videoModeEnabled: Boolean,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     isVideoSong: Boolean,
     isLocalOrUploaded: Boolean,
     songTitle: String?,
@@ -280,6 +282,15 @@ internal fun PlayerArtworkSwitcher(
         videoModeEnabled, isExpanded,
         canShowVideo && !isCasting && !isLocalOrUploaded,
     )
+    // Do not flash "En cours de lecture" over the selector while a clip is
+    // being identified. Fall back to the classic header only after checking.
+    val checkingForClip = videoModeEnabled && isExpanded && isYouTubeTrack &&
+        !isLocalOrUploaded && !isCasting && !showModeBar &&
+        (!counterpartLookupDone || (clipVideoId != null && !videoStreamLookupFinished))
+    val headerMode = PlayerVideoModePolicy.headerMode(
+        selectorVisible = showModeBar,
+        waitingForClip = checkingForClip,
+    )
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
         // temporarily collapsed during portrait/landscape reconstruction.
@@ -341,9 +352,10 @@ internal fun PlayerArtworkSwitcher(
         PlayerModeTopBar(
             audioLabel = coverLabel,
             videoLabel = videoLabel,
-            songTitle = songTitle,
             showVideo = showVideo,
-            showModeSelector = showModeBar,
+            headerMode = headerMode,
+            selectorTheme = selectorTheme,
+            appDarkTheme = appDarkTheme,
             modeTextColor = modeTextColor,
             onAudioClick = {
                 warmedVideoPlayer?.playWhenReady = false
@@ -393,36 +405,32 @@ internal fun PlayerArtworkSwitcher(
 }
 
 /**
- * Header from the supplied YouTube Music reference: collapse on the left,
- * two compact centered pills, then Cast and the three-dot menu on the right.
- * Use the active background style rather than assuming the app is always dark.
+ * Single top toolbar. When Son/Vidéo is available, its icons replace the
+ * classic header; NO extra title is duplicated over the real track title
+ * in the player's information section below the artwork.
  */
 @Composable
 private fun PlayerModeTopBar(
     audioLabel: String,
     videoLabel: String,
-    songTitle: String?,
     showVideo: Boolean,
-    showModeSelector: Boolean,
+    headerMode: PlayerVideoModePolicy.HeaderMode,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Real horizontal allocation: the title OR the mode buttons gets only the
-    // space between collapse and Cast/menu. No drawn-overlaid text/icons.
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(66.dp)
+            .height(52.dp)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onCollapse,
-            modifier = Modifier.size(48.dp),
-        ) {
+        IconButton(onClick = onCollapse, modifier = Modifier.size(48.dp)) {
             Icon(
                 painter = painterResource(R.drawable.expand_more),
                 contentDescription = stringResource(R.string.player_collapse_label),
@@ -430,22 +438,22 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-        Column(
+        Box(
             modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+            contentAlignment = Alignment.Center,
         ) {
-            if (showModeSelector) {
-                PlayerModePills(
+            when (headerMode) {
+                PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
                     audioLabel = audioLabel,
                     videoLabel = videoLabel,
                     showVideo = showVideo,
                     onAudioClick = onAudioClick,
                     onVideoClick = onVideoClick,
-                    modifier = Modifier.width(140.dp),
+                    selectorTheme = selectorTheme,
+                    appDarkTheme = appDarkTheme,
+                    modifier = Modifier.width(136.dp),
                 )
-            } else {
-                Text(
+                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Text(
                     text = stringResource(R.string.now_playing),
                     style = MaterialTheme.typography.labelMedium,
                     color = modeTextColor,
@@ -454,27 +462,17 @@ private fun PlayerModeTopBar(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth(),
                 )
-            }
-            songTitle?.takeIf { it.isNotBlank() }?.let { title ->
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = modeTextColor.copy(alpha = 0.92f),
-                    maxLines = 1,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                        .basicMarquee(
-                            iterations = Int.MAX_VALUE,
-                            initialDelayMillis = 1400,
-                            velocity = 32.dp,
-                        ),
-                )
+                // Leave the center clear rather than flashing the old label
+                // over Son/Vidéo during a counterpart/stream lookup.
+                PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
             }
         }
+        // Exactly the same width as Collapse: the switch is centered on
+        // the *screen*, not offset by the action buttons on either side.
         CastButton(
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(48.dp),
             tintColor = modeTextColor,
-            buttonSize = 40.dp,
+            buttonSize = 48.dp,
         )
     }
 }
@@ -486,22 +484,48 @@ private fun PlayerModePills(
     showVideo: Boolean,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Fixed YouTube Music-inspired palette: this toolbar MUST keep the
-    // same charcoal / peach appearance across light, dark, gradient, AMOLED
-    // and Liquid Glass app themes. The rest of the player remains themed.
+    // Only monochrome light/dark variants. DISABLED removes the custom
+    // pill treatment without removing the functional Son/Vidéo selector.
+    val dark = when (selectorTheme) {
+        PlayerVideoThemeMode.DARK -> true
+        PlayerVideoThemeMode.LIGHT -> false
+        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED -> appDarkTheme
+    }
     val shape = RoundedCornerShape(22.dp)
-    val barBackground = Color(0xFF30272B)
-    val selectedBackground = Color(0xFFF2A17E)
-    val selectedForeground = Color(0xFF251B1D)
-    val unselectedForeground = Color(0xFFF8F5F6)
+    val barBackground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
+        dark -> Color(0xFF242426)
+        else -> Color(0xFFEAEAEC)
+    }
+    val selectedBackground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White.copy(alpha = 0.16f)
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black.copy(alpha = 0.10f)
+        dark -> Color(0xFFF5F5F5)
+        else -> Color(0xFF242426)
+    }
+    val selectedForeground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black
+        dark -> Color(0xFF1B1B1D)
+        else -> Color.White
+    }
+    val unselectedForeground = if (dark) Color.White.copy(alpha = 0.85f)
+        else Color.Black.copy(alpha = 0.78f)
+    val outlineColor = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
+        dark -> Color.White.copy(alpha = 0.16f)
+        else -> Color.Black.copy(alpha = 0.10f)
+    }
 
     Row(
         modifier = modifier
             .clip(shape)
             .background(barBackground)
-            .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)
+            .border(0.75.dp, outlineColor, shape)
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,
