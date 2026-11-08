@@ -2331,11 +2331,11 @@ class MusicService :
                     if (reported && cachedSoundProofSkipAi &&
                         player.currentMediaItem?.mediaId == candidateId &&
                         player.currentMediaItemIndex == candidateIndex &&
-                        castConnectionHandler?.isCasting?.value != true &&
-                        player.mediaItemCount > 1 && player.hasNextMediaItem()
+                        castConnectionHandler?.isCasting?.value != true
                     ) {
                         Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
-                        player.seekToNextMediaItem()
+                        if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+                        else player.pause() // Prevent playing a flagged lone/final queue item.
                     }
                 }
             }
