@@ -142,14 +142,13 @@ internal fun PlayerArtworkSwitcher(
         // Keep the SAME TextureView attached while switching tabs. Removing the
         // AndroidView on every Son selection forces a fresh decoder surface and
         // creates a black/loading pause when returning to Vidéo.
-        val resolvedVideo = showModeBar && videoId != null && clip != null && videoPlayer != null
-        if (resolvedVideo) {
+        if (showModeBar && videoId != null && clip != null && videoPlayer != null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
                 VideoOnlySurface(
-                    videoId = clip!!.id,
-                    audioId = videoId!!,
-                    videoPlayer = videoPlayer!!,
+                    videoId = clip.id,
+                    audioId = videoId,
+                    videoPlayer = videoPlayer,
                     thumbnailUrl = thumbnailUrl,
                     isPlaying = isPlaying,
                     visible = showVideo,
