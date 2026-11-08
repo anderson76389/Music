@@ -354,7 +354,7 @@ internal fun PlayerArtworkSwitcher(
             // part of its animation. Suppress Thumbnail's legacy "En cours de
             // lecture / Cache Songs" at ALL times while Son/Vidéo is enabled,
             // not only after the sheet has finished expanding.
-            artwork(isExpanded || videoModeEnabled)
+            artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
