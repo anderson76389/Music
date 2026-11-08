@@ -139,17 +139,25 @@ internal fun PlayerArtworkSwitcher(
     }
 
     val playerImage: @Composable () -> Unit = {
-        if (showVideo && showModeBar && videoId != null && clip != null && videoPlayer != null) {
-            VideoOnlySurface(
-                videoId = clip.id,
-                audioId = videoId,
-                videoPlayer = videoPlayer,
-                thumbnailUrl = thumbnailUrl,
-                isPlaying = isPlaying,
-                playerConnection = playerConnection,
-                onUnavailable = { onVideoUnavailable(clip.id) },
-                modifier = Modifier.fillMaxSize(),
-            )
+        // Keep the SAME TextureView attached while switching tabs. Removing the
+        // AndroidView on every Son selection forces a fresh decoder surface and
+        // creates a black/loading pause when returning to Vidéo.
+        val resolvedVideo = showModeBar && videoId != null && clip != null && videoPlayer != null
+        if (resolvedVideo) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
+                VideoOnlySurface(
+                    videoId = clip!!.id,
+                    audioId = videoId!!,
+                    videoPlayer = videoPlayer!!,
+                    thumbnailUrl = thumbnailUrl,
+                    isPlaying = isPlaying,
+                    visible = showVideo,
+                    playerConnection = playerConnection,
+                    onUnavailable = { onVideoUnavailable(clip.id) },
+                    modifier = Modifier.fillMaxSize().alpha(if (showVideo) 1f else 0f),
+                )
+            }
         } else {
             artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
         }
@@ -171,18 +179,17 @@ internal fun PlayerArtworkSwitcher(
                 onShowVideoChange(false)
             },
             onVideoClick = {
-                videoPlayer?.let { player ->
-                    // Seek and start the already-buffered video before the
-                    // AndroidView is attached, rather than waiting for the
-                    // first 350 ms synchronisation poll.
+                if (videoPlayer != null && showModeBar) {
                     val audioPosition = runCatching { playerConnection.player.currentPosition }
                         .getOrDefault(0L).coerceAtLeast(0L)
-                    if (abs(player.currentPosition - audioPosition) > 700L) {
-                        player.seekTo(audioPosition)
+                    // An already prepared frame is normally within the sync
+                    // window. Avoid a decoder-flushing seek on every tab tap.
+                    if (abs(videoPlayer.currentPosition - audioPosition) > 1_800L) {
+                        videoPlayer.seekTo(audioPosition)
                     }
-                    player.playWhenReady = isPlaying
+                    videoPlayer.playWhenReady = isPlaying
+                    onShowVideoChange(true)
                 }
-                if (videoPlayer != null && showModeBar) onShowVideoChange(true)
             },
             onCollapse = onCollapse,
             modifier = barModifier,
@@ -434,6 +441,7 @@ private fun VideoOnlySurface(
     thumbnailUrl: String?,
     playerConnection: PlayerConnection,
     isPlaying: Boolean,
+    visible: Boolean,
     onUnavailable: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -469,25 +477,32 @@ private fun VideoOnlySurface(
         }
     }
 
-    LaunchedEffect(videoPlayer, audioId, isPlaying) {
+    // Respond to play/pause and tab selection without the 350 ms polling
+    // latency. Only correct large drift, never seek during buffering: doing
+    // so every 350 ms was flushing ExoPlayer and causing repeated stalls.
+    LaunchedEffect(videoPlayer, audioId, isPlaying, visible) {
+        val audioPlayer = playerConnection.player
+        val sameSong = audioPlayer.currentMediaItem?.mediaId == audioId
+        videoPlayer.playWhenReady = visible && isPlaying && sameSong
+        if (!visible || !sameSong) return@LaunchedEffect
+
+        var lastSyncMs = 0L
         while (isActive) {
-            val audioPlayer = runCatching { playerConnection.player }.getOrNull()
-            if (audioPlayer?.currentMediaItem?.mediaId == audioId) {
-                val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
-                if (abs(videoPlayer.currentPosition - audioPosition) > 700L) {
-                    videoPlayer.seekTo(audioPosition)
+            if (videoPlayer.playbackState == Player.STATE_READY) {
+                val drift = abs(videoPlayer.currentPosition - audioPlayer.currentPosition)
+                val now = android.os.SystemClock.elapsedRealtime()
+                if (drift > 2_800L && now - lastSyncMs > 5_000L) {
+                    videoPlayer.seekTo(audioPlayer.currentPosition.coerceAtLeast(0L))
+                    lastSyncMs = now
                 }
-                videoPlayer.playWhenReady = isPlaying
-            } else {
-                videoPlayer.playWhenReady = false
             }
-            delay(350L)
+            delay(1_500L)
         }
     }
 
     // Propagate explicit seeks immediately rather than waiting for the
     // periodic 350 ms drift correction (e.g. a fast drag of the audio slider).
-    DisposableEffect(videoPlayer, audioId, playerConnection) {
+    DisposableEffect(videoPlayer, audioId, playerConnection, visible) {
         val audio = playerConnection.player
         val listener = object : Player.Listener {
             override fun onPositionDiscontinuity(
@@ -495,7 +510,9 @@ private fun VideoOnlySurface(
                 newPosition: Player.PositionInfo,
                 reason: Int,
             ) {
-                if (audio.currentMediaItem?.mediaId == audioId) {
+                if (visible && audio.currentMediaItem?.mediaId == audioId &&
+                    abs(videoPlayer.currentPosition - newPosition.positionMs) > 500L
+                ) {
                     videoPlayer.seekTo(newPosition.positionMs.coerceAtLeast(0L))
                 }
             }
@@ -554,13 +571,13 @@ private fun VideoOnlySurface(
             // really pauses/resumes the underlying audio service. The video-only
             // session remains muted and follows the service; no duplicate sound.
             Box(
-                Modifier.matchParentSize().clickable(onClickLabel = playbackLabel) {
+                Modifier.matchParentSize().clickable(enabled = visible, onClickLabel = playbackLabel) {
                     playerConnection.togglePlayPause()
                     controlsVisible = true
                 },
             )
             AnimatedVisibility(
-                visible = videoReady && (!isPlaying || controlsVisible),
+                visible = visible && videoReady && (!isPlaying || controlsVisible),
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
