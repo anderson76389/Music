@@ -25,12 +25,10 @@ import java.util.Locale
  * NOT a technical proof that a musician uses generative AI.
  */
 internal class SoundProofRepository(private val context: Context) {
-    private data class Votes(val human: Int, val ai: Int)
-
     private val mutex = Mutex()
     private val directory = context.filesDir.resolve("soundproof")
     private val cacheFile = File(directory, "artists.json")
-    private var artists: Map<String, Votes>? = null
+    private var artists: Map<String, Pair<Int, Int>>? = null
     private var lastAttemptMs = 0L
 
     suspend fun refresh() = withContext(Dispatchers.IO) {
@@ -43,7 +41,7 @@ internal class SoundProofRepository(private val context: Context) {
             loadAndRefreshLocked()
             artists.orEmpty()
         }
-        SoundProofPolicy.isAnyArtistReportedAi(credits, known.mapValues { it.value.human to it.value.ai })
+        SoundProofPolicy.isAnyArtistReportedAi(credits, known)
     }
 
     private fun loadAndRefreshLocked() {
@@ -105,9 +103,9 @@ internal class SoundProofRepository(private val context: Context) {
         }
     }
 
-    private fun parseDump(file: File): Map<String, Votes> {
+    private fun parseDump(file: File): Map<String, Pair<Int, Int>> {
         require(file.length() <= MAX_DOWNLOAD_BYTES) { "SoundProof cache too large" }
-        val result = HashMap<String, Votes>()
+        val result = HashMap<String, Pair<Int, Int>>()
         InputStreamReader(FileInputStream(file), Charsets.UTF_8).use { input ->
             JsonReader(input).use { json ->
                 json.beginArray()
@@ -129,7 +127,7 @@ internal class SoundProofRepository(private val context: Context) {
                     json.endObject()
                     if (!name.isNullOrBlank() && human >= 0 && ai >= 0) {
                         val key = SoundProofPolicy.normalize(id?.takeIf { it.isNotBlank() } ?: name)
-                        if (key.isNotBlank()) result[key] = Votes(human, ai)
+                        if (key.isNotBlank()) result[key] = human to ai
                     }
                 }
                 json.endArray()
