@@ -249,7 +249,7 @@
     <string name="listen_history">Historique d\'écoute</string>
     <string name="disable_screenshot">Désactiver les captures d\'écran</string>
     <string name="search_history">Historique des recherches</string>
-    <string name="disable_screenshot_desc">Lorsque cette option est activée, les captures d\'écran et l\'aperçu de l\'application dans les applications récentes sont désactivés.</string>
+    <string name="disable_screenshot_desc">Bloquer les captures et les aperçus dans les applications récentes.</string>
     <string name="stop_music_on_task_clear">Arrêter l\'écoute lorsque l\'application est quittée</string>
     <string name="forgotten_favorites">Favoris oubliés</string>
     <string name="keep_listening">Continuez d\'écouter</string>
@@ -269,7 +269,7 @@
     <string name="squiggly">Ondulé</string>
     <string name="misc">Divers</string>
     <string name="grid_cell_size">Taille des cellules de la grille</string>
-    <string name="auto_load_more_desc">Ajouter automatiquement des titres à la file d\'attente lorsqu\'elle prend fin</string>
+    <string name="auto_load_more_desc">Ajouter des titres quand la file se termine.</string>
     <string name="auto_skip_next_on_error_desc">Assure une lecture en continu</string>
     <string name="library_album_empty">Les albums sauvegardés s\'afficheront ici</string>
     <string name="your_youtube_playlists">Vos playlists YouTube</string>
@@ -278,12 +278,12 @@
     <string name="small">Petites</string>
     <string name="player_slider_style">Style de curseur du lecteur</string>
     <string name="big">Grandes</string>
-    <string name="persistent_queue_desc">Restaurer la file d\'attente précédente au démarrage de l\'application</string>
+    <string name="persistent_queue_desc">Restaurer la dernière file au démarrage.</string>
     <string name="queue">File d\'attente</string>
     <string name="auto_load_more">Charger automatiquement plus de titres</string>
     <string name="auto_skip_next_on_error">Passer au titre suivant en cas d\'erreur</string>
     <string name="use_login_for_browse">Utiliser le compte connecté pour parcourir le contenu</string>
-    <string name="use_login_for_browse_desc">Ceci peut influencer le contenu que vous voyez et affiche par exemple les albums premiums si vous êtes connecté avec un compte Premium</string>
+    <string name="use_login_for_browse_desc">Adapter le catalogue au compte connecté, notamment Premium.</string>
     <string name="action_login">Se connecter</string>
     <!-- Réglages du thème : ne plus laisser de libellés anglais en français. -->
     <string name="theme_desc">Personnalisez l’apparence de l’application</string>
@@ -291,5 +291,5 @@
     <string name="theme_mode">Mode d’affichage</string>
     <string name="color_palette">Palette de couleurs</string>
     <string name="use_system_colors">Utiliser les couleurs du système</string>
-    <string name="pause_listen_history_desc">Empêche aussi l’envoi de la progression d’écoute vers votre compte YouTube Music connecté.</string>
+    <string name="pause_listen_history_desc">Bloque aussi le suivi sur votre compte YouTube Music.</string>
 </resources>
