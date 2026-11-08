@@ -5,6 +5,12 @@
 
 package fr.makoff.music.ui.screens.settings
 
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import fr.makoff.music.playback.SoundProofRepository
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -95,13 +101,18 @@ fun PlayerSettings(
     val (playerVideoModeEnabled, onPlayerVideoModeEnabledChange) = rememberPreference(
         PlayerVideoModeEnabledKey, defaultValue = true,
     )
-    val (playerVideoThemeMode, onPlayerVideoThemeModeChange) = rememberEnumPreference(
+    val (playerVideoThemeMode, _) = rememberEnumPreference(
         PlayerVideoThemeModeKey, defaultValue = PlayerVideoThemeMode.AUTO,
     )
     // Both settings screens use the same stored SoundProof toggle.
     val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(
         SoundProofSkipAiKey, defaultValue = false,
     )
+    val context = LocalContext.current
+    val soundProofRepository = remember(context) { SoundProofRepository(context) }
+    val refreshScope = rememberCoroutineScope()
+    var refreshingSoundProof by remember { mutableStateOf(false) }
+    var refreshedSoundProof by remember { mutableStateOf<Boolean?>(null) }
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
         defaultValue = AudioQuality.HIGH
@@ -233,31 +244,6 @@ fun PlayerSettings(
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
     }
-    var showVideoThemeDialog by remember { mutableStateOf(false) }
-    if (showVideoThemeDialog) {
-        EnumDialog(
-            onDismiss = { showVideoThemeDialog = false },
-            onSelect = {
-                onPlayerVideoThemeModeChange(it)
-                showVideoThemeDialog = false
-            },
-            title = stringResource(R.string.player_video_theme_setting),
-            current = playerVideoThemeMode,
-            values = PlayerVideoThemeMode.values().toList(),
-            valueText = {
-                when (it) {
-                    PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
-                    PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
-                    PlayerVideoThemeMode.COVER -> stringResource(R.string.player_video_theme_cover)
-                    PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
-                    PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
-                    PlayerVideoThemeMode.OLED -> stringResource(R.string.player_video_theme_oled)
-                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
-                }
-            },
-        )
-    }
-
     var showLoudnessLevelDialog by remember {
         mutableStateOf(false)
     }
@@ -342,20 +328,8 @@ fun PlayerSettings(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.palette),
                         title = { Text(stringResource(R.string.player_video_theme_setting)) },
-                        description = {
-                            Text(
-                                when (playerVideoThemeMode) {
-                                    PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
-                                    PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
-                                    PlayerVideoThemeMode.COVER -> stringResource(R.string.player_video_theme_cover)
-                                    PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
-                                    PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
-                                    PlayerVideoThemeMode.OLED -> stringResource(R.string.player_video_theme_oled)
-                                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
-                                },
-                            )
-                        },
-                        onClick = { showVideoThemeDialog = true },
+                        description = { Text(videoThemeLabel(playerVideoThemeMode)) },
+                        onClick = { navController.navigate("settings/player/video_theme") },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.person),
@@ -368,9 +342,100 @@ fun PlayerSettings(
                             )
                         },
                         onClick = { onSoundProofSkipAiChange(!soundProofSkipAi) },
+                    ),
+                    // These are real SoundProof actions, not decorative switches.
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.sync),
+                        title = { Text(stringResource(R.string.soundproof_refresh_title)) },
+                        description = {
+                            Text(
+                                when {
+                                    refreshingSoundProof -> stringResource(R.string.soundproof_refresh_running)
+                                    refreshedSoundProof == true -> stringResource(R.string.soundproof_refresh_success)
+                                    refreshedSoundProof == false -> stringResource(R.string.soundproof_refresh_error)
+                                    else -> stringResource(R.string.soundproof_refresh_description)
+                                }
+                            )
+                        },
+                        enabled = soundProofSkipAi && !refreshingSoundProof,
+                        onClick = {
+                            if (!refreshingSoundProof) {
+                                refreshingSoundProof = true
+                                refreshScope.launch {
+                                    refreshedSoundProof = runCatching { soundProofRepository.refreshNow() }.getOrDefault(false)
+                                    refreshingSoundProof = false
+                                }
+                            }
+                        },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.info),
+                        title = { Text(stringResource(R.string.soundproof_source_title)) },
+                        description = { Text(stringResource(R.string.soundproof_source_description)) },
+                        onClick = {
+                            runCatching {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/NuclearBlox/SoundProof-Dumps"))
+                                )
+                            }
+                        },
                     )
                 ),
             )
+            Spacer(modifier = Modifier.height(27.dp))
+        Material3SettingsGroup(
+            title = stringResource(R.string.player_devices_section),
+            items = buildList {
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.bluetooth),
+                        title = { Text(stringResource(R.string.resume_on_bluetooth_connect)) },
+                        trailingContent = {
+                            Switch(
+                                checked = resumeOnBluetoothConnect,
+                                onCheckedChange = onResumeOnBluetoothConnectChange,
+                                thumbContent = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = if (resumeOnBluetoothConnect) R.drawable.check else R.drawable.close
+                                        ),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(SwitchDefaults.IconSize)
+                                    )
+                                }
+                            )
+                        },
+                        onClick = { onResumeOnBluetoothConnectChange(!resumeOnBluetoothConnect) }
+                    ),
+                )
+                if (BuildConfig.CAST_AVAILABLE) {
+                    add(
+                        Material3SettingsItem(
+                            icon = painterResource(R.drawable.cast),
+                            title = { Text(stringResource(R.string.google_cast)) },
+                            description = { Text(stringResource(R.string.google_cast_description)) },
+                            trailingContent = {
+                                Switch(
+                                    checked = enableGoogleCast,
+                                    onCheckedChange = onEnableGoogleCastChange,
+                                    thumbContent = {
+                                        Icon(
+                                            painter = painterResource(
+                                                id = if (enableGoogleCast) R.drawable.check else R.drawable.close
+                                            ),
+                                            contentDescription = null,
+                                            modifier = Modifier.size(SwitchDefaults.IconSize)
+                                        )
+                                    }
+                                )
+                            },
+                            onClick = { onEnableGoogleCastChange(!enableGoogleCast) }
+                        ),
+                    )
+                }
+            },
+        )
+
             Spacer(modifier = Modifier.height(27.dp))
         }
 
@@ -1004,60 +1069,7 @@ fun PlayerSettings(
 
         Spacer(modifier = Modifier.height(27.dp))
 
-        Material3SettingsGroup(
-            title = stringResource(R.string.player_devices_section),
-            items = buildList {
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.bluetooth),
-                        title = { Text(stringResource(R.string.resume_on_bluetooth_connect)) },
-                        trailingContent = {
-                            Switch(
-                                checked = resumeOnBluetoothConnect,
-                                onCheckedChange = onResumeOnBluetoothConnectChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter = painterResource(
-                                            id = if (resumeOnBluetoothConnect) R.drawable.check else R.drawable.close
-                                        ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                                    )
-                                }
-                            )
-                        },
-                        onClick = { onResumeOnBluetoothConnectChange(!resumeOnBluetoothConnect) }
-                    ),
-                )
-                if (BuildConfig.CAST_AVAILABLE) {
-                    add(
-                        Material3SettingsItem(
-                            icon = painterResource(R.drawable.cast),
-                            title = { Text(stringResource(R.string.google_cast)) },
-                            description = { Text(stringResource(R.string.google_cast_description)) },
-                            trailingContent = {
-                                Switch(
-                                    checked = enableGoogleCast,
-                                    onCheckedChange = onEnableGoogleCastChange,
-                                    thumbContent = {
-                                        Icon(
-                                            painter = painterResource(
-                                                id = if (enableGoogleCast) R.drawable.check else R.drawable.close
-                                            ),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(SwitchDefaults.IconSize)
-                                        )
-                                    }
-                                )
-                            },
-                            onClick = { onEnableGoogleCastChange(!enableGoogleCast) }
-                        ),
-                    )
-                }
-            },
-        )
 
-        Spacer(modifier = Modifier.height(27.dp))
 
         }
         if (section == PlayerSettingsTab.AUDIO) {

@@ -30,9 +30,18 @@ internal class SoundProofRepository(private val context: Context) {
     private val cacheFile = File(directory, "artists.json")
     private var artists: Map<String, Pair<Int, Int>>? = null
     private var lastAttemptMs = 0L
+    private var loadedCacheModifiedMs = 0L
 
     suspend fun refresh() = withContext(Dispatchers.IO) {
         mutex.withLock { loadAndRefreshLocked() }
+    }
+
+    /** Explicit action from settings. It bypasses the daily cache interval,
+     * reports a real download/parse result, and preserves the last valid file
+     * if the remote source is unavailable.
+     */
+    suspend fun refreshNow(): Boolean = withContext(Dispatchers.IO) {
+        mutex.withLock { loadAndRefreshLocked(force = true) }
     }
 
     suspend fun shouldSkipArtist(credits: List<String>): Boolean = withContext(Dispatchers.IO) {
@@ -44,18 +53,21 @@ internal class SoundProofRepository(private val context: Context) {
         SoundProofPolicy.isAnyArtistReportedAi(credits, known)
     }
 
-    private fun loadAndRefreshLocked() {
-        if (artists == null) {
+    private fun loadAndRefreshLocked(force: Boolean = false): Boolean {
+        // Refresh in-memory votes after another instance (settings/player)
+        // atomically replaces the shared cache on disk.
+        if (artists == null || (cacheFile.isFile && loadedCacheModifiedMs != cacheFile.lastModified())) {
             artists = runCatching { if (cacheFile.isFile) parseDump(cacheFile) else emptyMap() }
                 .onFailure { Timber.w(it, "SoundProof cache unreadable") }
                 .getOrDefault(emptyMap())
+            loadedCacheModifiedMs = if (cacheFile.isFile) cacheFile.lastModified() else 0L
         }
         val now = System.currentTimeMillis()
         val stale = !cacheFile.isFile || now - cacheFile.lastModified() >= REFRESH_AFTER_MS
-        if (!stale || now - lastAttemptMs < RETRY_AFTER_MS) return
+        if (!force && (!stale || now - lastAttemptMs < RETRY_AFTER_MS)) return false
         lastAttemptMs = now
 
-        runCatching {
+        val result = runCatching {
             directory.mkdirs()
             val temporary = File(directory, "artists.json.download")
             try {
@@ -67,6 +79,7 @@ internal class SoundProofRepository(private val context: Context) {
                     StandardCopyOption.REPLACE_EXISTING,
                 )
                 artists = parsed
+                loadedCacheModifiedMs = cacheFile.lastModified()
             } finally {
                 temporary.delete()
             }
@@ -74,6 +87,7 @@ internal class SoundProofRepository(private val context: Context) {
             // Never replace a previous valid cache with a failed download.
             Timber.w(it, "SoundProof update unavailable: using saved community database")
         }
+        return result.isSuccess
     }
 
     private fun fetchDump(target: File) {
