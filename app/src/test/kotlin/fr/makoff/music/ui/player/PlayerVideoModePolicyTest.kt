@@ -5,6 +5,21 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PlayerVideoModePolicyTest {
+    @Test fun noClassicHeaderWhenVideoModeIsEnabledEvenForUnplayableClips() {
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
+                PlayerVideoModePolicy.HeaderMode.LOADING,
+        )
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(false, true, modeEnabled = true) ==
+                PlayerVideoModePolicy.HeaderMode.LOADING,
+        )
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(true, false, modeEnabled = true) ==
+                PlayerVideoModePolicy.HeaderMode.SELECTOR,
+        )
+    }
+
     @Test fun videoSelectorNeverOverlaysOldNowPlayingHeader() {
         assertTrue(
             PlayerVideoModePolicy.headerMode(true, false) ==
