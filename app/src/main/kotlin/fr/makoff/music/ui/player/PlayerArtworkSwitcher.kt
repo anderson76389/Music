@@ -37,6 +37,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.CompositionLocalProvider
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -504,72 +507,85 @@ private fun PlayerModePills(
     appDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Only monochrome light/dark variants. DISABLED removes the custom
-    // pill treatment without removing the functional Son/Vidéo selector.
+    val colors = MaterialTheme.colorScheme
+    val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
     val dark = when (selectorTheme) {
         PlayerVideoThemeMode.DARK -> true
         PlayerVideoThemeMode.LIGHT -> false
-        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED -> appDarkTheme
+        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
     val shape = RoundedCornerShape(22.dp)
-    val barBackground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
-        dark -> Color(0xFF242426)
-        else -> Color(0xFFEAEAEC)
+    // AUTO really follows MaterialTheme (including dynamic/custom colors).
+    // Light/Dark are fixed monochrome styles; Glass uses the EXISTING
+    // Haze / refraction implementation of the application.
+    val barBackground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
+        PlayerVideoThemeMode.AUTO -> colors.surfaceContainerHigh
+        PlayerVideoThemeMode.DARK -> Color(0xFF242426)
+        PlayerVideoThemeMode.LIGHT -> Color(0xFFEAEAEC)
     }
-    val selectedBackground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White.copy(alpha = 0.16f)
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black.copy(alpha = 0.10f)
-        dark -> Color(0xFFF5F5F5)
-        else -> Color(0xFF242426)
+    val selectedBackground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED -> if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.10f)
+        PlayerVideoThemeMode.AUTO -> colors.primaryContainer
+        PlayerVideoThemeMode.DARK -> Color(0xFFF5F5F5)
+        PlayerVideoThemeMode.LIGHT -> Color(0xFF242426)
+        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.90f)
     }
-    val selectedForeground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black
-        dark -> Color(0xFF1B1B1D)
-        else -> Color.White
+    val selectedForeground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED -> if (dark) Color.White else Color.Black
+        PlayerVideoThemeMode.AUTO -> colors.onPrimaryContainer
+        PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
+        PlayerVideoThemeMode.LIGHT -> Color.White
+        PlayerVideoThemeMode.LIQUID_GLASS -> Color(0xFF17191D)
     }
-    val unselectedForeground = if (dark) Color.White.copy(alpha = 0.85f)
-        else Color.Black.copy(alpha = 0.78f)
-    val outlineColor = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
-        dark -> Color.White.copy(alpha = 0.16f)
-        else -> Color.Black.copy(alpha = 0.10f)
+    val unselectedForeground = when (selectorTheme) {
+        PlayerVideoThemeMode.AUTO -> colors.onSurfaceVariant
+        else -> if (dark) Color.White.copy(alpha = 0.86f) else Color.Black.copy(alpha = 0.78f)
+    }
+    val outlineColor = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
+        PlayerVideoThemeMode.AUTO -> colors.outlineVariant
+        PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.16f)
+        PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
 
-    Row(
-        modifier = modifier
-            .clip(shape)
-            .background(barBackground)
-            .border(0.75.dp, outlineColor, shape)
-            .padding(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
-            val selected = showVideo == video
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(30.dp)
-                    .clip(RoundedCornerShape(19.dp))
-                    .background(if (selected) selectedBackground else Color.Transparent)
-                    .selectable(
-                        selected = selected,
-                        role = Role.Tab,
-                        onClick = if (video) onVideoClick else onAudioClick,
-                    )
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(
-                        if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
-                    ),
-                    contentDescription = label,
-                    tint = if (selected) selectedForeground else unselectedForeground,
-                    modifier = Modifier.size(19.dp),
+    // Local override allows glass for the pill ALONE even if the app's global
+    // Liquid Glass theme is disabled. The player supplies the shared HazeState.
+    CompositionLocalProvider(LocalLiquidGlassEnabled provides (LocalLiquidGlassEnabled.current || glass)) {
+        Row(
+            modifier = modifier
+                .then(
+                    if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
+                    else Modifier.clip(shape).background(barBackground).border(0.75.dp, outlineColor, shape)
                 )
+                .padding(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
+                val selected = showVideo == video
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(19.dp))
+                        .background(if (selected) selectedBackground else Color.Transparent)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = if (video) onVideoClick else onAudioClick,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
+                        ),
+                        contentDescription = label,
+                        tint = if (selected) selectedForeground else unselectedForeground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
     }
