@@ -1682,7 +1682,9 @@ fun BottomSheetPlayer(
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,
                                 onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
-                                isExpanded = state.isExpanded,
+                                // Render controls as the sheet starts to open,
+                                // not only after the spring reaches its exact final anchor.
+                                isExpanded = state.progress >= 0.16f || state.isExpanded,
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
@@ -1759,7 +1761,9 @@ fun BottomSheetPlayer(
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,
                                 onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
-                                isExpanded = state.isExpanded,
+                                // Render controls as the sheet starts to open,
+                                // not only after the spring reaches its exact final anchor.
+                                isExpanded = state.progress >= 0.16f || state.isExpanded,
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
