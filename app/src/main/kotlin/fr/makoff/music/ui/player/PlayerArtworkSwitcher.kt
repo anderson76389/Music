@@ -3,6 +3,8 @@ package fr.makoff.music.ui.player
 import android.view.TextureView
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -49,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -92,6 +95,7 @@ internal fun PlayerArtworkSwitcher(
     videoModeEnabled: Boolean,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
+    artworkThemeColor: Color,
     isVideoSong: Boolean,
     isLocalOrUploaded: Boolean,
     songTitle: String?,
@@ -366,6 +370,7 @@ internal fun PlayerArtworkSwitcher(
             headerMode = headerMode,
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
+            artworkThemeColor = artworkThemeColor,
             modeTextColor = modeTextColor,
             onAudioClick = {
                 warmedVideoPlayer?.playWhenReady = false
@@ -428,6 +433,7 @@ private fun PlayerModeTopBar(
     headerMode: PlayerVideoModePolicy.HeaderMode,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
+    artworkThemeColor: Color,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -449,6 +455,7 @@ private fun PlayerModeTopBar(
                 onVideoClick = onVideoClick,
                 selectorTheme = selectorTheme,
                 appDarkTheme = appDarkTheme,
+                artworkThemeColor = artworkThemeColor,
                 modifier = Modifier.width(144.dp),
             )
             PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
@@ -509,38 +516,46 @@ private fun PlayerModePills(
     onVideoClick: () -> Unit,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
+    artworkThemeColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
+    val coverDark = artworkThemeColor.luminance() < 0.48f
     val dark = when (selectorTheme) {
-        PlayerVideoThemeMode.DARK -> true
+        PlayerVideoThemeMode.DARK, PlayerVideoThemeMode.OLED -> true
         PlayerVideoThemeMode.LIGHT -> false
+        PlayerVideoThemeMode.COVER -> coverDark
         PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
     val shape = RoundedCornerShape(22.dp)
-    // AUTO really follows MaterialTheme (including dynamic/custom colors).
-    // Light/Dark are fixed monochrome styles; Glass uses the EXISTING
-    // Haze / refraction implementation of the application.
+    // COVER samples this track's artwork even when the player background is
+    // not a gradient. OLED is true black; AUTO continues to follow the app.
     val barBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.surfaceContainerHigh
+        PlayerVideoThemeMode.COVER -> artworkThemeColor.copy(alpha = 0.94f)
         PlayerVideoThemeMode.DARK -> Color(0xFF242426)
+        PlayerVideoThemeMode.OLED -> Color.Black
         PlayerVideoThemeMode.LIGHT -> Color(0xFFEAEAEC)
     }
     val selectedBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.10f)
         PlayerVideoThemeMode.AUTO -> colors.primaryContainer
+        PlayerVideoThemeMode.COVER -> if (dark) Color.White.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.18f)
         PlayerVideoThemeMode.DARK -> Color(0xFFF5F5F5)
+        PlayerVideoThemeMode.OLED -> Color.White.copy(alpha = 0.20f)
         PlayerVideoThemeMode.LIGHT -> Color(0xFF242426)
-        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.90f)
+        PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
     }
     val selectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White else Color.Black
         PlayerVideoThemeMode.AUTO -> colors.onPrimaryContainer
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED ->
+            if (dark) Color.White else Color(0xFF131313)
         PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
         PlayerVideoThemeMode.LIGHT -> Color.White
-        PlayerVideoThemeMode.LIQUID_GLASS -> Color(0xFF17191D)
+        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White else Color(0xFF17191D)
     }
     val unselectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.AUTO -> colors.onSurfaceVariant
@@ -549,9 +564,15 @@ private fun PlayerModePills(
     val outlineColor = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.outlineVariant
-        PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.16f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED, PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.18f)
         PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
+    val animatedBarColor by animateColorAsState(
+        targetValue = barBackground, animationSpec = tween(450), label = "modeSelectorBackground",
+    )
+    val animatedSelectedColor by animateColorAsState(
+        targetValue = selectedBackground, animationSpec = tween(450), label = "modeSelectorSelected",
+    )
 
     // Local override allows glass for the pill ALONE even if the app's global
     // Liquid Glass theme is disabled. The player supplies the shared HazeState.
@@ -560,7 +581,7 @@ private fun PlayerModePills(
             modifier = modifier
                 .then(
                     if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
-                    else Modifier.clip(shape).background(barBackground).border(0.75.dp, outlineColor, shape)
+                    else Modifier.clip(shape).background(animatedBarColor).border(0.75.dp, outlineColor, shape)
                 )
                 .padding(2.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -572,8 +593,20 @@ private fun PlayerModePills(
                     modifier = Modifier
                         .weight(1f)
                         .height(34.dp)
-                        .clip(RoundedCornerShape(19.dp))
-                        .background(if (selected) selectedBackground else Color.Transparent)
+                        .then(
+                            if (glass && selected) {
+                                // Refract the artwork below the active tab, too:
+                                // no permanently painted, opaque white highlight.
+                                Modifier.liquidGlass(
+                                    shape = RoundedCornerShape(19.dp),
+                                    chrome = true,
+                                    showBorder = true,
+                                )
+                            } else {
+                                Modifier.clip(RoundedCornerShape(19.dp))
+                                    .background(if (selected) animatedSelectedColor else Color.Transparent)
+                            },
+                        )
                         .selectable(
                             selected = selected,
                             role = Role.Tab,

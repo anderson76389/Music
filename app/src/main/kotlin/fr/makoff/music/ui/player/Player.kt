@@ -461,8 +461,10 @@ fun BottomSheetPlayer(
         else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode) {
-        if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
+    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode, selectorTheme) {
+        // Sample every song's artwork for the selector, regardless of the
+        // player's own background setting.
+        if (playerBackground == PlayerBackgroundStyle.GRADIENT || selectorTheme == PlayerVideoThemeMode.COVER) {
             gradientColors = gradientColorsCache["${mediaMetadata?.id}_$glassMode"] ?: defaultGradientColors
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
@@ -738,7 +740,9 @@ fun BottomSheetPlayer(
         LocalMenuState provides playerMenuState,
     ) {
     // Capture the player separately: the navigation canvas sits behind it.
-    Box(Modifier.then(if (glassMode || selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS) Modifier.hazeSource(playerGlass) else Modifier)) {
+    // Capture the artwork-backed background only, not the chrome itself;
+    // this prevents the Haze glass selector from feeding back on itself.
+    Box {
     BottomSheet(
         state = state,
         modifier = modifier,
@@ -747,6 +751,11 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
+                        .then(
+                            if (glassMode || selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS) {
+                                Modifier.hazeSource(playerGlass)
+                            } else Modifier
+                        )
                         .background(if (LocalLiquidGlassEnabled.current) bottomSheetBackgroundColor.copy(alpha = backgroundAlpha) else bottomSheetBackgroundColor),
             ) {
                 when (playerBackground) {
@@ -1612,6 +1621,7 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
+                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
@@ -1705,6 +1715,7 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
+                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
@@ -1816,19 +1827,14 @@ private fun PlayerMoreMenuButton(
     val navController = LocalNavController.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
-    val pressSource = remember { MutableInteractionSource() }
-    val pressed by pressSource.collectIsPressedAsState()
-
+    // Default ripple is scoped to the tap and cannot remain stuck behind a modal sheet.
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(24.dp))
-                // No permanent highlight: draw the filled state only for a
-                // real pressed gesture, not while the button is idle.
-                .background(if (pressed) textButtonColor else Color.Transparent)
-                .clickable(interactionSource = pressSource, indication = null) {
+                .clickable {
                     menuState.show {
                         PlayerMenu(
                             mediaMetadata = mediaMetadata,
@@ -1848,7 +1854,7 @@ private fun PlayerMoreMenuButton(
         Image(
             painter = painterResource(R.drawable.more_horiz),
             contentDescription = stringResource(R.string.more_options),
-            colorFilter = ColorFilter.tint(if (pressed) iconButtonColor else idleIconColor),
+            colorFilter = ColorFilter.tint(idleIconColor),
         )
     }
 }
