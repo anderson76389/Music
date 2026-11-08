@@ -59,6 +59,8 @@ import fr.makoff.music.constants.LoudnessLevelKey
 import fr.makoff.music.constants.PauseOnMute
 import fr.makoff.music.constants.PersistentQueueKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
+import fr.makoff.music.constants.PlayerVideoThemeMode
+import fr.makoff.music.constants.PlayerVideoThemeModeKey
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
 import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
@@ -91,6 +93,9 @@ fun PlayerSettings(
 ) {
     val (playerVideoModeEnabled, onPlayerVideoModeEnabledChange) = rememberPreference(
         PlayerVideoModeEnabledKey, defaultValue = true,
+    )
+    val (playerVideoThemeMode, onPlayerVideoThemeModeChange) = rememberEnumPreference(
+        PlayerVideoThemeModeKey, defaultValue = PlayerVideoThemeMode.AUTO,
     )
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
@@ -223,6 +228,27 @@ fun PlayerSettings(
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
     }
+    var showVideoThemeDialog by remember { mutableStateOf(false) }
+    if (showVideoThemeDialog) {
+        EnumDialog(
+            onDismiss = { showVideoThemeDialog = false },
+            onSelect = {
+                onPlayerVideoThemeModeChange(it)
+                showVideoThemeDialog = false
+            },
+            title = stringResource(R.string.player_video_theme_setting),
+            current = playerVideoThemeMode,
+            values = PlayerVideoThemeMode.values().toList(),
+            valueText = {
+                when (it) {
+                    PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
+                    PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
+                    PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
+                    PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
+                }
+            },
+        )
+    }
 
     var showLoudnessLevelDialog by remember {
         mutableStateOf(false)
@@ -304,6 +330,21 @@ fun PlayerSettings(
                             )
                         },
                         onClick = { onPlayerVideoModeEnabledChange(!playerVideoModeEnabled) },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.palette),
+                        title = { Text(stringResource(R.string.player_video_theme_setting)) },
+                        description = {
+                            Text(
+                                when (playerVideoThemeMode) {
+                                    PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
+                                    PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
+                                    PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
+                                    PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
+                                },
+                            )
+                        },
+                        onClick = { showVideoThemeDialog = true },
                     )
                 ),
             )

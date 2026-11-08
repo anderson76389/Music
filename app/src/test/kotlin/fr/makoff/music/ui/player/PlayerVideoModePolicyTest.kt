@@ -5,6 +5,25 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class PlayerVideoModePolicyTest {
+    @Test fun videoSelectorNeverOverlaysOldNowPlayingHeader() {
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(true, false) ==
+                PlayerVideoModePolicy.HeaderMode.SELECTOR,
+        )
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(true, true) ==
+                PlayerVideoModePolicy.HeaderMode.SELECTOR,
+        )
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(false, true) ==
+                PlayerVideoModePolicy.HeaderMode.LOADING,
+        )
+        assertTrue(
+            PlayerVideoModePolicy.headerMode(false, false) ==
+                PlayerVideoModePolicy.HeaderMode.CLASSIC,
+        )
+    }
+
     @Test fun modeIsEnabledByDefaultOnlyForPlayableVideos() {
         assertTrue(PlayerVideoModePolicy.showSelector(true, true, true))
         assertFalse(PlayerVideoModePolicy.showSelector(true, true, false))
@@ -40,6 +59,17 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", null, false, true, true))
         assertFalse(PlayerVideoModePolicy.clipSelectable(true, "abcdefghijk", "abcdefghijk", true, true, true))
         assertFalse(PlayerVideoModePolicy.clipSelectable(false, "abcdefghijk", null, true, true, true))
+    }
+
+    @Test fun pairedClipFailureAttemptsOriginalVideoWithoutInfiniteRetry() {
+        val original = "abcdefghijk"
+        val paired = "lmnopqrstuv"
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, emptySet()) == paired)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, setOf(paired)) == original)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, true, setOf(original, paired)) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, true, true, emptySet()) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, false, false, true, emptySet()) == null)
+        assertTrue(PlayerVideoModePolicy.bestClipId(original, paired, true, false, false, setOf(paired)) == null)
     }
 
     @Test fun screenStaysAwakeOnlyForExpandedVideoNotAudioOrCast() {

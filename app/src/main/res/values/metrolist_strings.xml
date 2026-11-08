@@ -931,4 +931,10 @@
     <string name="restart_app_recommended_message">Ce changement peut nécessiter un redémarrage pour être appliqué partout. Vous pouvez le faire maintenant ou plus tard.</string>
     <string name="restart_app_now">Redémarrer</string>
     <string name="restart_app_later">Plus tard</string>
+    <string name="player_video_theme_setting">Mode thème (Son / Vidéo)</string>
+    <string name="player_video_theme_setting_desc">Personnaliser uniquement le sélecteur Son / Vidéo, sans changer le thème du lecteur.</string>
+    <string name="player_video_theme_off">Désactivé</string>
+    <string name="player_video_theme_auto">Automatique</string>
+    <string name="player_video_theme_light">Clair</string>
+    <string name="player_video_theme_dark">Sombre</string>
 </resources>

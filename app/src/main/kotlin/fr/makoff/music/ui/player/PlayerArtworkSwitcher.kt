@@ -61,6 +61,7 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.R
+import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.utils.InnerTubeXPlayer
@@ -86,6 +87,8 @@ import kotlin.math.abs
 internal fun PlayerArtworkSwitcher(
     videoId: String?,
     videoModeEnabled: Boolean,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     isVideoSong: Boolean,
     isLocalOrUploaded: Boolean,
     songTitle: String?,
@@ -152,13 +155,25 @@ internal fun PlayerArtworkSwitcher(
 
     // A direct video stream is a valid video for the *same* audio queue item;
     // never substitute an unverified search result.
-    val clipVideoId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
+    // The first signed URL can be unavailable even when the actual music
+    // video is playable. Try the same YouTube item after an unavailable paired
+    // clip, without inventing a search match or retrying one bad ID forever.
+    var failedClipIds by remember(videoId) { mutableStateOf(emptySet<String>()) }
+    val preferredClipId = knownPlayableClipId ?: PlayerVideoModePolicy.candidateVideoId(
         originalId = videoId,
         isYouTubeTrack = isYouTubeTrack,
         isLocalOrUploaded = isLocalOrUploaded,
         isVideoSong = isVideoSong,
         pairedId = companionVideoId,
         counterpartLookupDone = counterpartLookupDone,
+    )
+    val clipVideoId = PlayerVideoModePolicy.bestClipId(
+        originalId = videoId,
+        preferredId = preferredClipId,
+        youtubeTrack = isYouTubeTrack,
+        localOrUploaded = isLocalOrUploaded,
+        counterpartLookupDone = counterpartLookupDone,
+        failedIds = failedClipIds,
     )
     // Do not advertise an unplayable clip. Resolve the actual signed video
     // stream in the background ONLY while the full player is expanded, and
@@ -187,14 +202,14 @@ internal fun PlayerArtworkSwitcher(
         videoStreamLookupFinished = true
         if (availableVideoStream != null) {
             onPlayableClipResolved(id)
-        } else if (knownPlayableClipId == id) {
-            onPlayableClipInvalidated(id)
+        } else {
+            failedClipIds = failedClipIds + id
+            if (knownPlayableClipId == id) onPlayableClipInvalidated(id)
         }
     }
-    var unavailableClipId by remember(videoId) { mutableStateOf<String?>(null) }
     val playableStream = availableVideoStream.takeIf {
         videoModeEnabled && isExpanded && !isCasting && !isLocalOrUploaded &&
-            clipVideoId != unavailableClipId
+            clipVideoId != null && clipVideoId !in failedClipIds
     }
 
     // Prepare once, as soon as the clip stream is known, instead of creating
@@ -242,9 +257,10 @@ internal fun PlayerArtworkSwitcher(
     DisposableEffect(warmedVideoPlayer, clipVideoId) {
         val listener = object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                unavailableClipId = clipVideoId
-                clipVideoId?.let(onPlayableClipInvalidated)
-                onShowVideoChange(false)
+                clipVideoId?.let { id ->
+                    failedClipIds = failedClipIds + id
+                    onPlayableClipInvalidated(id)
+                }
             }
         }
         warmedVideoPlayer?.addListener(listener)
@@ -258,7 +274,7 @@ internal fun PlayerArtworkSwitcher(
     val canShowVideo = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = isYouTubeTrack,
         clipId = clipVideoId,
-        unavailableClipId = unavailableClipId,
+        unavailableClipId = clipVideoId?.takeIf { it in failedClipIds },
         hasResolvedStream = playableStream != null,
         hasOfficialPair = hasPairedVideo,
         streamLookupFinished = videoStreamLookupFinished,
@@ -266,6 +282,15 @@ internal fun PlayerArtworkSwitcher(
     val showModeBar = PlayerVideoModePolicy.showSelector(
         videoModeEnabled, isExpanded,
         canShowVideo && !isCasting && !isLocalOrUploaded,
+    )
+    // Do not flash "En cours de lecture" over the selector while a clip is
+    // being identified. Fall back to the classic header only after checking.
+    val checkingForClip = videoModeEnabled && isExpanded && isYouTubeTrack &&
+        !isLocalOrUploaded && !isCasting && !showModeBar &&
+        (!counterpartLookupDone || (clipVideoId != null && !videoStreamLookupFinished))
+    val headerMode = PlayerVideoModePolicy.headerMode(
+        selectorVisible = showModeBar,
+        waitingForClip = checkingForClip,
     )
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
@@ -280,7 +305,12 @@ internal fun PlayerArtworkSwitcher(
     LaunchedEffect(showVideo, clipVideoId, videoStreamLookupFinished, showModeBar) {
         // Keep the user's video choice while a rotated layout re-resolves its
         // stream. Reset only after a completed, unsuccessful lookup.
-        if (showVideo && clipVideoId != null && videoStreamLookupFinished && !showModeBar) {
+        // If both the paired clip and the direct fallback have failed,
+        // restore audio mode instead of trapping the player on a spinner.
+        if (showVideo && !showModeBar &&
+            ((clipVideoId == null && counterpartLookupDone) ||
+                (clipVideoId == videoId && videoStreamLookupFinished))
+        ) {
             onShowVideoChange(false)
         }
     }
@@ -296,10 +326,16 @@ internal fun PlayerArtworkSwitcher(
                 isPlaying = isPlaying,
                 playerConnection = playerConnection,
                 onUnavailable = {
-                    unavailableClipId = clipVideoId
-                    clipVideoId?.let(onPlayableClipInvalidated)
-                    onShowVideoChange(false)
-                    Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    clipVideoId?.let { id ->
+                        failedClipIds = failedClipIds + id
+                        onPlayableClipInvalidated(id)
+                    }
+                    // Keep the choice while trying the same-track video fallback;
+                    // close video only when there is no other playable candidate.
+                    if (clipVideoId == videoId) {
+                        onShowVideoChange(false)
+                        Toast.makeText(context, unavailable, Toast.LENGTH_SHORT).show()
+                    }
                 },
                 modifier = Modifier.fillMaxSize(),
             )
@@ -319,7 +355,9 @@ internal fun PlayerArtworkSwitcher(
             videoLabel = videoLabel,
             songTitle = songTitle,
             showVideo = showVideo,
-            showModeSelector = showModeBar,
+            headerMode = headerMode,
+            selectorTheme = selectorTheme,
+            appDarkTheme = appDarkTheme,
             modeTextColor = modeTextColor,
             onAudioClick = {
                 warmedVideoPlayer?.playWhenReady = false
@@ -369,9 +407,9 @@ internal fun PlayerArtworkSwitcher(
 }
 
 /**
- * Header from the supplied YouTube Music reference: collapse on the left,
- * two compact centered pills, then Cast and the three-dot menu on the right.
- * Use the active background style rather than assuming the app is always dark.
+ * Single top toolbar. When Son/Vidéo is available, its icons replace the
+ * classic header; NO extra title is duplicated over the real track title
+ * in the player's information section below the artwork.
  */
 @Composable
 private fun PlayerModeTopBar(
@@ -379,15 +417,15 @@ private fun PlayerModeTopBar(
     videoLabel: String,
     songTitle: String?,
     showVideo: Boolean,
-    showModeSelector: Boolean,
+    headerMode: PlayerVideoModePolicy.HeaderMode,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    // Real horizontal allocation: the title OR the mode buttons gets only the
-    // space between collapse and Cast/menu. No drawn-overlaid text/icons.
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -395,10 +433,7 @@ private fun PlayerModeTopBar(
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        IconButton(
-            onClick = onCollapse,
-            modifier = Modifier.size(48.dp),
-        ) {
+        IconButton(onClick = onCollapse, modifier = Modifier.size(48.dp)) {
             Icon(
                 painter = painterResource(R.drawable.expand_more),
                 contentDescription = stringResource(R.string.player_collapse_label),
@@ -406,51 +441,62 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-        Column(
+        Box(
             modifier = Modifier.weight(1f),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
+            contentAlignment = Alignment.Center,
         ) {
-            if (showModeSelector) {
-                PlayerModePills(
+            when (headerMode) {
+                PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
                     audioLabel = audioLabel,
                     videoLabel = videoLabel,
                     showVideo = showVideo,
                     onAudioClick = onAudioClick,
                     onVideoClick = onVideoClick,
-                    modifier = Modifier.width(140.dp),
+                    selectorTheme = selectorTheme,
+                    appDarkTheme = appDarkTheme,
+                    modifier = Modifier.width(136.dp),
                 )
-            } else {
-                Text(
-                    text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = modeTextColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
+                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                     modifier = Modifier.fillMaxWidth(),
-                )
-            }
-            songTitle?.takeIf { it.isNotBlank() }?.let { title ->
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = modeTextColor.copy(alpha = 0.92f),
-                    maxLines = 1,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                        .basicMarquee(
-                            iterations = Int.MAX_VALUE,
-                            initialDelayMillis = 1400,
-                            velocity = 32.dp,
-                        ),
-                )
+                ) {
+                    Text(
+                        text = stringResource(R.string.now_playing),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = modeTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+                    // Restore the original marquee ONLY with the classic
+                    // header. Never draw another title beneath Son/Vidéo.
+                    songTitle?.takeIf { it.isNotBlank() }?.let { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = modeTextColor.copy(alpha = 0.82f),
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                initialDelayMillis = 1400,
+                                velocity = 32.dp,
+                            ),
+                        )
+                    }
+                }
+                // Leave the center clear rather than flashing the old label
+                // over Son/Vidéo during a counterpart/stream lookup.
+                PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
             }
         }
+        // Exactly the same width as Collapse: the switch is centered on
+        // the *screen*, not offset by the action buttons on either side.
         CastButton(
-            modifier = Modifier.size(40.dp),
+            modifier = Modifier.size(48.dp),
             tintColor = modeTextColor,
-            buttonSize = 40.dp,
+            buttonSize = 48.dp,
         )
     }
 }
@@ -462,22 +508,48 @@ private fun PlayerModePills(
     showVideo: Boolean,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
+    selectorTheme: PlayerVideoThemeMode,
+    appDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Fixed YouTube Music-inspired palette: this toolbar MUST keep the
-    // same charcoal / peach appearance across light, dark, gradient, AMOLED
-    // and Liquid Glass app themes. The rest of the player remains themed.
+    // Only monochrome light/dark variants. DISABLED removes the custom
+    // pill treatment without removing the functional Son/Vidéo selector.
+    val dark = when (selectorTheme) {
+        PlayerVideoThemeMode.DARK -> true
+        PlayerVideoThemeMode.LIGHT -> false
+        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED -> appDarkTheme
+    }
     val shape = RoundedCornerShape(22.dp)
-    val barBackground = Color(0xFF30272B)
-    val selectedBackground = Color(0xFFF2A17E)
-    val selectedForeground = Color(0xFF251B1D)
-    val unselectedForeground = Color(0xFFF8F5F6)
+    val barBackground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
+        dark -> Color(0xFF242426)
+        else -> Color(0xFFEAEAEC)
+    }
+    val selectedBackground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White.copy(alpha = 0.16f)
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black.copy(alpha = 0.10f)
+        dark -> Color(0xFFF5F5F5)
+        else -> Color(0xFF242426)
+    }
+    val selectedForeground = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black
+        dark -> Color(0xFF1B1B1D)
+        else -> Color.White
+    }
+    val unselectedForeground = if (dark) Color.White.copy(alpha = 0.85f)
+        else Color.Black.copy(alpha = 0.78f)
+    val outlineColor = when {
+        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
+        dark -> Color.White.copy(alpha = 0.16f)
+        else -> Color.Black.copy(alpha = 0.10f)
+    }
 
     Row(
         modifier = modifier
             .clip(shape)
             .background(barBackground)
-            .border(0.75.dp, Color.White.copy(alpha = 0.14f), shape)
+            .border(0.75.dp, outlineColor, shape)
             .padding(2.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center,

@@ -59,6 +59,7 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout"
             android:theme="@style/Theme.MakoffMusic"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

@@ -10,6 +10,23 @@ import org.junit.Test
 
 class InnerTubeXPlayerTest {
     @Test
+    fun `HLS video MIME metadata is accepted without claiming an audio stream is video`() {
+        assertEquals(
+            "application/x-mpegURL",
+            InnerTubeXPlayer.supportedVideoMimeType("application/vnd.apple.mpegurl", "audio/mp4"),
+        )
+        assertEquals(
+            "application/x-mpegURL",
+            InnerTubeXPlayer.supportedVideoMimeType("application/x-mpegURL", "audio/mp4"),
+        )
+        assertEquals(
+            "video/mp4",
+            InnerTubeXPlayer.supportedVideoMimeType("video/mp4", "audio/mp4"),
+        )
+        assertEquals(null, InnerTubeXPlayer.supportedVideoMimeType("audio/mp4", "audio/mp4"))
+    }
+
+    @Test
     fun `high quality never downgrades on a metered connection`() {
         val high = fr.makoff.music.constants.AudioQuality.HIGH
         val low = fr.makoff.music.constants.AudioQuality.LOW
