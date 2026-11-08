@@ -952,4 +952,5 @@
     <string name="soundproof_refresh_error">Échec : ancienne base conservée.</string>
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
+    <string name="player_video_theme_custom">Personnalisé</string>
 </resources>

@@ -169,6 +169,7 @@ import fr.makoff.music.constants.UseNewPlayerDesignKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
+import fr.makoff.music.constants.PlayerVideoCustomColorKey
 import fr.makoff.music.extensions.metadata
 import fr.makoff.music.extensions.togglePlayPause
 import fr.makoff.music.extensions.toggleRepeatMode
@@ -228,6 +229,7 @@ fun BottomSheetPlayer(
         )
     val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
     val selectorTheme by rememberEnumPreference(PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO)
+    val selectorCustomColorInt by rememberPreference(PlayerVideoCustomColorKey, defaultValue = 0xFF9158BC.toInt())
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
@@ -1683,6 +1685,7 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,
@@ -1763,6 +1766,7 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,

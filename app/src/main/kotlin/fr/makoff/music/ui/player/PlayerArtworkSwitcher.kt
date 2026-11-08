@@ -88,6 +88,7 @@ internal fun PlayerArtworkSwitcher(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     videoPreview: PlayerVideoPreview,
     videoPlayer: ExoPlayer?,
     thumbnailUrl: String?,
@@ -163,6 +164,7 @@ internal fun PlayerArtworkSwitcher(
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
             artworkThemeColor = artworkThemeColor,
+            customThemeColor = customThemeColor,
             modeTextColor = modeTextColor,
             onAudioClick = {
                 videoPlayer?.playWhenReady = false
@@ -226,6 +228,7 @@ private fun PlayerModeTopBar(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -248,6 +251,7 @@ private fun PlayerModeTopBar(
                 selectorTheme = selectorTheme,
                 appDarkTheme = appDarkTheme,
                 artworkThemeColor = artworkThemeColor,
+                customThemeColor = customThemeColor,
                 modifier = Modifier.width(120.dp),
             )
             PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
@@ -309,15 +313,17 @@ internal fun PlayerModePills(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
-    val coverDark = artworkThemeColor.luminance() < 0.48f
+    val activeThemeColor = if (selectorTheme == PlayerVideoThemeMode.CUSTOM) customThemeColor else artworkThemeColor
+    val coverDark = activeThemeColor.luminance() < 0.48f
     val dark = when (selectorTheme) {
         PlayerVideoThemeMode.DARK, PlayerVideoThemeMode.OLED -> true
         PlayerVideoThemeMode.LIGHT -> false
-        PlayerVideoThemeMode.COVER -> coverDark
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> coverDark
         PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
     val shape = RoundedCornerShape(18.dp)
@@ -326,7 +332,7 @@ internal fun PlayerModePills(
     val barBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.surfaceContainerHigh
-        PlayerVideoThemeMode.COVER -> artworkThemeColor.copy(alpha = 0.94f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> activeThemeColor.copy(alpha = 0.94f)
         PlayerVideoThemeMode.DARK -> Color(0xFF242426)
         PlayerVideoThemeMode.OLED -> Color.Black
         PlayerVideoThemeMode.LIGHT -> Color(0xFFEAEAEC)
@@ -334,7 +340,7 @@ internal fun PlayerModePills(
     val selectedBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.10f)
         PlayerVideoThemeMode.AUTO -> colors.primaryContainer
-        PlayerVideoThemeMode.COVER -> if (dark) Color.White.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.18f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> if (dark) Color.White.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.18f)
         PlayerVideoThemeMode.DARK -> Color(0xFFF5F5F5)
         PlayerVideoThemeMode.OLED -> Color.White.copy(alpha = 0.20f)
         PlayerVideoThemeMode.LIGHT -> Color(0xFF242426)
@@ -343,7 +349,7 @@ internal fun PlayerModePills(
     val selectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White else Color.Black
         PlayerVideoThemeMode.AUTO -> colors.onPrimaryContainer
-        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED ->
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM, PlayerVideoThemeMode.OLED ->
             if (dark) Color.White else Color(0xFF131313)
         PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
         PlayerVideoThemeMode.LIGHT -> Color.White
@@ -356,7 +362,7 @@ internal fun PlayerModePills(
     val outlineColor = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.outlineVariant
-        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED, PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.18f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM, PlayerVideoThemeMode.OLED, PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.18f)
         PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
     val animatedBarColor by animateColorAsState(

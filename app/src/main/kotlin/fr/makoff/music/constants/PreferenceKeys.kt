@@ -63,7 +63,9 @@ val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val PlayerVideoModeEnabledKey = booleanPreferencesKey("playerVideoModeEnabled")
 /** Only the visual treatment of the Son/Vidéo selector, never video availability. */
 val PlayerVideoThemeModeKey = stringPreferencesKey("playerVideoThemeMode")
-enum class PlayerVideoThemeMode { DISABLED, AUTO, COVER, LIGHT, DARK, OLED, LIQUID_GLASS }
+/** Independent custom color palette for the small Son/Vidéo selector. */
+val PlayerVideoCustomColorKey = intPreferencesKey("playerVideoCustomColor")
+enum class PlayerVideoThemeMode { DISABLED, AUTO, COVER, CUSTOM, LIGHT, DARK, OLED, LIQUID_GLASS }
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,6 +19,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -43,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,9 +56,11 @@ import dev.chrisbanes.haze.hazeSource
 import fr.makoff.music.R
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
+import fr.makoff.music.constants.PlayerVideoCustomColorKey
 import fr.makoff.music.ui.player.PlayerModePills
 import fr.makoff.music.ui.theme.LocalChromeGlass
 import fr.makoff.music.utils.rememberEnumPreference
+import fr.makoff.music.utils.rememberPreference
 
 /**
  * The same full-screen preview-and-controls presentation as the application's
@@ -66,6 +72,10 @@ fun PlayerVideoThemeScreen(navController: NavController) {
     val (selected, onSelected) = rememberEnumPreference(
         PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO,
     )
+    val (customColorInt, onCustomColorIntChange) = rememberPreference(
+        PlayerVideoCustomColorKey, defaultValue = 0xFF9158BC.toInt(),
+    )
+    val customColor = Color(customColorInt)
     var previewVideo by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
@@ -93,12 +103,18 @@ fun PlayerVideoThemeScreen(navController: NavController) {
                 ) {
                     VideoSelectorPreview(
                         mode = selected,
+                        customThemeColor = customColor,
                         showVideo = previewVideo,
                         onShowVideoChange = { previewVideo = it },
                         modifier = Modifier.weight(1f),
                     )
                     VideoSelectorThemeChoices(
                         mode = selected,
+                        customColor = customColor,
+                        onCustomColorSelected = { color ->
+                            onCustomColorIntChange(color.toArgb())
+                            onSelected(PlayerVideoThemeMode.CUSTOM)
+                        },
                         onSelect = onSelected,
                         modifier = Modifier.weight(1.5f),
                     )
@@ -112,12 +128,18 @@ fun PlayerVideoThemeScreen(navController: NavController) {
                 ) {
                     VideoSelectorPreview(
                         mode = selected,
+                        customThemeColor = customColor,
                         showVideo = previewVideo,
                         onShowVideoChange = { previewVideo = it },
                         modifier = Modifier.fillMaxWidth(),
                     )
                     VideoSelectorThemeChoices(
                         mode = selected,
+                        customColor = customColor,
+                        onCustomColorSelected = { color ->
+                            onCustomColorIntChange(color.toArgb())
+                            onSelected(PlayerVideoThemeMode.CUSTOM)
+                        },
                         onSelect = onSelected,
                         modifier = Modifier.fillMaxWidth(),
                     )
@@ -131,6 +153,7 @@ fun PlayerVideoThemeScreen(navController: NavController) {
 @Composable
 private fun VideoSelectorPreview(
     mode: PlayerVideoThemeMode,
+    customThemeColor: Color,
     showVideo: Boolean,
     onShowVideoChange: (Boolean) -> Unit,
     modifier: Modifier,
@@ -185,6 +208,7 @@ private fun VideoSelectorPreview(
                         selectorTheme = mode,
                         appDarkTheme = previewDark,
                         artworkThemeColor = Color(0xFF9158BC),
+                        customThemeColor = customThemeColor,
                         modifier = Modifier.align(Alignment.TopCenter)
                             .padding(top = 19.dp).width(120.dp),
                     )
@@ -203,6 +227,8 @@ private fun VideoSelectorPreview(
 @Composable
 private fun VideoSelectorThemeChoices(
     mode: PlayerVideoThemeMode,
+    customColor: Color,
+    onCustomColorSelected: (Color) -> Unit,
     onSelect: (PlayerVideoThemeMode) -> Unit,
     modifier: Modifier,
 ) {
@@ -246,6 +272,7 @@ private fun VideoSelectorThemeChoices(
             ) {
                 listOf(
                     PlayerVideoThemeMode.COVER,
+                    PlayerVideoThemeMode.CUSTOM,
                     PlayerVideoThemeMode.LIQUID_GLASS,
                     PlayerVideoThemeMode.DISABLED,
                 ).forEach { target ->
@@ -253,6 +280,29 @@ private fun VideoSelectorThemeChoices(
                         selected = mode == target,
                         onClick = { onSelect(target) },
                         label = { Text(videoThemeLabel(target)) },
+                    )
+                }
+            }
+            Text(
+                text = stringResource(R.string.color_palette),
+                style = MaterialTheme.typography.titleMedium,
+            )
+            LazyRow(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(horizontal = 4.dp),
+            ) {
+                items(PaletteColors) { palette ->
+                    PaletteItem(
+                        palette = palette,
+                        isSelected = if (palette.seedColor == Color.Transparent) {
+                            mode == PlayerVideoThemeMode.AUTO
+                        } else {
+                            mode == PlayerVideoThemeMode.CUSTOM && customColor == palette.seedColor
+                        },
+                        onClick = {
+                            if (palette.seedColor == Color.Transparent) onSelect(PlayerVideoThemeMode.AUTO)
+                            else onCustomColorSelected(palette.seedColor)
+                        },
                     )
                 }
             }
@@ -324,6 +374,7 @@ internal fun videoThemeLabel(mode: PlayerVideoThemeMode): String = stringResourc
         PlayerVideoThemeMode.DISABLED -> R.string.player_video_theme_off
         PlayerVideoThemeMode.AUTO -> R.string.player_video_theme_auto
         PlayerVideoThemeMode.COVER -> R.string.player_video_theme_cover
+        PlayerVideoThemeMode.CUSTOM -> R.string.player_video_theme_custom
         PlayerVideoThemeMode.LIGHT -> R.string.player_video_theme_light
         PlayerVideoThemeMode.DARK -> R.string.player_video_theme_dark
         PlayerVideoThemeMode.OLED -> R.string.player_video_theme_oled
