@@ -5,6 +5,17 @@ package fr.makoff.music.ui.player
  * A mode selector must never be shown for local tracks or unavailable clips.
  */
 internal object PlayerVideoModePolicy {
+    enum class HeaderMode { SELECTOR, CLASSIC, LOADING }
+
+    /** Exactly one header is rendered; never combine En cours de lecture
+     * with Son/Vidéo. Don't flash the old header during video discovery.
+     */
+    fun headerMode(selectorVisible: Boolean, waitingForClip: Boolean): HeaderMode = when {
+        selectorVisible -> HeaderMode.SELECTOR
+        waitingForClip -> HeaderMode.LOADING
+        else -> HeaderMode.CLASSIC
+    }
+
     fun showSelector(
         enabled: Boolean,
         expanded: Boolean,
