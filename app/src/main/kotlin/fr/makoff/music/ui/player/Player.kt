@@ -167,6 +167,8 @@ import fr.makoff.music.constants.SquigglySliderKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewPlayerDesignKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
+import fr.makoff.music.constants.PlayerVideoThemeMode
+import fr.makoff.music.constants.PlayerVideoThemeModeKey
 import fr.makoff.music.extensions.metadata
 import fr.makoff.music.extensions.togglePlayPause
 import fr.makoff.music.extensions.toggleRepeatMode
@@ -225,6 +227,7 @@ fun BottomSheetPlayer(
             defaultValue = true,
         )
     val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
+    val selectorTheme by rememberEnumPreference(PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO)
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
@@ -1068,6 +1071,7 @@ fun BottomSheetPlayer(
                                 state = state,
                                 textButtonColor = textButtonColor,
                                 iconButtonColor = iconButtonColor,
+                                idleIconColor = TextBackgroundColor,
                             )
 
                 }
@@ -1606,6 +1610,8 @@ fun BottomSheetPlayer(
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 videoModeEnabled = playerVideoModeEnabled,
+                                selectorTheme = selectorTheme,
+                                appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
@@ -1697,6 +1703,8 @@ fun BottomSheetPlayer(
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 videoModeEnabled = playerVideoModeEnabled,
+                                selectorTheme = selectorTheme,
+                                appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
                                 isLocalOrUploaded = currentSong?.song?.isLocal == true ||
                                     currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
@@ -1803,10 +1811,13 @@ private fun PlayerMoreMenuButton(
     state: BottomSheetState,
     textButtonColor: Color,
     iconButtonColor: Color,
+    idleIconColor: Color,
 ) {
     val navController = LocalNavController.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
+    val pressSource = remember { MutableInteractionSource() }
+    val pressed by pressSource.collectIsPressedAsState()
 
     Box(
         contentAlignment = Alignment.Center,
@@ -1814,8 +1825,10 @@ private fun PlayerMoreMenuButton(
             Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(textButtonColor)
-                .clickable {
+                // No permanent highlight: draw the filled state only for a
+                // real pressed gesture, not while the button is idle.
+                .background(if (pressed) textButtonColor else Color.Transparent)
+                .clickable(interactionSource = pressSource, indication = null) {
                     menuState.show {
                         PlayerMenu(
                             mediaMetadata = mediaMetadata,
@@ -1835,7 +1848,7 @@ private fun PlayerMoreMenuButton(
         Image(
             painter = painterResource(R.drawable.more_horiz),
             contentDescription = stringResource(R.string.more_options),
-            colorFilter = ColorFilter.tint(iconButtonColor),
+            colorFilter = ColorFilter.tint(if (pressed) iconButtonColor else idleIconColor),
         )
     }
 }
