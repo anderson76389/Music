@@ -30,20 +30,22 @@ internal object PlayerVideoModePolicy {
         hasPlayableClip: Boolean,
     ): Boolean = enabled && expanded && hasPlayableClip
 
+    /** Do not request video for a local/uploaded track, Cast, or malformed ID. */
+    fun canProbeVideo(videoId: String?, enabled: Boolean, localOrUploaded: Boolean, casting: Boolean): Boolean =
+        enabled && !localOrUploaded && !casting &&
+            videoId != null && videoId.length == 11 &&
+            videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
+
     /**
-     * A known official pairing may show Son/Vidéo while its URL is loading;
-     * unverified direct video fallback is shown only after stream extraction.
-     * Never advertise a clip that already failed to play.
+     * Only a confirmed usable stream may enable the Son/Vidéo tabs.
+     * An official counterpart alone is not proof the clip can be played.
      */
     fun clipSelectable(
         youtubeTrack: Boolean,
         clipId: String?,
         unavailableClipId: String?,
         hasResolvedStream: Boolean,
-        hasOfficialPair: Boolean,
-        streamLookupFinished: Boolean,
-    ): Boolean = youtubeTrack && clipId != null && clipId != unavailableClipId &&
-        (hasResolvedStream || (hasOfficialPair && !streamLookupFinished))
+    ): Boolean = youtubeTrack && clipId != null && clipId != unavailableClipId && hasResolvedStream
 
     /** Do not keep retrying a failed clip. For a valid YouTube song with an
      * unavailable paired video, the original item may itself have a video stream.

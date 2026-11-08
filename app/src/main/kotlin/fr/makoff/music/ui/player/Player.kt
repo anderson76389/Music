@@ -315,6 +315,61 @@ fun BottomSheetPlayer(
     // preserves the buttons for direct-video tracks across layout recreation.
     var playableClipOwner by rememberSaveable { mutableStateOf<String?>(null) }
     var playableClipId by rememberSaveable { mutableStateOf<String?>(null) }
+    // Start clip discovery as soon as the song reaches the mini player.
+    // This subtree survives collapsing the expanded player, so neither the
+    // network probe nor the video prebuffer restarts on every reopen.
+    val activeVideoId = mediaMetadata?.id
+    val videoIsLocalOrUploaded = currentSong?.song?.isLocal == true ||
+        currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
+    val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
+    val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
+    var failedVideoClipIds by remember(activeVideoId) { mutableStateOf(emptySet<String>()) }
+    val videoPreview = rememberPlayerVideoPreview(
+        videoId = activeVideoId,
+        enabled = playerVideoModeEnabled,
+        isVideoSong = videoIsMusicClip,
+        localOrUploaded = videoIsLocalOrUploaded,
+        casting = isCasting,
+        title = mediaMetadata?.title ?: currentSong?.song?.title,
+        artists = videoArtistNames,
+        knownCompanionVideoId = if (verifiedVideoPairOwner == activeVideoId) verifiedVideoPairId else null,
+        knownPlayableClipId = if (playableClipOwner == activeVideoId) playableClipId else null,
+        failedClipIds = failedVideoClipIds,
+        onCompanionResolved = { paired ->
+            if (activeVideoId != null) {
+                verifiedVideoPairOwner = activeVideoId
+                verifiedVideoPairId = paired
+            }
+        },
+        onPlayableResolved = { clipId ->
+            if (activeVideoId != null) {
+                playableClipOwner = activeVideoId
+                playableClipId = clipId
+            }
+        },
+    )
+    val preparedVideoPlayer = rememberPreparedVideoPlayer(
+        clip = videoPreview.clip,
+        playerConnection = playerConnection,
+        onUnavailable = { clipId ->
+            if (videoPreview.clip?.id == clipId) {
+                failedVideoClipIds = failedVideoClipIds + clipId
+                if (playableClipOwner == activeVideoId && playableClipId == clipId) {
+                    playableClipOwner = null
+                    playableClipId = null
+                }
+            }
+        },
+    )
+    val onVideoClipUnavailable: (String) -> Unit = { clipId ->
+        if (videoPreview.clip?.id == clipId) {
+            failedVideoClipIds = failedVideoClipIds + clipId
+            if (playableClipOwner == activeVideoId && playableClipId == clipId) {
+                playableClipOwner = null
+                playableClipId = null
+            }
+        }
+    }
     val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
@@ -461,8 +516,10 @@ fun BottomSheetPlayer(
         else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
 
-    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode) {
-        if (playerBackground == PlayerBackgroundStyle.GRADIENT) {
+    LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode, selectorTheme) {
+        // Sample every song's artwork for the selector, regardless of the
+        // player's own background setting.
+        if (playerBackground == PlayerBackgroundStyle.GRADIENT || selectorTheme == PlayerVideoThemeMode.COVER) {
             gradientColors = gradientColorsCache["${mediaMetadata?.id}_$glassMode"] ?: defaultGradientColors
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
@@ -738,7 +795,9 @@ fun BottomSheetPlayer(
         LocalMenuState provides playerMenuState,
     ) {
     // Capture the player separately: the navigation canvas sits behind it.
-    Box(Modifier.then(if (glassMode || selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS) Modifier.hazeSource(playerGlass) else Modifier)) {
+    // Capture the artwork-backed background only, not the chrome itself;
+    // this prevents the Haze glass selector from feeding back on itself.
+    Box {
     BottomSheet(
         state = state,
         modifier = modifier,
@@ -747,6 +806,11 @@ fun BottomSheetPlayer(
                 modifier =
                     Modifier
                         .fillMaxSize()
+                        .then(
+                            if (glassMode || selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS) {
+                                Modifier.hazeSource(playerGlass)
+                            } else Modifier
+                        )
                         .background(if (LocalLiquidGlassEnabled.current) bottomSheetBackgroundColor.copy(alpha = backgroundAlpha) else bottomSheetBackgroundColor),
             ) {
                 when (playerBackground) {
@@ -1612,29 +1676,16 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
-                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
-                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
+                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                videoPreview = videoPreview,
+                                videoPlayer = preparedVideoPlayer,
+                                thumbnailUrl = mediaMetadata?.thumbnailUrl,
                                 songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
-                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
-                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
-                                onCompanionVideoIdResolved = { pairedId ->
-                                    verifiedVideoPairOwner = mediaMetadata?.id
-                                    verifiedVideoPairId = pairedId
-                                },
-                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
-                                onPlayableClipResolved = { clipId ->
-                                    playableClipOwner = mediaMetadata?.id
-                                    playableClipId = clipId
-                                },
-                                onPlayableClipInvalidated = { failedId ->
-                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
-                                        playableClipOwner = null
-                                        playableClipId = null
-                                    }
-                                },
+                                onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
-                                isExpanded = state.isExpanded,
+                                // Render controls as the sheet starts to open,
+                                // not only after the spring reaches its exact final anchor.
+                                isExpanded = state.progress >= 0.16f || state.isExpanded,
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
@@ -1705,29 +1756,16 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
-                                isVideoSong = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true,
-                                isLocalOrUploaded = currentSong?.song?.isLocal == true ||
-                                    currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null,
+                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                videoPreview = videoPreview,
+                                videoPlayer = preparedVideoPlayer,
+                                thumbnailUrl = mediaMetadata?.thumbnailUrl,
                                 songTitle = mediaMetadata?.title ?: currentSong?.song?.title,
-                                artistNames = mediaMetadata?.artists?.map { it.name }.orEmpty(),
-                                knownCompanionVideoId = if (verifiedVideoPairOwner == mediaMetadata?.id) verifiedVideoPairId else null,
-                                onCompanionVideoIdResolved = { pairedId ->
-                                    verifiedVideoPairOwner = mediaMetadata?.id
-                                    verifiedVideoPairId = pairedId
-                                },
-                                knownPlayableClipId = if (playableClipOwner == mediaMetadata?.id) playableClipId else null,
-                                onPlayableClipResolved = { clipId ->
-                                    playableClipOwner = mediaMetadata?.id
-                                    playableClipId = clipId
-                                },
-                                onPlayableClipInvalidated = { failedId ->
-                                    if (playableClipOwner == mediaMetadata?.id && playableClipId == failedId) {
-                                        playableClipOwner = null
-                                        playableClipId = null
-                                    }
-                                },
+                                onVideoUnavailable = onVideoClipUnavailable,
                                 isCasting = isCasting,
-                                isExpanded = state.isExpanded,
+                                // Render controls as the sheet starts to open,
+                                // not only after the spring reaches its exact final anchor.
+                                isExpanded = state.progress >= 0.16f || state.isExpanded,
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
@@ -1816,19 +1854,14 @@ private fun PlayerMoreMenuButton(
     val navController = LocalNavController.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
-    val pressSource = remember { MutableInteractionSource() }
-    val pressed by pressSource.collectIsPressedAsState()
-
+    // Default ripple is scoped to the tap and cannot remain stuck behind a modal sheet.
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(24.dp))
-                // No permanent highlight: draw the filled state only for a
-                // real pressed gesture, not while the button is idle.
-                .background(if (pressed) textButtonColor else Color.Transparent)
-                .clickable(interactionSource = pressSource, indication = null) {
+                .clickable {
                     menuState.show {
                         PlayerMenu(
                             mediaMetadata = mediaMetadata,
@@ -1848,7 +1881,7 @@ private fun PlayerMoreMenuButton(
         Image(
             painter = painterResource(R.drawable.more_horiz),
             contentDescription = stringResource(R.string.more_options),
-            colorFilter = ColorFilter.tint(if (pressed) iconButtonColor else idleIconColor),
+            colorFilter = ColorFilter.tint(idleIconColor),
         )
     }
 }

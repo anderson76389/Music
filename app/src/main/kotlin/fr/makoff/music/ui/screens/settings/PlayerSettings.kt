@@ -61,6 +61,7 @@ import fr.makoff.music.constants.PersistentQueueKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
+import fr.makoff.music.constants.SoundProofSkipAiKey
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
 import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
@@ -96,6 +97,10 @@ fun PlayerSettings(
     )
     val (playerVideoThemeMode, onPlayerVideoThemeModeChange) = rememberEnumPreference(
         PlayerVideoThemeModeKey, defaultValue = PlayerVideoThemeMode.AUTO,
+    )
+    // Both settings screens use the same stored SoundProof toggle.
+    val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(
+        SoundProofSkipAiKey, defaultValue = false,
     )
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
@@ -243,9 +248,11 @@ fun PlayerSettings(
                 when (it) {
                     PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
                     PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
+                    PlayerVideoThemeMode.COVER -> stringResource(R.string.player_video_theme_cover)
                     PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
                     PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
-                                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
+                    PlayerVideoThemeMode.OLED -> stringResource(R.string.player_video_theme_oled)
+                    PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
                 }
             },
         )
@@ -340,13 +347,27 @@ fun PlayerSettings(
                                 when (playerVideoThemeMode) {
                                     PlayerVideoThemeMode.DISABLED -> stringResource(R.string.player_video_theme_off)
                                     PlayerVideoThemeMode.AUTO -> stringResource(R.string.player_video_theme_auto)
+                                    PlayerVideoThemeMode.COVER -> stringResource(R.string.player_video_theme_cover)
                                     PlayerVideoThemeMode.LIGHT -> stringResource(R.string.player_video_theme_light)
                                     PlayerVideoThemeMode.DARK -> stringResource(R.string.player_video_theme_dark)
+                                    PlayerVideoThemeMode.OLED -> stringResource(R.string.player_video_theme_oled)
                                     PlayerVideoThemeMode.LIQUID_GLASS -> stringResource(R.string.player_video_theme_glass)
                                 },
                             )
                         },
                         onClick = { showVideoThemeDialog = true },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.person),
+                        title = { Text(stringResource(R.string.soundproof_skip_ai_title)) },
+                        description = { Text(stringResource(R.string.soundproof_skip_ai_description)) },
+                        trailingContent = {
+                            Switch(
+                                checked = soundProofSkipAi,
+                                onCheckedChange = onSoundProofSkipAiChange,
+                            )
+                        },
+                        onClick = { onSoundProofSkipAiChange(!soundProofSkipAi) },
                     )
                 ),
             )
