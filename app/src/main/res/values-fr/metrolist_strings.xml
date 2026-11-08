@@ -727,4 +727,5 @@
     <string name="player_video_theme_auto">Automatique</string>
     <string name="player_video_theme_light">Clair</string>
     <string name="player_video_theme_dark">Sombre</string>
+    <string name="player_video_theme_glass">Liquid Glass</string>
 </resources>
