@@ -88,6 +88,7 @@ internal fun PlayerArtworkSwitcher(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     videoPreview: PlayerVideoPreview,
     videoPlayer: ExoPlayer?,
     thumbnailUrl: String?,
@@ -126,7 +127,7 @@ internal fun PlayerArtworkSwitcher(
     // behind the selector, even during the background clip availability probe.
     val headerMode = PlayerVideoModePolicy.headerMode(
         selectorVisible = showModeBar,
-        waitingForClip = !videoPreview.lookupFinished,
+        waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
     LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting) {
@@ -163,6 +164,7 @@ internal fun PlayerArtworkSwitcher(
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
             artworkThemeColor = artworkThemeColor,
+            customThemeColor = customThemeColor,
             modeTextColor = modeTextColor,
             onAudioClick = {
                 videoPlayer?.playWhenReady = false
@@ -226,6 +228,7 @@ private fun PlayerModeTopBar(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     modeTextColor: Color,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
@@ -248,7 +251,8 @@ private fun PlayerModeTopBar(
                 selectorTheme = selectorTheme,
                 appDarkTheme = appDarkTheme,
                 artworkThemeColor = artworkThemeColor,
-                modifier = Modifier.width(144.dp),
+                customThemeColor = customThemeColor,
+                modifier = Modifier.width(120.dp),
             )
             PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -300,7 +304,7 @@ private fun PlayerModeTopBar(
 }
 
 @Composable
-private fun PlayerModePills(
+internal fun PlayerModePills(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
@@ -309,24 +313,26 @@ private fun PlayerModePills(
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
+    customThemeColor: Color,
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
-    val coverDark = artworkThemeColor.luminance() < 0.48f
+    val activeThemeColor = if (selectorTheme == PlayerVideoThemeMode.CUSTOM) customThemeColor else artworkThemeColor
+    val coverDark = activeThemeColor.luminance() < 0.48f
     val dark = when (selectorTheme) {
         PlayerVideoThemeMode.DARK, PlayerVideoThemeMode.OLED -> true
         PlayerVideoThemeMode.LIGHT -> false
-        PlayerVideoThemeMode.COVER -> coverDark
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> coverDark
         PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(18.dp)
     // COVER samples this track's artwork even when the player background is
     // not a gradient. OLED is true black; AUTO continues to follow the app.
     val barBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.surfaceContainerHigh
-        PlayerVideoThemeMode.COVER -> artworkThemeColor.copy(alpha = 0.94f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> activeThemeColor.copy(alpha = 0.94f)
         PlayerVideoThemeMode.DARK -> Color(0xFF242426)
         PlayerVideoThemeMode.OLED -> Color.Black
         PlayerVideoThemeMode.LIGHT -> Color(0xFFEAEAEC)
@@ -334,7 +340,7 @@ private fun PlayerModePills(
     val selectedBackground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.10f)
         PlayerVideoThemeMode.AUTO -> colors.primaryContainer
-        PlayerVideoThemeMode.COVER -> if (dark) Color.White.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.18f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> if (dark) Color.White.copy(alpha = 0.24f) else Color.Black.copy(alpha = 0.18f)
         PlayerVideoThemeMode.DARK -> Color(0xFFF5F5F5)
         PlayerVideoThemeMode.OLED -> Color.White.copy(alpha = 0.20f)
         PlayerVideoThemeMode.LIGHT -> Color(0xFF242426)
@@ -343,7 +349,7 @@ private fun PlayerModePills(
     val selectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED -> if (dark) Color.White else Color.Black
         PlayerVideoThemeMode.AUTO -> colors.onPrimaryContainer
-        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED ->
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM, PlayerVideoThemeMode.OLED ->
             if (dark) Color.White else Color(0xFF131313)
         PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
         PlayerVideoThemeMode.LIGHT -> Color.White
@@ -356,14 +362,14 @@ private fun PlayerModePills(
     val outlineColor = when (selectorTheme) {
         PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
         PlayerVideoThemeMode.AUTO -> colors.outlineVariant
-        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.OLED, PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.18f)
+        PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM, PlayerVideoThemeMode.OLED, PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.18f)
         PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
     val animatedBarColor by animateColorAsState(
-        targetValue = barBackground, animationSpec = tween(450), label = "modeSelectorBackground",
+        targetValue = barBackground, animationSpec = tween(170), label = "modeSelectorBackground",
     )
     val animatedSelectedColor by animateColorAsState(
-        targetValue = selectedBackground, animationSpec = tween(450), label = "modeSelectorSelected",
+        targetValue = selectedBackground, animationSpec = tween(170), label = "modeSelectorSelected",
     )
 
     // Local override allows glass for the pill ALONE even if the app's global
@@ -375,7 +381,7 @@ private fun PlayerModePills(
                     if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
                     else Modifier.clip(shape).background(animatedBarColor).border(0.75.dp, outlineColor, shape)
                 )
-                .padding(2.dp),
+                .padding(1.5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
@@ -384,13 +390,13 @@ private fun PlayerModePills(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(34.dp)
+                        .height(28.dp)
                         .then(
                             if (glass && selected) {
                                 // Refract the artwork below the active tab, too:
                                 // no permanently painted, opaque white highlight.
                                 Modifier.liquidGlass(
-                                    shape = RoundedCornerShape(19.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     chrome = true,
                                     showBorder = true,
                                 )
@@ -412,7 +418,7 @@ private fun PlayerModePills(
                         ),
                         contentDescription = label,
                         tint = if (selected) selectedForeground else unselectedForeground,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }

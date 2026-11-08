@@ -96,7 +96,7 @@ assert 'title = "Wrapped"' not in content_source
 print('PASS: Content section order and translated headings')
 
 for screen, headings in {
-    'PlayerSettings.kt': ['settings_player_entry', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section', 'player_devices_section'],
+    'PlayerSettings.kt': ['settings_player_entry', 'player_devices_section', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section'],
     'AppearanceSettings.kt': ['theme', 'appearance_display_section', 'appearance_navigation_section', 'appearance_player_section', 'mini_player', 'appearance_gestures_section', 'auto_playlists'],
 }.items():
     source = (k/'ui/screens/settings'/screen).read_text()

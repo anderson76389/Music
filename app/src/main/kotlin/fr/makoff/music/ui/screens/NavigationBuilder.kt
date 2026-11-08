@@ -53,6 +53,7 @@ import fr.makoff.music.ui.screens.settings.SettingsScreen
 import fr.makoff.music.ui.screens.settings.DownloadsSettings
 import fr.makoff.music.ui.screens.settings.StorageSettings
 import fr.makoff.music.ui.screens.settings.ThemeScreen
+import fr.makoff.music.ui.screens.settings.PlayerVideoThemeScreen
 import fr.makoff.music.ui.screens.settings.UpdaterScreen
 
 import fr.makoff.music.ui.screens.wrapped.WrappedScreen
@@ -338,6 +339,9 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/appearance/theme") {
         ThemeScreen(navController)
+    }
+    composable("settings/player/video_theme") {
+        PlayerVideoThemeScreen(navController)
     }
 
     composable("settings/content") {

@@ -169,6 +169,7 @@ import fr.makoff.music.constants.UseNewPlayerDesignKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
+import fr.makoff.music.constants.PlayerVideoCustomColorKey
 import fr.makoff.music.extensions.metadata
 import fr.makoff.music.extensions.togglePlayPause
 import fr.makoff.music.extensions.toggleRepeatMode
@@ -228,6 +229,7 @@ fun BottomSheetPlayer(
         )
     val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
     val selectorTheme by rememberEnumPreference(PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO)
+    val selectorCustomColorInt by rememberPreference(PlayerVideoCustomColorKey, defaultValue = 0xFF9158BC.toInt())
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
     val (hideStatusBarOnFullscreen) = rememberPreference(HideStatusBarOnFullscreenKey, false)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
@@ -323,7 +325,7 @@ fun BottomSheetPlayer(
         currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
     val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
     val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
-    var failedVideoClipIds by remember(activeVideoId) { mutableStateOf(emptySet<String>()) }
+    var failedVideoClipIds by remember(activeVideoId, playerVideoModeEnabled) { mutableStateOf(emptySet<String>()) }
     val videoPreview = rememberPlayerVideoPreview(
         videoId = activeVideoId,
         enabled = playerVideoModeEnabled,
@@ -350,6 +352,7 @@ fun BottomSheetPlayer(
     )
     val preparedVideoPlayer = rememberPreparedVideoPlayer(
         clip = videoPreview.clip,
+        audioId = activeVideoId,
         playerConnection = playerConnection,
         onUnavailable = { clipId ->
             if (videoPreview.clip?.id == clipId) {
@@ -370,7 +373,12 @@ fun BottomSheetPlayer(
             }
         }
     }
-    val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    // OFF takes effect in the same frame and never restores stale video state.
+    LaunchedEffect(playerVideoModeEnabled, activeVideoId) {
+        if (!playerVideoModeEnabled || selectedVideoId != activeVideoId) selectedVideoId = null
+    }
+    val selectedVideoForTrack = playerVideoModeEnabled &&
+        selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
     )
@@ -1677,6 +1685,7 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,
@@ -1757,6 +1766,7 @@ fun BottomSheetPlayer(
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
                                 artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
                                 thumbnailUrl = mediaMetadata?.thumbnailUrl,
