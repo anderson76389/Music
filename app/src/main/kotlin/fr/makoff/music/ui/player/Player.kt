@@ -738,7 +738,7 @@ fun BottomSheetPlayer(
         LocalMenuState provides playerMenuState,
     ) {
     // Capture the player separately: the navigation canvas sits behind it.
-    Box(Modifier.then(if (glassMode) Modifier.hazeSource(playerGlass) else Modifier)) {
+    Box(Modifier.then(if (glassMode || selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS) Modifier.hazeSource(playerGlass) else Modifier)) {
     BottomSheet(
         state = state,
         modifier = modifier,

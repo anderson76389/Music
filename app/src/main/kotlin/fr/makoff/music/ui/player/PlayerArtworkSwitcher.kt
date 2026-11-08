@@ -37,6 +37,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.CompositionLocalProvider
+import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -291,6 +294,7 @@ internal fun PlayerArtworkSwitcher(
     val headerMode = PlayerVideoModePolicy.headerMode(
         selectorVisible = showModeBar,
         waitingForClip = checkingForClip,
+        modeEnabled = videoModeEnabled && isExpanded,
     )
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
@@ -346,7 +350,11 @@ internal fun PlayerArtworkSwitcher(
         } else {
             // A single top bar owns the entire expanded player header.
             // Thumbnail must not draw a second "En cours de lecture" label or Cast.
-            artwork(isExpanded)
+            // A collapsing/expanding BottomSheet reports isExpanded=false for
+            // part of its animation. Suppress Thumbnail's legacy "En cours de
+            // lecture / Cache Songs" at ALL times while Son/Vidéo is enabled,
+            // not only after the sheet has finished expanding.
+            artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
@@ -426,14 +434,57 @@ private fun PlayerModeTopBar(
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(66.dp)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    // Place the selector in the absolute horizontal center. A Row with a
+    // weighted center shifts when Cast is hidden or resized by the host.
+    Box(
+        modifier = modifier.fillMaxWidth().height(62.dp).padding(horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        IconButton(onClick = onCollapse, modifier = Modifier.size(48.dp)) {
+        when (headerMode) {
+            PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
+                audioLabel = audioLabel,
+                videoLabel = videoLabel,
+                showVideo = showVideo,
+                onAudioClick = onAudioClick,
+                onVideoClick = onVideoClick,
+                selectorTheme = selectorTheme,
+                appDarkTheme = appDarkTheme,
+                modifier = Modifier.width(144.dp),
+            )
+            PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 54.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.now_playing),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = modeTextColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+                songTitle?.takeIf { it.isNotBlank() }?.let { title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = modeTextColor.copy(alpha = 0.82f),
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            initialDelayMillis = 1400,
+                            velocity = 32.dp,
+                        ),
+                    )
+                }
+            }
+            PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
+        }
+        IconButton(
+            onClick = onCollapse,
+            modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        ) {
             Icon(
                 painter = painterResource(R.drawable.expand_more),
                 contentDescription = stringResource(R.string.player_collapse_label),
@@ -441,60 +492,8 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center,
-        ) {
-            when (headerMode) {
-                PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
-                    audioLabel = audioLabel,
-                    videoLabel = videoLabel,
-                    showVideo = showVideo,
-                    onAudioClick = onAudioClick,
-                    onVideoClick = onVideoClick,
-                    selectorTheme = selectorTheme,
-                    appDarkTheme = appDarkTheme,
-                    modifier = Modifier.width(136.dp),
-                )
-                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(R.string.now_playing),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = modeTextColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                    // Restore the original marquee ONLY with the classic
-                    // header. Never draw another title beneath Son/Vidéo.
-                    songTitle?.takeIf { it.isNotBlank() }?.let { title ->
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = modeTextColor.copy(alpha = 0.82f),
-                            maxLines = 1,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(
-                                iterations = Int.MAX_VALUE,
-                                initialDelayMillis = 1400,
-                                velocity = 32.dp,
-                            ),
-                        )
-                    }
-                }
-                // Leave the center clear rather than flashing the old label
-                // over Son/Vidéo during a counterpart/stream lookup.
-                PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
-            }
-        }
-        // Exactly the same width as Collapse: the switch is centered on
-        // the *screen*, not offset by the action buttons on either side.
         CastButton(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
             tintColor = modeTextColor,
             buttonSize = 48.dp,
         )
@@ -512,72 +511,85 @@ private fun PlayerModePills(
     appDarkTheme: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    // Only monochrome light/dark variants. DISABLED removes the custom
-    // pill treatment without removing the functional Son/Vidéo selector.
+    val colors = MaterialTheme.colorScheme
+    val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
     val dark = when (selectorTheme) {
         PlayerVideoThemeMode.DARK -> true
         PlayerVideoThemeMode.LIGHT -> false
-        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED -> appDarkTheme
+        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
     val shape = RoundedCornerShape(22.dp)
-    val barBackground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
-        dark -> Color(0xFF242426)
-        else -> Color(0xFFEAEAEC)
+    // AUTO really follows MaterialTheme (including dynamic/custom colors).
+    // Light/Dark are fixed monochrome styles; Glass uses the EXISTING
+    // Haze / refraction implementation of the application.
+    val barBackground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
+        PlayerVideoThemeMode.AUTO -> colors.surfaceContainerHigh
+        PlayerVideoThemeMode.DARK -> Color(0xFF242426)
+        PlayerVideoThemeMode.LIGHT -> Color(0xFFEAEAEC)
     }
-    val selectedBackground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White.copy(alpha = 0.16f)
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black.copy(alpha = 0.10f)
-        dark -> Color(0xFFF5F5F5)
-        else -> Color(0xFF242426)
+    val selectedBackground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED -> if (dark) Color.White.copy(alpha = 0.16f) else Color.Black.copy(alpha = 0.10f)
+        PlayerVideoThemeMode.AUTO -> colors.primaryContainer
+        PlayerVideoThemeMode.DARK -> Color(0xFFF5F5F5)
+        PlayerVideoThemeMode.LIGHT -> Color(0xFF242426)
+        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White.copy(alpha = 0.82f) else Color.White.copy(alpha = 0.90f)
     }
-    val selectedForeground = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED && dark -> Color.White
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Black
-        dark -> Color(0xFF1B1B1D)
-        else -> Color.White
+    val selectedForeground = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED -> if (dark) Color.White else Color.Black
+        PlayerVideoThemeMode.AUTO -> colors.onPrimaryContainer
+        PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
+        PlayerVideoThemeMode.LIGHT -> Color.White
+        PlayerVideoThemeMode.LIQUID_GLASS -> Color(0xFF17191D)
     }
-    val unselectedForeground = if (dark) Color.White.copy(alpha = 0.85f)
-        else Color.Black.copy(alpha = 0.78f)
-    val outlineColor = when {
-        selectorTheme == PlayerVideoThemeMode.DISABLED -> Color.Transparent
-        dark -> Color.White.copy(alpha = 0.16f)
-        else -> Color.Black.copy(alpha = 0.10f)
+    val unselectedForeground = when (selectorTheme) {
+        PlayerVideoThemeMode.AUTO -> colors.onSurfaceVariant
+        else -> if (dark) Color.White.copy(alpha = 0.86f) else Color.Black.copy(alpha = 0.78f)
+    }
+    val outlineColor = when (selectorTheme) {
+        PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> Color.Transparent
+        PlayerVideoThemeMode.AUTO -> colors.outlineVariant
+        PlayerVideoThemeMode.DARK -> Color.White.copy(alpha = 0.16f)
+        PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
 
-    Row(
-        modifier = modifier
-            .clip(shape)
-            .background(barBackground)
-            .border(0.75.dp, outlineColor, shape)
-            .padding(2.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center,
-    ) {
-        listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
-            val selected = showVideo == video
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .height(30.dp)
-                    .clip(RoundedCornerShape(19.dp))
-                    .background(if (selected) selectedBackground else Color.Transparent)
-                    .selectable(
-                        selected = selected,
-                        role = Role.Tab,
-                        onClick = if (video) onVideoClick else onAudioClick,
-                    )
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    painter = painterResource(
-                        if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
-                    ),
-                    contentDescription = label,
-                    tint = if (selected) selectedForeground else unselectedForeground,
-                    modifier = Modifier.size(19.dp),
+    // Local override allows glass for the pill ALONE even if the app's global
+    // Liquid Glass theme is disabled. The player supplies the shared HazeState.
+    CompositionLocalProvider(LocalLiquidGlassEnabled provides (LocalLiquidGlassEnabled.current || glass)) {
+        Row(
+            modifier = modifier
+                .then(
+                    if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
+                    else Modifier.clip(shape).background(barBackground).border(0.75.dp, outlineColor, shape)
                 )
+                .padding(2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
+                val selected = showVideo == video
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(34.dp)
+                        .clip(RoundedCornerShape(19.dp))
+                        .background(if (selected) selectedBackground else Color.Transparent)
+                        .selectable(
+                            selected = selected,
+                            role = Role.Tab,
+                            onClick = if (video) onVideoClick else onAudioClick,
+                        ),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Icon(
+                        painter = painterResource(
+                            if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
+                        ),
+                        contentDescription = label,
+                        tint = if (selected) selectedForeground else unselectedForeground,
+                        modifier = Modifier.size(20.dp),
+                    )
+                }
             }
         }
     }

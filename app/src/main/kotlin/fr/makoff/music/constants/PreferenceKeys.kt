@@ -63,7 +63,7 @@ val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val PlayerVideoModeEnabledKey = booleanPreferencesKey("playerVideoModeEnabled")
 /** Only the visual treatment of the Son/Vidéo selector, never video availability. */
 val PlayerVideoThemeModeKey = stringPreferencesKey("playerVideoThemeMode")
-enum class PlayerVideoThemeMode { DISABLED, AUTO, LIGHT, DARK }
+enum class PlayerVideoThemeMode { DISABLED, AUTO, LIGHT, DARK, LIQUID_GLASS }
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")
@@ -85,6 +85,7 @@ val ContentCountryKey = stringPreferencesKey("contentCountry")
 val HideExplicitKey = booleanPreferencesKey("hideExplicit")
 val HideVideoSongsKey = booleanPreferencesKey("hideVideoSongs")
 val HideYoutubeShortsKey = booleanPreferencesKey("hideYoutubeShorts")
+val SoundProofSkipAiKey = booleanPreferencesKey("soundProofSkipAiArtists")
 val ShowArtistDescriptionKey = booleanPreferencesKey("showArtistDescription")
 val ShowArtistSubscriberCountKey = booleanPreferencesKey("showArtistSubscriberCount")
 val ShowMonthlyListenersKey = booleanPreferencesKey("showMonthlyListeners")
