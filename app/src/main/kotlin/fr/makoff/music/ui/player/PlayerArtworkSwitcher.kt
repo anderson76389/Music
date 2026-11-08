@@ -291,6 +291,7 @@ internal fun PlayerArtworkSwitcher(
     val headerMode = PlayerVideoModePolicy.headerMode(
         selectorVisible = showModeBar,
         waitingForClip = checkingForClip,
+        modeEnabled = videoModeEnabled && isExpanded,
     )
     LaunchedEffect(videoModeEnabled, isExpanded, isCasting, isLocalOrUploaded, videoId) {
         // Do not erase the saved video choice just because an Activity is
@@ -426,14 +427,57 @@ private fun PlayerModeTopBar(
     onCollapse: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(66.dp)
-            .padding(horizontal = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+    // Place the selector in the absolute horizontal center. A Row with a
+    // weighted center shifts when Cast is hidden or resized by the host.
+    Box(
+        modifier = modifier.fillMaxWidth().height(62.dp).padding(horizontal = 8.dp),
+        contentAlignment = Alignment.Center,
     ) {
-        IconButton(onClick = onCollapse, modifier = Modifier.size(48.dp)) {
+        when (headerMode) {
+            PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
+                audioLabel = audioLabel,
+                videoLabel = videoLabel,
+                showVideo = showVideo,
+                onAudioClick = onAudioClick,
+                onVideoClick = onVideoClick,
+                selectorTheme = selectorTheme,
+                appDarkTheme = appDarkTheme,
+                modifier = Modifier.width(144.dp),
+            )
+            PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 54.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.now_playing),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = modeTextColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+                songTitle?.takeIf { it.isNotBlank() }?.let { title ->
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = modeTextColor.copy(alpha = 0.82f),
+                        maxLines = 1,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().basicMarquee(
+                            iterations = Int.MAX_VALUE,
+                            initialDelayMillis = 1400,
+                            velocity = 32.dp,
+                        ),
+                    )
+                }
+            }
+            PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
+        }
+        IconButton(
+            onClick = onCollapse,
+            modifier = Modifier.align(Alignment.CenterStart).size(48.dp),
+        ) {
             Icon(
                 painter = painterResource(R.drawable.expand_more),
                 contentDescription = stringResource(R.string.player_collapse_label),
@@ -441,60 +485,8 @@ private fun PlayerModeTopBar(
                 modifier = Modifier.size(24.dp),
             )
         }
-        Box(
-            modifier = Modifier.weight(1f),
-            contentAlignment = Alignment.Center,
-        ) {
-            when (headerMode) {
-                PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
-                    audioLabel = audioLabel,
-                    videoLabel = videoLabel,
-                    showVideo = showVideo,
-                    onAudioClick = onAudioClick,
-                    onVideoClick = onVideoClick,
-                    selectorTheme = selectorTheme,
-                    appDarkTheme = appDarkTheme,
-                    modifier = Modifier.width(136.dp),
-                )
-                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = stringResource(R.string.now_playing),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = modeTextColor,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        textAlign = TextAlign.Center,
-                    )
-                    // Restore the original marquee ONLY with the classic
-                    // header. Never draw another title beneath Son/Vidéo.
-                    songTitle?.takeIf { it.isNotBlank() }?.let { title ->
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = modeTextColor.copy(alpha = 0.82f),
-                            maxLines = 1,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth().basicMarquee(
-                                iterations = Int.MAX_VALUE,
-                                initialDelayMillis = 1400,
-                                velocity = 32.dp,
-                            ),
-                        )
-                    }
-                }
-                // Leave the center clear rather than flashing the old label
-                // over Son/Vidéo during a counterpart/stream lookup.
-                PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
-            }
-        }
-        // Exactly the same width as Collapse: the switch is centered on
-        // the *screen*, not offset by the action buttons on either side.
         CastButton(
-            modifier = Modifier.size(48.dp),
+            modifier = Modifier.align(Alignment.CenterEnd).size(48.dp),
             tintColor = modeTextColor,
             buttonSize = 48.dp,
         )
