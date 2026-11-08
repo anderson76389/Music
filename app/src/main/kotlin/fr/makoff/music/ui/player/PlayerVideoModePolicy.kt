@@ -18,6 +18,12 @@ internal object PlayerVideoModePolicy {
         else -> HeaderMode.CLASSIC
     }
 
+    /** The cover's independent legacy header must not leak through while
+     * the full-screen sheet is opening or closing with Son/Vidéo enabled.
+     */
+    fun suppressLegacyThumbnailHeader(modeEnabled: Boolean, expanded: Boolean): Boolean =
+        modeEnabled || expanded
+
     fun showSelector(
         enabled: Boolean,
         expanded: Boolean,
