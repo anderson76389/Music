@@ -117,6 +117,7 @@ import fr.makoff.music.constants.CrossfadeGaplessKey
 import fr.makoff.music.constants.DisableLoadMoreWhenRepeatAllKey
 import fr.makoff.music.constants.EnableSongCacheKey
 import fr.makoff.music.constants.HideExplicitKey
+import fr.makoff.music.constants.SoundProofSkipAiKey
 import fr.makoff.music.constants.HideVideoSongsKey
 import fr.makoff.music.constants.HistoryDuration
 import fr.makoff.music.constants.MediaSessionConstants
@@ -436,6 +437,9 @@ class MusicService :
     private var cachedHideExplicit = false
     @Volatile
     private var cachedHideVideoSongs = false
+    @Volatile
+    private var cachedSoundProofSkipAi = false
+    private val soundProofRepository by lazy { SoundProofRepository(applicationContext) }
     @Volatile
     private var cachedShufflePlaylistFirst = false
     @Volatile
@@ -833,6 +837,16 @@ class MusicService :
             updateNotification()
             updateWidgetUI(player.isPlaying)
         }
+
+        // Community database downloads happen only after explicit opt-in.
+        // The dump is cached on device; no artist or track name is sent online.
+        dataStore.data
+            .map { it[SoundProofSkipAiKey] ?: false }
+            .distinctUntilChanged()
+            .collect(scope) { enabled ->
+                cachedSoundProofSkipAi = enabled
+                if (enabled) scope.launch(Dispatchers.IO) { soundProofRepository.refresh() }
+            }
 
         dataStore.data
             .map { (it[SkipSilenceKey] ?: false) to (it[SkipSilenceInstantKey] ?: false) }
@@ -2301,6 +2315,31 @@ class MusicService :
 
         setupAudioNormalization()
 
+        // SoundProof: independent opt-in decision based on a locally cached
+        // community dataset. Guard against stale async results when the user
+        // skips manually or disables the setting while a lookup is running.
+        if (cachedSoundProofSkipAi && mediaItem != null) {
+            val artists = mediaItem.metadata?.artists?.map { it.name }.orEmpty()
+                .filter { it.isNotBlank() }
+            if (artists.isNotEmpty()) {
+                val candidateId = mediaItem.mediaId
+                val candidateIndex = player.currentMediaItemIndex
+                scope.launch {
+                    val reported = withContext(Dispatchers.IO) {
+                        soundProofRepository.shouldSkipArtist(artists)
+                    }
+                    if (reported && cachedSoundProofSkipAi &&
+                        player.currentMediaItem?.mediaId == candidateId &&
+                        player.currentMediaItemIndex == candidateIndex &&
+                        castConnectionHandler?.isCasting?.value != true &&
+                        player.mediaItemCount > 1 && player.hasNextMediaItem()
+                    ) {
+                        Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
+                        player.seekToNextMediaItem()
+                    }
+                }
+            }
+        }
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
         if (castConnectionHandler?.isCasting?.value == true &&
