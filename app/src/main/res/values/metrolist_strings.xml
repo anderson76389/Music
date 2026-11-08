@@ -938,4 +938,6 @@
     <string name="player_video_theme_light">Clair</string>
     <string name="player_video_theme_dark">Sombre</string>
     <string name="player_video_theme_glass">Liquid Glass</string>
+    <string name="soundproof_skip_ai_title">SoundProof : ignorer les artistes IA</string>
+    <string name="soundproof_skip_ai_description">Passe automatiquement les morceaux signalés comme IA dans la base communautaire SoundProof. Désactivé par défaut. Une identification communautaire peut être incorrecte ; la liste est mise en cache pour 24 h.</string>
 </resources>
