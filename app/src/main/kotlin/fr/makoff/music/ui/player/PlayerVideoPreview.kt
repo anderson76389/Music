@@ -69,7 +69,7 @@ internal fun rememberPlayerVideoPreview(
         }
         // The current stream remains valid across recomposition and sheet
         // collapse. Only a change of song or a confirmed decoder error retries.
-        if (preview.clip != null && preview.clip?.id !in failedClipIds) return@LaunchedEffect
+        if (preview.clip?.let { it.id !in failedClipIds } == true) return@LaunchedEffect
 
         preview = PlayerVideoPreview()
         val id = videoId ?: return@LaunchedEffect
