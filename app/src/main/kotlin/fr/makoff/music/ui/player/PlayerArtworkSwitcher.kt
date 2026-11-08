@@ -126,7 +126,7 @@ internal fun PlayerArtworkSwitcher(
     // behind the selector, even during the background clip availability probe.
     val headerMode = PlayerVideoModePolicy.headerMode(
         selectorVisible = showModeBar,
-        waitingForClip = !videoPreview.lookupFinished,
+        waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
     LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting) {
@@ -248,7 +248,7 @@ private fun PlayerModeTopBar(
                 selectorTheme = selectorTheme,
                 appDarkTheme = appDarkTheme,
                 artworkThemeColor = artworkThemeColor,
-                modifier = Modifier.width(144.dp),
+                modifier = Modifier.width(120.dp),
             )
             PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -300,7 +300,7 @@ private fun PlayerModeTopBar(
 }
 
 @Composable
-private fun PlayerModePills(
+internal fun PlayerModePills(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
@@ -320,7 +320,7 @@ private fun PlayerModePills(
         PlayerVideoThemeMode.COVER -> coverDark
         PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
     }
-    val shape = RoundedCornerShape(22.dp)
+    val shape = RoundedCornerShape(18.dp)
     // COVER samples this track's artwork even when the player background is
     // not a gradient. OLED is true black; AUTO continues to follow the app.
     val barBackground = when (selectorTheme) {
@@ -360,10 +360,10 @@ private fun PlayerModePills(
         PlayerVideoThemeMode.LIGHT -> Color.Black.copy(alpha = 0.10f)
     }
     val animatedBarColor by animateColorAsState(
-        targetValue = barBackground, animationSpec = tween(450), label = "modeSelectorBackground",
+        targetValue = barBackground, animationSpec = tween(170), label = "modeSelectorBackground",
     )
     val animatedSelectedColor by animateColorAsState(
-        targetValue = selectedBackground, animationSpec = tween(450), label = "modeSelectorSelected",
+        targetValue = selectedBackground, animationSpec = tween(170), label = "modeSelectorSelected",
     )
 
     // Local override allows glass for the pill ALONE even if the app's global
@@ -375,7 +375,7 @@ private fun PlayerModePills(
                     if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
                     else Modifier.clip(shape).background(animatedBarColor).border(0.75.dp, outlineColor, shape)
                 )
-                .padding(2.dp),
+                .padding(1.5.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
         ) {
@@ -384,13 +384,13 @@ private fun PlayerModePills(
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .height(34.dp)
+                        .height(28.dp)
                         .then(
                             if (glass && selected) {
                                 // Refract the artwork below the active tab, too:
                                 // no permanently painted, opaque white highlight.
                                 Modifier.liquidGlass(
-                                    shape = RoundedCornerShape(19.dp),
+                                    shape = RoundedCornerShape(16.dp),
                                     chrome = true,
                                     showBorder = true,
                                 )
@@ -412,7 +412,7 @@ private fun PlayerModePills(
                         ),
                         contentDescription = label,
                         tint = if (selected) selectedForeground else unselectedForeground,
-                        modifier = Modifier.size(20.dp),
+                        modifier = Modifier.size(16.dp),
                     )
                 }
             }

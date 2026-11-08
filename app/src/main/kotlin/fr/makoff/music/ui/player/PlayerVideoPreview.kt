@@ -21,6 +21,10 @@ import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.utils.InnerTubeXPlayer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.abs
 import kotlinx.coroutines.withContext
 
 /**
@@ -60,10 +64,15 @@ internal fun rememberPlayerVideoPreview(
     onCompanionResolved: (String) -> Unit,
     onPlayableResolved: (String) -> Unit,
 ): PlayerVideoPreview {
-    var preview by remember(videoId) { mutableStateOf(PlayerVideoPreview()) }
+    // Hide the selector and release the decoder in the SAME recomposition
+    // as disabling the setting, without waiting for a coroutine.
+    val canProbe = PlayerVideoModePolicy.canProbeVideo(videoId, enabled, localOrUploaded, casting)
+    var preview by remember(videoId, canProbe) {
+        mutableStateOf(PlayerVideoPreview(lookupFinished = !canProbe))
+    }
 
     LaunchedEffect(videoId, enabled, isVideoSong, localOrUploaded, casting, title, artists, failedClipIds) {
-        if (!PlayerVideoModePolicy.canProbeVideo(videoId, enabled, localOrUploaded, casting)) {
+        if (!canProbe) {
             preview = PlayerVideoPreview(lookupFinished = true)
             return@LaunchedEffect
         }
@@ -78,7 +87,9 @@ internal fun rememberPlayerVideoPreview(
         } else {
             knownCompanionVideoId ?: try {
                 withContext(Dispatchers.IO) {
-                    YouTube.videoCounterpart(videoId = id, title = title, artists = artists).getOrNull()
+                    withTimeoutOrNull(3_500L) {
+                        YouTube.videoCounterpart(videoId = id, title = title, artists = artists).getOrNull()
+                    }
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -88,13 +99,12 @@ internal fun rememberPlayerVideoPreview(
         }
         if (counterpart != null && counterpart != id) onCompanionResolved(counterpart)
 
-        // A verified pairing gets priority. The original item is probed as a
-        // fallback ONLY when it is itself marked as video or had an already
-        // verified video stream (e.g. a previous landscape session).
+        // Prioritize the YouTube Music counterpart; use only the SAME original
+        // item as fallback. Audio-only formats remain rejected by the resolver.
         val candidateIds = buildList {
             if (knownPlayableClipId != null) add(knownPlayableClipId)
             if (counterpart != null) add(counterpart)
-            if (isVideoSong) add(id)
+            add(id)
         }.distinct().filterNot { it in failedClipIds }
 
         for (candidate in candidateIds) {
@@ -114,7 +124,7 @@ internal fun rememberPlayerVideoPreview(
         // Songs without a proven, playable video must never advertise the tabs.
         preview = PlayerVideoPreview(lookupFinished = true)
     }
-    return preview
+    return if (canProbe) preview else PlayerVideoPreview(lookupFinished = true)
 }
 
 /**
@@ -125,12 +135,13 @@ internal fun rememberPlayerVideoPreview(
 @Composable
 internal fun rememberPreparedVideoPlayer(
     clip: PlayerVideoClip?,
+    audioId: String?,
     playerConnection: PlayerConnection,
     onUnavailable: (String) -> Unit,
 ): ExoPlayer? {
     val context = LocalContext.current
     val onUnavailableLatest by rememberUpdatedState(onUnavailable)
-    val player = remember(clip) {
+    val player = remember(clip, audioId) {
         clip?.let { selected ->
             val http = DefaultHttpDataSource.Factory()
                 .setDefaultRequestProperties(selected.stream.headers)
@@ -138,7 +149,7 @@ internal fun rememberPreparedVideoPlayer(
                 .setMediaSourceFactory(DefaultMediaSourceFactory(http))
                 .setLoadControl(
                     DefaultLoadControl.Builder()
-                        .setBufferDurationsMs(800, 4_000, 250, 500)
+                        .setBufferDurationsMs(1_500, 12_000, 300, 650)
                         .build(),
                 )
                 .build()
@@ -157,6 +168,21 @@ internal fun rememberPreparedVideoPlayer(
                     )
                     prepare()
                 }
+        }
+    }
+    // Keep the muted prebuffer near the audio clock without extra network
+    // lookups when the full player opens.
+    LaunchedEffect(player, audioId, playerConnection) {
+        val prepared = player ?: return@LaunchedEffect
+        while (isActive) {
+            delay(4_000L)
+            val audio = playerConnection.player
+            if (audioId != null && audio.currentMediaItem?.mediaId == audioId &&
+                !prepared.playWhenReady && prepared.playbackState == Player.STATE_READY &&
+                abs(audio.currentPosition - prepared.currentPosition) > 6_000L
+            ) {
+                prepared.seekTo(audio.currentPosition.coerceAtLeast(0L))
+            }
         }
     }
     DisposableEffect(player, clip) {

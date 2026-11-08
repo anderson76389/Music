@@ -323,7 +323,7 @@ fun BottomSheetPlayer(
         currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
     val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
     val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
-    var failedVideoClipIds by remember(activeVideoId) { mutableStateOf(emptySet<String>()) }
+    var failedVideoClipIds by remember(activeVideoId, playerVideoModeEnabled) { mutableStateOf(emptySet<String>()) }
     val videoPreview = rememberPlayerVideoPreview(
         videoId = activeVideoId,
         enabled = playerVideoModeEnabled,
@@ -350,6 +350,7 @@ fun BottomSheetPlayer(
     )
     val preparedVideoPlayer = rememberPreparedVideoPlayer(
         clip = videoPreview.clip,
+        audioId = activeVideoId,
         playerConnection = playerConnection,
         onUnavailable = { clipId ->
             if (videoPreview.clip?.id == clipId) {
@@ -370,7 +371,12 @@ fun BottomSheetPlayer(
             }
         }
     }
-    val selectedVideoForTrack = selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    // OFF takes effect in the same frame and never restores stale video state.
+    LaunchedEffect(playerVideoModeEnabled, activeVideoId) {
+        if (!playerVideoModeEnabled || selectedVideoId != activeVideoId) selectedVideoId = null
+    }
+    val selectedVideoForTrack = playerVideoModeEnabled &&
+        selectedVideoId != null && selectedVideoId == mediaMetadata?.id
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
     )

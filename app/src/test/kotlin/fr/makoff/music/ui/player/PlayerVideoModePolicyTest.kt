@@ -38,7 +38,7 @@ class PlayerVideoModePolicyTest {
         )
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, true) ==
-                PlayerVideoModePolicy.HeaderMode.LOADING,
+                PlayerVideoModePolicy.HeaderMode.CLASSIC,
         )
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, false) ==
@@ -52,6 +52,8 @@ class PlayerVideoModePolicyTest {
     }
 
     @Test fun disablingModeAlwaysRestoresTheClassicHeader() {
+        assertTrue(PlayerVideoModePolicy.headerMode(false, true, modeEnabled = false) == PlayerVideoModePolicy.HeaderMode.CLASSIC)
+        assertTrue(PlayerVideoModePolicy.headerMode(false, false, modeEnabled = false) == PlayerVideoModePolicy.HeaderMode.CLASSIC)
         assertFalse(PlayerVideoModePolicy.showSelector(false, true, true))
         assertFalse(PlayerVideoModePolicy.showSelector(false, true, false))
     }
