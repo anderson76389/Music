@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.border
@@ -352,6 +353,7 @@ internal fun PlayerArtworkSwitcher(
         PlayerModeTopBar(
             audioLabel = coverLabel,
             videoLabel = videoLabel,
+            songTitle = songTitle,
             showVideo = showVideo,
             headerMode = headerMode,
             selectorTheme = selectorTheme,
@@ -413,6 +415,7 @@ internal fun PlayerArtworkSwitcher(
 private fun PlayerModeTopBar(
     audioLabel: String,
     videoLabel: String,
+    songTitle: String?,
     showVideo: Boolean,
     headerMode: PlayerVideoModePolicy.HeaderMode,
     selectorTheme: PlayerVideoThemeMode,
@@ -426,7 +429,7 @@ private fun PlayerModeTopBar(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .height(66.dp)
             .padding(horizontal = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -453,15 +456,36 @@ private fun PlayerModeTopBar(
                     appDarkTheme = appDarkTheme,
                     modifier = Modifier.width(136.dp),
                 )
-                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Text(
-                    text = stringResource(R.string.now_playing),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = modeTextColor,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
+                PlayerVideoModePolicy.HeaderMode.CLASSIC -> Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
                     modifier = Modifier.fillMaxWidth(),
-                )
+                ) {
+                    Text(
+                        text = stringResource(R.string.now_playing),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = modeTextColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+                    // Restore the original marquee ONLY with the classic
+                    // header. Never draw another title beneath Son/Vidéo.
+                    songTitle?.takeIf { it.isNotBlank() }?.let { title ->
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = modeTextColor.copy(alpha = 0.82f),
+                            maxLines = 1,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth().basicMarquee(
+                                iterations = Int.MAX_VALUE,
+                                initialDelayMillis = 1400,
+                                velocity = 32.dp,
+                            ),
+                        )
+                    }
+                }
                 // Leave the center clear rather than flashing the old label
                 // over Son/Vidéo during a counterpart/stream lookup.
                 PlayerVideoModePolicy.HeaderMode.LOADING -> Unit
