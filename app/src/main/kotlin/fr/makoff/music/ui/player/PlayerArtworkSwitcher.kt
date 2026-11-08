@@ -91,6 +91,7 @@ internal fun PlayerArtworkSwitcher(
     videoPreview: PlayerVideoPreview,
     videoPlayer: ExoPlayer?,
     thumbnailUrl: String?,
+    songTitle: String?,
     onVideoUnavailable: (String) -> Unit,
     isCasting: Boolean,
     isExpanded: Boolean,
