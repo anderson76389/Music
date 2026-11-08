@@ -291,32 +291,18 @@ class OfflinePlayerInstrumentedTest {
             }
             instrumentation.waitForIdleSync()
             delay(1200)
-            // An audio-only song shows ONE classic heading in the same reserved
-            // top bar: no duplicated title above the cover, and no fake video mode.
-            val heading = device.wait(
-                Until.findObject(By.text(context.getString(R.string.now_playing))),
-                5000,
+            // With Son/Vidéo enabled, NO legacy header may flash during or
+            // after expansion, even if a local track has no video counterpart.
+            assertNull(
+                "En cours de lecture must NEVER leak into Son/Vidéo mode",
+                device.findObject(By.text(context.getString(R.string.now_playing))),
             )
-            assertNotNull("Classic En cours de lecture heading must be visible", heading)
-            val coverBounds = requireNotNull(freshControlBounds(context.getString(R.string.player_cover_toggle)))
-            assertTrue(
-                "Now Playing heading must remain above (not overlay) the cover",
-                requireNotNull(heading).visibleBounds.bottom <= coverBounds.top,
+            assertNull(
+                "No legacy queue title should float over the player artwork",
+                device.findObject(By.text("Validation locale")),
             )
-            assertEquals(
-                "Only one Now Playing heading is allowed",
-                1,
-                device.findObjects(By.text(context.getString(R.string.now_playing))).size,
-            )
-            val headerTitle = device.findObjects(By.text(tracks[0].title))
-                .minByOrNull { it.visibleBounds.top }
-            val titleBounds = requireNotNull(headerTitle) {
-                "The scrolling song title must be restored beneath Now Playing"
-            }.visibleBounds
-            val headingBounds = requireNotNull(heading).visibleBounds
-            assertTrue(
-                "Song title must stay below Now Playing and above artwork",
-                titleBounds.top >= headingBounds.bottom && titleBounds.bottom <= coverBounds.top,
+            val coverBounds = requireNotNull(
+                freshControlBounds(context.getString(R.string.player_cover_toggle))
             )
             assertTrue(
                 "The duplicate three-dot menu must not appear above the cover",
@@ -337,6 +323,18 @@ class OfflinePlayerInstrumentedTest {
             await("Disabling video mode must restore the classic title") {
                 device.findObject(By.text(context.getString(R.string.now_playing))) != null
             }
+            val heading = requireNotNull(
+                device.findObject(By.text(context.getString(R.string.now_playing)))
+            )
+            assertTrue(
+                "Classic Now Playing must remain above the cover",
+                heading.visibleBounds.bottom <= coverBounds.top,
+            )
+            assertEquals(
+                "The legacy title must appear only once after disabling Son/Vidéo",
+                1,
+                device.findObjects(By.text(context.getString(R.string.now_playing))).size,
+            )
             assertNull(
                 "Disabled video mode must not advertise Vidéo",
                 device.findObject(By.desc(context.getString(R.string.player_video_label))),
