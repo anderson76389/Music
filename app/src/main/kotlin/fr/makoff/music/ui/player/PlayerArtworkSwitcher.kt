@@ -350,7 +350,11 @@ internal fun PlayerArtworkSwitcher(
         } else {
             // A single top bar owns the entire expanded player header.
             // Thumbnail must not draw a second "En cours de lecture" label or Cast.
-            artwork(isExpanded)
+            // A collapsing/expanding BottomSheet reports isExpanded=false for
+            // part of its animation. Suppress Thumbnail's legacy "En cours de
+            // lecture / Cache Songs" at ALL times while Son/Vidéo is enabled,
+            // not only after the sheet has finished expanding.
+            artwork(isExpanded || videoModeEnabled)
         }
     }
     val topBar: @Composable (Modifier) -> Unit = { barModifier ->
