@@ -12,10 +12,10 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(false, false))
     }
 
-    @Test fun noClassicHeaderWhenVideoModeIsEnabledEvenForUnplayableClips() {
+    @Test fun classicHeaderReturnsAfterUnavailableVideoProbe() {
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
-                PlayerVideoModePolicy.HeaderMode.LOADING,
+                PlayerVideoModePolicy.HeaderMode.CLASSIC,
         )
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, true, modeEnabled = true) ==
