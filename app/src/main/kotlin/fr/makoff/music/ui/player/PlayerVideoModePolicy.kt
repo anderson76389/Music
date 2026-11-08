@@ -10,9 +10,11 @@ internal object PlayerVideoModePolicy {
     /** Exactly one header is rendered; never combine En cours de lecture
      * with Son/Vidéo. Don't flash the old header during video discovery.
      */
-    fun headerMode(selectorVisible: Boolean, waitingForClip: Boolean): HeaderMode = when {
+    fun headerMode(selectorVisible: Boolean, waitingForClip: Boolean, modeEnabled: Boolean = false): HeaderMode = when {
         selectorVisible -> HeaderMode.SELECTOR
-        waitingForClip -> HeaderMode.LOADING
+        // Once enabled, the classic header must NEVER flash even before the
+        // metadata is ready or after a video stream has failed.
+        modeEnabled || waitingForClip -> HeaderMode.LOADING
         else -> HeaderMode.CLASSIC
     }
 
