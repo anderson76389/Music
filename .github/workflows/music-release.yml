@@ -39,8 +39,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p previous-apk
-          gh release download --repo "$GITHUB_REPOSITORY" --pattern Metrolist.apk --dir previous-apk
-          python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk previous-apk/Metrolist.apk --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
+          # Download previous stable APK regardless of historical or new filename.
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir previous-apk
+          previous_apk=$(find previous-apk -maxdepth 1 -type f -name '*.apk' -print -quit)
+          test -n "$previous_apk"
+          echo "PREVIOUS_APK=$previous_apk" >> "$GITHUB_ENV"
+          python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk "$previous_apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - name: Restore private publication key
         env:
@@ -65,13 +69,13 @@ jobs:
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
           mkdir -p dist
-          cp app/build/outputs/apk/gms/release/app-gms-release.apk dist/Metrolist.apk
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/Metrolist.apk > dist/SIGNATURE.txt
+          cp app/build/outputs/apk/gms/release/app-gms-release.apk dist/"Apple Music.apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs dist/"Apple Music.apk" > dist/SIGNATURE.txt
       - name: Préparer les APK stables pour les essais
         run: |
           mkdir -p apk-foss apk-gms
           cp app/build/outputs/apk/foss/release/app-foss-release.apk apk-foss/
-          cp dist/Metrolist.apk apk-gms/
+          cp dist/"Apple Music.apk" apk-gms/
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
@@ -98,11 +102,11 @@ jobs:
         run: |
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           printf 'MUSIC_VERSION_CODE=%s\nMUSIC_VERSION_NAME=%s\nSOURCE_SHA=%s\n' "$MUSIC_VERSION_CODE" "$MUSIC_VERSION_NAME" "$SOURCE_SHA" > dist/BUILD.txt
-          (cd dist && sha256sum Metrolist.apk MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
+          (cd dist && sha256sum "Apple Music.apk" MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
           cat > notes.txt <<'NOTES'
           ## Apple Music pour Android
 
-          - **Metrolist.apk** : un seul APK universel, avec Google Cast.
+          - **Apple Music.apk** : un seul APK universel, avec Google Cast.
           - Sources et sommes de contrôle des APK jointes.
 
           APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
