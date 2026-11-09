@@ -143,14 +143,14 @@
   </tr>
   <tr>
     <td align="center">
-      <a href="https://github.com/anderson76389/Music/releases/latest/download/Apple%20Music.apk">
+      <a href="https://github.com/anderson76389/Music/releases/latest/download/Apple.Music.apk">
         <img src="assets/badges/github-apk-fr.svg" alt="Télécharger l’APK universel sur GitHub" height="120" />
       </a>
     </td>
   </tr>
 </table>
 
-**[Télécharger Apple Music — dernière version signée](https://github.com/anderson76389/Music/releases/latest/download/Apple%20Music.apk)**
+**[Télécharger Apple Music — dernière version signée](https://github.com/anderson76389/Music/releases/latest/download/Apple.Music.apk)**
 
 Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
@@ -158,9 +158,9 @@ Android 8.0 minimum · ARM 32/64 bits et x86 32/64 bits · Google Cast inclus
 
 </div>
 
-Installez **`Apple Music.apk`** directement. Les sources et les sommes de contrôle jointes ne sont pas des versions supplémentaires de l’application.
+Installez **`Apple.Music.apk`** directement : GitHub remplace les espaces du nom par des points. Le fichier **`Metrolist.apk`** de la même release est une copie signée strictement identique, conservée uniquement pour que les anciennes versions trouvent leurs mises à jour. Les sources et les sommes de contrôle ne sont pas des versions supplémentaires.
 
-Chaque modification du code sur `main` lance les contrôles. Après leur réussite, une seconde étape construit et vérifie les APK signés, puis publie **un seul fichier `Apple Music.apk` universel** dans Releases. Les numéros de version augmentent automatiquement. Les deux variantes sont compilées en interne pour les essais de compatibilité.
+Chaque modification du code sur `main` lance les contrôles. Après leur réussite, une seconde étape construit et vérifie les APK signés, puis publie **une APK universelle `Apple.Music.apk` (et une copie `Metrolist.apk` pour la compatibilité avec les anciennes versions)** dans Releases. Les numéros de version augmentent automatiquement. Les deux variantes sont compilées en interne pour les essais de compatibilité.
 
 > [!IMPORTANT]
 > **Passage des anciennes préversions à la version signée :** la version publique utilise `fr.makoff.music`, tandis que les anciens tests utilisent `fr.makoff.music.debug`. Les deux peuvent coexister. Sauvegardez vos données dans l’ancienne application, restaurez-les et vérifiez-les dans la nouvelle avant toute suppression. Les publications signées suivantes conservent la même clé.
