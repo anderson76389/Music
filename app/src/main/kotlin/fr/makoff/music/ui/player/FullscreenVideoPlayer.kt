@@ -1,5 +1,6 @@
 package fr.makoff.music.ui.player
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -53,6 +54,9 @@ internal fun FullscreenVideoPlayer(
     onUnavailable: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // Register after BottomSheet's predictive back handler so Back exits
+    // cinema mode instead of collapsing/stopping the entire music player.
+    BackHandler { onExit() }
     var controlsVisible by remember(videoPlayer) { mutableStateOf(true) }
     LaunchedEffect(controlsVisible, isPlaying) {
         if (controlsVisible && isPlaying) {
