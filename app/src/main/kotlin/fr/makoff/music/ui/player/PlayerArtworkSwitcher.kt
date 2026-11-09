@@ -130,7 +130,11 @@ internal fun PlayerArtworkSwitcher(
         waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
-    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting) {
+    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting, videoPlayer) {
+        // On collapse, rotation teardown, Cast or disabling the selector,
+        // the surface is absent: pause the muted stream immediately.
+        // Audio remains owned by MusicService and is never interrupted.
+        if (!showModeBar) videoPlayer?.playWhenReady = false
         // Do not cancel an in-progress lookup. If every verified candidate
         // fails, safely restore audio without leaving a black video panel.
         if (showVideo && videoPreview.lookupFinished && !showModeBar) {
@@ -482,7 +486,9 @@ private fun VideoOnlySurface(
         val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
         if (PlayerVideoModePolicy.shouldSeekOnVideoSelection(audioPosition, videoPlayer.currentPosition)) {
             videoPlayer.seekTo(audioPosition)
-            videoReady = false
+            // A seek within existing buffer can remain READY and fire no state
+            // change callback: never leave a permanent loading overlay.
+            videoReady = videoPlayer.playbackState == Player.STATE_READY
             lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
         }
         videoPlayer.playWhenReady = isPlaying
@@ -496,7 +502,7 @@ private fun VideoOnlySurface(
                 )
             ) {
                 videoPlayer.seekTo(audioPlayer.currentPosition.coerceAtLeast(0L))
-                videoReady = false
+                videoReady = videoPlayer.playbackState == Player.STATE_READY
                 lastPeriodicSeekMs[0] = now
             }
             delay(1_500L)
@@ -520,7 +526,7 @@ private fun VideoOnlySurface(
                     )
                 ) {
                     videoPlayer.seekTo(newPosition.positionMs.coerceAtLeast(0L))
-                    videoReady = false
+                    videoReady = videoPlayer.playbackState == Player.STATE_READY
                     lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
                 }
             }
