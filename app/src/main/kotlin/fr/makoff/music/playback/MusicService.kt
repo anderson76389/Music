@@ -845,7 +845,18 @@ class MusicService :
             .distinctUntilChanged()
             .collect(scope) { enabled ->
                 cachedSoundProofSkipAi = enabled
-                if (enabled) scope.launch(Dispatchers.IO) { soundProofRepository.refresh() }
+                if (enabled) {
+                    // Apply the filter immediately when enabling it during a
+                    // song, not just after the next track transition.
+                    checkSoundProofForCurrent(player.currentMediaItem)
+                    scope.launch(Dispatchers.IO) {
+                        soundProofRepository.refresh()
+                        withContext(Dispatchers.Main) {
+                            // Also recheck once the first download is cached.
+                            if (cachedSoundProofSkipAi) checkSoundProofForCurrent(player.currentMediaItem)
+                        }
+                    }
+                }
             }
 
         dataStore.data
@@ -2221,6 +2232,32 @@ class MusicService :
 
     }
 
+    /** Called on both track transitions and when SoundProof is enabled/refreshed.
+     * The database lookup runs off the main thread, never holds a network lock,
+     * and the playback action is guarded against stale asynchronous results.
+     */
+    private fun checkSoundProofForCurrent(mediaItem: MediaItem?) {
+        if (!cachedSoundProofSkipAi || mediaItem == null) return
+        val artists = mediaItem.metadata?.artists?.map { it.name }.orEmpty()
+            .filter { it.isNotBlank() }
+        if (artists.isEmpty()) return
+
+        val candidateId = mediaItem.mediaId
+        val candidateIndex = player.currentMediaItemIndex
+        scope.launch {
+            val reported = soundProofRepository.shouldSkipArtist(artists)
+            if (reported && cachedSoundProofSkipAi &&
+                player.currentMediaItem?.mediaId == candidateId &&
+                player.currentMediaItemIndex == candidateIndex &&
+                castConnectionHandler?.isCasting?.value != true
+            ) {
+                Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
+                if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+                else player.pause()
+            }
+        }
+    }
+
     private var previousMediaItemIndex = C.INDEX_UNSET
     private var previousEpisodeId: String? = null
 
@@ -2315,31 +2352,7 @@ class MusicService :
 
         setupAudioNormalization()
 
-        // SoundProof: independent opt-in decision based on a locally cached
-        // community dataset. Guard against stale async results when the user
-        // skips manually or disables the setting while a lookup is running.
-        if (cachedSoundProofSkipAi && mediaItem != null) {
-            val artists = mediaItem.metadata?.artists?.map { it.name }.orEmpty()
-                .filter { it.isNotBlank() }
-            if (artists.isNotEmpty()) {
-                val candidateId = mediaItem.mediaId
-                val candidateIndex = player.currentMediaItemIndex
-                scope.launch {
-                    val reported = withContext(Dispatchers.IO) {
-                        soundProofRepository.shouldSkipArtist(artists)
-                    }
-                    if (reported && cachedSoundProofSkipAi &&
-                        player.currentMediaItem?.mediaId == candidateId &&
-                        player.currentMediaItemIndex == candidateIndex &&
-                        castConnectionHandler?.isCasting?.value != true
-                    ) {
-                        Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
-                        if (player.hasNextMediaItem()) player.seekToNextMediaItem()
-                        else player.pause() // Prevent playing a flagged lone/final queue item.
-                    }
-                }
-            }
-        }
+        checkSoundProofForCurrent(mediaItem)
 
         // Skip if this change was triggered by Cast sync (to prevent loops)
         if (castConnectionHandler?.isCasting?.value == true &&
