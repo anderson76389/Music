@@ -108,6 +108,19 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.videoModeActive(true, true, true, true))
     }
 
+    @Test fun switchingDoesNotSeekForDecoderJitterOrDuringVideoBuffering() {
+        assertFalse(PlayerVideoModePolicy.shouldSeekOnVideoSelection(30_000L, 28_400L))
+        assertTrue(PlayerVideoModePolicy.shouldSeekOnVideoSelection(30_000L, 26_000L))
+        assertFalse(PlayerVideoModePolicy.shouldSeekOnVideoSelection(-1L, 0L))
+        assertFalse(PlayerVideoModePolicy.shouldSeekOnVideoSelection(1_000L, -1L))
+        assertFalse(PlayerVideoModePolicy.shouldCorrectVideoDrift(30_000L, 23_000L, false, 10_000L))
+        assertFalse(PlayerVideoModePolicy.shouldCorrectVideoDrift(30_000L, 23_000L, true, 2_000L))
+        assertFalse(PlayerVideoModePolicy.shouldCorrectVideoDrift(30_000L, 28_000L, true, 10_000L))
+        assertTrue(PlayerVideoModePolicy.shouldCorrectVideoDrift(30_000L, 23_000L, true, 10_000L))
+        // A seek on the main audio timeline follows even small explicit jumps.
+        assertTrue(PlayerVideoModePolicy.shouldSeekOnVideoSelection(30_000L, 29_000L, toleranceMs = 500L))
+    }
+
     @Test fun collapsedPlayerNeverShowsVideoModeControls() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }

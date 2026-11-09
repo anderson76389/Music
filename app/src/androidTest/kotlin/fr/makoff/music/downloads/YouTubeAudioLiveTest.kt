@@ -36,7 +36,20 @@ class YouTubeAudioLiveTest {
             assertTrue(file.length() > 1000)
             assertTrue(file.extension in setOf("m4a", "webm", "opus", "ogg", "mp4"))
             if (format == DownloadAudioFormat.M4A) assertTrue(file.extension == "m4a")
-            println("YOUTUBE_DOWNLOAD_OK: format=$format; native=${file.parentFile?.name == "resolved"}; bytes=${file.length()}")
+            val extractor = android.media.MediaExtractor()
+            val codec: String
+            val sourceBitrate: Int
+            try {
+                extractor.setDataSource(file.absolutePath)
+                val track = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                    .firstOrNull { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+                    ?: error("Downloaded file contains no playable audio track")
+                codec = track.getString(android.media.MediaFormat.KEY_MIME).orEmpty()
+                sourceBitrate = if (track.containsKey(android.media.MediaFormat.KEY_BIT_RATE))
+                    track.getInteger(android.media.MediaFormat.KEY_BIT_RATE) else -1
+            } finally { extractor.release() }
+            if (format == DownloadAudioFormat.M4A) assertTrue(codec == "audio/mp4a-latm")
+            println("YOUTUBE_DOWNLOAD_OK: format=$format; native=${file.parentFile?.name == "resolved"}; bytes=${file.length()}; codec=$codec; reported_bitrate=$sourceBitrate")
             }
         } finally { directory.deleteRecursively() }
     }

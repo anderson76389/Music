@@ -53,6 +53,10 @@ for variant in foss gms; do
         echo "::warning::SoundProof live download did not pass; see soundproof-live-test.txt"
       fi
     fi
+    # Deterministic quality/integrity check against a local ranged HTTP server.
+    timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.downloads.DownloadRangeInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/audio-range-tests.txt
+    grep -Eq 'OK \\(2 tests\\)' smoke-results/audio-range-tests.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/audio-range-tests.txt
     timeout 300s adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
     adb pull /data/local/tmp/download-quality-popup.png smoke-results/ || true
     adb logcat -d > smoke-results/folder-audio-logcat.txt

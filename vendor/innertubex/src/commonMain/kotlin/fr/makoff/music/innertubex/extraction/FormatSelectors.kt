@@ -9,7 +9,11 @@ public fun selectBestAudioFormat(
     audioQuality: AudioQuality = AudioQuality.AUTO,
     requireUrl: Boolean = true,
 ): Format? {
-    val validFormats = originalAudioTrack(if (requireUrl) formats.filter { !it.url.isNullOrBlank() } else formats)
+    // A playback response may contain both video and audio formats. Never
+    // pick the video bitrate as "highest quality audio": the audio-only
+    // download would then fail or store the wrong stream.
+    val audioOnly = formats.filter { it.mimeType.substringBefore(';').trim().startsWith("audio/", ignoreCase = true) }
+    val validFormats = originalAudioTrack(if (requireUrl) audioOnly.filter { !it.url.isNullOrBlank() } else audioOnly)
     if (validFormats.isEmpty()) return null
     return when (audioQuality) {
         AudioQuality.LOW -> {
