@@ -439,6 +439,7 @@ class MusicService :
     private var cachedHideVideoSongs = false
     @Volatile
     private var cachedSoundProofSkipAi = false
+    private var consecutiveSoundProofAutoSkips = 0
     private val soundProofRepository by lazy { SoundProofRepository(applicationContext) }
     @Volatile
     private var cachedShufflePlaylistFirst = false
@@ -845,6 +846,7 @@ class MusicService :
             .distinctUntilChanged()
             .collect(scope) { enabled ->
                 cachedSoundProofSkipAi = enabled
+                if (!enabled) consecutiveSoundProofAutoSkips = 0
                 if (enabled) {
                     // Apply the filter immediately when enabling it during a
                     // song, not just after the next track transition.
@@ -2246,14 +2248,26 @@ class MusicService :
         val candidateIndex = player.currentMediaItemIndex
         scope.launch {
             val reported = soundProofRepository.shouldSkipArtist(artists)
-            if (reported && cachedSoundProofSkipAi &&
+            if (cachedSoundProofSkipAi &&
                 player.currentMediaItem?.mediaId == candidateId &&
                 player.currentMediaItemIndex == candidateIndex &&
                 castConnectionHandler?.isCasting?.value != true
             ) {
-                Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
-                if (player.hasNextMediaItem()) player.seekToNextMediaItem()
-                else player.pause()
+                if (!reported) {
+                    consecutiveSoundProofAutoSkips = 0
+                } else if (SoundProofPolicy.fullQueueAlreadySkipped(
+                        consecutiveSoundProofAutoSkips, player.mediaItemCount
+                    )
+                ) {
+                    // With repeat-all and every artist reported, repeated
+                    // seeks would otherwise spin through the queue forever.
+                    player.pause()
+                } else {
+                    consecutiveSoundProofAutoSkips++
+                    Timber.tag("SoundProof").i("Skipping community-reported AI artist in queue")
+                    if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+                    else player.pause()
+                }
             }
         }
     }
