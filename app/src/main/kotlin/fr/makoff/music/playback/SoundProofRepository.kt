@@ -196,6 +196,10 @@ internal object SoundProofPolicy {
     fun isReportedAi(human: Int, ai: Int): Boolean =
         human >= 0 && ai > 0 && ai.toLong() * 100 >= (human.toLong() + ai) * 50
 
+    /** Stop autoplay loops after checking a complete queue of reported artists. */
+    fun fullQueueAlreadySkipped(consecutiveSkips: Int, queueLength: Int): Boolean =
+        queueLength > 0 && consecutiveSkips >= queueLength
+
     fun isAnyArtistReportedAi(credits: List<String>, votesByName: Map<String, Pair<Int, Int>>): Boolean =
         credits.any { credit ->
             val whole = votesByName[normalize(credit)]
