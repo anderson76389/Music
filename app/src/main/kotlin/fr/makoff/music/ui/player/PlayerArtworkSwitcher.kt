@@ -113,15 +113,16 @@ internal fun PlayerArtworkSwitcher(
     // Video stream extraction and buffering now belong to BottomSheetPlayer,
     // which survives collapse. Never show Son/Vidéo for a merely guessed clip.
     val clip = videoPreview.clip
+    val hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
+        youtubeTrack = videoId != null,
+        clipId = clip?.id,
+        unavailableClipId = null,
+        hasResolvedStream = clip != null && videoPlayer != null,
+    )
     val showModeBar = PlayerVideoModePolicy.showSelector(
         enabled = videoModeEnabled && !isCasting,
         expanded = isExpanded,
-        hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
-            youtubeTrack = videoId != null,
-            clipId = clip?.id,
-            unavailableClipId = null,
-            hasResolvedStream = clip != null && videoPlayer != null,
-        ),
+        hasPlayableClip = hasPlayableClip,
     )
     // Maintain the previous single-header policy: never flash the old title
     // behind the selector, even during the background clip availability probe.
@@ -130,10 +131,17 @@ internal fun PlayerArtworkSwitcher(
         waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
-    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting) {
-        // Do not cancel an in-progress lookup. If every verified candidate
-        // fails, safely restore audio without leaving a black video panel.
-        if (showVideo && videoPreview.lookupFinished && !showModeBar) {
+    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting, hasPlayableClip, videoPlayer) {
+        // A collapsed sheet or a brief layout teardown during orientation
+        // change is NOT an unavailable video. Keep the selected tab for the
+        // same song instead of unexpectedly switching back to Son.
+        if (!showModeBar) videoPlayer?.playWhenReady = false
+        if (showVideo && PlayerVideoModePolicy.shouldResetVideoSelection(
+                modeEnabled = videoModeEnabled, casting = isCasting,
+                lookupFinished = videoPreview.lookupFinished,
+                hasPlayableClip = hasPlayableClip,
+            )
+        ) {
             onShowVideoChange(false)
         }
     }
@@ -146,7 +154,6 @@ internal fun PlayerArtworkSwitcher(
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
                 VideoOnlySurface(
-                    videoId = clip.id,
                     audioId = videoId,
                     videoPlayer = videoPlayer,
                     thumbnailUrl = thumbnailUrl,
@@ -174,19 +181,13 @@ internal fun PlayerArtworkSwitcher(
             customThemeColor = customThemeColor,
             modeTextColor = modeTextColor,
             onAudioClick = {
-                videoPlayer?.playWhenReady = false
+                // The VideoOnlySurface owns play/pause and clock sync, not the
+                // tab's click handler. Keep the decoder warm briefly on fast
+                // Son/Vidéo/Son gestures without a double seek or black frame.
                 onShowVideoChange(false)
             },
             onVideoClick = {
                 if (videoPlayer != null && showModeBar) {
-                    val audioPosition = runCatching { playerConnection.player.currentPosition }
-                        .getOrDefault(0L).coerceAtLeast(0L)
-                    // An already prepared frame is normally within the sync
-                    // window. Avoid a decoder-flushing seek on every tab tap.
-                    if (abs(videoPlayer.currentPosition - audioPosition) > 1_800L) {
-                        videoPlayer.seekTo(audioPosition)
-                    }
-                    videoPlayer.playWhenReady = isPlaying
                     onShowVideoChange(true)
                 }
             },
@@ -434,7 +435,6 @@ internal fun PlayerModePills(
 
 @Composable
 private fun VideoOnlySurface(
-    videoId: String,
     audioId: String,
     videoPlayer: ExoPlayer,
     thumbnailUrl: String?,
@@ -467,33 +467,47 @@ private fun VideoOnlySurface(
         videoPlayer.addListener(listener)
         onDispose { videoPlayer.removeListener(listener) }
     }
-    // Stop decoding as soon as the visible video surface disappears.
-    // Keep the preloaded player alive for a quick return to Vidéo.
-    DisposableEffect(videoPlayer) {
-        onDispose {
-            videoPlayer.playWhenReady = false
-            videoPlayer.clearVideoSurface()
-        }
-    }
+    // The prepared ExoPlayer is shared between portrait and landscape.
+    // Releasing a UI surface must never stop the *new* view's player or call
+    // clearVideoSurface() globally: that races with orientation reattachment.
+    val lastPeriodicSeekMs = remember(videoPlayer) { longArrayOf(0L) }
 
-    // Respond to play/pause and tab selection without the 350 ms polling
-    // latency. Only correct large drift, never seek during buffering: doing
-    // so every 350 ms was flushing ExoPlayer and causing repeated stalls.
+    // One owner for tab switching, play/pause and position alignment.
+    // Repeated rapid tab taps must not issue two competing seekTo() calls.
     LaunchedEffect(videoPlayer, audioId, isPlaying, visible) {
         val audioPlayer = playerConnection.player
         val sameSong = audioPlayer.currentMediaItem?.mediaId == audioId
-        videoPlayer.playWhenReady = visible && isPlaying && sameSong
-        if (!visible || !sameSong) return@LaunchedEffect
+        if (!visible || !sameSong) {
+            if (sameSong && !visible && isPlaying && videoPlayer.playWhenReady) {
+                // Keep the muted decoder warm just long enough for a rapid
+                // return to video, then stop consuming video network/CPU.
+                delay(600L)
+            }
+            videoPlayer.playWhenReady = false
+            return@LaunchedEffect
+        }
 
-        var lastSyncMs = 0L
+        val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
+        if (PlayerVideoModePolicy.shouldSeekOnVideoSelection(audioPosition, videoPlayer.currentPosition)) {
+            videoPlayer.seekTo(audioPosition)
+            // A seek within existing buffer can remain READY and fire no state
+            // change callback: never leave a permanent loading overlay.
+            videoReady = videoPlayer.playbackState == Player.STATE_READY
+            lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
+        }
+        videoPlayer.playWhenReady = isPlaying
         while (isActive) {
-            if (videoPlayer.playbackState == Player.STATE_READY) {
-                val drift = abs(videoPlayer.currentPosition - audioPlayer.currentPosition)
-                val now = android.os.SystemClock.elapsedRealtime()
-                if (drift > 2_800L && now - lastSyncMs > 5_000L) {
-                    videoPlayer.seekTo(audioPlayer.currentPosition.coerceAtLeast(0L))
-                    lastSyncMs = now
-                }
+            val now = android.os.SystemClock.elapsedRealtime()
+            if (PlayerVideoModePolicy.shouldCorrectVideoDrift(
+                    audioPositionMs = audioPlayer.currentPosition,
+                    videoPositionMs = videoPlayer.currentPosition,
+                    videoReady = videoPlayer.playbackState == Player.STATE_READY,
+                    timeSinceLastSeekMs = now - lastPeriodicSeekMs[0],
+                )
+            ) {
+                videoPlayer.seekTo(audioPlayer.currentPosition.coerceAtLeast(0L))
+                videoReady = videoPlayer.playbackState == Player.STATE_READY
+                lastPeriodicSeekMs[0] = now
             }
             delay(1_500L)
         }
@@ -509,10 +523,15 @@ private fun VideoOnlySurface(
                 newPosition: Player.PositionInfo,
                 reason: Int,
             ) {
-                if (visible && audio.currentMediaItem?.mediaId == audioId &&
-                    abs(videoPlayer.currentPosition - newPosition.positionMs) > 500L
+                if (visible && reason == Player.DISCONTINUITY_REASON_SEEK &&
+                    audio.currentMediaItem?.mediaId == audioId &&
+                    PlayerVideoModePolicy.shouldSeekOnVideoSelection(
+                        newPosition.positionMs, videoPlayer.currentPosition, toleranceMs = 500L,
+                    )
                 ) {
                     videoPlayer.seekTo(newPosition.positionMs.coerceAtLeast(0L))
+                    videoReady = videoPlayer.playbackState == Player.STATE_READY
+                    lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
                 }
             }
         }
@@ -541,16 +560,22 @@ private fun VideoOnlySurface(
                 factory = { TextureView(it) },
                 modifier = Modifier.fillMaxSize(),
                 update = { textureView ->
-                    // Reconnect a reused TextureView to the NEW ExoPlayer when
-                    // changing tracks, otherwise the clip can remain black.
                     if (textureView.tag !== videoPlayer) {
                         videoPlayer.setVideoTextureView(textureView)
                         textureView.tag = videoPlayer
                     }
                 },
+                onRelease = { textureView ->
+                    // Conditional clear never detaches a replacement surface
+                    // attached by the landscape/portrait branch meanwhile.
+                    if (textureView.tag === videoPlayer) {
+                        videoPlayer.clearVideoTextureView(textureView)
+                        textureView.tag = null
+                    }
+                },
             )
             AnimatedVisibility(
-                visible = !firstFrameRendered,
+                visible = !firstFrameRendered || !videoReady,
                 enter = fadeIn(animationSpec = tween(100)),
                 exit = fadeOut(animationSpec = tween(180)),
             ) {

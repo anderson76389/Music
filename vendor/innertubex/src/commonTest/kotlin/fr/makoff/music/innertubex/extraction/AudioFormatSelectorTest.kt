@@ -150,6 +150,19 @@ class AudioFormatSelectorTest {
     }
 
     @Test
+    fun highQualityNeverPicksABiggerVideoStreamInsteadOfAudio() {
+        val formats = listOf(
+            Format(itag = 137, mimeType = "video/mp4; codecs=\"avc1.640028\"", bitrate = 3_000_000, url = "https://video"),
+            Format(itag = 251, mimeType = "audio/webm; codecs=\"opus\"", bitrate = 160_000, url = "https://audio-high"),
+            Format(itag = 250, mimeType = "audio/webm; codecs=\"opus\"", bitrate = 70_000, url = "https://audio-low"),
+        )
+        assertEquals(251, selectBestAudioFormat(formats, AudioQuality.HIGH)?.itag)
+        assertEquals(251, selectBestAudioFormat(formats, AudioQuality.AUTO)?.itag)
+        assertEquals(250, selectBestAudioFormat(formats, AudioQuality.LOW)?.itag)
+        assertNull(selectBestAudioFormat(formats.take(1), AudioQuality.HIGH))
+    }
+
+    @Test
     fun highQualityUsesBitrateBeforeContainer() {
         val formats =
             listOf(

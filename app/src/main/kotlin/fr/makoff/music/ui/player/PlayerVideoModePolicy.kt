@@ -64,6 +64,30 @@ internal object PlayerVideoModePolicy {
         else -> null
     }
 
+    /** Avoid decoder-flushing seeks for tiny drift when changing Son/Vidéo.
+     * Never seek to invalid negative positions (unprepared/unknown clock).
+     */
+    fun shouldSeekOnVideoSelection(audioPositionMs: Long, videoPositionMs: Long, toleranceMs: Long = 1_800L): Boolean =
+        audioPositionMs >= 0L && videoPositionMs >= 0L && toleranceMs >= 0L &&
+            kotlin.math.abs(audioPositionMs - videoPositionMs) > toleranceMs
+
+    /** Large drift is corrected only after the decoder is ready and the
+     * preceding seek had time to rebuffer. No repeated stall every tick.
+     */
+    fun shouldCorrectVideoDrift(
+        audioPositionMs: Long, videoPositionMs: Long,
+        videoReady: Boolean, timeSinceLastSeekMs: Long,
+    ): Boolean = videoReady && timeSinceLastSeekMs >= 5_000L &&
+        shouldSeekOnVideoSelection(audioPositionMs, videoPositionMs, toleranceMs = 2_800L)
+
+    /** Collapse and temporary layout detach do not invalidate a user's
+     * selected video. Only disabling, Cast, or proven clip failure does.
+     */
+    fun shouldResetVideoSelection(
+        modeEnabled: Boolean, casting: Boolean,
+        lookupFinished: Boolean, hasPlayableClip: Boolean,
+    ): Boolean = !modeEnabled || casting || (lookupFinished && !hasPlayableClip)
+
     /** Wake and permit sensor rotation only while the selected video is on
      * screen. Audio-only playback and Cast must not acquire these flags.
      */
