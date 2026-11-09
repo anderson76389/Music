@@ -14,7 +14,7 @@ internal object PlayerVideoModePolicy {
         selectorVisible -> HeaderMode.SELECTOR
         // Once enabled, the classic header must NEVER flash even before the
         // metadata is ready or after a video stream has failed.
-        modeEnabled && waitingForClip -> HeaderMode.LOADING
+        modeEnabled -> HeaderMode.LOADING
         else -> HeaderMode.CLASSIC
     }
 
