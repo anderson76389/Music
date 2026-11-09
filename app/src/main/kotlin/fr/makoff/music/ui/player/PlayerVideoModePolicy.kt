@@ -80,6 +80,11 @@ internal object PlayerVideoModePolicy {
     ): Boolean = videoReady && timeSinceLastSeekMs >= 5_000L &&
         shouldSeekOnVideoSelection(audioPositionMs, videoPositionMs, toleranceMs = 2_800L)
 
+    /** Exclusive rendering: Son always owns the cover; Vidéo never
+     * composes the cover behind a native TextureView.
+     */
+    fun showSongArtwork(videoSelected: Boolean): Boolean = !videoSelected
+
     /** Collapse and temporary layout detach do not invalidate a user's
      * selected video. Only disabling, Cast, or proven clip failure does.
      */
