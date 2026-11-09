@@ -96,7 +96,7 @@ for variant in foss gms; do
     # Live network access is best-effort; keep evidence but do not hide a failure.
     if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -eq 30 ]; then
       timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.playback.SoundProofInstrumentedTest#downloadsCommunityDumpAndParsesArtistVotes "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/soundproof-live-test.txt || true
-      if grep -Fq 'SOUNDPROOF_LIVE_OK' smoke-results/soundproof-live-test.txt; then
+      if grep -Eq 'OK \(1 test\)' smoke-results/soundproof-live-test.txt && ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/soundproof-live-test.txt; then
         echo "SOUNDPROOF_REAL_DUMP_OK"
       else
         echo "::warning::SoundProof live download did not pass; see soundproof-live-test.txt"
