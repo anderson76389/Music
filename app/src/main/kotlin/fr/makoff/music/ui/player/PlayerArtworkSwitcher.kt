@@ -147,15 +147,9 @@ internal fun PlayerArtworkSwitcher(
     val playerImage: @Composable () -> Unit = {
         if (showModeBar && videoId != null && clip != null && videoPlayer != null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                // Son and Vidéo are TWO exclusive screens, not two layers. An
-                // Android TextureView doesn't reliably obey Compose alpha(0f);
-                // leaving the artwork underneath made the video look pasted on
-                // the cover (especially on the foldable / landscape player).
-                // Compose the cover ONLY in Son, but keep the TextureView mounted
-                // in both modes to avoid re-creating the video decoder on taps.
-                if (PlayerVideoModePolicy.showSongArtwork(showVideo)) {
-                    artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
-                }
+                // Mount the decoder surface behind the artwork so its FIRST
+                // frame is decoded before the Vidéo tap. Native TextureView
+                // alpha hides it in Son; the cover on top is a second safeguard.
                 VideoOnlySurface(
                     audioId = videoId,
                     videoPlayer = videoPlayer,
@@ -165,6 +159,9 @@ internal fun PlayerArtworkSwitcher(
                     onUnavailable = { onVideoUnavailable(clip.id) },
                     modifier = Modifier.fillMaxSize(),
                 )
+                if (PlayerVideoModePolicy.showSongArtwork(showVideo)) {
+                    artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
+                }
             }
         } else {
             artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
@@ -436,7 +433,7 @@ internal fun PlayerModePills(
 }
 
 @Composable
-private fun VideoOnlySurface(
+internal fun VideoOnlySurface(
     audioId: String,
     videoPlayer: ExoPlayer,
     playerConnection: PlayerConnection,
@@ -444,6 +441,8 @@ private fun VideoOnlySurface(
     visible: Boolean,
     onUnavailable: () -> Unit,
     modifier: Modifier = Modifier,
+    fullscreen: Boolean = false,
+    onSurfaceTap: (() -> Unit)? = null,
 ) {
     // The stream is already resolved and the muted ExoPlayer is already
     // prepared above. Switching tabs only attaches its TextureView.
@@ -554,17 +553,19 @@ private fun VideoOnlySurface(
         Box(
             modifier = Modifier
                 .size(videoWidth, videoWidth * (9f / 16f))
-                .clip(RoundedCornerShape(18.dp))
+                .then(if (fullscreen) Modifier else Modifier.clip(RoundedCornerShape(18.dp)))
                 .then(if (visible) Modifier.background(Color.Black) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             AndroidView(
-                factory = { TextureView(it).apply { visibility = View.INVISIBLE } },
+                factory = { TextureView(it).apply { alpha = 0f; visibility = View.VISIBLE } },
                 modifier = Modifier.fillMaxSize(),
                 update = { textureView ->
-                    // Native visibility, not Compose alpha: when Son is active
-                    // the video must not draw a single pixel over the cover.
-                    textureView.visibility = if (visible) View.VISIBLE else View.INVISIBLE
+                    // Decode the first muted frame with a real attached
+                    // TextureView even in Son mode. Native view alpha (not
+                    // Compose graphics alpha) plus cover drawn ABOVE it
+                    // prevents the clip from ever appearing on the artwork.
+                    textureView.alpha = if (visible) 1f else 0f
                     if (textureView.tag !== videoPlayer) {
                         videoPlayer.setVideoTextureView(textureView)
                         textureView.tag = videoPlayer
@@ -599,12 +600,16 @@ private fun VideoOnlySurface(
             // session remains muted and follows the service; no duplicate sound.
             Box(
                 Modifier.matchParentSize().clickable(enabled = visible, onClickLabel = playbackLabel) {
-                    playerConnection.togglePlayPause()
-                    controlsVisible = true
+                    if (onSurfaceTap != null) {
+                        onSurfaceTap()
+                    } else {
+                        playerConnection.togglePlayPause()
+                        controlsVisible = true
+                    }
                 },
             )
             AnimatedVisibility(
-                visible = visible && videoReady && (!isPlaying || controlsVisible),
+                visible = !fullscreen && visible && videoReady && (!isPlaying || controlsVisible),
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {

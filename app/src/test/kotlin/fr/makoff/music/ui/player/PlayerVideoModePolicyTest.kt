@@ -140,6 +140,12 @@ class PlayerVideoModePolicyTest {
             modeEnabled = true, casting = true, lookupFinished = false, hasPlayableClip = true))
     }
 
+    @Test fun landscapeVideoUsesFullScreenRatherThanTheMusicTwoPaneLayout() {
+        assertTrue(PlayerVideoModePolicy.fullscreenLandscapeVideo(true, true))
+        assertFalse(PlayerVideoModePolicy.fullscreenLandscapeVideo(false, true))
+        assertFalse(PlayerVideoModePolicy.fullscreenLandscapeVideo(true, false))
+    }
+
     @Test fun collapsedPlayerNeverShowsVideoModeControls() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }

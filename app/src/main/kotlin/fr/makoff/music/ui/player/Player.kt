@@ -354,6 +354,7 @@ fun BottomSheetPlayer(
         clip = videoPreview.clip,
         audioId = activeVideoId,
         playerConnection = playerConnection,
+        prewarmForSwitch = state.isExpanded || state.progress >= 0.16f,
         onUnavailable = { clipId ->
             if (videoPreview.clip?.id == clipId) {
                 failedVideoClipIds = failedVideoClipIds + clipId
@@ -382,6 +383,12 @@ fun BottomSheetPlayer(
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
     )
+    val fullscreenLandscapeVideo = PlayerVideoModePolicy.fullscreenLandscapeVideo(
+        videoActive = videoModeActive,
+        isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE,
+    )
+    // Android back and the exit button both restore the normal music layout.
+    BackHandler(enabled = fullscreenLandscapeVideo) { selectedVideoId = null }
     val keepScreenOn = (isPlaying && isKeepScreenOn) || videoModeActive
 
     // Video alone enables device-sensor rotation (including with orientation
@@ -403,7 +410,7 @@ fun BottomSheetPlayer(
 
     // The video surface stays awake even if audio is paused or buffering.
     // Respect the existing explicit Keep screen on preference for audio.
-    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen) {
+    DisposableEffect(playerBackground, state.isExpanded, useDarkTheme, keepScreenOn, isFullScreen, hideStatusBarOnFullscreen, fullscreenLandscapeVideo) {
         val window = activity?.window
         if (window != null && state.isExpanded) {
             val insetsController = WindowCompat.getInsetsController(window, window.decorView)
@@ -418,11 +425,16 @@ fun BottomSheetPlayer(
                 }
             }
 
-            if (isFullScreen && hideStatusBarOnFullscreen) {
+            if (fullscreenLandscapeVideo) {
+                // Video expands across the whole landscape window, including
+                // the status/navigation insets, with swipe-to-reveal controls.
+                insetsController.hide(WindowInsetsCompat.Type.systemBars())
+                insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            } else if (isFullScreen && hideStatusBarOnFullscreen) {
                 insetsController.hide(WindowInsetsCompat.Type.statusBars())
                 insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
             } else {
-                insetsController.show(WindowInsetsCompat.Type.statusBars())
+                insetsController.show(WindowInsetsCompat.Type.systemBars())
             }
 
             if (keepScreenOn && state.isExpanded) {
@@ -436,7 +448,7 @@ fun BottomSheetPlayer(
             if (window != null) {
                 val insetsController = WindowCompat.getInsetsController(window, window.decorView)
                 insetsController.isAppearanceLightStatusBars = !useDarkTheme
-                insetsController.show(WindowInsetsCompat.Type.statusBars())
+                insetsController.show(WindowInsetsCompat.Type.systemBars())
                 window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             }
         }
@@ -508,8 +520,7 @@ fun BottomSheetPlayer(
 
     val glassMode = LocalLiquidGlassEnabled.current
     val playerConfiguration = LocalConfiguration.current
-    val wideVideoLandscape = videoModeActive &&
-        playerConfiguration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val wideVideoLandscape = fullscreenLandscapeVideo
     // Magic V6 internal display is nearly square and may still be PORTRAIT.
     // Choose layout by available dp on BOTH axes, not by orientation alone.
     val twoPanePlayer = PlayerLayoutPolicy.useTwoPane(
@@ -1647,6 +1658,23 @@ fun BottomSheetPlayer(
         }
 
         when {
+            fullscreenLandscapeVideo && preparedVideoPlayer != null &&
+                videoPreview.clip != null && mediaMetadata?.id != null -> {
+                FullscreenVideoPlayer(
+                    audioId = mediaMetadata.id,
+                    videoPlayer = preparedVideoPlayer,
+                    playerConnection = playerConnection,
+                    isPlaying = isPlaying,
+                    title = mediaMetadata.title,
+                    canSkipPrevious = canSkipPrevious,
+                    canSkipNext = canSkipNext,
+                    onPrevious = playerConnection::seekToPrevious,
+                    onNext = playerConnection::seekToNext,
+                    onExit = { selectedVideoId = null },
+                    onUnavailable = { onVideoClipUnavailable(videoPreview.clip.id) },
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             twoPanePlayer -> {
                 // Calculate vertical padding like OuterTune
                 val density = LocalDensity.current
@@ -1807,7 +1835,7 @@ fun BottomSheetPlayer(
         }
 
         AnimatedVisibility(
-            visible = !isFullScreen,
+            visible = !isFullScreen && !fullscreenLandscapeVideo,
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
             exit = shrinkVertically(shrinkTowards = Alignment.Top) + slideOutVertically(targetOffsetY = { it }) + fadeOut(),
         ) {
