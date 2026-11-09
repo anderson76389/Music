@@ -1661,17 +1661,17 @@ fun BottomSheetPlayer(
             fullscreenLandscapeVideo && preparedVideoPlayer != null &&
                 videoPreview.clip != null && mediaMetadata?.id != null -> {
                 FullscreenVideoPlayer(
-                    audioId = mediaMetadata.id,
+                    audioId = mediaMetadata?.id.orEmpty(),
                     videoPlayer = preparedVideoPlayer,
                     playerConnection = playerConnection,
                     isPlaying = isPlaying,
-                    title = mediaMetadata.title,
+                    title = mediaMetadata?.title.orEmpty(),
                     canSkipPrevious = canSkipPrevious,
                     canSkipNext = canSkipNext,
                     onPrevious = playerConnection::seekToPrevious,
                     onNext = playerConnection::seekToNext,
                     onExit = { selectedVideoId = null },
-                    onUnavailable = { onVideoClipUnavailable(videoPreview.clip.id) },
+                    onUnavailable = { videoPreview.clip?.id?.let(onVideoClipUnavailable) },
                     modifier = Modifier.fillMaxSize(),
                 )
             }

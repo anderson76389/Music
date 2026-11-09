@@ -68,6 +68,8 @@ import fr.makoff.music.constants.PlayerVideoModeEnabledKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
 import fr.makoff.music.constants.SoundProofSkipAiKey
+import fr.makoff.music.constants.SoundProofRefreshGenerationKey
+import fr.makoff.music.utils.safeDataStoreEdit
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
 import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
@@ -362,7 +364,17 @@ fun PlayerSettings(
                             if (!refreshingSoundProof) {
                                 refreshingSoundProof = true
                                 refreshScope.launch {
-                                    refreshedSoundProof = runCatching { soundProofRepository.refreshNow() }.getOrDefault(false)
+                                    val refreshed = runCatching { soundProofRepository.refreshNow() }.getOrDefault(false)
+                                    // Settings and MusicService are separate repository
+                                    // instances. Signal the service to reload this *new*
+                                    // local file and recheck the song already playing.
+                                    refreshedSoundProof = if (refreshed) {
+                                        context.safeDataStoreEdit { preferences ->
+                                            val last = preferences[SoundProofRefreshGenerationKey] ?: 0L
+                                            preferences[SoundProofRefreshGenerationKey] =
+                                                maxOf(System.currentTimeMillis(), last + 1L)
+                                        }
+                                    } else false
                                     refreshingSoundProof = false
                                 }
                             }

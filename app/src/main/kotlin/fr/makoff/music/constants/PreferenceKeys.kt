@@ -88,6 +88,8 @@ val HideExplicitKey = booleanPreferencesKey("hideExplicit")
 val HideVideoSongsKey = booleanPreferencesKey("hideVideoSongs")
 val HideYoutubeShortsKey = booleanPreferencesKey("hideYoutubeShorts")
 val SoundProofSkipAiKey = booleanPreferencesKey("soundProofSkipAiArtists")
+/** Notifies the audio service after Settings has successfully refreshed SoundProof. */
+val SoundProofRefreshGenerationKey = longPreferencesKey("soundProofRefreshGeneration")
 val ShowArtistDescriptionKey = booleanPreferencesKey("showArtistDescription")
 val ShowArtistSubscriberCountKey = booleanPreferencesKey("showArtistSubscriberCount")
 val ShowMonthlyListenersKey = booleanPreferencesKey("showMonthlyListeners")
