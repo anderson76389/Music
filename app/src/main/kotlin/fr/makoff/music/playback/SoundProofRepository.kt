@@ -25,69 +25,86 @@ import java.util.Locale
  * NOT a technical proof that a musician uses generative AI.
  */
 internal class SoundProofRepository(private val context: Context) {
-    private val mutex = Mutex()
+    // Network I/O must never hold the cache lock: otherwise the first queued
+    // song continues playing for up to 27 seconds before SoundProof can skip it.
+    private val cacheMutex = Mutex()
+    private val refreshMutex = Mutex()
     private val directory = context.filesDir.resolve("soundproof")
     private val cacheFile = File(directory, "artists.json")
     private var artists: Map<String, Pair<Int, Int>>? = null
-    private var lastAttemptMs = 0L
     private var loadedCacheModifiedMs = 0L
+    private var lastAttemptMs = 0L
 
     suspend fun refresh() = withContext(Dispatchers.IO) {
-        mutex.withLock { loadAndRefreshLocked() }
+        refreshMutex.withLock { refreshIfNeeded(force = false) }
     }
 
-    /** Explicit action from settings. It bypasses the daily cache interval,
-     * reports a real download/parse result, and preserves the last valid file
-     * if the remote source is unavailable.
-     */
+    /** Force a real download and report whether its JSON was accepted. */
     suspend fun refreshNow(): Boolean = withContext(Dispatchers.IO) {
-        mutex.withLock { loadAndRefreshLocked(force = true) }
+        refreshMutex.withLock { refreshIfNeeded(force = true) }
     }
 
+    /** Read local votes only, without any network wait in the player hot path. */
     suspend fun shouldSkipArtist(credits: List<String>): Boolean = withContext(Dispatchers.IO) {
         if (credits.isEmpty()) return@withContext false
-        val known = mutex.withLock {
-            loadAndRefreshLocked()
+        val known = cacheMutex.withLock {
+            loadSavedCacheLocked()
             artists.orEmpty()
         }
         SoundProofPolicy.isAnyArtistReportedAi(credits, known)
     }
 
-    private fun loadAndRefreshLocked(force: Boolean = false): Boolean {
-        // Refresh in-memory votes after another instance (settings/player)
-        // atomically replaces the shared cache on disk.
-        if (artists == null || (cacheFile.isFile && loadedCacheModifiedMs != cacheFile.lastModified())) {
-            artists = runCatching { if (cacheFile.isFile) parseDump(cacheFile) else emptyMap() }
-                .onFailure { Timber.w(it, "SoundProof cache unreadable") }
-                .getOrDefault(emptyMap())
-            loadedCacheModifiedMs = if (cacheFile.isFile) cacheFile.lastModified() else 0L
+    /** Used by a real Android test to validate the decoded community download. */
+    internal suspend fun cachedArtistCount(): Int = withContext(Dispatchers.IO) {
+        cacheMutex.withLock {
+            loadSavedCacheLocked()
+            artists.orEmpty().size
         }
+    }
+
+    private fun loadSavedCacheLocked() {
+        val lastModified = if (cacheFile.isFile) cacheFile.lastModified() else 0L
+        if (artists != null && loadedCacheModifiedMs == lastModified) return
+        artists = runCatching { if (cacheFile.isFile) parseDump(cacheFile) else emptyMap() }
+            .onFailure { Timber.w(it, "SoundProof cache unreadable") }
+            .getOrDefault(emptyMap())
+        loadedCacheModifiedMs = lastModified
+    }
+
+    /** Caller holds refreshMutex, but not cacheMutex across HTTP operations. */
+    private suspend fun refreshIfNeeded(force: Boolean): Boolean {
         val now = System.currentTimeMillis()
-        val stale = !cacheFile.isFile || now - cacheFile.lastModified() >= REFRESH_AFTER_MS
+        val stale = cacheMutex.withLock {
+            loadSavedCacheLocked()
+            !cacheFile.isFile || now - cacheFile.lastModified() >= REFRESH_AFTER_MS
+        }
         if (!force && (!stale || now - lastAttemptMs < RETRY_AFTER_MS)) return false
         lastAttemptMs = now
 
-        val result = runCatching {
+        return runCatching {
             directory.mkdirs()
-            val temporary = File(directory, "artists.json.download")
+            // Settings and the playback service have independent repositories.
+            // Unique temp paths prevent their simultaneous refreshes colliding.
+            val temporary = File.createTempFile("artists.", ".download", directory)
             try {
                 fetchDump(temporary)
                 val parsed = parseDump(temporary)
                 require(parsed.isNotEmpty()) { "SoundProof dump contained no artists" }
-                Files.move(
-                    temporary.toPath(), cacheFile.toPath(),
-                    StandardCopyOption.REPLACE_EXISTING,
-                )
-                artists = parsed
-                loadedCacheModifiedMs = cacheFile.lastModified()
+                cacheMutex.withLock {
+                    Files.move(
+                        temporary.toPath(), cacheFile.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING,
+                    )
+                    artists = parsed
+                    loadedCacheModifiedMs = cacheFile.lastModified()
+                }
             } finally {
                 temporary.delete()
             }
         }.onFailure {
-            // Never replace a previous valid cache with a failed download.
-            Timber.w(it, "SoundProof update unavailable: using saved community database")
-        }
-        return result.isSuccess
+            // A network failure must not destroy the previous votes.
+            Timber.w(it, "SoundProof refresh unavailable: retaining saved database")
+        }.isSuccess
     }
 
     private fun fetchDump(target: File) {
@@ -140,8 +157,14 @@ internal class SoundProofRepository(private val context: Context) {
                     }
                     json.endObject()
                     if (!name.isNullOrBlank() && human >= 0 && ai >= 0) {
-                        val key = SoundProofPolicy.normalize(id?.takeIf { it.isNotBlank() } ?: name)
-                        if (key.isNotBlank()) result[key] = human to ai
+                        val vote = human to ai
+                        // IDs in the upstream dump are slugs, whereas YouTube
+                        // Music credits contain display names. Index BOTH:
+                        // keeping only the ID silently missed real artists.
+                        val nameKey = SoundProofPolicy.normalize(name)
+                        if (nameKey.isNotBlank()) result[nameKey] = vote
+                        val idKey = id?.let(SoundProofPolicy::normalize).orEmpty()
+                        if (idKey.isNotBlank()) result.putIfAbsent(idKey, vote)
                     }
                 }
                 json.endArray()
@@ -172,6 +195,10 @@ internal object SoundProofPolicy {
 
     fun isReportedAi(human: Int, ai: Int): Boolean =
         human >= 0 && ai > 0 && ai.toLong() * 100 >= (human.toLong() + ai) * 50
+
+    /** Stop autoplay loops after checking a complete queue of reported artists. */
+    fun fullQueueAlreadySkipped(consecutiveSkips: Int, queueLength: Int): Boolean =
+        queueLength > 0 && consecutiveSkips >= queueLength
 
     fun isAnyArtistReportedAi(credits: List<String>, votesByName: Map<String, Pair<Int, Int>>): Boolean =
         credits.any { credit ->

@@ -175,11 +175,11 @@ internal fun rememberPreparedVideoPlayer(
     LaunchedEffect(player, audioId, playerConnection) {
         val prepared = player ?: return@LaunchedEffect
         while (isActive) {
-            delay(4_000L)
+            delay(8_000L)
             val audio = playerConnection.player
             if (audioId != null && audio.currentMediaItem?.mediaId == audioId &&
                 !prepared.playWhenReady && prepared.playbackState == Player.STATE_READY &&
-                abs(audio.currentPosition - prepared.currentPosition) > 6_000L
+                abs(audio.currentPosition - prepared.currentPosition) > 12_000L
             ) {
                 prepared.seekTo(audio.currentPosition.coerceAtLeast(0L))
             }

@@ -550,8 +550,32 @@ class OfflinePlayerInstrumentedTest {
             assertNotNull("Share must be in player menu", share)
             assertNotNull("Details must remain in player menu", details)
             assertTrue("Share must precede Details", share!!.visibleBounds.top < details!!.visibleBounds.top)
-            eq!!.click()
-            assertTrue("Built-in equalizer screen", device.wait(Until.hasObject(By.text(context.getString(R.string.equalizer_header))), 10000))
+            // The menu is lazy/scrollable, and Compose can detach an earlier
+            // accessibility node while checking Share/Details. Reacquire its
+            // actual on-screen bounds and perform a coordinate tap instead of
+            // retaining UiObject2 across recompositions.
+            val eqLabel = context.getString(R.string.equalizer)
+            val eqHeader = context.getString(R.string.equalizer_header)
+            var equalizerOpened = false
+            repeat(12) {
+                if (!equalizerOpened) {
+                    val visibleBounds = runCatching {
+                        device.findObject(By.text(eqLabel))?.visibleBounds
+                    }.getOrNull()
+                    if (visibleBounds != null && !visibleBounds.isEmpty) {
+                        device.click(visibleBounds.centerX(), visibleBounds.centerY())
+                        equalizerOpened = device.wait(Until.hasObject(By.text(eqHeader)), 750)
+                    }
+                    if (!equalizerOpened) {
+                        device.swipe(
+                            device.displayWidth / 2, device.displayHeight * 8 / 10,
+                            device.displayWidth / 2, device.displayHeight * 4 / 10, 35,
+                        )
+                        device.waitForIdle()
+                    }
+                }
+            }
+            assertTrue("Built-in equalizer screen", equalizerOpened)
             device.pressBack()
             println("PLAYER_EQUALIZER_OK: built-in equalizer remains reachable; system entry absent")
             println("PLAYER_SETTINGS_OK: renderer, skip-silence, cached playback and crossfade verified")

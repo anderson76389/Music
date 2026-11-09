@@ -35,7 +35,7 @@ import java.io.File
 class ApkUpdateActivity : ComponentActivity() {
     private val downloads by lazy { requireNotNull(getSystemService(DownloadManager::class.java)) }
     private val preferences by lazy { getSharedPreferences("apk-update", MODE_PRIVATE) }
-    private val apk by lazy { File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates/Metrolist.apk") }
+    private val apk by lazy { File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates/Apple Music.apk") }
     private var message by mutableStateOf("")
     private var ready by mutableStateOf(false)
     private var busy by mutableStateOf(false)
@@ -96,7 +96,7 @@ class ApkUpdateActivity : ComponentActivity() {
                         apk.parentFile?.mkdirs()
                         apk.delete()
                         downloads.enqueue(DownloadManager.Request(Uri.parse(url))
-                            .setTitle("Metrolist.apk")
+                            .setTitle("Apple Music.apk")
                             .setDescription(getString(R.string.apk_update_downloading))
                             .setMimeType("application/vnd.android.package-archive")
                             .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)

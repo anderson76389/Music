@@ -20,6 +20,14 @@ class SoundProofPolicyTest {
         assertTrue(SoundProofPolicy.isReportedAi(0, 3))
     }
 
+    @Test fun preventsInfiniteSkipLoopWhenEveryItemIsReportedAi() {
+        assertFalse(SoundProofPolicy.fullQueueAlreadySkipped(0, 3))
+        assertFalse(SoundProofPolicy.fullQueueAlreadySkipped(2, 3))
+        assertTrue(SoundProofPolicy.fullQueueAlreadySkipped(3, 3))
+        assertTrue(SoundProofPolicy.fullQueueAlreadySkipped(7, 3))
+        assertFalse(SoundProofPolicy.fullQueueAlreadySkipped(0, 0))
+    }
+
     @Test fun matchesCreditsAndCollaborationsWithoutGuessingUnknownArtists() {
         val votes = mapOf(
             "ai-performer" to (0 to 2),

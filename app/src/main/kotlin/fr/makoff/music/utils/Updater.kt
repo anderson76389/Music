@@ -108,7 +108,7 @@ object Updater {
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
-                name == "Metrolist.apk" || name == "MAKOFF-Music-universal.apk" -> "universal" to "gms"
+                name == "Apple Music.apk" || name == "Metrolist.apk" || name == "MAKOFF-Music-universal.apk" -> "universal" to "gms"
                 name == "MAKOFF-Music.apk" -> "universal" to "foss"
                 name == "MAKOFF-Music-Google-Cast.apk" -> "universal" to "gms"
                 name.startsWith("app-") && name.endsWith("-release.apk") -> {
@@ -240,7 +240,8 @@ object Updater {
     }
 
     internal fun selectUpdateAsset(assets: List<ReleaseAsset>, architecture: String, variant: String): ReleaseAsset? =
-        assets.firstOrNull { it.name == "Metrolist.apk" && it.architecture == "universal" }
+        assets.firstOrNull { it.name == "Apple Music.apk" && it.architecture == "universal" }
+            ?: assets.firstOrNull { it.name == "Metrolist.apk" && it.architecture == "universal" }
             ?: assets.firstOrNull { it.architecture == architecture && it.variant == variant }
             ?: assets.firstOrNull { it.architecture == "universal" && it.variant == variant }
 

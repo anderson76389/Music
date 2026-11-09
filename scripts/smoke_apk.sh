@@ -40,6 +40,19 @@ for variant in foss gms; do
   fi
   if [ "$variant" = gms ] && [ -d apk-tests ]; then
     adb install apk-tests/*.apk
+    # SoundProof real parser and cached offline filtering must work on all API levels.
+    timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.playback.SoundProofInstrumentedTest#cachedRealSchemaMatchesYouTubeMusicDisplayNames "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/soundproof-local-test.txt
+    grep -Eq 'OK \(1 test\)' smoke-results/soundproof-local-test.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/soundproof-local-test.txt
+    # Live network access is best-effort; keep evidence but do not hide a failure.
+    if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -eq 30 ]; then
+      timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.playback.SoundProofInstrumentedTest#downloadsCommunityDumpAndParsesArtistVotes "$package.test/androidx.test.runner.AndroidJUnitRunner" > smoke-results/soundproof-live-test.txt || true
+      if grep -Eq 'OK \(1 test\)' smoke-results/soundproof-live-test.txt && ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/soundproof-live-test.txt; then
+        echo "SOUNDPROOF_REAL_DUMP_OK"
+      else
+        echo "::warning::SoundProof live download did not pass; see soundproof-live-test.txt"
+      fi
+    fi
     timeout 300s adb shell am instrument -w -r -e class fr.makoff.music.downloads.FolderAudioInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/yt-dlp-saf-tests.txt
     adb pull /data/local/tmp/download-quality-popup.png smoke-results/ || true
     adb logcat -d > smoke-results/folder-audio-logcat.txt

@@ -22,6 +22,23 @@ class UpdaterTest {
         assertTrue(runCatching { Updater.parsePublishedVersionCode("MUSIC_VERSION_CODE=bad") }.isFailure)
     }
 
+
+    @Test fun appleMusicNamedApkIsRecognizedAndPreferredWithoutBreakingOlderReleases() {
+        val renamedUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.107/Apple%20Music.apk"
+        val legacyUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.106/Metrolist.apk"
+        val assets = Updater.parseAssets(JSONArray("""
+            [
+              {"name":"Metrolist.apk","browser_download_url":"$legacyUrl","size":51},
+              {"name":"Apple Music.apk","browser_download_url":"$renamedUrl","size":52}
+            ]
+        """))
+        assertEquals(2, assets.size)
+        assertTrue(Updater.isOwnApkUrl(renamedUrl))
+        assertEquals(renamedUrl, Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.downloadUrl)
+        assertEquals(renamedUrl, Updater.selectUpdateAsset(assets, "universal", "gms")?.downloadUrl)
+        assertFalse(Updater.isOwnApkUrl("https://github.com.bad.test/anderson76389/Music/releases/download/v1/Apple%20Music.apk"))
+    }
+
     @Test fun latestReleaseReadsPublishedAndroidCodeAndApk() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             if (request.url.encodedPath.endsWith("/releases/latest")) respond("""{
