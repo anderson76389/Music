@@ -550,7 +550,23 @@ class OfflinePlayerInstrumentedTest {
             assertNotNull("Share must be in player menu", share)
             assertNotNull("Details must remain in player menu", details)
             assertTrue("Share must precede Details", share!!.visibleBounds.top < details!!.visibleBounds.top)
-            eq!!.click()
+            // Compose may recompose this menu between locating and clicking an item.
+            // Never rely on a retained UiObject2 after querying other entries.
+            var eqClicked = false
+            repeat(5) {
+                if (!eqClicked) {
+                    try {
+                        val fresh = device.findObject(By.text(context.getString(R.string.equalizer)))
+                        if (fresh != null) {
+                            fresh.click()
+                            eqClicked = true
+                        }
+                    } catch (_: androidx.test.uiautomator.StaleObjectException) {
+                        SystemClock.sleep(150)
+                    }
+                }
+            }
+            assertTrue("Built-in equalizer action remains clickable", eqClicked)
             assertTrue("Built-in equalizer screen", device.wait(Until.hasObject(By.text(context.getString(R.string.equalizer_header))), 10000))
             device.pressBack()
             println("PLAYER_EQUALIZER_OK: built-in equalizer remains reachable; system entry absent")
