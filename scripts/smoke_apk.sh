@@ -47,7 +47,7 @@ for variant in foss gms; do
     # The Settings refresh must replace a stale in-memory artist vote map
     # without relying on the timestamp of a same-length cache file.
     timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.playback.SoundProofInstrumentedTest#manualRefreshRechecksChangedVotesEvenWithSameFileTimestamp "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/soundproof-manual-refresh-test.txt
-    grep -Eq 'OK \\(1 test\\)' smoke-results/soundproof-manual-refresh-test.txt
+    grep -Eq 'OK \(1 test\)' smoke-results/soundproof-manual-refresh-test.txt
     ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/soundproof-manual-refresh-test.txt
     # Live network access is best-effort; keep evidence but do not hide a failure.
     if [ "$(adb shell getprop ro.build.version.sdk | tr -d '\r')" -eq 30 ]; then
