@@ -121,6 +121,20 @@ class PlayerVideoModePolicyTest {
         assertTrue(PlayerVideoModePolicy.shouldSeekOnVideoSelection(30_000L, 29_000L, toleranceMs = 500L))
     }
 
+    @Test fun collapseOrRotationDoesNotCancelSelectedVideoWhenClipRemainsPlayable() {
+        assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
+        assertFalse(PlayerVideoModePolicy.shouldResetVideoSelection(
+            modeEnabled = true, casting = false, lookupFinished = true, hasPlayableClip = true))
+        assertFalse(PlayerVideoModePolicy.shouldResetVideoSelection(
+            modeEnabled = true, casting = false, lookupFinished = false, hasPlayableClip = false))
+        assertTrue(PlayerVideoModePolicy.shouldResetVideoSelection(
+            modeEnabled = true, casting = false, lookupFinished = true, hasPlayableClip = false))
+        assertTrue(PlayerVideoModePolicy.shouldResetVideoSelection(
+            modeEnabled = false, casting = false, lookupFinished = false, hasPlayableClip = true))
+        assertTrue(PlayerVideoModePolicy.shouldResetVideoSelection(
+            modeEnabled = true, casting = true, lookupFinished = false, hasPlayableClip = true))
+    }
+
     @Test fun collapsedPlayerNeverShowsVideoModeControls() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }

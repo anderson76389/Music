@@ -113,15 +113,16 @@ internal fun PlayerArtworkSwitcher(
     // Video stream extraction and buffering now belong to BottomSheetPlayer,
     // which survives collapse. Never show Son/Vidéo for a merely guessed clip.
     val clip = videoPreview.clip
+    val hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
+        youtubeTrack = videoId != null,
+        clipId = clip?.id,
+        unavailableClipId = null,
+        hasResolvedStream = clip != null && videoPlayer != null,
+    )
     val showModeBar = PlayerVideoModePolicy.showSelector(
         enabled = videoModeEnabled && !isCasting,
         expanded = isExpanded,
-        hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
-            youtubeTrack = videoId != null,
-            clipId = clip?.id,
-            unavailableClipId = null,
-            hasResolvedStream = clip != null && videoPlayer != null,
-        ),
+        hasPlayableClip = hasPlayableClip,
     )
     // Maintain the previous single-header policy: never flash the old title
     // behind the selector, even during the background clip availability probe.
@@ -130,14 +131,17 @@ internal fun PlayerArtworkSwitcher(
         waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
-    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting, videoPlayer) {
-        // On collapse, rotation teardown, Cast or disabling the selector,
-        // the surface is absent: pause the muted stream immediately.
-        // Audio remains owned by MusicService and is never interrupted.
+    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting, hasPlayableClip, videoPlayer) {
+        // A collapsed sheet or a brief layout teardown during orientation
+        // change is NOT an unavailable video. Keep the selected tab for the
+        // same song instead of unexpectedly switching back to Son.
         if (!showModeBar) videoPlayer?.playWhenReady = false
-        // Do not cancel an in-progress lookup. If every verified candidate
-        // fails, safely restore audio without leaving a black video panel.
-        if (showVideo && videoPreview.lookupFinished && !showModeBar) {
+        if (showVideo && PlayerVideoModePolicy.shouldResetVideoSelection(
+                modeEnabled = videoModeEnabled, casting = isCasting,
+                lookupFinished = videoPreview.lookupFinished,
+                hasPlayableClip = hasPlayableClip,
+            )
+        ) {
             onShowVideoChange(false)
         }
     }

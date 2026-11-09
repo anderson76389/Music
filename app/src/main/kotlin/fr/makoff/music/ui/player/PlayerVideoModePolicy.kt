@@ -80,6 +80,14 @@ internal object PlayerVideoModePolicy {
     ): Boolean = videoReady && timeSinceLastSeekMs >= 5_000L &&
         shouldSeekOnVideoSelection(audioPositionMs, videoPositionMs, toleranceMs = 2_800L)
 
+    /** Collapse and temporary layout detach do not invalidate a user's
+     * selected video. Only disabling, Cast, or proven clip failure does.
+     */
+    fun shouldResetVideoSelection(
+        modeEnabled: Boolean, casting: Boolean,
+        lookupFinished: Boolean, hasPlayableClip: Boolean,
+    ): Boolean = !modeEnabled || casting || (lookupFinished && !hasPlayableClip)
+
     /** Wake and permit sensor rotation only while the selected video is on
      * screen. Audio-only playback and Cast must not acquire these flags.
      */
