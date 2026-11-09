@@ -2,8 +2,6 @@ package fr.makoff.music.ui.player
 
 import android.view.TextureView
 import android.view.View
-import coil3.compose.AsyncImage
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.animateColorAsState
@@ -161,7 +159,6 @@ internal fun PlayerArtworkSwitcher(
                 VideoOnlySurface(
                     audioId = videoId,
                     videoPlayer = videoPlayer,
-                    thumbnailUrl = thumbnailUrl,
                     isPlaying = isPlaying,
                     visible = showVideo,
                     playerConnection = playerConnection,
@@ -442,7 +439,6 @@ internal fun PlayerModePills(
 private fun VideoOnlySurface(
     audioId: String,
     videoPlayer: ExoPlayer,
-    thumbnailUrl: String?,
     playerConnection: PlayerConnection,
     isPlaying: Boolean,
     visible: Boolean,
@@ -588,16 +584,14 @@ private fun VideoOnlySurface(
                 enter = fadeIn(animationSpec = tween(100)),
                 exit = fadeOut(animationSpec = tween(180)),
             ) {
+                // This is the VIDEO-only screen, not the album-cover layer.
+                // Display a neutral loading indicator instead of cropping the
+                // song's square thumbnail into a 16:9 background.
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    if (thumbnailUrl != null) {
-                        AsyncImage(
-                            model = thumbnailUrl,
-                            contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    if (!videoReady) CircularProgressIndicator(modifier = Modifier.size(28.dp))
+                    CircularProgressIndicator(
+                        color = Color.White,
+                        modifier = Modifier.size(28.dp),
+                    )
                 }
             }
             // A transparent touch target ABOVE the Android view ensures one tap
