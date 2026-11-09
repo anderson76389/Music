@@ -44,6 +44,33 @@ class SoundProofInstrumentedTest {
         }
     }
 
+    @Test fun manualRefreshRechecksChangedVotesEvenWithSameFileTimestamp() = runBlocking {
+        val directory = context.filesDir.resolve("soundproof").apply { mkdirs() }
+        val cache = File(directory, "artists.json")
+        val before = cache.takeIf { it.isFile }?.readBytes()
+        val originalModified = cache.lastModified()
+        try {
+            val first = """[{"id":"changed-artist","name":"Changed Artist","human_votes":0,"ai_votes":9}]"""
+            val second = """[{"id":"changed-artist","name":"Changed Artist","human_votes":9,"ai_votes":0}]"""
+            cache.writeText(first)
+            val repository = SoundProofRepository(context)
+            assertTrue(repository.shouldSkipArtist(listOf("Changed Artist")))
+            val stamp = cache.lastModified()
+            cache.writeText(second)
+            // Android filesystem timestamps can have coarse granularity.
+            cache.setLastModified(stamp)
+            repository.invalidateCachedIndex()
+            assertFalse(repository.shouldSkipArtist(listOf("Changed Artist")))
+            println("SOUNDPROOF_MANUAL_REFRESH_RECHECK_OK")
+        } finally {
+            if (before == null) cache.delete()
+            else {
+                cache.writeBytes(before)
+                cache.setLastModified(originalModified)
+            }
+        }
+    }
+
     /**
      * Live smoke check. Run separately from deterministic CI: the network
      * may block raw.githubusercontent.com even with correct app behavior.

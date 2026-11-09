@@ -93,6 +93,12 @@ internal object PlayerVideoModePolicy {
         lookupFinished: Boolean, hasPlayableClip: Boolean,
     ): Boolean = !modeEnabled || casting || (lookupFinished && !hasPlayableClip)
 
+    /** Landscape video replaces the entire music player canvas, never a
+     * two-pane artwork slot. The audio and normal landscape player are unchanged.
+     */
+    fun fullscreenLandscapeVideo(videoActive: Boolean, isLandscape: Boolean): Boolean =
+        videoActive && isLandscape
+
     /** Wake and permit sensor rotation only while the selected video is on
      * screen. Audio-only playback and Cast must not acquire these flags.
      */

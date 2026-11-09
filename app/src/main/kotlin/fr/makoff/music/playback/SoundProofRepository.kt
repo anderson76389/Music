@@ -55,6 +55,16 @@ internal class SoundProofRepository(private val context: Context) {
     }
 
     /** Used by a real Android test to validate the decoded community download. */
+    /** Explicit reload after the user refreshes the dump in Settings.
+     * Avoid relying only on filesystem timestamps to detect a replacement.
+     */
+    suspend fun invalidateCachedIndex() = withContext(Dispatchers.IO) {
+        cacheMutex.withLock {
+            artists = null
+            loadedCacheModifiedMs = 0L
+        }
+    }
+
     internal suspend fun cachedArtistCount(): Int = withContext(Dispatchers.IO) {
         cacheMutex.withLock {
             loadSavedCacheLocked()

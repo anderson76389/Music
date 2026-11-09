@@ -118,6 +118,7 @@ import fr.makoff.music.constants.DisableLoadMoreWhenRepeatAllKey
 import fr.makoff.music.constants.EnableSongCacheKey
 import fr.makoff.music.constants.HideExplicitKey
 import fr.makoff.music.constants.SoundProofSkipAiKey
+import fr.makoff.music.constants.SoundProofRefreshGenerationKey
 import fr.makoff.music.constants.HideVideoSongsKey
 import fr.makoff.music.constants.HistoryDuration
 import fr.makoff.music.constants.MediaSessionConstants
@@ -440,6 +441,7 @@ class MusicService :
     @Volatile
     private var cachedSoundProofSkipAi = false
     private var consecutiveSoundProofAutoSkips = 0
+    private var soundProofCheckJob: Job? = null
     private val soundProofRepository by lazy { SoundProofRepository(applicationContext) }
     @Volatile
     private var cachedShufflePlaylistFirst = false
@@ -842,20 +844,28 @@ class MusicService :
         // Community database downloads happen only after explicit opt-in.
         // The dump is cached on device; no artist or track name is sent online.
         dataStore.data
-            .map { it[SoundProofSkipAiKey] ?: false }
+            .map { (it[SoundProofSkipAiKey] ?: false) to (it[SoundProofRefreshGenerationKey] ?: 0L) }
             .distinctUntilChanged()
-            .collect(scope) { enabled ->
+            .collect(scope) { (enabled, generation) ->
+                val justEnabled = enabled && !cachedSoundProofSkipAi
                 cachedSoundProofSkipAi = enabled
-                if (!enabled) consecutiveSoundProofAutoSkips = 0
-                if (enabled) {
-                    // Apply the filter immediately when enabling it during a
-                    // song, not just after the next track transition.
-                    checkSoundProofForCurrent(player.currentMediaItem)
-                    scope.launch(Dispatchers.IO) {
-                        soundProofRepository.refresh()
-                        withContext(Dispatchers.Main) {
-                            // Also recheck once the first download is cached.
-                            if (cachedSoundProofSkipAi) checkSoundProofForCurrent(player.currentMediaItem)
+                if (!enabled) {
+                    consecutiveSoundProofAutoSkips = 0
+                    soundProofCheckJob?.cancel()
+                } else {
+                    // A manual Settings refresh updates the same on-device dump.
+                    // Reload it in this long-lived service even if the file
+                    // timestamp has coarse resolution, and apply immediately.
+                    scope.launch {
+                        if (!justEnabled && generation > 0L) soundProofRepository.invalidateCachedIndex()
+                        if (cachedSoundProofSkipAi) checkSoundProofForCurrent(player.currentMediaItem)
+                    }
+                    if (justEnabled) {
+                        scope.launch(Dispatchers.IO) {
+                            soundProofRepository.refresh()
+                            withContext(Dispatchers.Main) {
+                                if (cachedSoundProofSkipAi) checkSoundProofForCurrent(player.currentMediaItem)
+                            }
                         }
                     }
                 }
@@ -2239,14 +2249,22 @@ class MusicService :
      * and the playback action is guarded against stale asynchronous results.
      */
     private fun checkSoundProofForCurrent(mediaItem: MediaItem?) {
+        soundProofCheckJob?.cancel()
         if (!cachedSoundProofSkipAi || mediaItem == null) return
-        val artists = mediaItem.metadata?.artists?.map { it.name }.orEmpty()
-            .filter { it.isNotBlank() }
-        if (artists.isEmpty()) return
-
         val candidateId = mediaItem.mediaId
+        // Some queue items have not hydrated their metadata yet; the
+        // service's active media metadata can contain the proper artist names.
+        val artists = (mediaItem.metadata?.artists?.map { it.name }.orEmpty()
+            .ifEmpty {
+                currentMediaMetadata.value?.takeIf { it.id == candidateId }
+                    ?.artists?.map { it.name }.orEmpty()
+            }).filter { it.isNotBlank() }
+        if (artists.isEmpty()) {
+            consecutiveSoundProofAutoSkips = 0
+            return
+        }
         val candidateIndex = player.currentMediaItemIndex
-        scope.launch {
+        soundProofCheckJob = scope.launch {
             val reported = soundProofRepository.shouldSkipArtist(artists)
             if (cachedSoundProofSkipAi &&
                 player.currentMediaItem?.mediaId == candidateId &&

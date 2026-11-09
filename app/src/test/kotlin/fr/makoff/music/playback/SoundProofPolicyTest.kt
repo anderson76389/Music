@@ -28,6 +28,18 @@ class SoundProofPolicyTest {
         assertFalse(SoundProofPolicy.fullQueueAlreadySkipped(0, 0))
     }
 
+    @Test fun unknownOrUnvotedArtistsAreNeverAssumedAi() {
+        val votes = mapOf(
+            "unvoted" to (0 to 0),
+            "community-ai" to (1 to 6),
+            "human" to (40 to 0),
+        )
+        assertFalse(SoundProofPolicy.isAnyArtistReportedAi(listOf("Unvoted"), votes))
+        assertFalse(SoundProofPolicy.isAnyArtistReportedAi(listOf("Unlisted"), votes))
+        assertTrue(SoundProofPolicy.isAnyArtistReportedAi(listOf("Community AI - Topic"), votes))
+        assertFalse(SoundProofPolicy.isAnyArtistReportedAi(listOf("Human"), votes))
+    }
+
     @Test fun matchesCreditsAndCollaborationsWithoutGuessingUnknownArtists() {
         val votes = mapOf(
             "ai-performer" to (0 to 2),
