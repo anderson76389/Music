@@ -23,20 +23,27 @@ class UpdaterTest {
     }
 
 
-    @Test fun appleMusicNamedApkIsRecognizedAndPreferredWithoutBreakingOlderReleases() {
-        val renamedUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.107/Apple%20Music.apk"
-        val legacyUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.106/Metrolist.apk"
+    @Test fun githubNormalizesSpacesToDotsAndLegacyClientsStillFindAnApk() {
+        // GitHub Releases publishes "Apple Music.apk" as "Apple.Music.apk".
+        // The historical filename is also published so apps before this fix
+        // can continue updating in place with their existing signing key.
+        val newUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.108/Apple.Music.apk"
+        val legacyUrl = "https://github.com/anderson76389/Music/releases/download/v13.7.0.108/Metrolist.apk"
         val assets = Updater.parseAssets(JSONArray("""
-            [
-              {"name":"Metrolist.apk","browser_download_url":"$legacyUrl","size":51},
-              {"name":"Apple Music.apk","browser_download_url":"$renamedUrl","size":52}
-            ]
+          [
+            {"name":"Metrolist.apk","browser_download_url":"$legacyUrl","size":120},
+            {"name":"Apple.Music.apk","browser_download_url":"$newUrl","size":120}
+          ]
         """))
         assertEquals(2, assets.size)
-        assertTrue(Updater.isOwnApkUrl(renamedUrl))
-        assertEquals(renamedUrl, Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.downloadUrl)
-        assertEquals(renamedUrl, Updater.selectUpdateAsset(assets, "universal", "gms")?.downloadUrl)
-        assertFalse(Updater.isOwnApkUrl("https://github.com.bad.test/anderson76389/Music/releases/download/v1/Apple%20Music.apk"))
+        assertEquals("universal", assets.single { it.name == "Apple.Music.apk" }.architecture)
+        assertEquals("gms", assets.single { it.name == "Apple.Music.apk" }.variant)
+        assertTrue(Updater.isOwnApkUrl(newUrl))
+        assertEquals(newUrl, Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.downloadUrl)
+        assertEquals(newUrl, Updater.selectUpdateAsset(assets, "universal", "gms")?.downloadUrl)
+        assertEquals(legacyUrl, Updater.selectUpdateAsset(listOf(assets.first()), "universal", "gms")?.downloadUrl)
+        assertFalse(Updater.isOwnApkUrl("https://github.com.evil.invalid/anderson76389/Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Music/releases/download/v1/Apple.Music.apk"))
     }
 
     @Test fun latestReleaseReadsPublishedAndroidCodeAndApk() = runBlocking {
