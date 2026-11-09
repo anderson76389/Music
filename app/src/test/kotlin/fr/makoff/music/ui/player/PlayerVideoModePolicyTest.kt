@@ -121,6 +121,11 @@ class PlayerVideoModePolicyTest {
         assertTrue(PlayerVideoModePolicy.shouldSeekOnVideoSelection(30_000L, 29_000L, toleranceMs = 500L))
     }
 
+    @Test fun videoModeNeverPaintsVideoOverAlbumArtwork() {
+        assertTrue(PlayerVideoModePolicy.showSongArtwork(videoSelected = false))
+        assertFalse(PlayerVideoModePolicy.showSongArtwork(videoSelected = true))
+    }
+
     @Test fun collapseOrRotationDoesNotCancelSelectedVideoWhenClipRemainsPlayable() {
         assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
         assertFalse(PlayerVideoModePolicy.shouldResetVideoSelection(

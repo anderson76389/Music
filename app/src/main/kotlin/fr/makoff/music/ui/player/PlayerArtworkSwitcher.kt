@@ -1,6 +1,7 @@
 package fr.makoff.music.ui.player
 
 import android.view.TextureView
+import android.view.View
 import coil3.compose.AsyncImage
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.animation.fadeOut
@@ -15,7 +16,6 @@ import fr.makoff.music.ui.component.CastButton
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.alpha
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Icon
 import androidx.compose.foundation.selection.selectable
@@ -147,12 +147,17 @@ internal fun PlayerArtworkSwitcher(
     }
 
     val playerImage: @Composable () -> Unit = {
-        // Keep the SAME TextureView attached while switching tabs. Removing the
-        // AndroidView on every Son selection forces a fresh decoder surface and
-        // creates a black/loading pause when returning to Vidéo.
         if (showModeBar && videoId != null && clip != null && videoPlayer != null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
+                // Son and Vidéo are TWO exclusive screens, not two layers. An
+                // Android TextureView doesn't reliably obey Compose alpha(0f);
+                // leaving the artwork underneath made the video look pasted on
+                // the cover (especially on the foldable / landscape player).
+                // Compose the cover ONLY in Son, but keep the TextureView mounted
+                // in both modes to avoid re-creating the video decoder on taps.
+                if (PlayerVideoModePolicy.showSongArtwork(showVideo)) {
+                    artwork(PlayerVideoModePolicy.suppressLegacyThumbnailHeader(videoModeEnabled, isExpanded))
+                }
                 VideoOnlySurface(
                     audioId = videoId,
                     videoPlayer = videoPlayer,
@@ -161,7 +166,7 @@ internal fun PlayerArtworkSwitcher(
                     visible = showVideo,
                     playerConnection = playerConnection,
                     onUnavailable = { onVideoUnavailable(clip.id) },
-                    modifier = Modifier.fillMaxSize().alpha(if (showVideo) 1f else 0f),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
         } else {
@@ -553,13 +558,17 @@ private fun VideoOnlySurface(
         Box(
             modifier = Modifier
                 .size(videoWidth, videoWidth * (9f / 16f))
-                .clip(RoundedCornerShape(18.dp)),
+                .clip(RoundedCornerShape(18.dp))
+                .then(if (visible) Modifier.background(Color.Black) else Modifier),
             contentAlignment = Alignment.Center,
         ) {
             AndroidView(
-                factory = { TextureView(it) },
+                factory = { TextureView(it).apply { visibility = View.INVISIBLE } },
                 modifier = Modifier.fillMaxSize(),
                 update = { textureView ->
+                    // Native visibility, not Compose alpha: when Son is active
+                    // the video must not draw a single pixel over the cover.
+                    textureView.visibility = if (visible) View.VISIBLE else View.INVISIBLE
                     if (textureView.tag !== videoPlayer) {
                         videoPlayer.setVideoTextureView(textureView)
                         textureView.tag = videoPlayer
@@ -575,7 +584,7 @@ private fun VideoOnlySurface(
                 },
             )
             AnimatedVisibility(
-                visible = !firstFrameRendered || !videoReady,
+                visible = visible && (!firstFrameRendered || !videoReady),
                 enter = fadeIn(animationSpec = tween(100)),
                 exit = fadeOut(animationSpec = tween(180)),
             ) {
