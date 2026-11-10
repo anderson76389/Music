@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -64,6 +65,10 @@ internal fun FullscreenVideoPlayer(
     BackHandler { onExit() }
     var controlsVisible by remember(videoPlayer) { mutableStateOf(true) }
     var interactionCount by remember(videoPlayer) { mutableIntStateOf(0) }
+    val toggleControls = {
+        controlsVisible = !controlsVisible
+        if (controlsVisible) interactionCount++
+    }
     val showControlsAfterAction = {
         controlsVisible = true
         // Refresh the auto-hide deadline on every button press, even if already visible.
@@ -76,7 +81,13 @@ internal fun FullscreenVideoPlayer(
         }
     }
 
-    Box(modifier = modifier.background(Color.Black), contentAlignment = Alignment.Center) {
+    // Parent handles taps on letterbox/black margins (e.g. foldables).
+    // The child handles taps on the video itself, and control buttons consume
+    // their own taps without hiding the controls.
+    Box(
+        modifier = modifier.background(Color.Black).clickable { toggleControls() },
+        contentAlignment = Alignment.Center,
+    ) {
         VideoOnlySurface(
             audioId = audioId,
             videoPlayer = videoPlayer,
@@ -85,10 +96,7 @@ internal fun FullscreenVideoPlayer(
             visible = true,
             fullscreen = true,
             onUnavailable = onUnavailable,
-            onSurfaceTap = {
-                controlsVisible = !controlsVisible
-                if (controlsVisible) interactionCount++
-            },
+            onSurfaceTap = toggleControls,
             modifier = Modifier.fillMaxSize(),
         )
 

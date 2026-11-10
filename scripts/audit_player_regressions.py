@@ -26,6 +26,8 @@ def between(text: str, start: str, end: str) -> str:
 # must follow the SAME visibility state. No independent, always-on close icon.
 assert fullscreen.count("visible = controlsVisible,") == 4, "Fullscreen overlays lost shared visibility"
 assert "controlsVisible = !controlsVisible" in fullscreen, "Surface tap cannot toggle overlays"
+assert "modifier.background(Color.Black).clickable { toggleControls() }" in fullscreen, "Letterbox black areas must toggle controls"
+assert "onSurfaceTap = toggleControls" in fullscreen, "Video and black margins must share a tap handler"
 assert "if (controlsVisible) interactionCount++" in fullscreen, "Tap fails to refresh auto-hide"
 assert "LaunchedEffect(controlsVisible, isPlaying, interactionCount)" in fullscreen
 assert "onClick = onExit" in fullscreen
