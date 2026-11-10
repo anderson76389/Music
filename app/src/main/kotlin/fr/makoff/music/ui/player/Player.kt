@@ -287,6 +287,7 @@ fun BottomSheetPlayer(
     val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
     val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
     val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
+    val shuffleEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
     val canSkipNext by playerConnection.canSkipNext.collectAsStateWithLifecycle()
     val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
@@ -1668,8 +1669,14 @@ fun BottomSheetPlayer(
                     title = mediaMetadata?.title.orEmpty(),
                     canSkipPrevious = canSkipPrevious,
                     canSkipNext = canSkipNext,
+                    shuffleEnabled = shuffleEnabled,
+                    repeatMode = repeatMode,
                     onPrevious = playerConnection::seekToPrevious,
                     onNext = playerConnection::seekToNext,
+                    onShuffleToggle = {
+                        playerConnection.player.shuffleModeEnabled = !playerConnection.player.shuffleModeEnabled
+                    },
+                    onRepeatToggle = { playerConnection.player.toggleRepeatMode() },
                     onExit = { selectedVideoId = null },
                     onUnavailable = { videoPreview.clip?.id?.let(onVideoClipUnavailable) },
                     modifier = Modifier.fillMaxSize(),

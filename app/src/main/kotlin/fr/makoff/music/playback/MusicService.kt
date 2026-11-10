@@ -2607,7 +2607,9 @@ class MusicService :
         if (shuffleModeEnabled) {
             if (player.mediaItemCount == 0) return
 
-            val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
+            // Already observed asynchronously from DataStore; never block the
+            // audio/main looper reading preferences during a shuffle tap.
+            val shufflePlaylistFirst = cachedShufflePlaylistFirst
             val currentIndex = player.currentMediaItemIndex
             val totalCount = player.mediaItemCount
 
@@ -2622,9 +2624,10 @@ class MusicService :
             }
         }
 
-        if (cachedPersistentQueue) {
-            saveQueueToDisk()
-        }
+        // No queue items or position changed: repeat/shuffle preference is
+        // persisted above in DataStore. Serializing the entire queue to disk
+        // here blocked the main/audio playback thread on every button tap.
+        // The periodic, transition and shutdown queue backups remain intact.
     }
 
     override fun onRepeatModeChanged(repeatMode: Int) {
@@ -2637,9 +2640,8 @@ class MusicService :
             }
         }
 
-        if (cachedPersistentQueue) {
-            saveQueueToDisk()
-        }
+        // Repeat only changes the mode, not the queue content or its position.
+        // DataStore above remembers it; avoid synchronous disk IO on this tap.
     }
 
     /**
