@@ -66,6 +66,7 @@ jobs:
           mkdir -p "$HOME/.android"
           keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
+          python3 scripts/audit_player_regressions.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
           mkdir -p dist

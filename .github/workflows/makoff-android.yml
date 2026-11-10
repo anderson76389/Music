@@ -29,6 +29,7 @@ jobs:
           python3 scripts/audit_independence.py
           python3 scripts/audit_settings.py
           python3 scripts/test_release_version.py
+          python3 scripts/audit_player_regressions.py
       - name: Create test signing key
         run: |
           mkdir -p "$HOME/.android"
