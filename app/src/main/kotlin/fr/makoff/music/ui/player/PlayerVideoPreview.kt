@@ -40,6 +40,7 @@ import kotlinx.coroutines.withContext
 internal data class PlayerVideoClip(
     val id: String,
     val stream: InnerTubeXPlayer.VideoStream,
+    val maxHeight: Int,
 )
 
 internal data class PlayerVideoPreview(
@@ -100,7 +101,7 @@ internal fun rememberPlayerVideoPreview(
             } catch (_: Exception) {
                 null
             }
-            return stream?.let { PlayerVideoClip(candidate, it) }
+            return stream?.let { PlayerVideoClip(candidate, it, quality.maxHeight) }
         }
 
         fun publish(clip: PlayerVideoClip) {
@@ -194,6 +195,11 @@ internal fun rememberPreparedVideoPlayer(
                 )
                 .build()
                 .apply {
+                    // HLS variants are adaptive and can exceed the extractor's
+                    // chosen direct-format limit unless ExoPlayer also caps height.
+                    trackSelectionParameters = trackSelectionParameters.buildUpon()
+                        .setMaxVideoSize(Int.MAX_VALUE, selected.maxHeight)
+                        .build()
                     volume = 0f
                     playWhenReady = false
                     setMediaItem(
