@@ -65,6 +65,8 @@ import fr.makoff.music.constants.LoudnessLevelKey
 import fr.makoff.music.constants.PauseOnMute
 import fr.makoff.music.constants.PersistentQueueKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
+import fr.makoff.music.constants.PlayerVideoQuality
+import fr.makoff.music.constants.PlayerVideoQualityKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
 import fr.makoff.music.constants.SoundProofSkipAiKey
@@ -105,6 +107,9 @@ fun PlayerSettings(
     )
     val (playerVideoThemeMode, _) = rememberEnumPreference(
         PlayerVideoThemeModeKey, defaultValue = PlayerVideoThemeMode.AUTO,
+    )
+    val (playerVideoQuality, onPlayerVideoQualityChange) = rememberEnumPreference(
+        PlayerVideoQualityKey, defaultValue = PlayerVideoQuality.BEST,
     )
     // Both settings screens use the same stored SoundProof toggle.
     val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(
@@ -246,8 +251,28 @@ fun PlayerSettings(
     var showAudioQualityDialog by remember {
         mutableStateOf(false)
     }
+    var showVideoQualityDialog by remember { mutableStateOf(false) }
     var showLoudnessLevelDialog by remember {
         mutableStateOf(false)
+    }
+
+    if (showVideoQualityDialog) {
+        EnumDialog(
+            onDismiss = { showVideoQualityDialog = false },
+            onSelect = {
+                onPlayerVideoQualityChange(it)
+                showVideoQualityDialog = false
+            },
+            title = stringResource(R.string.player_video_quality_setting),
+            current = playerVideoQuality,
+            values = PlayerVideoQuality.values().toList(),
+            valueText = { when (it) {
+                    PlayerVideoQuality.BEST -> stringResource(R.string.player_video_quality_best)
+                    PlayerVideoQuality.FULL_HD -> stringResource(R.string.player_video_quality_1080)
+                    PlayerVideoQuality.HD -> stringResource(R.string.player_video_quality_720)
+                    PlayerVideoQuality.ECONOMY -> stringResource(R.string.player_video_quality_480)
+                } },
+        )
     }
 
     if (showAudioQualityDialog) {
@@ -332,6 +357,22 @@ fun PlayerSettings(
                         title = { Text(stringResource(R.string.player_video_theme_setting)) },
                         description = { Text(videoThemeLabel(playerVideoThemeMode)) },
                         onClick = { navController.navigate("settings/player/video_theme") },
+                    ),
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.graphic_eq),
+                        title = { Text(stringResource(R.string.player_video_quality_setting)) },
+                        description = {
+                            Text(
+                                when (playerVideoQuality) {
+                                    PlayerVideoQuality.BEST -> stringResource(R.string.player_video_quality_best)
+                                    PlayerVideoQuality.FULL_HD -> stringResource(R.string.player_video_quality_1080)
+                                    PlayerVideoQuality.HD -> stringResource(R.string.player_video_quality_720)
+                                    PlayerVideoQuality.ECONOMY -> stringResource(R.string.player_video_quality_480)
+                                }
+                            )
+                        },
+                        enabled = playerVideoModeEnabled,
+                        onClick = { showVideoQualityDialog = true },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.person),

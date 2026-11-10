@@ -133,7 +133,6 @@ internal fun PlayerArtworkSwitcher(
         // A collapsed sheet or a brief layout teardown during orientation
         // change is NOT an unavailable video. Keep the selected tab for the
         // same song instead of unexpectedly switching back to Son.
-        if (!showModeBar) videoPlayer?.playWhenReady = false
         if (showVideo && PlayerVideoModePolicy.shouldResetVideoSelection(
                 modeEnabled = videoModeEnabled, casting = isCasting,
                 lookupFinished = videoPreview.lookupFinished,
@@ -488,7 +487,9 @@ internal fun VideoOnlySurface(
         }
 
         val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
-        if (PlayerVideoModePolicy.shouldSeekOnVideoSelection(audioPosition, videoPlayer.currentPosition)) {
+        if (videoPlayer.playbackState == Player.STATE_READY &&
+            PlayerVideoModePolicy.shouldSeekOnVideoSelection(audioPosition, videoPlayer.currentPosition)
+        ) {
             videoPlayer.seekTo(audioPosition)
             // A seek within existing buffer can remain READY and fire no state
             // change callback: never leave a permanent loading overlay.

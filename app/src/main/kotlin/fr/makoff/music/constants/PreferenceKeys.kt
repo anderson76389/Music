@@ -61,6 +61,11 @@ val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
 val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
 val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val PlayerVideoModeEnabledKey = booleanPreferencesKey("playerVideoModeEnabled")
+val PlayerVideoQualityKey = stringPreferencesKey("playerVideoQuality")
+/** Requested maximum clip height; lower source formats remain eligible. */
+enum class PlayerVideoQuality(val maxHeight: Int) {
+    BEST(2160), FULL_HD(1080), HD(720), ECONOMY(480)
+}
 /** Only the visual treatment of the Son/Vidéo selector, never video availability. */
 val PlayerVideoThemeModeKey = stringPreferencesKey("playerVideoThemeMode")
 /** Independent custom color palette for the small Son/Vidéo selector. */
