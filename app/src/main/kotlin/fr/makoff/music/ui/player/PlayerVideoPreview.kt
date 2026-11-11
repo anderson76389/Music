@@ -3,22 +3,28 @@ package fr.makoff.music.ui.player
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.datasource.DefaultDataSource
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.constants.PlayerVideoQuality
-import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.utils.InnerTubeXPlayer
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -29,7 +35,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.math.abs
 import kotlinx.coroutines.withContext
 
 /**
@@ -176,18 +181,19 @@ internal fun rememberPlayerVideoPreview(
 internal fun rememberPreparedVideoPlayer(
     clip: PlayerVideoClip?,
     audioId: String?,
-    playerConnection: PlayerConnection,
+    audioPlayer: Player?,
     onUnavailable: (String) -> Unit,
-    prewarmForSwitch: Boolean = false,
+    videoActive: Boolean,
 ): ExoPlayer? {
     val context = LocalContext.current
     val onUnavailableLatest by rememberUpdatedState(onUnavailable)
-    val player = remember(clip, audioId) {
-        clip?.let { selected ->
+    val player = remember(clip, audioId, audioPlayer) {
+        if (clip != null && audioPlayer != null) {
+            val selected = clip
             val http = DefaultHttpDataSource.Factory()
                 .setDefaultRequestProperties(selected.stream.headers)
             ExoPlayer.Builder(context)
-                .setMediaSourceFactory(DefaultMediaSourceFactory(http))
+                .setMediaSourceFactory(DefaultMediaSourceFactory(DefaultDataSource.Factory(context, http)))
                 .setLoadControl(
                     DefaultLoadControl.Builder()
                         .setBufferDurationsMs(1_500, 12_000, 300, 650)
@@ -199,6 +205,7 @@ internal fun rememberPreparedVideoPlayer(
                     // chosen direct-format limit unless ExoPlayer also caps height.
                     trackSelectionParameters = trackSelectionParameters.buildUpon()
                         .setMaxVideoSize(Int.MAX_VALUE, selected.maxHeight)
+                        .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
                         .build()
                     volume = 0f
                     playWhenReady = false
@@ -209,29 +216,43 @@ internal fun rememberPreparedVideoPlayer(
                             .build(),
                     )
                     seekTo(
-                        runCatching { playerConnection.player.currentPosition }
+                        runCatching { audioPlayer.currentPosition }
                             .getOrDefault(0L).coerceAtLeast(0L),
                     )
                     prepare()
                 }
-        }
+        } else null
     }
-    // Keep the muted prebuffer near the audio clock without extra network
-    // lookups when the full player opens.
-    LaunchedEffect(player, audioId, playerConnection, prewarmForSwitch) {
-        val prepared = player ?: return@LaunchedEffect
-        while (isActive) {
-            // Only maintain a nearby muted video frame while the expanded
-            // player is visible. A sheet left collapsed keeps its inexpensive
-            // 8-second cache check, avoiding background video decoding.
-            delay(if (prewarmForSwitch) 1_800L else 8_000L)
-            val audio = playerConnection.player
-            if (audioId != null && audio.currentMediaItem?.mediaId == audioId &&
-                !prepared.playWhenReady && prepared.playbackState == Player.STATE_READY &&
-                abs(audio.currentPosition - prepared.currentPosition) >
-                    (if (prewarmForSwitch) 1_600L else 12_000L)
-            ) {
-                prepared.seekTo(audio.currentPosition.coerceAtLeast(0L))
+    val synchronizer = remember(player, audioId, audioPlayer) {
+        if (player != null && audioId != null && audioPlayer != null) {
+            PlayerVideoSynchronizer(audioPlayer, player, audioId) {
+                android.os.SystemClock.elapsedRealtime()
+            }
+        } else null
+    }
+    DisposableEffect(synchronizer) {
+        synchronizer?.attach()
+        onDispose { synchronizer?.detach() }
+    }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val videoActiveLatest by rememberUpdatedState(videoActive)
+    DisposableEffect(synchronizer, lifecycle) {
+        val observer = LifecycleEventObserver { _, _ ->
+            synchronizer?.setActive(videoActiveLatest && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+        }
+        lifecycle.addObserver(observer)
+        onDispose { lifecycle.removeObserver(observer) }
+    }
+    SideEffect {
+        synchronizer?.setActive(videoActive && lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED))
+    }
+    LaunchedEffect(synchronizer, videoActive, lifecycle) {
+        val session = synchronizer ?: return@LaunchedEffect
+        if (!videoActive) return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (isActive) {
+                delay(1_500L)
+                session.tick()
             }
         }
     }

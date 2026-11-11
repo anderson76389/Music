@@ -606,6 +606,52 @@ class SettingsNavigationTest {
                         R.string.player_devices_section,
                     ).forEach { findText(it) }
                     toggleAndRestore(R.string.player_video_mode_setting, PlayerVideoModeEnabledKey, true)
+                    val videoBefore = runBlocking { context.dataStore.data.first() }
+                    runBlocking { context.dataStore.edit { it[PlayerVideoModeEnabledKey] = true } }
+                    try {
+                        for ((label, quality) in listOf(
+                            R.string.player_video_quality_best to PlayerVideoQuality.BEST,
+                            R.string.player_video_quality_1080 to PlayerVideoQuality.FULL_HD,
+                            R.string.player_video_quality_720 to PlayerVideoQuality.HD,
+                            R.string.player_video_quality_480 to PlayerVideoQuality.ECONOMY,
+                        )) {
+                            open(R.string.player_video_quality_setting)
+                            open(label)
+                            awaitPreference("Video quality ${quality.name}") {
+                                context.dataStore.data.first()[PlayerVideoQualityKey] == quality.name
+                            }
+                        }
+                        open(R.string.player_video_theme_setting)
+                        findText(R.string.player_video_theme_preview)
+                        for ((label, mode) in listOf(
+                            R.string.player_video_theme_light to PlayerVideoThemeMode.LIGHT,
+                            R.string.player_video_theme_dark to PlayerVideoThemeMode.DARK,
+                            R.string.player_video_theme_oled to PlayerVideoThemeMode.OLED,
+                            R.string.player_video_theme_auto to PlayerVideoThemeMode.AUTO,
+                            R.string.player_video_theme_cover to PlayerVideoThemeMode.COVER,
+                            R.string.player_video_theme_custom to PlayerVideoThemeMode.CUSTOM,
+                            R.string.player_video_theme_glass to PlayerVideoThemeMode.LIQUID_GLASS,
+                            R.string.player_video_theme_off to PlayerVideoThemeMode.DISABLED,
+                        )) {
+                            // Click the text label, not a hard-coded circle coordinate.
+                            open(label)
+                            awaitPreference("Video theme ${mode.name}") {
+                                context.dataStore.data.first()[PlayerVideoThemeModeKey] == mode.name
+                            }
+                        }
+                        device.pressBack()
+                        device.waitForIdle()
+                        println("VIDEO_SETTINGS_OK: all four quality options and eight selector themes respond and persist")
+                    } finally {
+                        runBlocking { context.dataStore.edit { prefs ->
+                            videoBefore[PlayerVideoModeEnabledKey]?.let { prefs[PlayerVideoModeEnabledKey] = it }
+                                ?: prefs.remove(PlayerVideoModeEnabledKey)
+                            videoBefore[PlayerVideoQualityKey]?.let { prefs[PlayerVideoQualityKey] = it }
+                                ?: prefs.remove(PlayerVideoQualityKey)
+                            videoBefore[PlayerVideoThemeModeKey]?.let { prefs[PlayerVideoThemeModeKey] = it }
+                                ?: prefs.remove(PlayerVideoThemeModeKey)
+                        } }
+                    }
                     listOf(
                         Triple(R.string.google_cast, EnableGoogleCastKey, true),
                         Triple(R.string.persistent_queue, PersistentQueueKey, true),

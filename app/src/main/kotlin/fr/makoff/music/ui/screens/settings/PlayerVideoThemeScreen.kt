@@ -2,7 +2,7 @@ package fr.makoff.music.ui.screens.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import dev.chrisbanes.haze.HazeState
@@ -334,6 +335,8 @@ private fun VideoModeCircle(
         else -> Color.White
     }
     Column(
+        modifier = Modifier.selectable(selected = selected, role = Role.RadioButton, onClick = onClick)
+            .padding(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -344,21 +347,20 @@ private fun VideoModeCircle(
                     if (selected) 3.dp else 1.dp,
                     if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
                     CircleShape,
-                )
-                .clickable(onClick = onClick),
+                ),
             contentAlignment = Alignment.Center,
         ) {
             if (selected) {
                 Icon(
                     painter = painterResource(R.drawable.check),
-                    contentDescription = label,
+                    contentDescription = null,
                     tint = if (mode == PlayerVideoThemeMode.AUTO) MaterialTheme.colorScheme.primary else foreground,
                     modifier = Modifier.size(20.dp),
                 )
             } else if (mode == PlayerVideoThemeMode.AUTO) {
                 Icon(
                     painter = painterResource(R.drawable.sync),
-                    contentDescription = label,
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.size(18.dp),
                 )

@@ -65,8 +65,6 @@ import fr.makoff.music.R
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.playback.PlayerConnection
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.isActive
-import kotlin.math.abs
 
 /**
  * The regular audio session remains the source of truth. When a video is requested,
@@ -129,20 +127,6 @@ internal fun PlayerArtworkSwitcher(
         waitingForClip = videoModeEnabled && !videoPreview.lookupFinished,
         modeEnabled = videoModeEnabled && isExpanded,
     )
-    LaunchedEffect(showVideo, videoPreview.lookupFinished, showModeBar, videoModeEnabled, isCasting, hasPlayableClip, videoPlayer) {
-        // A collapsed sheet or a brief layout teardown during orientation
-        // change is NOT an unavailable video. Keep the selected tab for the
-        // same song instead of unexpectedly switching back to Son.
-        if (showVideo && PlayerVideoModePolicy.shouldResetVideoSelection(
-                modeEnabled = videoModeEnabled, casting = isCasting,
-                lookupFinished = videoPreview.lookupFinished,
-                hasPlayableClip = hasPlayableClip,
-            )
-        ) {
-            onShowVideoChange(false)
-        }
-    }
-
     val playerImage: @Composable () -> Unit = {
         if (showModeBar && videoId != null && clip != null && videoPlayer != null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -150,11 +134,10 @@ internal fun PlayerArtworkSwitcher(
                 // frame is decoded before the Vidéo tap. Native TextureView
                 // alpha hides it in Son; the cover on top is a second safeguard.
                 VideoOnlySurface(
-                    audioId = videoId,
                     videoPlayer = videoPlayer,
                     isPlaying = isPlaying,
                     visible = showVideo,
-                    playerConnection = playerConnection,
+                    onTogglePlayPause = { playerConnection.togglePlayPause() },
                     onUnavailable = { onVideoUnavailable(clip.id) },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -179,9 +162,6 @@ internal fun PlayerArtworkSwitcher(
             customThemeColor = customThemeColor,
             modeTextColor = modeTextColor,
             onAudioClick = {
-                // The VideoOnlySurface owns play/pause and clock sync, not the
-                // tab's click handler. Keep the decoder warm briefly on fast
-                // Son/Vidéo/Son gestures without a double seek or black frame.
                 onShowVideoChange(false)
             },
             onVideoClick = {
@@ -433,9 +413,8 @@ internal fun PlayerModePills(
 
 @Composable
 internal fun VideoOnlySurface(
-    audioId: String,
     videoPlayer: ExoPlayer,
-    playerConnection: PlayerConnection,
+    onTogglePlayPause: () -> Unit,
     isPlaying: Boolean,
     visible: Boolean,
     onUnavailable: () -> Unit,
@@ -466,80 +445,8 @@ internal fun VideoOnlySurface(
         videoPlayer.addListener(listener)
         onDispose { videoPlayer.removeListener(listener) }
     }
-    // The prepared ExoPlayer is shared between portrait and landscape.
-    // Releasing a UI surface must never stop the *new* view's player or call
-    // clearVideoSurface() globally: that races with orientation reattachment.
-    val lastPeriodicSeekMs = remember(videoPlayer) { longArrayOf(0L) }
-
-    // One owner for tab switching, play/pause and position alignment.
-    // Repeated rapid tab taps must not issue two competing seekTo() calls.
-    LaunchedEffect(videoPlayer, audioId, isPlaying, visible) {
-        val audioPlayer = playerConnection.player
-        val sameSong = audioPlayer.currentMediaItem?.mediaId == audioId
-        if (!visible || !sameSong) {
-            if (sameSong && !visible && isPlaying && videoPlayer.playWhenReady) {
-                // Keep the muted decoder warm just long enough for a rapid
-                // return to video, then stop consuming video network/CPU.
-                delay(600L)
-            }
-            videoPlayer.playWhenReady = false
-            return@LaunchedEffect
-        }
-
-        val audioPosition = audioPlayer.currentPosition.coerceAtLeast(0L)
-        if (videoPlayer.playbackState == Player.STATE_READY &&
-            PlayerVideoModePolicy.shouldSeekOnVideoSelection(audioPosition, videoPlayer.currentPosition)
-        ) {
-            videoPlayer.seekTo(audioPosition)
-            // A seek within existing buffer can remain READY and fire no state
-            // change callback: never leave a permanent loading overlay.
-            videoReady = videoPlayer.playbackState == Player.STATE_READY
-            lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
-        }
-        videoPlayer.playWhenReady = isPlaying
-        while (isActive) {
-            val now = android.os.SystemClock.elapsedRealtime()
-            if (PlayerVideoModePolicy.shouldCorrectVideoDrift(
-                    audioPositionMs = audioPlayer.currentPosition,
-                    videoPositionMs = videoPlayer.currentPosition,
-                    videoReady = videoPlayer.playbackState == Player.STATE_READY,
-                    timeSinceLastSeekMs = now - lastPeriodicSeekMs[0],
-                )
-            ) {
-                videoPlayer.seekTo(audioPlayer.currentPosition.coerceAtLeast(0L))
-                videoReady = videoPlayer.playbackState == Player.STATE_READY
-                lastPeriodicSeekMs[0] = now
-            }
-            delay(1_500L)
-        }
-    }
-
-    // Propagate explicit seeks immediately rather than waiting for the
-    // periodic 350 ms drift correction (e.g. a fast drag of the audio slider).
-    DisposableEffect(videoPlayer, audioId, playerConnection, visible) {
-        val audio = playerConnection.player
-        val listener = object : Player.Listener {
-            override fun onPositionDiscontinuity(
-                oldPosition: Player.PositionInfo,
-                newPosition: Player.PositionInfo,
-                reason: Int,
-            ) {
-                if (visible && reason == Player.DISCONTINUITY_REASON_SEEK &&
-                    audio.currentMediaItem?.mediaId == audioId &&
-                    PlayerVideoModePolicy.shouldSeekOnVideoSelection(
-                        newPosition.positionMs, videoPlayer.currentPosition, toleranceMs = 500L,
-                    )
-                ) {
-                    videoPlayer.seekTo(newPosition.positionMs.coerceAtLeast(0L))
-                    videoReady = videoPlayer.playbackState == Player.STATE_READY
-                    lastPeriodicSeekMs[0] = android.os.SystemClock.elapsedRealtime()
-                }
-            }
-        }
-        audio.addListener(listener)
-        onDispose { audio.removeListener(listener) }
-    }
-
+    // Clock synchronization is owned above both orientation-specific surfaces.
+    // Detaching this view must not stop or seek the shared video session.
     var controlsVisible by remember(videoPlayer) { mutableStateOf(false) }
     LaunchedEffect(controlsVisible, isPlaying) {
         if (controlsVisible && isPlaying) {
@@ -604,7 +511,7 @@ internal fun VideoOnlySurface(
                     if (onSurfaceTap != null) {
                         onSurfaceTap()
                     } else {
-                        playerConnection.togglePlayPause()
+                        onTogglePlayPause()
                         controlsVisible = true
                     }
                 },
@@ -616,7 +523,7 @@ internal fun VideoOnlySurface(
             ) {
                 IconButton(
                     onClick = {
-                        playerConnection.togglePlayPause()
+                        onTogglePlayPause()
                         controlsVisible = true
                     },
                     modifier = Modifier
