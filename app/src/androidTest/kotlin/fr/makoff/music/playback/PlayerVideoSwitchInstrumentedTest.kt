@@ -206,7 +206,9 @@ class PlayerVideoSwitchInstrumentedTest {
             assertNull(failure.get())
             assertNull(main { audio.playerError })
             assertNull(main { video.playerError })
-            println("VIDEO_SWITCH_LOCAL_OK: 12 tab clicks, real frames, pause/play, seek, speed, collapse/reopen, rotation and background; one muted decoder")
+            val proof = "VIDEO_SWITCH_LOCAL_OK: 12 tab clicks, real frames, pause/play, seek, speed, collapse/reopen, rotation and background; one muted decoder"
+            instrumentation.addResults(android.os.Bundle().apply { putString("video_switch_proof", proof) })
+            println(proof)
         } finally {
             device.unfreezeRotation()
             main {
