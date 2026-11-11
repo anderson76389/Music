@@ -17,9 +17,14 @@ import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import fr.makoff.music.innertube.YouTube
+import fr.makoff.music.constants.PlayerVideoQuality
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.utils.InnerTubeXPlayer
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
@@ -35,6 +40,7 @@ import kotlinx.coroutines.withContext
 internal data class PlayerVideoClip(
     val id: String,
     val stream: InnerTubeXPlayer.VideoStream,
+    val maxHeight: Int,
 )
 
 internal data class PlayerVideoPreview(
@@ -53,6 +59,7 @@ internal data class PlayerVideoPreview(
 internal fun rememberPlayerVideoPreview(
     videoId: String?,
     enabled: Boolean,
+    quality: PlayerVideoQuality,
     isVideoSong: Boolean,
     localOrUploaded: Boolean,
     casting: Boolean,
@@ -67,11 +74,11 @@ internal fun rememberPlayerVideoPreview(
     // Hide the selector and release the decoder in the SAME recomposition
     // as disabling the setting, without waiting for a coroutine.
     val canProbe = PlayerVideoModePolicy.canProbeVideo(videoId, enabled, localOrUploaded, casting)
-    var preview by remember(videoId, canProbe) {
+    var preview by remember(videoId, canProbe, quality) {
         mutableStateOf(PlayerVideoPreview(lookupFinished = !canProbe))
     }
 
-    LaunchedEffect(videoId, enabled, isVideoSong, localOrUploaded, casting, title, artists, failedClipIds) {
+    LaunchedEffect(videoId, enabled, quality, isVideoSong, localOrUploaded, casting, title, artists, failedClipIds) {
         if (!canProbe) {
             preview = PlayerVideoPreview(lookupFinished = true)
             return@LaunchedEffect
@@ -82,46 +89,79 @@ internal fun rememberPlayerVideoPreview(
 
         preview = PlayerVideoPreview()
         val id = videoId ?: return@LaunchedEffect
-        val counterpart = if (isVideoSong) {
-            id
-        } else {
-            knownCompanionVideoId ?: try {
+        val attempted = mutableSetOf<String>()
+        suspend fun resolve(candidate: String): PlayerVideoClip? {
+            if (candidate in failedClipIds || !attempted.add(candidate)) return null
+            val stream = try {
                 withContext(Dispatchers.IO) {
-                    withTimeoutOrNull(3_500L) {
-                        YouTube.videoCounterpart(videoId = id, title = title, artists = artists).getOrNull()
-                    }
+                    InnerTubeXPlayer.resolveVideoStream(candidate, quality.maxHeight)
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
                 null
             }
+            return stream?.let { PlayerVideoClip(candidate, it, quality.maxHeight) }
         }
-        if (counterpart != null && counterpart != id) onCompanionResolved(counterpart)
 
-        // Prioritize the YouTube Music counterpart; use only the SAME original
-        // item as fallback. Audio-only formats remain rejected by the resolver.
-        val candidateIds = buildList {
-            if (knownPlayableClipId != null) add(knownPlayableClipId)
-            if (counterpart != null) add(counterpart)
-            add(id)
-        }.distinct().filterNot { it in failedClipIds }
+        fun publish(clip: PlayerVideoClip) {
+            preview = PlayerVideoPreview(clip, lookupFinished = true)
+            onPlayableResolved(clip.id)
+        }
 
-        for (candidate in candidateIds) {
-            val stream = try {
-                withContext(Dispatchers.IO) { InnerTubeXPlayer.resolveVideoStream(candidate) }
-            } catch (cancelled: CancellationException) {
-                throw cancelled
-            } catch (_: Exception) {
-                null
-            }
-            if (stream != null) {
-                preview = PlayerVideoPreview(PlayerVideoClip(candidate, stream), lookupFinished = true)
-                onPlayableResolved(candidate)
+        // A previously proven clip is retried before any counterpart lookup.
+        // Its signed URL is never persisted.
+        if (knownPlayableClipId != null) {
+            resolve(knownPlayableClipId)?.let {
+                publish(it)
                 return@LaunchedEffect
             }
         }
-        // Songs without a proven, playable video must never advertise the tabs.
+
+        // A same-song playable stream is looked up concurrently with the
+        // potentially slow counterpart search. The first verified source wins;
+        // outstanding requests are cancelled on success or song change.
+        val clip = if (isVideoSong) {
+            resolve(id)
+        } else {
+            coroutineScope {
+                val winner = CompletableDeferred<PlayerVideoClip?>()
+                val counterpartJob = launch {
+                    val counterpart = knownCompanionVideoId ?: try {
+                        withContext(Dispatchers.IO) {
+                            withTimeoutOrNull(3_500L) {
+                                YouTube.videoCounterpart(videoId = id, title = title, artists = artists).getOrNull()
+                            }
+                        }
+                    } catch (cancelled: CancellationException) {
+                        throw cancelled
+                    } catch (_: Exception) {
+                        null
+                    }
+                    if (counterpart != null && counterpart != id) {
+                        onCompanionResolved(counterpart)
+                        resolve(counterpart)?.let { winner.complete(it) }
+                    }
+                }
+                val sameSongJob = launch {
+                    resolve(id)?.let { winner.complete(it) }
+                }
+                val completionJob = launch {
+                    joinAll(counterpartJob, sameSongJob)
+                    winner.complete(null)
+                }
+                val selected = winner.await()
+                counterpartJob.cancel()
+                sameSongJob.cancel()
+                completionJob.cancel()
+                selected
+            }
+        }
+        if (clip != null) {
+            publish(clip)
+            return@LaunchedEffect
+        }
+        // A guessed video ID must never display the tabs.
         preview = PlayerVideoPreview(lookupFinished = true)
     }
     return if (canProbe) preview else PlayerVideoPreview(lookupFinished = true)
@@ -155,6 +195,11 @@ internal fun rememberPreparedVideoPlayer(
                 )
                 .build()
                 .apply {
+                    // HLS variants are adaptive and can exceed the extractor's
+                    // chosen direct-format limit unless ExoPlayer also caps height.
+                    trackSelectionParameters = trackSelectionParameters.buildUpon()
+                        .setMaxVideoSize(Int.MAX_VALUE, selected.maxHeight)
+                        .build()
                     volume = 0f
                     playWhenReady = false
                     setMediaItem(

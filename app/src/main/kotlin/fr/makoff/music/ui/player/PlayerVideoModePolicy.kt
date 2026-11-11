@@ -12,9 +12,9 @@ internal object PlayerVideoModePolicy {
      */
     fun headerMode(selectorVisible: Boolean, waitingForClip: Boolean, modeEnabled: Boolean = false): HeaderMode = when {
         selectorVisible -> HeaderMode.SELECTOR
-        // Once enabled, the classic header must NEVER flash even before the
-        // metadata is ready or after a video stream has failed.
-        modeEnabled -> HeaderMode.LOADING
+        // Avoid a stale/empty header after lookup fails. Only show the quiet
+        // transition while the app is actively verifying video availability.
+        modeEnabled && waitingForClip -> HeaderMode.LOADING
         else -> HeaderMode.CLASSIC
     }
 

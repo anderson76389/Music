@@ -57,13 +57,13 @@ object InnerTubeXPlayer {
      * Resolve the video-only track for a YouTube music video without modifying the
      * audio-only playback session or queue. Signed URLs are deliberately not cached.
      */
-    suspend fun resolveVideoStream(videoId: String): VideoStream? {
+    suspend fun resolveVideoStream(videoId: String, maxHeight: Int = 2160): VideoStream? {
         // The standard audio extractor deliberately disables HLS; that is correct
         // for the audio service but can exclude the ONLY available clip source.
         // Video uses its own muted ExoPlayer and can safely accept HLS.
         val stream = bundle().extractor.extract(
             videoId = videoId,
-            hints = ContentHints(wantVideo = true, maxVideoHeight = 720)
+            hints = ContentHints(wantVideo = true, maxVideoHeight = maxHeight.coerceIn(144, 2160))
                 .withStreamCapabilities(allowHls = true, allowSabr = false),
             audioQuality = InnerTubeXAudioQuality.AUTO,
             clientPlaybackNonce = generateClientPlaybackNonce(),

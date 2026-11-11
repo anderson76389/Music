@@ -167,6 +167,8 @@ import fr.makoff.music.constants.SquigglySliderKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewPlayerDesignKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
+import fr.makoff.music.constants.PlayerVideoQuality
+import fr.makoff.music.constants.PlayerVideoQualityKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
 import fr.makoff.music.constants.PlayerVideoCustomColorKey
@@ -228,6 +230,7 @@ fun BottomSheetPlayer(
             defaultValue = true,
         )
     val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
+    val playerVideoQuality by rememberEnumPreference(PlayerVideoQualityKey, PlayerVideoQuality.BEST)
     val selectorTheme by rememberEnumPreference(PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO)
     val selectorCustomColorInt by rememberPreference(PlayerVideoCustomColorKey, defaultValue = 0xFF9158BC.toInt())
     val (hidePlayerThumbnail, onHidePlayerThumbnailChange) = rememberPreference(HidePlayerThumbnailKey, false)
@@ -326,10 +329,11 @@ fun BottomSheetPlayer(
         currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
     val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
     val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
-    var failedVideoClipIds by remember(activeVideoId, playerVideoModeEnabled) { mutableStateOf(emptySet<String>()) }
+    var failedVideoClipIds by remember(activeVideoId, playerVideoModeEnabled, playerVideoQuality) { mutableStateOf(emptySet<String>()) }
     val videoPreview = rememberPlayerVideoPreview(
         videoId = activeVideoId,
         enabled = playerVideoModeEnabled,
+        quality = playerVideoQuality,
         isVideoSong = videoIsMusicClip,
         localOrUploaded = videoIsLocalOrUploaded,
         casting = isCasting,
