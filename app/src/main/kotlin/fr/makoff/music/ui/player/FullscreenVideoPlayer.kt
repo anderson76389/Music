@@ -89,9 +89,8 @@ internal fun FullscreenVideoPlayer(
         contentAlignment = Alignment.Center,
     ) {
         VideoOnlySurface(
-            audioId = audioId,
             videoPlayer = videoPlayer,
-            playerConnection = playerConnection,
+            onTogglePlayPause = { playerConnection.togglePlayPause() },
             isPlaying = isPlaying,
             visible = true,
             fullscreen = true,

@@ -355,11 +355,31 @@ fun BottomSheetPlayer(
             }
         },
     )
+    // OFF takes effect in the same frame and never restores stale video state.
+    LaunchedEffect(playerVideoModeEnabled, activeVideoId) {
+        if (!playerVideoModeEnabled || selectedVideoId != activeVideoId) selectedVideoId = null
+    }
+    val selectedVideoForTrack = playerVideoModeEnabled &&
+        selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    val videoModeActive = PlayerVideoModePolicy.videoModeActive(
+        selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
+    )
+    LaunchedEffect(selectedVideoForTrack, playerVideoModeEnabled, isCasting, videoPreview) {
+        if (selectedVideoForTrack && PlayerVideoModePolicy.shouldResetVideoSelection(
+                modeEnabled = playerVideoModeEnabled,
+                casting = isCasting,
+                lookupFinished = videoPreview.lookupFinished,
+                hasPlayableClip = videoPreview.clip != null,
+            )
+        ) {
+            selectedVideoId = null
+        }
+    }
     val preparedVideoPlayer = rememberPreparedVideoPlayer(
         clip = videoPreview.clip,
         audioId = activeVideoId,
-        playerConnection = playerConnection,
-        prewarmForSwitch = state.isExpanded || state.progress >= 0.16f,
+        audioPlayer = runCatching { playerConnection.player }.getOrNull(),
+        videoActive = videoModeActive,
         onUnavailable = { clipId ->
             if (videoPreview.clip?.id == clipId) {
                 failedVideoClipIds = failedVideoClipIds + clipId
@@ -379,15 +399,6 @@ fun BottomSheetPlayer(
             }
         }
     }
-    // OFF takes effect in the same frame and never restores stale video state.
-    LaunchedEffect(playerVideoModeEnabled, activeVideoId) {
-        if (!playerVideoModeEnabled || selectedVideoId != activeVideoId) selectedVideoId = null
-    }
-    val selectedVideoForTrack = playerVideoModeEnabled &&
-        selectedVideoId != null && selectedVideoId == mediaMetadata?.id
-    val videoModeActive = PlayerVideoModePolicy.videoModeActive(
-        selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
-    )
     val fullscreenLandscapeVideo = PlayerVideoModePolicy.fullscreenLandscapeVideo(
         videoActive = videoModeActive,
         isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE,

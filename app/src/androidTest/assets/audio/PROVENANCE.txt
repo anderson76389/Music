@@ -10,3 +10,6 @@ Ces fixtures testent le transfert sans conversion ; elles ne prouvent pas l'acc�
 Fixture du lecteur hors connexion : player-aac.m4a.base64, signal synthétique de 20 s.
 ffmpeg -f lavfi -i sine=frequency=997:sample_rate=48000:duration=20 -ac 1 -c:a aac -b:a 32k player-aac.m4a
 Ce débit sert à un petit fichier de test ; il ne représente pas la qualité des flux YouTube.
+
+Fixture vidéo synthétique du swap Son/Vidéo : player-video.mp4.base64, mire animée de 20 s, sans son.
+ffmpeg -f lavfi -i testsrc2=size=160x90:rate=15 -t 20 -c:v libx264 -pix_fmt yuv420p -preset veryfast -crf 32 -movflags +faststart player-video.mp4

@@ -40,6 +40,12 @@ for variant in foss gms; do
   fi
   if [ "$variant" = gms ] && [ -d apk-tests ]; then
     adb install apk-tests/*.apk
+    # Exercise real video decoders and the production Son/Video controls using
+    # local fixtures; YouTube availability cannot turn this into a false pass.
+    timeout 210s adb shell am instrument -w -r -e class fr.makoff.music.playback.PlayerVideoSwitchInstrumentedTest "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/video-switch-local-tests.txt
+    grep -Fq 'VIDEO_SWITCH_LOCAL_OK' smoke-results/video-switch-local-tests.txt
+    grep -Eq 'OK \(1 test\)' smoke-results/video-switch-local-tests.txt
+    ! grep -Eq 'FAILURES|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' smoke-results/video-switch-local-tests.txt
     # SoundProof real parser and cached offline filtering must work on all API levels.
     timeout 90s adb shell am instrument -w -r -e class fr.makoff.music.playback.SoundProofInstrumentedTest#cachedRealSchemaMatchesYouTubeMusicDisplayNames "$package.test/androidx.test.runner.AndroidJUnitRunner" | tee smoke-results/soundproof-local-test.txt
     grep -Eq 'OK \(1 test\)' smoke-results/soundproof-local-test.txt
