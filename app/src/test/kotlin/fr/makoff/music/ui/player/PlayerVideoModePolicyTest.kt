@@ -15,7 +15,7 @@ class PlayerVideoModePolicyTest {
     @Test fun noClassicHeaderWhenVideoModeIsEnabledEvenForUnplayableClips() {
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
-                PlayerVideoModePolicy.HeaderMode.CLASSIC,
+                PlayerVideoModePolicy.HeaderMode.LOADING,
         )
         assertTrue(
             PlayerVideoModePolicy.headerMode(false, true, modeEnabled = true) ==
@@ -27,9 +27,9 @@ class PlayerVideoModePolicyTest {
         )
     }
 
-    @Test fun noClipRestoresNowPlayingWithoutClaimingVideoIsAvailable() {
+    @Test fun noClipKeepsHeaderEmptyWithoutClaimingVideoIsAvailable() {
         assertTrue(PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
-            PlayerVideoModePolicy.HeaderMode.CLASSIC)
+            PlayerVideoModePolicy.HeaderMode.LOADING)
         assertFalse(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = false))
     }
 

@@ -12,9 +12,10 @@ internal object PlayerVideoModePolicy {
      */
     fun headerMode(selectorVisible: Boolean, waitingForClip: Boolean, modeEnabled: Boolean = false): HeaderMode = when {
         selectorVisible -> HeaderMode.SELECTOR
-        // Avoid a stale/empty header after lookup fails. Only show the quiet
-        // transition while the app is actively verifying video availability.
-        modeEnabled && waitingForClip -> HeaderMode.LOADING
+        // When enabled, the classic header must NEVER appear even if the
+        // current item is audio-only or video lookup fails. This invariant is
+        // also covered by Android 11's real player UI instrumentation.
+        modeEnabled -> HeaderMode.LOADING
         else -> HeaderMode.CLASSIC
     }
 
