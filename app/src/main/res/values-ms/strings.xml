@@ -232,8 +232,6 @@
     <string name="use_login_for_browse_desc">Ini boleh mempengaruhi kandungan yang anda lihat dan contohnya memaparkan album premium sahaja jika anda log masuk dengan akaun Premium</string>
     <string name="disable_screenshot">Lumpuhkan tangkapan skrin</string>
     <string name="disable_screenshot_desc">Apabila pilihan ini dihidupkan, tangkapan skrin dan paparan aplikasi dalam Terkini akan dinyahdayakan.</string>
-    <string name="enable_lrclib">Dayakan penyedia lirik LrcLib</string>
-    <string name="enable_kugou">Dayakan penyedia lirik KuGou</string>
     <string name="hide_explicit">Sembunyikan kandungan eksplisit</string>
     <string name="backup_restore">Sandarkan dan pulihkan</string>
     <string name="action_backup">Sandaran</string>

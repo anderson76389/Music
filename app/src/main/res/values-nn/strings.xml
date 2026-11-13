@@ -258,8 +258,6 @@
     <string name="use_login_for_browse_desc">Dette kan påverka kva innhald du ser og syner til dømes album berre synlege for Premium-nøytarar dersom du er innlogga med ein Premium-konto</string>
     <string name="disable_screenshot">Slå av skjermbilete</string>
     <string name="disable_screenshot_desc">Når dette er aktivert, er skjermbilete og visningen for appen i Nylege appar avslegne.</string>
-    <string name="enable_lrclib">Slå på LrcLib-songteksttilbydar</string>
-    <string name="enable_kugou">Slå på KuGou-songteksttilbydar</string>
     <string name="hide_explicit">Gøym innhald som ikkje høver til born</string>
     <string name="backup_restore">Tryggleikskopiering og atteroppretting</string>
     <string name="action_backup">Trykkleikskopier</string>
