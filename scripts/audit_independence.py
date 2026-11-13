@@ -71,3 +71,77 @@ for module in ('app', 'innertube', 'vendor/innertubex'):
         assert 'com/metrolist/' not in p.as_posix(), p
         assert 'com.metrolist.' not in p.read_text(), p
 print('PASS: application and vendored source namespaces use the independent identity')
+
+
+# Permanent isolation guard: also cover build configuration, locally bundled
+# non-Kotlin resources, the update channel and Git tree structure.
+# SPDX and provenance documents are deliberately excluded: acknowledging
+# upstream authorship does not create a runtime or build dependency.
+import subprocess
+
+build_inputs = (
+    "settings.gradle.kts",
+    "build.gradle.kts",
+    "app/build.gradle.kts",
+    "innertube/build.gradle.kts",
+    "gradle/libs.versions.toml",
+    "vendor/innertubex/settings.gradle.kts",
+    "vendor/innertubex/build.gradle.kts",
+    "vendor/innertubex/gradle/libs.versions.toml",
+    "vendor/innertubex/gradle.properties",
+)
+for rel in build_inputs:
+    source = (r / rel).read_text(encoding="utf-8")
+    assert not re.search(
+        r"(?:https?://[^\s\"']*(?:MetrolistGroup|metrolist\.cc|meowery\.eu)"
+        r"|com\.github\.MetrolistGroup|com\.metrolist\.music)",
+        source,
+        flags=re.I,
+    ), f"Upstream dependency reintroduced in {rel}"
+
+settings = (r / "settings.gradle.kts").read_text()
+catalog = (r / "gradle/libs.versions.toml").read_text()
+assert 'include(":innertube")' in settings
+assert 'includeBuild("vendor/innertubex")' in settings
+assert 'substitute(module("fr.makoff.music:innertubex")).using(project(":"))' in settings
+assert 'module = "fr.makoff.music:innertubex"' in catalog
+assert 'applicationId = applicationIdOverride ?: baseApplicationId' in (r / "app/build.gradle.kts").read_text()
+print("PASS: all build roots use the local engine and own Android identity")
+
+for module in ("app", "innertube", "vendor/innertubex"):
+    src_dir = r / module / "src"
+    for path in src_dir.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in (".kt", ".java", ".xml", ".js", ".json", ".html", ".properties"):
+            continue
+        parts = {p.lower() for p in path.relative_to(src_dir).parts}
+        if parts.intersection(("test", "androidtest", "commontest", "desktoptest", "nativetest", "jvmtest")):
+            continue
+        source = path.read_text(encoding="utf-8")
+        assert not re.search(
+            r"(?:https?|wss?)://[^\s\"'<>()]*(?:metrolistgroup|metrolist\.cc|meowery\.eu|t\.me/metrolist)",
+            source,
+            flags=re.I,
+        ), f"Upstream endpoint reintroduced in {path.relative_to(r)}"
+print("PASS: production Kotlin, XML, JS, JSON and resources contain no upstream URLs")
+
+config = (k / "utils/InnerTubeXPlayer.kt").read_text()
+assert re.search(r"override val enabled:\s*Boolean\s*=\s*false", config)
+assert re.search(r'const val PLAYER_CONFIG_URL\s*=\s*""', config), "Unexpected remote cipher fallback"
+updater = (k / "utils/Updater.kt").read_text()
+assert 'GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"' in updater
+assert '/anderson76389/Music/releases/download/' in updater
+assert "isOwnApkUrl(downloadUrl)" in updater
+assert "isOwnApkUrl(url)" in (k / "utils/UpdateNotifications.kt").read_text()
+print("PASS: remote cipher disabled; APK updates and update notifications use own repository")
+
+actions = (r / ".github/workflows/music-release.yml").read_text()
+assert 'github.event.workflow_run.conclusion == ' in actions
+assert 'github.event.workflow_run.head_sha == github.sha' in actions
+assert 'apksigner" verify --verbose --print-certs' in actions
+assert 'gh release upload "$RELEASE_TAG" dist/* --clobber' in actions
+git_files = subprocess.run(
+    ["git", "ls-files", "--stage"], cwd=r, text=True, capture_output=True, check=True
+).stdout
+assert not any(line.startswith("160000 ") for line in git_files.splitlines()), "Remote Git submodule found"
+assert not (r / ".gitmodules").exists(), "Submodule manifest found"
+print("PASS: verified signed release pipeline and no Git submodule")
