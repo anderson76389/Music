@@ -244,8 +244,6 @@
     <string name="clear_search_history_confirm">検索履歴をすべて削除しますか？</string>
     <string name="disable_screenshot">プライバシーモード</string>
     <string name="disable_screenshot_desc">スクリーンショットと最近使用したアプリ画面での表示を無効にします。</string>
-    <string name="enable_lrclib">歌詞の提供元にLrcLibを使用</string>
-    <string name="enable_kugou">歌詞の提供元にKuGouを使用</string>
     <string name="hide_explicit">露骨な内容のコンテンツを非表示</string>
     <string name="backup_restore">バックアップと復元</string>
     <string name="action_backup">バックアップ</string>

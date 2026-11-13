@@ -131,8 +131,6 @@
     <string name="use_login_for_browse_desc">Isto inflúe no contido que ves e, por exemplo, mostra álbuns premium se iniciaches sesión con unha conta Premium</string>
     <string name="disable_screenshot">Desactivar captura de pantalla</string>
     <string name="disable_screenshot_desc">Cando esta opción estea activada as capturas de pantalla e a vista da aplicación en \"Recentes\" estarán desactivadas.</string>
-    <string name="enable_lrclib">Activar o provedor de letras LrcLib</string>
-    <string name="enable_kugou">Activar provedor de letras KuGou</string>
     <string name="hide_explicit">Ocultar contido explícito</string>
     <string name="history">Historial</string>
     <string name="stats">Estatísticas</string>
