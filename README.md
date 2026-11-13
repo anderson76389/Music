@@ -37,7 +37,6 @@
 <img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_2.png" alt="Page d’un artiste" width="30%" />
 <img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_3.png" alt="Reconnaissance musicale" width="30%" />
 <img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_5.png" alt="Lecteur musical" width="30%" />
-<img src="fastlane/metadata/android/en-US/images/screenshots/screenshot_6.png" alt="Paroles synchronisées dans le lecteur" width="30%" />
 
 <sub>Captures de présentation héritées de l’interface d’origine, conservées dans ce dépôt. Elles illustrent l’interface et ne constituent pas une preuve de test de la préversion actuelle.</sub>
 
@@ -77,10 +76,8 @@
   <tr>
     <td width="50%" valign="top">
 
-#### Paroles et découverte
+#### Découverte
 
-- Paroles synchronisées
-- Romanisation locale des paroles
 - Suggestions rapides personnalisées
 - Recherche de morceaux, albums, artistes, vidéos et listes de lecture
 - Reconnaissance musicale
@@ -125,7 +122,7 @@
   </tr>
 </table>
 
-<sub>Fonctions présentes dans le code. Leur disponibilité peut dépendre du compte, de YouTube, des fournisseurs de paroles ou du matériel. Le périmètre effectivement testé est détaillé dans le rapport.</sub>
+<sub>Fonctions présentes dans le code. Leur disponibilité peut dépendre du compte, de YouTube ou du matériel. Le périmètre effectivement testé est détaillé dans le rapport.</sub>
 
 </div>
 
@@ -250,7 +247,6 @@ Les ressources de traduction sont conservées dans les [sources de l’applicati
   <tr><th align="center">Composant</th><th align="center">Contribution</th></tr>
   <tr><td align="center"><strong>Moteur embarqué</strong></td><td>Accès aux données et aux flux YouTube Music ; sources conservées dans <a href="vendor/innertubex">vendor/innertubex</a>.</td></tr>
   <tr><td align="center"><strong>yt-dlp et FFmpeg</strong></td><td>Téléchargement des flux audio et conversion FLAC locale.</td></tr>
-  <tr><td align="center"><strong>Fournisseurs de paroles</strong></td><td>Recherche des paroles et synchronisation selon les réponses disponibles.</td></tr>
   <tr><td align="center"><strong>Reconnaissance musicale</strong></td><td>Identification musicale via les services concernés.</td></tr>
 </table>
 

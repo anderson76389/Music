@@ -145,3 +145,38 @@ git_files = subprocess.run(
 assert not any(line.startswith("160000 ") for line in git_files.splitlines()), "Remote Git submodule found"
 assert not (r / ".gitmodules").exists(), "Submodule manifest found"
 print("PASS: verified signed release pipeline and no Git submodule")
+
+# Lyrics providers have been intentionally removed, including the former
+# YouTube Music lyrics browse endpoint. Keep legacy Room schema intact so
+# an existing user database can upgrade without losing saved records.
+BANNED_LYRICS_PROVIDERS = re.compile(
+    r"\\b(?:lrclib|kugou|paxsenix|zemer|lyricsplus|musixmatch)\\b"
+    r"|lyricsplus\\.atomix\\.one|\\blyricsEndpoint\\b|\\bsuspend\\s+fun\\s+lyrics\\s*\\(",
+    re.I,
+)
+for module in ("app", "innertube"):
+    source_root = r / module / "src/main"
+    for p in source_root.rglob("*"):
+        if p.is_file() and p.suffix.lower() in (".kt", ".java", ".json", ".js", ".html", ".xml"):
+            assert not BANNED_LYRICS_PROVIDERS.search(p.read_text(encoding="utf-8")), (
+                "Lyrics provider implementation or endpoint is forbidden", p
+            )
+assert (k / "db/entities/LyricsEntity.kt").is_file()
+assert "LyricsEntity::class" in (k / "db/MusicDatabase.kt").read_text()
+assert not (k / "ui/menu/LyricsMenu.kt").exists()
+assert not (k / "lyrics/LyricsHelper.kt").exists()
+assert not (r / "app/src/main/res/drawable/lyrics.xml").exists()
+
+PROVIDER_RESOURCE_KEYS = (
+    "enable_lrclib_desc", "enable_kugou_desc", "youtube_music_lyrics_note",
+    "enable_zemer", "enable_zemer_desc", "enable_paxsenix", "enable_paxsenix_desc",
+    "enable_lyricsplus", "enable_lyricsplus_desc",
+    "lyrics_from_provider", "lyrics_provider_selection",
+    "lyrics_provider_selection_desc", "lyrics_provider_priority",
+    "lyrics_provider_priority_desc",
+)
+for xml in (r / "app/src/main/res").glob("values*/metrolist_strings.xml"):
+    content = xml.read_text(encoding="utf-8")
+    for key in PROVIDER_RESOURCE_KEYS:
+        assert not re.search(r'<string\\s+name="' + key + r'"', content), (xml, key)
+print("PASS: no lyrics provider endpoints, fetchers, UI, strings or icons; legacy DB preserved")
