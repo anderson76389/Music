@@ -88,15 +88,8 @@
     <string name="lyrics_auto_scroll">Mahnı sözlərinin avtomatik sürüşdürülməsi</string>
     <string name="lyrics_glow_effect">Parıldayan lirik effektin yandır</string>
     <string name="lyrics_glow_effect_desc">Aktiv mahnı sətrinə parlaq animasiya və sıçrama effekti əlavə edir</string>
-    <string name="enable_lrclib_desc">Icma tərəfindən sinxron liriklər databazası</string>
-    <string name="enable_kugou_desc">Mahnı sözlərini populyar Çin musiqi platforması olan KuGou-dan əldə edir</string>
-    <string name="youtube_music_lyrics_note">QEYD: Başqa mənbə mövcud olmadıqda, YouTube Music mahnı sözləri avtomatik olaraq göstəriləcək. Onlar adətən sinxronlaşdırılmır</string>
     <string name="enable_better_lyrics">Better Lyrics yandır</string>
     <string name="enable_better_lyrics_desc">İstənilən mahnı üçün hecalarla sinxronlaşdırılmış sözlər – karaoke üçün idealdır</string>
-    <string name="enable_lyricsplus">LyricsPlus yandır</string>
-    <string name="enable_lyricsplus_desc">Bir neçə mövqedən alınmış liriklər</string>
-    <string name="lyrics_provider_selection">Provayder seçimi</string>
-    <string name="lyrics_provider_selection_desc">Hansı lirik provayderin seçilmiş olduğunu dəyiş</string>
     <string name="auto_scroll">Tezdən sinxronlaşdır</string>
     <string name="slim">Incə</string>
     <string name="slim_navbar">Incə alt naviqasiya paneli</string>
@@ -120,7 +113,6 @@
     <string name="show_artist_description">Göstər sənətçinin təsviri</string>
     <string name="crop_album_art_desc">Video örtükü kəsərək kvadrat aspekt nisbətini məcburi edin</string>
     <string name="player_background_solid">Bütöv</string>
-    <string name="lyrics_from_provider">Sözləri %s</string>
     <string name="mixes">Qarışıqlar</string>
     <string name="hide_status_bar_fullscreen">Tam ekranda vəziyyət zolağını gizlət</string>
     <string name="hide_status_bar_fullscreen_desc">Mahnı sözləri tam ekran rejimində olduqda status panelini gizlədin</string>
@@ -137,8 +129,6 @@
     <string name="lyrics_animation_apple">Apple Music tərzi</string>
     <string name="lyrics_text_size">Mətnin ölçüsü</string>
     <string name="lyrics_line_spacing">Mahnı sözlərində sətirarası məsafə</string>
-    <string name="enable_paxsenix">Paxsenix-i aktivləşdirin</string>
-    <string name="enable_paxsenix_desc">Paxsenix API-dən yüksək keyfiyyətli sinxronlaşdırılmış mahnı sözləri</string>
     <string name="enable_song_cache">Mahnı keşini aktivləşdirin</string>
     <string name="enable_song_cache_desc">Gələcəkdə daha sürətli oxutma üçün mahnıları avtomatik olaraq keşdə saxlayın</string>
     <string name="show_most_stats_playlists">Ən çox dinlənilən həftəlik və aylıq pleylistləri göstər</string>
@@ -166,8 +156,6 @@
     <string name="set_quick_picks">Tez seçimləri təyin edin</string>
     <string name="last_song_listened">Dinlədiyiniz son mahnıya əsasən</string>
     <string name="app_language">Tətbiq dili</string>
-    <string name="lyrics_provider_priority">Mahnı sözləri təchizatçısının prioriteti</string>
-    <string name="lyrics_provider_priority_desc">Provayderlərin ardıcıllığını üstünlüyə görə dəyişmək üçün onları sürüşdürün. Daha yuxarı mövqe daha yüksək prioritet deməkdir</string>
     <string name="experimental_lyrics">Eksperimental sözlər</string>
     <string name="experimental_lyrics_desc">Təkmilləşdirilmiş animasiyalar və məhsuldarlıqla yeni eksperimental mahnı sözləri komponentini aktivləşdirin</string>
     <string name="experimental_lyrics_beta_title">Eksperimental funksiya</string>
@@ -698,8 +686,6 @@
     <string name="playlist_position_beginning_desc">Yeni əlavə edilmiş mahnılar mövcud mahnılardan əvvəl görünür</string>
     <string name="playlist_position_end">Pleylist siyahısının sonu</string>
     <string name="playlist_position_end_desc">Yeni əlavə edilmiş mahnılar mövcud mahnılardan sonra görünür</string>
-    <string name="enable_zemer">Zemer aktivləşdirin</string>
-    <string name="enable_zemer_desc">Yəhudi musiqisi üçün sözlər</string>
     <string name="playlist_created_locally">YouTube sinxronizasiyası uğursuz oldu. Pleylist yerli olaraq yaradıldı.</string>
     <string name="update_available_message">Apple Music %s yükləməyə hazırdır.</string>
     <string name="update_action">Yeniləmə</string>

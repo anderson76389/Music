@@ -394,8 +394,6 @@
     <string name="daily_discover_based_on">Založeno na %1$s</string>
     <string name="daily_discover_for_fans_of">Pro fanoušky %1$s</string>
     <string name="from_the_community">Z komunity</string>
-    <string name="enable_lrclib_desc">Komunitní databáze synchronizovaných textů</string>
-    <string name="enable_kugou_desc">Získává texty z KuGou, populární čínské hudební platformy</string>
     <string name="changelog">Seznam změn</string>
     <string name="changelog_empty">Seznam změn není k dispozici</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -470,13 +468,6 @@
     <string name="error_podcast_subscribe">Nepodařilo se přihlásit k odběru podcastu</string>
     <string name="error_episode_save">Nepodařilo se uložit epizodu</string>
     <string name="error_episode_remove">Nepodařilo se odebrat epizodu</string>
-    <string name="youtube_music_lyrics_note">UPOZORNĚNÍ: Texty YouTube Music budou zobrazeny automaticky, když není dostupný jiný zdroj. Obvykle nejsou synchronizované</string>
-    <string name="enable_lyricsplus">Povolit LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Synchronizované texty z několika zdrojů</string>
-    <string name="lyrics_provider_selection">Výběr poskytovatele</string>
-    <string name="lyrics_provider_selection_desc">Vyberte, kteří poskytovatelé textů jsou povoleni</string>
-    <string name="lyrics_provider_priority">Priorita poskytovatelů textů</string>
-    <string name="lyrics_provider_priority_desc">Přesuňte pro změnu pořadí poskytovatelů. Vyšší pozice znamená vyšší prioritu</string>
     <string name="widget_recognizer_name">Rozpoznávání hudby</string>
     <string name="widget_recognizer_description">Identifikuje skladby hrající kolem vás přímo z vaší domovské obrazovky</string>
     <string name="widget_recognizer_tap_to_search">Klepněte pro identifikaci skladby</string>
@@ -602,7 +593,6 @@
     <string name="android_auto_target_playlist">Cíl rychlého přidání</string>
     <string name="android_auto_target_playlist_auto">Nenastaveno</string>
     <string name="android_auto_target_playlist_not_set">Není vybrán žádný playlist. Vyberte jej v nastavení Android Auto</string>
-    <string name="lyrics_from_provider">Texty ze služby %s</string>
     <string name="hide_status_bar_fullscreen">Skrýt stavovou lištu na celé obrazovce</string>
     <string name="hide_status_bar_fullscreen_desc">Skrýt stavovou lištu při aktivním režimu celé obrazovky</string>
     <string name="show_interval_indicator">Zobrazit indikátor intervalu</string>
@@ -615,8 +605,6 @@
     <string name="lyrics_animation_slide">Posunutí</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Styl Apple Music</string>
-    <string name="enable_paxsenix">Povolit Paxsenix</string>
-    <string name="enable_paxsenix_desc">Vysoce kvalitní synchronizované texty z API Paxsenix</string>
     <string name="experimental_lyrics">Experimentální texty</string>
     <string name="parsed_from_link">Získáno z odkazu</string>
     <string name="experimental_lyrics_desc">Povolit novou experimentální komponentu textů s vylepšenými animacemi a výkonem</string>
@@ -713,8 +701,6 @@
     <string name="error_no_internet_connection">Nejste připojeni k internetu</string>
     <string name="error_offline_playback">Jste offline. Připojte se k internetu nebo si přehrajte staženou skladbu.</string>
     <string name="error_explicit_login_recommended">Explicitní přehrávání funguje lépe s přihlášeným účtem.</string>
-    <string name="enable_zemer">Povolit Zemer</string>
-    <string name="enable_zemer_desc">Texty pro židovskou hudbu</string>
     <string name="playlist_created_locally">Synchronizace s YouTube selhala. Playlist byl vytvořen lokálně.</string>
     <string name="update_available_message">Apple Music %s je připraven ke stažení.</string>
     <string name="update_action">Aktualizovat</string>

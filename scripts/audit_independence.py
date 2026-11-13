@@ -150,8 +150,8 @@ print("PASS: verified signed release pipeline and no Git submodule")
 # YouTube Music lyrics browse endpoint. Keep legacy Room schema intact so
 # an existing user database can upgrade without losing saved records.
 BANNED_LYRICS_PROVIDERS = re.compile(
-    r"\\b(?:lrclib|kugou|paxsenix|zemer|lyricsplus|musixmatch)\\b"
-    r"|lyricsplus\\.atomix\\.one|\\blyricsEndpoint\\b|\\bsuspend\\s+fun\\s+lyrics\\s*\\(",
+    r"\b(?:lrclib|kugou|paxsenix|zemer|lyricsplus|musixmatch)\b"
+    r"|lyricsplus\.atomix\.one|\blyricsEndpoint\b|\bsuspend\s+fun\s+lyrics\s*\(",
     re.I,
 )
 for module in ("app", "innertube"):
@@ -178,5 +178,5 @@ PROVIDER_RESOURCE_KEYS = (
 for xml in (r / "app/src/main/res").glob("values*/metrolist_strings.xml"):
     content = xml.read_text(encoding="utf-8")
     for key in PROVIDER_RESOURCE_KEYS:
-        assert not re.search(r'<string\\s+name="' + key + r'"', content), (xml, key)
+        assert not re.search(r'<string\s+name="' + key + r'"', content), (xml, key)
 print("PASS: no lyrics provider endpoints, fetchers, UI, strings or icons; legacy DB preserved")

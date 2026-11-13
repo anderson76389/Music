@@ -400,15 +400,6 @@
     <string name="daily_discover_based_on">بناءً على %1$s</string>
     <string name="daily_discover_for_fans_of">لمحبي %1$s</string>
     <string name="from_the_community">‌من قِبل المجتمع</string>
-    <string name="enable_lrclib_desc">قاعدة بيانات لكلمات الأغاني المتزامنة تعتمد على مساهمات المجتمع</string>
-    <string name="enable_kugou_desc">جلب كلمات الأغاني من KuGou، وهي منصة موسيقى صينية شهيرة</string>
-    <string name="youtube_music_lyrics_note">ملاحظة: سيتم عرض كلمات الأغاني من YouTube Music تلقائيًا عند عدم توفر مصادر أخرى. وغالبًا ما تكون غير متزامنة.</string>
-    <string name="enable_lyricsplus">تفعيل LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">كلمات متزامنة من مصادر متعددة</string>
-    <string name="lyrics_provider_selection">اختيار الموفر</string>
-    <string name="lyrics_provider_selection_desc">اختر مزودي كلمات الأغاني المفعلين</string>
-    <string name="lyrics_provider_priority">أولوية مزوّد كلمات الأغاني</string>
-    <string name="lyrics_provider_priority_desc">اسحب لإعادة ترتيب المزودين حسب التفضيل. الموضع الأعلى يعني أولوية أعلى.</string>
     <string name="changelog">سجل التغييرات</string>
     <string name="changelog_empty">لا توجد سجلات تغييرات متاحة</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -548,7 +539,6 @@
     <string name="parsed_from_link">تم استخراجه من الرابط</string>
     <string name="weekly_most_playlist_name">الأكثر استماعًا أسبوعيًا</string>
     <string name="monthly_most_playlist_name">الأكثر استماعًا شهريًا</string>
-    <string name="lyrics_from_provider">كلمات الأغاني من %s</string>
     <string name="hide_status_bar_fullscreen">إخفاء شريط الحالة في وضع ملء الشاشة</string>
     <string name="hide_status_bar_fullscreen_desc">إخفاء شريط الحالة عند تفعيل وضع ملء الشاشة لكلمات الأغاني</string>
     <string name="show_interval_indicator">إظهار مؤشر الفواصل الزمنية</string>
@@ -561,8 +551,6 @@
     <string name="lyrics_animation_slide">انزلاق</string>
     <string name="lyrics_animation_karaoke">كاريوكي</string>
     <string name="lyrics_animation_apple">نمط Apple Music</string>
-    <string name="enable_paxsenix">تفعيل Paxsenix</string>
-    <string name="enable_paxsenix_desc">كلمات متزامنة عالية الجودة من واجهة برمجة Paxsenix</string>
     <string name="enable_song_cache">تفعيل التخزين المؤقت للأغاني</string>
     <string name="enable_song_cache_desc">تخزين الأغاني مؤقتًا تلقائيًا لتشغيلها بشكل أسرع مستقبلاً</string>
     <string name="show_most_stats_playlists">إظهار قوائم الأكثر استماعًا أسبوعيًا وشهريًا</string>
