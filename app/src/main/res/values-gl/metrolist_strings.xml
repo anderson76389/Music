@@ -91,10 +91,6 @@
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Estilo de Apple Music</string>
     <string name="lyrics_text_size">Tamaño do texto da letra</string>
-    <string name="enable_lyricsplus">Activar LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Letras sincronizadas desde múltiples fontes</string>
-    <string name="lyrics_provider_selection">Selección de provedor</string>
-    <string name="lyrics_provider_selection_desc">Escolle que provedores de letras están activados</string>
     <string name="auto_scroll">Volver a sincronizar</string>
     <string name="show_cached_playlist">Amosar lista de reprodución na caché</string>
     <string name="enable_song_cache">Activar caché na canción</string>
@@ -111,8 +107,6 @@
     <string name="remove_custom_image">Eliminar imaxe personalizada</string>
     <string name="general">Xeral</string>
     <string name="app_language">Idioma da aplicación</string>
-    <string name="lyrics_provider_priority">Prioridade do provedor de letras</string>
-    <string name="lyrics_provider_priority_desc">Arrastrar para reordenar os provedores por preferencia. A posición máis alta significa maior prioridade</string>
     <string name="experimental_lyrics">Letras experimentais</string>
     <string name="proxy_password">Contrasinal de proxy</string>
     <string name="enable_authentication">Activar autenticación</string>
@@ -599,8 +593,6 @@
     <string name="show_interval_indicator_desc">Amosar unha barra de progreso durante longos ocos instrumentais</string>
     <string name="lyrics_glow_effect_desc">Engadir unha animación de brillo e un efecto de rebote á liña da letra activa</string>
     <string name="enable_better_lyrics_desc">Letras sincronizadas por sílabas para calquera canción, perfectas para karaoke</string>
-    <string name="enable_paxsenix">Activar Paxsenix</string>
-    <string name="enable_paxsenix_desc">Letras sincronizadas de alta calidade desde a API Paxsenix</string>
     <string name="slim">Reducido</string>
     <string name="slim_navbar">Barra de navegación inferior reducida</string>
     <string name="auto_playlists">Listas de reprodución automáticas</string>
@@ -617,10 +609,6 @@
     <string name="swipe_song_to_add">Escorrega á esquerda para engadir a canción á cola ou á dereita para reproducir a seguinte</string>
     <string name="swipe_song_to_remove">Escorrega para eliminar a canción da lista de reprodución</string>
     <string name="lyrics_click_change">Cambiar a letra ao premer</string>
-    <string name="lyrics_from_provider">Letras de %s</string>
-    <string name="youtube_music_lyrics_note">NOTA: as letras de YouTube Music amosaranse automaticamente cando non haxa outra fonte dispoñible. Polo xeral, non están sincronizadas</string>
-    <string name="enable_lrclib_desc">Base de datos de letras sincronizadas impulsada pola comunidade</string>
-    <string name="enable_kugou_desc">Obtén letras de KuGou, unha popular plataforma de música chinesa</string>
     <string name="token_adv_login_description">Este é un método de inicio de sesión AVANZADO. En lugar de usar o portal web, podes introducir ou actualizar o teu token de inicio de sesión directamente. Isto pode ser útil para iniciar sesión en varios dispositivos rapidamente. Rexeitaranse os tokens que teñan un formato non recoñecido</string>
     <string name="yt_sync">Sincronización automática coa conta</string>
     <string name="more_content">Máis contido</string>

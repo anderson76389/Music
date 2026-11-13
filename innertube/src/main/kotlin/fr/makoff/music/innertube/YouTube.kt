@@ -3073,16 +3073,6 @@ object YouTube {
                         result.copy(
                             title = title,
                             items = songs + result.items,
-                            lyricsEndpoint =
-                                response.contents.singleColumnMusicWatchNextResultsRenderer
-                                    ?.tabbedRenderer
-                                    ?.watchNextTabbedResultsRenderer
-                                    ?.tabs
-                                    ?.getOrNull(
-                                        1,
-                                    )?.tabRenderer
-                                    ?.endpoint
-                                    ?.browseEndpoint,
                             relatedEndpoint =
                                 response.contents.singleColumnMusicWatchNextResultsRenderer
                                     ?.tabbedRenderer
@@ -3102,16 +3092,6 @@ object YouTube {
                 title = title,
                 items = songs,
                 currentIndex = currentIndex,
-                lyricsEndpoint =
-                    response.contents.singleColumnMusicWatchNextResultsRenderer
-                        ?.tabbedRenderer
-                        ?.watchNextTabbedResultsRenderer
-                        ?.tabs
-                        ?.getOrNull(
-                            1,
-                        )?.tabRenderer
-                        ?.endpoint
-                        ?.browseEndpoint,
                 relatedEndpoint =
                     response.contents.singleColumnMusicWatchNextResultsRenderer
                         ?.tabbedRenderer
@@ -3125,19 +3105,6 @@ object YouTube {
                 continuation = playlistPanelRenderer.continuations?.getContinuation(),
                 endpoint = endpoint,
             )
-        }
-
-    suspend fun lyrics(endpoint: BrowseEndpoint): Result<String?> =
-        runCatching {
-            val response = innerTube.browse(WEB_REMIX, endpoint.browseId, endpoint.params).body<BrowseResponse>()
-            response.contents
-                ?.sectionListRenderer
-                ?.contents
-                ?.firstOrNull { it.musicDescriptionShelfRenderer != null }
-                ?.musicDescriptionShelfRenderer
-                ?.description
-                ?.runs
-                ?.joinToString(separator = "") { it.text }
         }
 
     suspend fun related(endpoint: BrowseEndpoint): Result<RelatedPage> =

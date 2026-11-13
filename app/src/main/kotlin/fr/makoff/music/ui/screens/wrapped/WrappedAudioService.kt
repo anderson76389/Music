@@ -12,7 +12,6 @@ import androidx.core.net.toUri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
-import fr.makoff.music.R
 import fr.makoff.music.constants.AudioQuality
 import fr.makoff.music.utils.InnerTubeXPlayer
 import fr.makoff.music.utils.dataStore
@@ -56,9 +55,18 @@ class WrappedAudioService(
         player?.volume = if (_isMuted.value) 0f else 1f
     }
 
-    suspend fun prepareTrack(songId: String?) {
-        initPlayer()
+    suspend fun prepareTrack(songId: String?): Boolean {
+        // There is no bundled fallback audio. Never prepare a decoder for an
+        // empty placeholder file if this year has no song or the network fails.
         val songUri = getSongUri(songId)
+        if (songUri == null) {
+            withContext(Dispatchers.Main) {
+                player?.stop()
+                player?.clearMediaItems()
+            }
+            return false
+        }
+        initPlayer()
         withContext(Dispatchers.Main) {
             val mediaItem = MediaItem.Builder()
                 .setUri(songUri)
@@ -67,6 +75,7 @@ class WrappedAudioService(
             player?.setMediaItem(mediaItem)
             player?.prepare()
         }
+        return true
     }
 
     fun playTrack(songId: String?) {
@@ -79,7 +88,7 @@ class WrappedAudioService(
 
         playbackJob = scope.launch {
             try {
-                prepareTrack(songId)
+                if (!prepareTrack(songId)) return@launch
                 withContext(Dispatchers.Main) {
                     if (songId != null && songId != "2-p9DM2Xvsc") {
                         player?.seekTo(30_000)
@@ -95,11 +104,10 @@ class WrappedAudioService(
         }
     }
 
-    private suspend fun getSongUri(songId: String?): Uri {
-        val fallbackUri = "android.resource://${context.packageName}/${R.raw.wrapped_theme}".toUri()
+    private suspend fun getSongUri(songId: String?): Uri? {
         if (songId == null) {
-            Timber.tag("WrappedAudio").i("No song ID provided, using fallback audio.")
-            return fallbackUri
+            Timber.tag("WrappedAudio").d("No track for this recap page; remain silent.")
+            return null
         }
 
         return try {
@@ -117,14 +125,14 @@ class WrappedAudioService(
             val streamUrl = playbackData?.streamUrl
             if (streamUrl.isNullOrBlank()) {
                 Timber.tag("WrappedAudio")
-                    .w("Resolved URL for $songId is null or blank. Using fallback.")
-                fallbackUri
+                    .w("Resolved URL for $songId is null or blank; remaining silent.")
+                null
             } else {
                 streamUrl.toUri()
             }
         } catch (e: Exception) {
-            Timber.tag("WrappedAudio").e(e, "Failed to resolve URL for $songId. Using fallback.")
-            fallbackUri
+            Timber.tag("WrappedAudio").e(e, "Failed to resolve URL for $songId; remaining silent.")
+            null
         }
     }
 

@@ -320,17 +320,8 @@
     <string name="restart">Uruchom ponownie</string>
     <string name="restart_required">Wymagane ponowne uruchomienie!</string>
     <string name="density_restart_message">Zmiana gęstości wyświetlania zacznie obowiązywać po ponownym uruchomieniu aplikacji. Uruchomić ją ponownie teraz?</string>
-    <string name="enable_lyricsplus">Włącz LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Synchronizuje teksty piosenek z różnych zródeł</string>
-    <string name="lyrics_provider_selection">Wybór dostawcy tekstów utworów</string>
-    <string name="lyrics_provider_selection_desc">Wybierz, których dostawców tekstów utworów chcesz używać</string>
     <string name="prevent_duplicate_tracks_in_queue">Zapobiegaj duplikatom utworów w kolejce</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">Gdy dodajesz utwór do kolejki, podczas gdy on już w niej jest, zostanie on przesunięty zamiast bycia dodanym ponownie</string>
-    <string name="lyrics_provider_priority_desc">Przeciągnij, aby zmienić kolejność dostawców tekstów utworów. Wyższa pozycja oznacza wyższy priorytet</string>
-    <string name="enable_lrclib_desc">Synchronizowana baza danych tekstów utworów tworzona przez społeczność</string>
-    <string name="enable_kugou_desc">Pobiera teksty utworów z KuGou, popularnej chińskiej platformy muzycznej</string>
-    <string name="youtube_music_lyrics_note">UWAGA: Teksty z YouTube Music będą wyświetlane automatycznie, gdy inne teksty nie są dostępne. Zwykle nie są one synchronizowane</string>
-    <string name="lyrics_provider_priority">Kolejność dostawców tekstów utworów</string>
     <string name="changelog">Lista zmian</string>
     <string name="changelog_empty">Brak dostępnych dzienników zmian</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -602,7 +593,6 @@
     <string name="time_transfer_convert">Konwertuj</string>
     <string name="song_dropdown_more_results">Wpisz więcej aby zawęzić wyniki(%d więcej)</string>
     <string name="parsed_from_link">Wyodrębniono z linku</string>
-    <string name="lyrics_from_provider">Tekst z %s</string>
     <string name="hide_status_bar_fullscreen">Ukryj pasek stanu w trybie pełnoekranowym</string>
     <string name="hide_status_bar_fullscreen_desc">Ukryj pasek stanu gdy napisy są w trybie pełnoekranowym</string>
     <string name="show_interval_indicator">Pokaż oznaczenie interwału</string>
@@ -615,8 +605,6 @@
     <string name="lyrics_animation_slide">Przesunięcie</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Styl Apple Music</string>
-    <string name="enable_paxsenix">Włącz Paxsenix</string>
-    <string name="enable_paxsenix_desc">Wysokiej jakości synchronizowane teksty z Paxsenix API</string>
     <string name="mixes">Miksy</string>
     <string name="and">i</string>
     <string name="show_most_stats_playlists">Pokaż najpopularniejsze tygodniowe i miesięczne playlisty</string>
@@ -655,8 +643,6 @@
     <string name="loudness_level_quiet">Cichy (-19 dB)</string>
     <string name="choose_youtube_channel">Wybierz kanał YouTube</string>
     <string name="kmp_upgrade_later">Nie teraz</string>
-    <string name="enable_zemer">Uruchom Zemer</string>
-    <string name="enable_zemer_desc">Słowa dla muzyki Żydowskiej</string>
     <string name="playlist_position_beginning_desc">Nowo dodane piosenki pojawiają się przed istniejącymi piosenkami</string>
     <string name="playlist_position_end_desc">Nowo dodane piosenki pojawiają się przed istniejącymi już piosenkami</string>
     <string name="auto_radio_queue">Automatyczna kolejka radia</string>

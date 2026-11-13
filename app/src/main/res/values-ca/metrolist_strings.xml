@@ -391,15 +391,6 @@
     <string name="daily_discover_based_on">Basat en %1$s</string>
     <string name="daily_discover_for_fans_of">Per als seguidors de %1$s</string>
     <string name="from_the_community">De la comunitat</string>
-    <string name="enable_lrclib_desc">Base de dades de lletres sincronitzada impulsat per la comunitat</string>
-    <string name="enable_kugou_desc">Pren les lletres de KuGou, una coneguda plataforma de música xinesa</string>
-    <string name="youtube_music_lyrics_note">NOTA: Les lletres provinents de YouTube Music es mostraran automàticament quan no haja cap altra lletra disponible. Les lletres de YTM no solen estar sincronitzades</string>
-    <string name="enable_lyricsplus">Habilita LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Lletra sincronitzada de diverses fonts</string>
-    <string name="lyrics_provider_selection">Selecció de proveïdor</string>
-    <string name="lyrics_provider_selection_desc">Tria quins proveïdors de lletres estan permesos</string>
-    <string name="lyrics_provider_priority">Prioritat de proveïdors de lletres</string>
-    <string name="lyrics_provider_priority_desc">Arrastra per ordenar els proveïdors per preferència. Posició elevada -&gt; proritat elevada.</string>
     <string name="changelog">Registre de canvis</string>
     <string name="changelog_empty">Registre de canvis no disponible</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -526,7 +517,6 @@
     <string name="weekly_most_playlist_name">Els més escoltats de la setmana</string>
     <string name="monthly_most_playlist_name">Els més escoltats del mes</string>
     <string name="and">i</string>
-    <string name="lyrics_from_provider">Lletra de %s</string>
     <string name="hide_status_bar_fullscreen">Amaga la barra d’estat amb pantalla completa</string>
     <string name="hide_status_bar_fullscreen_desc">Amaga la barra d’estat quan el mode de pantalla completa de les lletres està actiu</string>
     <string name="show_interval_indicator">Mostra l’indicator d’interval</string>
@@ -539,8 +529,6 @@
     <string name="lyrics_animation_slide">Lliscar</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Estil d’Apple Music</string>
-    <string name="enable_paxsenix">Habilitar Paxsenix</string>
-    <string name="enable_paxsenix_desc">Lletres sincronitzades d’alta qualitat per l’API Paxsenix</string>
     <string name="enable_song_cache">Activar memòria cau de cançons</string>
     <string name="export_playlist">Exporta llista de reproducció</string>
     <string name="export_as_csv">Exporta com a CSV</string>

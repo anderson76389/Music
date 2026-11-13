@@ -96,7 +96,6 @@
     <string name="swipe_song_to_add">Vee links om die liedjie by die tou te voeg, of regs om dit volgende te speel</string>
     <string name="swipe_song_to_remove">Vee om die liedjie uit die snitlys te verwyder</string>
     <string name="lyrics_click_change">Tik om lirieke te verander</string>
-    <string name="lyrics_from_provider">Lirieke van %s</string>
     <string name="lyrics_auto_scroll">Outorol lirieke</string>
     <string name="hide_status_bar_fullscreen">Steek statusbalk weg op volskerm</string>
     <string name="hide_status_bar_fullscreen_desc">Steek die statusbalk weg wanneer volskerm-modus vir lirieke aktief is</string>
@@ -115,17 +114,8 @@
     <string name="lyrics_animation_apple">Apple Music-styl</string>
     <string name="lyrics_text_size">Lirieke-teksgrootte</string>
     <string name="lyrics_line_spacing">Lirieke-reëlspasiëring</string>
-    <string name="enable_lrclib_desc">Gemeenskapsgedrewe gesinkroniseerde liriekedatabasis</string>
-    <string name="enable_kugou_desc">Trek lirieke van KuGou, \'n gewilde Chinese musiekplatform</string>
-    <string name="youtube_music_lyrics_note">LET WEL: YouTube Music-lirieke sal outomaties vertoon word wanneer geen ander bron beskikbaar is nie. Hulle is gewoonlik nie gesinkroniseer nie</string>
     <string name="enable_better_lyrics">Aktiveer Better Lyrics</string>
     <string name="enable_better_lyrics_desc">Lettergreep-gesinkroniseerde lirieke vir enige liedjie, perfek vir karaoke</string>
-    <string name="enable_paxsenix">Aktiveer Paxsenix</string>
-    <string name="enable_paxsenix_desc">Hoëgehalte gesinkroniseerde lirieke van Paxsenix API</string>
-    <string name="enable_lyricsplus">Aktiveer LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Gesinkroniseerde lirieke van verskeie bronne</string>
-    <string name="lyrics_provider_selection">Verskafferseleksie</string>
-    <string name="lyrics_provider_selection_desc">Kies watter liriekeverskaffers geaktiveer is</string>
     <string name="auto_scroll">Her-sinkroniseer</string>
     <string name="slim">Skraal</string>
     <string name="slim_navbar">Skraal onderste navigasiebalk</string>
@@ -166,8 +156,6 @@
     <string name="set_quick_picks">Stel vinnige keuses in</string>
     <string name="last_song_listened">Gebaseer op die laaste liedjie waarna jy geluister het</string>
     <string name="app_language">Toep-taal</string>
-    <string name="lyrics_provider_priority">Liriekeverskaffer-prioriteit</string>
-    <string name="lyrics_provider_priority_desc">Sleep om verskaffers volgens voorkeur te herrangskik. Hoër posisie beteken hoër prioriteit</string>
     <string name="experimental_lyrics">Eksperimentele lirieke</string>
     <string name="experimental_lyrics_desc">Aktiveer die nuwe eksperimentele lirieke-komponent met verbeterde animasies en werkverrigting</string>
     <string name="experimental_lyrics_beta_title">Eksperimentele kenmerk</string>

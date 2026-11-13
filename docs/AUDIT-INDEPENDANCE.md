@@ -4,7 +4,9 @@ Le nom affiché par défaut est **Apple Music**. Le dépôt conserve des mention
 
 Les fonctions de salons et de traduction IA ont été retirées avec leurs interfaces, clients, ressources, serveur et protocole. Les mentions légales et noms techniques historiques sont conservés. Les colonnes historiques de traduction dans la base ne servent plus à une fonction active ; elles préservent la compatibilité des données sans changer le schéma.
 
-YouTube/Google, les fournisseurs de paroles, Shazam, AutoEQ officiel, Return YouTube Dislike, GitHub et les dépôts de construction restent externes. L’APK publié inclut le SDK propriétaire Google Cast ; il ne s’agit pas d’un ensemble de dépendances entièrement libres. Les autres variantes restent disponibles dans les sources.
+YouTube/Google, Shazam, AutoEQ officiel, Return YouTube Dislike, GitHub et les dépôts de construction restent externes. L’APK publié inclut le SDK propriétaire Google Cast ; il ne s’agit pas d’un ensemble de dépendances entièrement libres. Les autres variantes restent disponibles dans les sources.
+
+Aucun fournisseur externe de paroles n'est maintenu dans le code actif. L'ancienne table SQLite des paroles est conservée exclusivement pour la compatibilité des sauvegardes et mises à jour Android. Les entrées de données historiques ne sont pas supprimées.
 
 Le contrôle recherche les adresses connues dans les modules de production et vérifie le moteur embarqué, le logo et l’absence des composants supprimés :
 

@@ -201,14 +201,7 @@
     <string name="wavy">Вълнообразен</string>
     <string name="lyrics_glow_effect">Активиране на ефекта на светещ текст на песента</string>
     <string name="lyrics_glow_effect_desc">Добавя светеща анимация и ефект на отскачане към активния текст на песента</string>
-    <string name="enable_lrclib_desc">База данни със синхронизирани текстове на песни, управлявана от общността</string>
-    <string name="enable_kugou_desc">Изтегля текстове на песни от KuGou, популярна китайска музикална платформа</string>
-    <string name="youtube_music_lyrics_note">ЗАБЕЛЕЖКА: Текстовете на песни от YouTube Music ще се показват автоматично, ако няма други източници. Обикновено не са синхронизирани</string>
     <string name="enable_better_lyrics_desc">Синхронизирайте текста по срички за всяка песен, идеално за караоке</string>
-    <string name="enable_lyricsplus">Активиране на LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Синхронизирани текстове на песни от множество източници</string>
-    <string name="lyrics_provider_selection">Избор на доставчик</string>
-    <string name="lyrics_provider_selection_desc">Изберете кои доставчици на текстове да са активирани</string>
     <string name="enable_song_cache">Активиране на кеша на песни</string>
     <string name="enable_song_cache_desc">Автоматично кеширане на аудио за по-бързо възпроизвеждане по-късно</string>
     <string name="shuffle_playlist_first">Разбъркайте първо плейлиста или албума</string>
@@ -221,8 +214,6 @@
     <string name="skip_silence_instant_desc">Прескачайте напред по време на тихи моменти, вместо да ускорявате възпроизвеждането</string>
     <string name="sort_ascending">Сортиране във възходящ ред</string>
     <string name="sort_descending">Сортиране по низходящ ред</string>
-    <string name="lyrics_provider_priority">Приоритет на доставчика на текстове на песни</string>
-    <string name="lyrics_provider_priority_desc">Плъзнете, за да пренаредите доставчиците по предпочитание. По-високата позиция означава по-висок приоритет</string>
     <string name="persistent_shuffle_title">Постоянно разбъркване</string>
     <string name="player_background_solid">Плътен</string>
     <string name="persistent_shuffle_desc">Оставете режима на разбъркване включен, когато възпроизвеждате нови песни или плейлисти</string>
@@ -299,7 +290,6 @@
     <string name="alarm_duplicate_time_warning">За този час вече е настроен друг будилник. Ако двете аларми са включени едновременно, може и да се възпроизведе само едната</string>
     <string name="alarm_random_song">Пусни произволна песен от плейлиста</string>
     <string name="parsed_from_link">Извлечено от линка</string>
-    <string name="lyrics_from_provider">Текст песни от %s</string>
     <string name="hide_status_bar_fullscreen">Скриване на лентата на състоянието на цял екран</string>
     <string name="hide_status_bar_fullscreen_desc">Скриване на лентата на състоянието, в пълноекранен режим за текст</string>
     <string name="show_interval_indicator">Показване на индикатора за интервал</string>
@@ -417,8 +407,6 @@
     <string name="respect_agent_positioning_desc">Подреждаме на текста според ролята (напр. вокали)</string>
     <string name="lyrics_animation_style">Стил анимация на текста на песента</string>
     <string name="lyrics_animation_slide">Пързаляне</string>
-    <string name="enable_paxsenix">Включи Paxsenix</string>
-    <string name="enable_paxsenix_desc">Високо качество синхронизирани текстове от Paxsenix API</string>
     <string name="show_most_stats_playlists_desc">Създай и покажи базирани на статистики Най-много плейлисти в Статистики и Библиотека</string>
     <string name="experimental_lyrics_beta_title">Експериментална функция</string>
     <string name="experimental_lyrics_beta_message">Новия компонент за текст на песента в момента е в разработка и може да има бъгове. Сигорни ли сте, че искате да го еключите?</string>

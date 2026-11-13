@@ -383,15 +383,6 @@
     <string name="daily_discover_based_on">%1$sをもとにしたおすすめ</string>
     <string name="daily_discover_for_fans_of">%1$sのファンにおすすめ</string>
     <string name="from_the_community">コミュニティのおすすめ</string>
-    <string name="enable_lrclib_desc">コミュニティ主導の歌詞データベースです</string>
-    <string name="enable_kugou_desc">中国で人気の音楽プラットフォームであるKuGouから歌詞を取得します</string>
-    <string name="youtube_music_lyrics_note">使用できる歌詞ソースがない場合は、YouTube Musicの歌詞が自動的に表示されます。YouTube Musicの歌詞は通常、再生に合わせて表示されません</string>
-    <string name="enable_lyricsplus">歌詞の提供元にLyricsPlusを使用</string>
-    <string name="enable_lyricsplus_desc">複数のソースの歌詞を提供する提供元です</string>
-    <string name="lyrics_provider_selection">歌詞の提供元</string>
-    <string name="lyrics_provider_selection_desc">使用する歌詞の提供元を選択します</string>
-    <string name="lyrics_provider_priority">歌詞の提供元の優先順位</string>
-    <string name="lyrics_provider_priority_desc">ドラッグして提供元を並び替えます。上にあるほど優先順位が高くなります</string>
     <string name="changelog">変更履歴</string>
     <string name="changelog_empty">変更履歴はありません</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -581,7 +572,6 @@
     <string name="time_transfer_convert">変換</string>
     <string name="song_dropdown_more_results">入力を続けて結果を絞り込んでください（あと%d件）</string>
     <string name="parsed_from_link">リンクから取得</string>
-    <string name="lyrics_from_provider">歌詞提供：%s</string>
     <string name="hide_status_bar_fullscreen">全画面時にステータスバーを非表示</string>
     <string name="hide_status_bar_fullscreen_desc">歌詞を全画面で表示しているとき、ステータスバーを非表示にします</string>
     <string name="show_interval_indicator">間隔インジケーターを表示</string>
@@ -594,8 +584,6 @@
     <string name="lyrics_animation_slide">スライド</string>
     <string name="lyrics_animation_karaoke">カラオケ</string>
     <string name="lyrics_animation_apple">Apple Music</string>
-    <string name="enable_paxsenix">歌詞の提供元にPaxsenixを使用</string>
-    <string name="enable_paxsenix_desc">Paxsenix APIによる高品質な同期した歌詞ソースです</string>
     <string name="experimental_lyrics">試験的な歌詞</string>
     <string name="experimental_lyrics_desc">アニメーションとパフォーマンスを強化した、新しい実験的な歌詞コンポーネントを使用します</string>
     <string name="experimental_lyrics_beta_title">実験的機能</string>
@@ -681,7 +669,6 @@
     <string name="stream_source_android_vr_desc">Android VRクライアント（全バージョン）。</string>
     <string name="stream_source_web_creator">WEB_CREATOR</string>
     <string name="stream_source_web_creator_desc">クリエーター向けウェブクライアント。</string>
-    <string name="enable_zemer_desc">ユダヤ音楽用の歌詞ソースです</string>
     <string name="add_to_playlist_position">プレイリストへの追加位置</string>
     <string name="playlist_position_beginning">プレイリストの最初</string>
     <string name="playlist_position_beginning_desc">新しく追加された曲は既存の曲の前に表示されます</string>
@@ -698,6 +685,5 @@
     <string name="youtube_channels_failed">このアカウントの YouTube チャンネルを取得できませんでした。もう一度お試しください。</string>
     <string name="authentication_data_extraction_failed">YouTube Music のセッションを読み込めませんでした。もう一度お試しください。</string>
     <string name="login_failed_with_error">ログインに失敗 : %1$s</string>
-    <string name="enable_zemer">歌詞の提供元にZemerを使用</string>
     <string name="error_explicit_login_recommended">­露骨なコンテンツの再生はアカウントにログインした状態でより上手く動作します。</string>
 </resources>

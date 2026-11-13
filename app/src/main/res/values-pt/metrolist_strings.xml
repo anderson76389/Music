@@ -307,21 +307,12 @@
     <string name="restart">Reiniciar</string>
     <string name="restart_required">Reinicialização necessária!</string>
     <string name="density_restart_message">A alteração de densidade do display vai fazer efeito após reiniciar a aplicação. Reiniciar agora?</string>
-    <string name="enable_lrclib_desc">Base de dados de letras sincronizadas e impulsionadas pela comunidade</string>
-    <string name="enable_kugou_desc">Extrai letras de músicas do KuGou, uma plataforma popular de música chinesa</string>
-    <string name="youtube_music_lyrics_note">NOTA: As letras das músicas no YouTube serão automaticamente apresentadas quando não estiver disponível qualquer outra fonte. Geralmente, não são sincronizadas</string>
-    <string name="enable_lyricsplus">Ativar LyricPlus</string>
-    <string name="enable_lyricsplus_desc">Letras sincronizadas de múltiplas fontes</string>
-    <string name="lyrics_provider_selection">Seleção de fornecedor</string>
-    <string name="lyrics_provider_selection_desc">Selecione quais os fornecedores de letras que estão ativados</string>
     <string name="enable_song_cache">Ativar cache de música</string>
     <string name="enable_song_cache_desc">Armazene automaticamente as músicas em cache para uma reprodução futura mais rápida</string>
     <string name="parsed_from_link">analisado a partir do link</string>
-    <string name="lyrics_from_provider">Letras de %s</string>
     <string name="lyrics_animation_apple">Animação estilo Apple Music</string>
     <string name="sort_ascending">Organização crescente</string>
     <string name="sort_descending">Organização Decrescente</string>
-    <string name="lyrics_provider_priority">Prioridade de provedor de letras de música</string>
     <string name="experimental_lyrics">Sistema experimental de leitor de letras de musicais</string>
     <string name="experimental_lyrics_desc">Abilitar o novo sistema de letras músicais com animações e performance melhorada.</string>
     <string name="experimental_lyrics_beta_title">Opção Experimental</string>
@@ -411,9 +402,6 @@
     <string name="lyrics_animation_glow">Animação de brilho</string>
     <string name="lyrics_animation_slide">Animação de deslize</string>
     <string name="lyrics_animation_karaoke">Animação Karaoke</string>
-    <string name="enable_paxsenix">Ativar o serviço Paxsenix</string>
-    <string name="enable_paxsenix_desc">Letras síncronas de alta qualidade fornecidas pela API da Paxsenix</string>
-    <string name="lyrics_provider_priority_desc">Arraste para re-ordenar os provedores por preferência. Quanto maior for a posição, maior será a prioridade.</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
     <string name="alarm_battery_optimization_desc">Desabilite optimizações de bateria para um melhor comportamento do alarme em segundo plano</string>
     <string name="resume_on_bluetooth_connect">Resumir musica quando um dispositivo bluetooth for conectado.</string>
@@ -477,7 +465,6 @@
     <string name="copied_to_clipboard">Copiado para a área de transferência</string>
     <string name="clear">Limpar</string>
     <string name="copy">Copiar</string>
-    <string name="enable_zemer_desc">Letras para música Judaica</string>
     <string name="playlist_position_beginning">Começo da lista de reprodução</string>
     <string name="playlist_position_beginning_desc">Faixas recentemente adicionadas aparecem antes de faixas existentes</string>
     <string name="playlist_position_end">Fim da lista de reprodução</string>
@@ -496,7 +483,6 @@
     <string name="audio_track_playback_params_description">Usar o Android AudioTrack para mudanças de tom/velocidade em vez de processamento de software. Mais sólido para toms agudos mais extremos</string>
     <string name="mini_player_background_style">Estilo de fundo de reprodutor minimizado</string>
     <string name="plays">Vezes tocadas</string>
-    <string name="enable_zemer">Habilitar Zemer</string>
     <string name="found_in_settings_content">Pode ser encontrado em Definições &gt; Conteúdo</string>
     <string name="error_no_internet_connection">Sem conexão à internet</string>
     <string name="error_offline_playback">Estás offline. Conecta-te a internet, ou Reproduz uma música descarregada para ouvires offline.</string>

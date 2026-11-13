@@ -56,7 +56,6 @@
     <string name="lyrics_text_size">가사 글씨 크기</string>
     <string name="lyrics_line_spacing">가사 줄간격</string>
     <string name="token_adv_login_description">고급 로그인 방식입니다. 토큰을 직접 입력해 여러 기기에 빠르게 로그인할 수 있습니다. 올바르지 않은 형식의 토큰은 거부됩니다</string>
-    <string name="youtube_music_lyrics_note">참고: 다른 출처가 없으면 YouTube Music 가사가 자동으로 표시되며, 보통 싱크가 지원되지 않습니다</string>
     <string name="swipe_song_to_add">왼쪽으로 스와이프해 재생목록에 추가, 혹은 오른쪽으로 스와이프해 다음에 재생</string>
     <string name="density_restart_message">앱을 재시작해야 변경 사항이 적용됩니다. 지금 재시작하시겠습니까?</string>
     <string name="playlist_add_local_to_synced_note">참고: 동기화 / 원격 재생목록에 로컬 곡 추가는 지원되지 않습니다. 그 외 조합은 모두 가능합니다</string>
@@ -129,16 +128,8 @@
     <string name="primary_color_style">주요 색상</string>
     <string name="tertiary_color_style">3차 색상</string>
     <string name="lyrics_animation_style">가사 애니메이션 스타일</string>
-    <string name="enable_lrclib_desc">커뮤니티 기반 동기화 가사 데이터베이스</string>
-    <string name="enable_kugou_desc">인기있는 중국 플랫폼 KuGou 가사 불러오기</string>
     <string name="enable_better_lyrics">Better Lyrics 활성화</string>
     <string name="enable_better_lyrics_desc">음절 단위 가사 동기화 지원 (노래방 최적화)</string>
-    <string name="enable_paxsenix">Paxsenix 활성화</string>
-    <string name="enable_paxsenix_desc">Paxsenix API 기반 고품질 동기화 가사</string>
-    <string name="enable_lyricsplus">LyricsPlus 활성화</string>
-    <string name="enable_lyricsplus_desc">여러 출처의 동기화 가사 불러오기</string>
-    <string name="lyrics_provider_selection">가사 제공자 선택</string>
-    <string name="lyrics_provider_selection_desc">사용할 가사 제공자를 선택하여 활성화</string>
     <string name="auto_scroll">재동기화</string>
     <string name="show_liked_playlist">\'좋아요\' 표시된 재생목록 표시</string>
     <string name="show_downloaded_playlist">다운로드된 재생목록 표시</string>
@@ -214,8 +205,6 @@
     <string name="choose_from_library">라이브러리에서 선택</string>
     <string name="remove_custom_image">커스텀 이미지 제거</string>
     <string name="last_song_listened">마지막으로 들은 곡 기준</string>
-    <string name="lyrics_provider_priority">가사 제공자 우선순위</string>
-    <string name="lyrics_provider_priority_desc">가사 제공자를 선호하는 순서대로 드래그하십시오. 상단에 있을수록 우선순위가 높습니다</string>
     <string name="experimental_lyrics">실험실 가사</string>
     <string name="experimental_lyrics_desc">애니메이션과 성능이 향상된 새로운 실험실 가사 기능을 활성화합니다</string>
     <string name="experimental_lyrics_beta_title">실험실 기능</string>
@@ -451,7 +440,6 @@
     <string name="parsed_from_link">링크에서 가져왔습니다</string>
     <string name="max_selection_limit">최대 선택 개수에 도달했습니다</string>
     <string name="about_artist">아티스트 정보</string>
-    <string name="lyrics_from_provider">가사 제공: %s</string>
     <string name="hide_status_bar_fullscreen">전체 화면에서 상태 표시줄 숨기기</string>
     <string name="hide_status_bar_fullscreen_desc">가사를 전체 화면으로 볼 때 화면 상단의 상태 표시줄을 숨깁니다</string>
     <string name="show_interval_indicator">간주 진행 바 표시</string>

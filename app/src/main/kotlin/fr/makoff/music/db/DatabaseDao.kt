@@ -35,7 +35,6 @@ import fr.makoff.music.db.entities.ArtistEntity
 import fr.makoff.music.db.entities.Event
 import fr.makoff.music.db.entities.EventWithSong
 import fr.makoff.music.db.entities.FormatEntity
-import fr.makoff.music.db.entities.LyricsEntity
 import fr.makoff.music.db.entities.PlayCountEntity
 import fr.makoff.music.db.entities.Playlist
 import fr.makoff.music.db.entities.PlaylistEntity
@@ -756,10 +755,6 @@ interface DatabaseDao {
     @Transaction
     @Query("SELECT * FROM format WHERE id = :id")
     fun format(id: String?): Flow<FormatEntity?>
-
-    @Transaction
-    @Query("SELECT * FROM lyrics WHERE id = :id")
-    fun lyrics(id: String?): Flow<LyricsEntity?>
 
     @Transaction
     @SuppressWarnings(RoomWarnings.QUERY_MISMATCH)
@@ -1938,9 +1933,6 @@ interface DatabaseDao {
     fun upsert(map: SongAlbumMap)
 
     @Upsert
-    fun upsert(lyrics: LyricsEntity)
-
-    @Upsert
     fun upsert(format: FormatEntity)
 
     @Query("DELETE FROM format WHERE id = :id")
@@ -1985,9 +1977,6 @@ interface DatabaseDao {
 
     @Delete
     fun delete(playlistSongMap: PlaylistSongMap)
-
-    @Delete
-    fun delete(lyrics: LyricsEntity)
 
     @Delete
     fun delete(searchHistory: SearchHistory)

@@ -8,7 +8,6 @@ Fonctionnalités :
 - Gestion de la bibliothèque
 - Téléchargement et mise en cache des morceaux pour une écoute hors ligne
 - Recherche de morceaux, albums, artistes, vidéos et playlists
-- Affichage des paroles en direct
 - Connexion à votre compte YouTube Music
 - Synchronisation des morceaux, artistes, albums et playlists avec votre compte
 - Suppression des silences

@@ -111,7 +111,6 @@
     <string name="enable_swipe_thumbnail">Уключыць пераключэнне трэкаў свайпам</string>
     <string name="swipe_song_to_add">Свайп налева - дадаць трэк у чаргу, свайп направа - прайграць яго наступным</string>
     <string name="swipe_song_to_remove">Свайп - выдаліць трэк з плэйліста</string>
-    <string name="lyrics_from_provider">Тэкст песні з %s</string>
     <string name="lyrics_auto_scroll">Аўтапракрутка тэксту</string>
     <string name="hide_status_bar_fullscreen">Хаваць радок стану ў поўнаэкранным рэжыме</string>
     <string name="hide_status_bar_fullscreen_desc">Хаваць радок стану, калі ўключаны поўнаэкранны рэжым тэксту</string>
@@ -128,16 +127,8 @@
     <string name="lyrics_animation_apple">У стыле Apple Music</string>
     <string name="lyrics_text_size">Памер тэксту песні</string>
     <string name="lyrics_line_spacing">Міжрадковы інтэрвал тэксту</string>
-    <string name="enable_kugou_desc">Загружае тэксты песень з KuGou, папулярнай кітайскай музычнай платформы</string>
-    <string name="youtube_music_lyrics_note">"УВАГА: Тэксты з YouTube Music будуць паказвацца аўтаматычна, калі няма іншых крыніц.  Звычайна яны не сінхранізаваныя"</string>
     <string name="enable_better_lyrics">Уключыць Better Lyrics</string>
     <string name="enable_better_lyrics_desc">Сінхранізацыя тэксту па складах для любой песні, ідэальна для караоке</string>
-    <string name="enable_paxsenix">Уключыць Paxsenix</string>
-    <string name="enable_paxsenix_desc">Высакаякасныя сінхранізаваныя тэксты з API Paxsenix</string>
-    <string name="enable_lyricsplus">Уключыць LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Сінхранізаваныя тэксты з некалькіх крыніц</string>
-    <string name="lyrics_provider_selection">Выбар пастаўшчыкоў</string>
-    <string name="lyrics_provider_selection_desc">Выберыце, якія пастаўшчыкі тэкстаў будуць уключаны</string>
     <string name="auto_scroll">Сінхранізаваць</string>
     <string name="slim">Тонкі</string>
     <string name="slim_navbar">Тонкая панэль навігацыі</string>
@@ -177,8 +168,6 @@
     <string name="set_quick_picks">Выбраць тып рэкамендацый</string>
     <string name="last_song_listened">На аснове апошняга праслуханага трэка</string>
     <string name="app_language">Мова прыкладання</string>
-    <string name="lyrics_provider_priority">Прыярытэт пастаўшчыкоў тэкстаў</string>
-    <string name="lyrics_provider_priority_desc">Перацягіце, каб змяніць парадак пастаўшчыкоў. Чым вышэйшая пазіцыя, тым вышэйшы прыярытэт</string>
     <string name="experimental_lyrics">Эксперыментальны тэкст</string>
     <string name="experimental_lyrics_desc">Уключыць новы эксперыментальны кампанент тэксту з палепшанай анімацыяй і прадукцыйнасцю</string>
     <string name="experimental_lyrics_beta_title">Эксперыментальная функцыя</string>
@@ -315,7 +304,6 @@
     <string name="lyrics_click_change">Змяняць тэкст песні па націску</string>
     <string name="show_interval_indicator">Паказваць індыкатар паўз</string>
     <string name="respect_agent_positioning">Улічваць пазіцыянаванне артыста</string>
-    <string name="enable_lrclib_desc">База сінхранізаваных тэкстаў песень, якая падтрымліваецца супольнасцю</string>
     <string name="advanced_login">Уваход па токену</string>
     <string name="remove_custom_image">Выдаліць свой малюнак</string>
     <string name="resume_on_bluetooth_connect">Працягваць пры падключэнні Bluetooth</string>

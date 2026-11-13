@@ -114,13 +114,6 @@
     <string name="restart">הפעלה מחדש</string>
     <string name="restart_required">נחוצה הפעלה מחדש</string>
     <string name="density_restart_message">שינוי דחיסות תצוגה תושפע לאחר הפעלה מחדש של הישומון. התרצה להפעיל מחדש כעת?</string>
-    <string name="enable_lrclib_desc">מסד נתונים מסונכרן מונע-מקהילה</string>
-    <string name="enable_kugou_desc">לקיחת מילות שיר מקוגו, אסדת מוזיקה סינית אהודה</string>
-    <string name="youtube_music_lyrics_note">הערה: שירים מיוטיוב מיוזיק יוצגו באופן ממוכן כשמילות שיר אחרות לא זמינות. מילות שיר מיוטיוב מיוזיק בדר\"כ אינן מסונכרנות.</string>
-    <string name="enable_lyricsplus">הפעל לירקספלוס</string>
-    <string name="enable_lyricsplus_desc">סנכרן מילות שיר ממקורות מרובים</string>
-    <string name="lyrics_provider_selection">בחירת ספק</string>
-    <string name="lyrics_provider_selection_desc">בחר איזה ספק מילות שיר מופעל</string>
     <string name="enable_song_cache">הפעלת מטמון שירים</string>
     <string name="enable_song_cache_desc">שמירת שירים במטמון אוטומטית לצורך השמעה עתידית</string>
     <string name="show_wrapped_card">הצג כרטיס עטוף</string>
@@ -146,8 +139,6 @@
     <string name="set_quick_picks">הגדר בחירות מהירות</string>
     <string name="last_song_listened">בהתבסס על השיר האחרון שהאזנתי לו</string>
     <string name="app_language">שפת האפליקציה</string>
-    <string name="lyrics_provider_priority">עדיפות לספק מילות השיר</string>
-    <string name="lyrics_provider_priority_desc">גרור כדי לסדר מחדש ספקים לפי העדפה. מיקום גבוה יותר -&gt; עדיפות גבוהה יותר.</string>
     <string name="config_proxy">הגדרת proxy</string>
     <string name="proxy_username">שם משתמש של Proxy</string>
     <string name="proxy_password">סיסמת Proxy</string>

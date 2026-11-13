@@ -232,12 +232,7 @@
     <string name="restart">重新啟動</string>
     <string name="restart_required">需要重新啟動!</string>
     <string name="density_restart_message">顯示密度變更將在重新啟動應用後生效。您現在要重啟嗎？</string>
-    <string name="enable_lrclib_desc">社群驅動的同步歌詞資料庫</string>
-    <string name="enable_kugou_desc">歌詞來自酷狗，一個流行的中國音樂平台</string>
-    <string name="youtube_music_lyrics_note">注意：當其他歌詞無法使用時，會自動顯示來自 YouTube Music 的歌詞，來源歌詞通常不同步</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">將曲目新增至佇列時，如果該曲目已存在於佇列中，則將其從先前的位置移除</string>
-    <string name="lyrics_provider_priority">歌詞提供者優先權</string>
-    <string name="lyrics_provider_priority_desc">拖曳即可依優先順序重新排列供應商。位置越高，優先權越高</string>
     <string name="remember_shuffle_and_repeat">記住隨機與循環設置</string>
     <string name="remember_shuffle_and_repeat_desc">重啟應用程式時，請記住隨機播放和重複播放模式</string>
     <string name="export_playlist">匯出播放列表</string>
@@ -283,10 +278,6 @@
     <string name="crossfade_desc">在下一首歌曲淡入時使當前歌曲淡出</string>
     <string name="weekly_most_playlist_name">本週最常播放</string>
     <string name="monthly_most_playlist_name">本月最常播放</string>
-    <string name="enable_lyricsplus">啟用 LyricsPlus 提供歌詞</string>
-    <string name="enable_lyricsplus_desc">來自多個來源的同步歌詞</string>
-    <string name="lyrics_provider_selection">選擇歌詞提供者</string>
-    <string name="lyrics_provider_selection_desc">選擇要啟用的歌詞提供者</string>
     <string name="enable_song_cache">啟用歌曲快取</string>
     <string name="enable_song_cache_desc">自動快取歌曲以便日後播放</string>
     <string name="deleting">正在刪除…</string>
@@ -551,7 +542,6 @@
     <string name="time_transfer_listen_time_label">收聽時間：</string>
     <string name="time_transfer_convert">轉換</string>
     <string name="parsed_from_link">從連結解析</string>
-    <string name="lyrics_from_provider">來自 %s 的歌詞</string>
     <string name="hide_status_bar_fullscreen">全螢幕模式下隱藏狀態列</string>
     <string name="hide_status_bar_fullscreen_desc">歌詞全螢幕模式開啟時隱藏狀態列</string>
     <string name="show_interval_indicator">顯示間隔指示器</string>
@@ -560,8 +550,6 @@
     <string name="lyrics_animation_none">沒有</string>
     <string name="lyrics_animation_slide">滑動</string>
     <string name="lyrics_animation_karaoke">卡拉OK</string>
-    <string name="enable_paxsenix">啟用 Paxsenix</string>
-    <string name="enable_paxsenix_desc">來自 Paxsenix API 的高品質同步歌詞</string>
     <string name="experimental_lyrics">實驗性歌詞</string>
     <string name="experimental_lyrics_desc">啟用具有增強動畫效果和效能的全新實驗性歌詞功能</string>
     <string name="experimental_lyrics_beta_title">實驗性功能</string>

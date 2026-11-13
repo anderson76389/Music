@@ -375,15 +375,6 @@
     <string name="restart">Yeniden başlat</string>
     <string name="restart_required">Yeniden başlatma gerekli!</string>
     <string name="density_restart_message">Ekran yoğunluğu değişikliği, uygulama yeniden başlatıldıktan sonra geçerli olacaktır. Şimdi yeniden başlatılsın mı?</string>
-    <string name="enable_lrclib_desc">Topluluk odaklı senkronize şarkı sözü veritabanı</string>
-    <string name="enable_kugou_desc">Şarkı sözlerini popüler Çin müzik platformu KuGou\'dan çeker</string>
-    <string name="youtube_music_lyrics_note">NOT: Başka kaynak bulunmadığında YouTube Music sözleri otomatik gösterilir. Genellikle senkronize değildir</string>
-    <string name="enable_lyricsplus">LyricsPlus\'ı Etkinleştir</string>
-    <string name="enable_lyricsplus_desc">Birden fazla kaynaktan senkronize edilmiş şarkı sözleri</string>
-    <string name="lyrics_provider_selection">Sağlayıcı seçimi</string>
-    <string name="lyrics_provider_selection_desc">Hangi şarkı sözü sağlayıcılarının etkin olacağını seçin</string>
-    <string name="lyrics_provider_priority">Şarkı sözü sağlayıcı önceliği</string>
-    <string name="lyrics_provider_priority_desc">Sağlayıcıları sürükleyerek sıralayın. Üst konum daha yüksek öncelik demektir</string>
     <string name="changelog">Değişiklik günlüğü</string>
     <string name="changelog_empty">Değişiklik günlüğü mevcut değil</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -604,8 +595,6 @@
     <string name="experimental_lyrics_beta_title">Deneysel özellik</string>
     <string name="experimental_lyrics_desc">Gelişmiş animasyon ve performans sunan deneysel şarkı sözü bileşenini etkinleştirin</string>
     <string name="experimental_lyrics">Deneysel şarkı sözleri</string>
-    <string name="enable_paxsenix_desc">Paxsenix API\'den yüksek kaliteli senkronize şarkı sözleri</string>
-    <string name="enable_paxsenix">Paxsenix\'i Etkinleştir</string>
     <string name="lyrics_animation_apple">Apple Music Tarzı</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_slide">Kayma</string>
@@ -618,7 +607,6 @@
     <string name="show_interval_indicator">Aralık göstergesini göster</string>
     <string name="hide_status_bar_fullscreen_desc">Şarkı sözleri tam ekran modundayken durum çubuğunu gizle</string>
     <string name="hide_status_bar_fullscreen">Tam ekranda durum çubuğunu gizle</string>
-    <string name="lyrics_from_provider">Şarkı sözleri sağlayıcısı: %s</string>
     <string name="parsed_from_link">Bağlantıdan ayrıştırıldı</string>
     <string name="autoplay">Oto oynatma</string>
     <string name="autoplay_desc">Mevcut şarkı bittiğinde sonraki şarkıyı otomatik olarak çal</string>
@@ -702,8 +690,6 @@
     <string name="error_offline_playback">Çevrimdışı durumdasınız. İnternete bağlanın veya çevrimdışı kullanım için indirdiğiniz bir parçayı oynatın.</string>
     <string name="error_explicit_login_recommended">Açık içerikli oynatma, oturum açılmış bir hesapla daha iyi çalışır.</string>
     <string name="playlist_created_locally">YouTube eşitlemesi başarısız. Oynatma listeleri yerelde oluşturuldu.</string>
-    <string name="enable_zemer">Zemer\'i aktifleştir</string>
-    <string name="enable_zemer_desc">Yahudi müzikleri için şarkı sözleri</string>
     <string name="update_available_message">Apple Music %s indirmeye hazır.</string>
     <string name="update_action">Güncelle</string>
 </resources>
