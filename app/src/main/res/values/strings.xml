@@ -321,8 +321,6 @@
     <string name="use_login_for_browse_desc">Adapter le catalogue au compte connecté, notamment Premium.</string>
     <string name="disable_screenshot">Disable screenshot</string>
     <string name="disable_screenshot_desc">Bloquer les captures et les aperçus dans les applications récentes.</string>
-    <string name="enable_lrclib">Enable LrcLib lyrics provider</string>
-    <string name="enable_kugou">Enable KuGou lyrics provider</string>
     <string name="hide_explicit">Hide explicit content</string>
 
     <string name="backup_restore">Backup and restore</string>

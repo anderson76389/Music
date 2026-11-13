@@ -244,8 +244,6 @@
     <string name="clear_search_history_confirm">確定要清除所有搜尋記錄嗎？</string>
     <string name="disable_screenshot">禁用截圖</string>
     <string name="disable_screenshot_desc">開啟此選項時，將停用螢幕截圖功能，且在「最近的畫面」中不會顯示畫面內容。</string>
-    <string name="enable_lrclib">使用 LrcLib 提供歌詞</string>
-    <string name="enable_kugou">使用酷狗音樂提供歌詞</string>
     <string name="hide_explicit">移除不適當內容</string>
     <string name="backup_restore">備份與還原</string>
     <string name="action_backup">備份</string>
