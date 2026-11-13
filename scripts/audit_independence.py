@@ -173,9 +173,9 @@ PROVIDER_RESOURCE_KEYS = (
     "enable_lyricsplus", "enable_lyricsplus_desc",
     "lyrics_from_provider", "lyrics_provider_selection",
     "lyrics_provider_selection_desc", "lyrics_provider_priority",
-    "lyrics_provider_priority_desc",
+    "lyrics_provider_priority_desc", "enable_lrclib", "enable_kugou",
 )
-for xml in (r / "app/src/main/res").glob("values*/metrolist_strings.xml"):
+for xml in (r / "app/src/main/res").glob("values*/*.xml"):
     content = xml.read_text(encoding="utf-8")
     for key in PROVIDER_RESOURCE_KEYS:
         assert not re.search(r'<string\s+name="' + key + r'"', content), (xml, key)
