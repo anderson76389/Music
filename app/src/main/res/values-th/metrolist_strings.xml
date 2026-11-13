@@ -372,15 +372,6 @@
     <string name="restart">เริ่มต้นใหม่</string>
     <string name="restart_required">ต้องรีสตาร์ท!</string>
     <string name="density_restart_message">การเปลี่ยนความหนาแน่นของหน้าจอจะมีผลหลังจากรีสตาร์ทแอป คุณต้องการรีสตาร์ทตอนนี้หรือไม่?</string>
-    <string name="enable_lrclib_desc">ฐานข้อมูลเนื้อเพลงแบบซิงค์ที่ขับเคลื่อนโดยชุมชนผู้ใช้</string>
-    <string name="enable_kugou_desc">ดึงเนื้อเพลงจาก KuGou แพลตฟอร์มเพลงยอดนิยมของจีน</string>
-    <string name="youtube_music_lyrics_note">หมายเหตุ: เนื้อเพลงจาก YouTube Music จะแสดงโดยอัตโนมัติเมื่อไม่มีแหล่งเนื้อเพลงอื่นให้ใช้งาน โดยทั่วไปเนื้อเพลงเหล่านี้มักไม่ซิงค์กับจังหวะเพลง</string>
-    <string name="enable_lyricsplus">เปิดใช้งาน LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">เนื้อเพลงแบบซิงค์จากหลายแหล่ง</string>
-    <string name="lyrics_provider_selection">การเลือกผู้ให้บริการเนื้อเพลง</string>
-    <string name="lyrics_provider_selection_desc">เลือกแหล่งที่มาของเนื้อเพลงที่ต้องการเปิดใช้งาน</string>
-    <string name="lyrics_provider_priority">ลำดับความสำคัญของแหล่งเนื้อเพลง</string>
-    <string name="lyrics_provider_priority_desc">ลากเพื่อจัดเรียงลำดับผู้ให้บริการตามความต้องการ ตำแหน่งที่อยู่สูงกว่าจะมีลำดับความสำคัญมากกว่า</string>
     <string name="changelog">บันทึกการเปลี่ยนแปลง</string>
     <string name="changelog_empty">ยังไม่มีบันทึกการเปลี่ยนแปลง</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -515,7 +506,6 @@
     <string name="parsed_from_link">ดึงข้อมูลจากลิงก์</string>
     <string name="weekly_most_playlist_name">ฟังบ่อยประจำสัปดาห์</string>
     <string name="monthly_most_playlist_name">ฟังบ่อยประจำเดือน</string>
-    <string name="lyrics_from_provider">เนื้อเพลงจาก %s</string>
     <string name="hide_status_bar_fullscreen">ซ่อนแถบสถานะในโหมดเต็มหน้าจอ</string>
     <string name="hide_status_bar_fullscreen_desc">ซ่อนแถบสถานะเมื่อเปิดโหมดเนื้อเพลงแบบเต็มหน้าจอ</string>
     <string name="show_interval_indicator">แสดงตัวบ่งชี้ช่วงเว้น</string>
@@ -528,8 +518,6 @@
     <string name="lyrics_animation_slide">เลื่อน</string>
     <string name="lyrics_animation_karaoke">คาราโอเกะ</string>
     <string name="lyrics_animation_apple">สไตล์ Apple Music</string>
-    <string name="enable_paxsenix">เปิดใช้งาน Paxsenix</string>
-    <string name="enable_paxsenix_desc">เนื้อเพลงแบบซิงค์คุณภาพสูงจาก Paxsenix API</string>
     <string name="enable_song_cache">เปิดใช้งานแคชเพลง</string>
     <string name="enable_song_cache_desc">บันทึกเพลงลงแคชโดยอัตโนมัติ เพื่อให้เล่นได้เร็วขึ้นในครั้งถัดไป</string>
     <string name="show_most_stats_playlists">แสดงเพลย์ลิสต์ฟังบ่อยรายสัปดาห์และรายเดือน</string>

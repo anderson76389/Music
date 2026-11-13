@@ -111,7 +111,6 @@
     <string name="swipe_song_to_add">Swipe left to add the song to the queue, or right to play it next</string>
     <string name="swipe_song_to_remove">Swipe to remove the song from the playlist</string>
     <string name="lyrics_click_change">Change lyrics on tap</string>
-    <string name="lyrics_from_provider">Lyrics from %s</string>
     <string name="lyrics_auto_scroll">Auto-scroll lyrics</string>
     <string name="hide_status_bar_fullscreen">Hide status bar on fullscreen</string>
     <string name="hide_status_bar_fullscreen_desc">Hide the status bar when lyrics fullscreen mode is active</string>
@@ -130,19 +129,8 @@
     <string name="lyrics_animation_apple">Apple Music Style</string>
     <string name="lyrics_text_size">Lyrics text size</string>
     <string name="lyrics_line_spacing">Lyrics line spacing</string>
-    <string name="enable_lrclib_desc">Community-driven synchronized lyrics database</string>
-    <string name="enable_kugou_desc">Pulls lyrics from KuGou, a popular Chinese music platform</string>
-    <string name="youtube_music_lyrics_note">NOTE: YouTube Music lyrics will be shown automatically when no other source is available. They are usually not synchronized</string>
-    <string name="enable_zemer">Enable Zemer</string>
-    <string name="enable_zemer_desc">Lyrics for Jewish music</string>
     <string name="enable_better_lyrics">Enable Better Lyrics</string>
     <string name="enable_better_lyrics_desc">Paroles synchronisées syllabe par syllabe pour le karaoké.</string>
-    <string name="enable_paxsenix">Enable Paxsenix</string>
-    <string name="enable_paxsenix_desc">High-quality synchronized lyrics from Paxsenix API</string>
-    <string name="enable_lyricsplus">Enable LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Synchronized lyrics from multiple sources</string>
-    <string name="lyrics_provider_selection">Provider selection</string>
-    <string name="lyrics_provider_selection_desc">Choose which lyrics providers are enabled</string>
     <string name="auto_scroll">Re-sync</string>
     <string name="slim">Slim</string>
     <string name="force_bottom_navbar">Force bottom navigation bar</string>
@@ -195,8 +183,6 @@
     <string name="set_quick_picks">Set quick picks</string>
     <string name="last_song_listened">Based on the last song you listened to</string>
     <string name="app_language">App language</string>
-    <string name="lyrics_provider_priority">Lyrics provider priority</string>
-    <string name="lyrics_provider_priority_desc">Drag to reorder providers by preference. Higher position means higher priority</string>
     <string name="experimental_lyrics">Experimental lyrics</string>
     <string name="experimental_lyrics_desc">Nouvelles paroles animées, encore expérimentales.</string>
     <string name="experimental_lyrics_beta_title">Experimental feature</string>

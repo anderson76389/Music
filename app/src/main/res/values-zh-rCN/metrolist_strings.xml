@@ -372,15 +372,6 @@
     <string name="restart">重启</string>
     <string name="restart_required">需要重启！</string>
     <string name="density_restart_message">显示密度更改将在重启应用后生效。现在重启？</string>
-    <string name="enable_lrclib_desc">社区驱动的同步歌词数据库</string>
-    <string name="enable_kugou_desc">从中国热门音乐平台酷狗获取歌词</string>
-    <string name="youtube_music_lyrics_note">注意：当没有其他可用来源时，YouTube Music 的歌词将自动显示，这些歌词通常不同步</string>
-    <string name="enable_lyricsplus">启用 LyricsPlus 提供歌词</string>
-    <string name="enable_lyricsplus_desc">多源同步歌词支持</string>
-    <string name="lyrics_provider_selection">提供商选择</string>
-    <string name="lyrics_provider_selection_desc">选择要启用的歌词提供商</string>
-    <string name="lyrics_provider_priority">歌词提供商优先级</string>
-    <string name="lyrics_provider_priority_desc">拖动即可按偏好重新排序提供商。位置越高，优先级越高</string>
     <string name="changelog">更新日志</string>
     <string name="changelog_empty">暂无更新日志</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -585,7 +576,6 @@
     <string name="mini_player_background_not_available">当新迷你播放器设计被禁用时不可用</string>
     <string name="your_daily_discover">您的每日发现</string>
     <string name="lyrics_animation_none">无</string>
-    <string name="lyrics_from_provider">来自 %s 的歌词</string>
     <string name="hide_status_bar_fullscreen">全屏时隐藏状态栏</string>
     <string name="hide_status_bar_fullscreen_desc">歌词全屏模式开启时隐藏状态栏</string>
     <string name="show_interval_indicator">显示间隔指示器</string>
@@ -597,8 +587,6 @@
     <string name="lyrics_animation_slide">滑动</string>
     <string name="lyrics_animation_karaoke">卡拉OK</string>
     <string name="lyrics_animation_apple">Apple Music 样式</string>
-    <string name="enable_paxsenix">启用 Paxsenix</string>
-    <string name="enable_paxsenix_desc">通过 Paxsenix API 获取高质量的同步歌词</string>
     <string name="experimental_lyrics">实验性歌词</string>
     <string name="experimental_lyrics_desc">启用具有增强动画和性能的全新实验性歌词组件</string>
     <string name="experimental_lyrics_beta_title">实验性功能</string>

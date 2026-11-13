@@ -268,17 +268,8 @@
     <string name="restart">Khởi động lại</string>
     <string name="restart_required">Cần khởi động lại!</string>
     <string name="density_restart_message">Mật độ hiển thị đã thay đổi sẽ có hiệu lực ngay sau khi khởi động lại ứng dụng. Bạn có muốn khởi động lại ngay không?</string>
-    <string name="enable_lrclib_desc">Cơ sở dữ liệu lời bài hát khớp thời gian do cộng đồng đóng góp</string>
-    <string name="enable_kugou_desc">Lời bài hát được lấy từ KuGou, một nền tảng âm nhạc phổ biến của Trung Quốc</string>
-    <string name="youtube_music_lyrics_note">LƯU Ý: Lời bài hát từ YouTube Music sẽ được hiển thị tự động khi không có nguồn nào khác. Lời bài hát của chúng thường không được đồng bộ với nhau</string>
-    <string name="enable_lyricsplus">Bật nhà cung cấp lời bài hát LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Đồng bộ lời bài hát từ nhiều nguồn</string>
-    <string name="lyrics_provider_selection">Chọn bên cung cấp</string>
-    <string name="lyrics_provider_selection_desc">Chọn các nguồn cung cấp lời bài hát được kích hoạt</string>
     <string name="prevent_duplicate_tracks_in_queue">Tránh lặp lại bài hát trong hàng</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">Khi thêm một bài hát đã có sẵn trong hàng chờ, bài hát đó sẽ được chuyển từ vị trí cũ sang vị trí mới thay vì được thêm vào lần nữa</string>
-    <string name="lyrics_provider_priority">Ưu tiên nhà cung cấp lời bài hát</string>
-    <string name="lyrics_provider_priority_desc">Kéo để xắp xếp lại nhà cung cấp theo ý muốn. Vị trí càng cao -&gt; Ưu tiên càng cao</string>
     <string name="changelog">Lịch sử cập nhật</string>
     <string name="changelog_empty">Không có lịch sử cập nhật có sẵn</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -500,7 +491,6 @@
     <string name="recognize_music">Nhận dạng âm nhạc</string>
     <string name="tap_to_recognize">Ấn để nhận dạng</string>
     <string name="parsed_from_link">Đã trích xuất từ liên kết</string>
-    <string name="lyrics_from_provider">Lời bài hát được cung cấp bởi %s</string>
     <string name="hide_status_bar_fullscreen">Ẩn thanh trạng thái khi ở chế độ toàn màn hình</string>
     <string name="hide_status_bar_fullscreen_desc">Ẩn thanh trạng thái khi lời bài hát ở chế độ toàn màn hình được bật</string>
     <string name="show_interval_indicator">Hiển thị chỉ báo thời gian</string>
@@ -513,8 +503,6 @@
     <string name="lyrics_animation_slide">Trượt</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Phong cách Apple Music</string>
-    <string name="enable_paxsenix">Bật nhà cung cấp lời bài hát Paxsenix</string>
-    <string name="enable_paxsenix_desc">Lời bài hát chất lượng cao được đồng bộ từ API của Paxsenix</string>
     <string name="experimental_lyrics">Phong cách lời bài hát mới (Thử nghiệm)</string>
     <string name="experimental_lyrics_desc">Kích hoạt phong cách lời bài hát mới với hoạt ảnh và hiệu suất được nâng cao</string>
     <string name="experimental_lyrics_beta_title">Tính năng thử nghiệm</string>
@@ -696,8 +684,6 @@
     <string name="error_offline_playback">Bạn đang ngoại tuyến. Hãy kết nối Internet hoặc phát bản nhạc đã tải xuống để nghe ngoại tuyến.</string>
     <string name="error_explicit_login_recommended">Phát nội dung nhạy cảm hoạt động tốt hơn khi đăng nhập tài khoản.</string>
     <string name="playlist_created_locally">Đồng bộ hóa với YouTube thất bại. Đã tạo danh sách phát cục bộ.</string>
-    <string name="enable_zemer">Bật nhà cung cấp lời bài hát Zemer</string>
-    <string name="enable_zemer_desc">Lời bài hát cho âm nhạc Do Thái</string>
     <string name="update_available_message">Apple Music %s đã sẵn sàng để tải xuống.</string>
     <string name="update_action">Cập nhật</string>
     <string name="force_bottom_navbar">Buộc thanh điều hướng phía dưới</string>
