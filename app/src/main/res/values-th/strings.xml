@@ -249,8 +249,6 @@
     <string name="use_login_for_browse_desc">นี่อาจส่งผลต่อเนื้อหาที่คุณเห็น เช่น แสดงอัลบั้มสำหรับผู้ใช้ Premium หากคุณเข้าสู่ระบบด้วยบัญชี Premium</string>
     <string name="disable_screenshot">ปิดการจับภาพหน้าจอ</string>
     <string name="disable_screenshot_desc">เมื่อเปิดใช้งาน จะไม่สามารถจับภาพหน้าจอหรือดูตัวอย่างแอปในหน้าจอแอปล่าสุดได้</string>
-    <string name="enable_lrclib">เปิดใช้งานผู้ให้บริการเนื้อเพลง LrcLib</string>
-    <string name="enable_kugou">เปิดใช้งานผู้ให้บริการเนื้อเพลง KuGou</string>
     <string name="hide_explicit">ซ่อนเนื้อหาที่ไม่เหมาะสม</string>
     <string name="backup_restore">สำรองข้อมูลและกู้คืน</string>
     <string name="action_backup">สำรองข้อมูล</string>
