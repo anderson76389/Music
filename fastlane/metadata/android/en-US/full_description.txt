@@ -8,7 +8,6 @@ Features:
 - Library management 
 - Download and cache songs for offline playback
 - Search for songs, albums, artists, videos and playlists
-- Live lyrics 
 - YouTube Music account login support
 - Syncing of songs, artists, albums and playlists, from and to your account
 - Skip silence 
