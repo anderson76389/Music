@@ -144,7 +144,6 @@
     <string name="filter_uploaded">آپلود شده</string>
     <string name="display_density">تراکم صفحه نمایش</string>
     <string name="density_restart_message">تراکم صفحه نمایش پس از باز کردن مجدد برنامه تغییر خواهد کرد.بستن برنامه؟</string>
-    <string name="lyrics_from_provider">متن از %s</string>
     <string name="hide_status_bar_fullscreen">پنهان کردن نوار وضعیت به هنگام تمام صفحه کردن</string>
     <string name="hide_status_bar_fullscreen_desc">پنهان کردن نوار وضعیت به هنگام تمام صفحه بودن متن موسیقی</string>
     <string name="show_interval_indicator">نمایش نشانگر</string>
@@ -153,16 +152,6 @@
     <string name="lyrics_animation_fade">فید</string>
     <string name="lyrics_animation_slide">بکش</string>
     <string name="lyrics_animation_karaoke">کرئوکه</string>
-    <string name="enable_kugou_desc">لیریک را از KuGou برداشته شده پلتفورم چینی معروف</string>
-    <string name="youtube_music_lyrics_note">نکته:لیریک های یوتیوب موزیک به صورت خودکار نمایش داده میشود وقتی منبع دیگری در دسترس نیست.معمولا سینک نشده اند</string>
-    <string name="enable_zemer">فعال سازی zemer</string>
-    <string name="enable_zemer_desc">لیریک برای موسیقی یهودی</string>
-    <string name="enable_paxsenix">فعال سازی paxsenix</string>
-    <string name="enable_paxsenix_desc">متن های هماهنگ شده با کیفیت بالا از Paxsenix API</string>
-    <string name="enable_lyricsplus">فعال سازی Lyricsplus</string>
-    <string name="enable_lyricsplus_desc">لیریک های هماهنگ شده از چندین منبع مختلف</string>
-    <string name="lyrics_provider_selection">انتخاب تامین کننده</string>
-    <string name="lyrics_provider_selection_desc">انتخاب تامین کننده لیریک که فعال هستند</string>
     <string name="show_cached_playlist">نمایش لیست پخش های سیو شده</string>
     <string name="enable_song_cache">فعال سازی سیو موقت آهنگ</string>
     <string name="show_uploaded_playlist">نمایش لیست پخش آپلود شده</string>

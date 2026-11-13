@@ -150,7 +150,6 @@
     <string name="show_artist_description">Artistaren deskribapena ikusi</string>
     <string name="show_artist_subscriber_count">Harpidedun kopurua ikusi</string>
     <string name="download_playlist_desc">Abesti guztiak deskargatu lineaz-kanpo entzuteko</string>
-    <string name="youtube_music_lyrics_note">OHARRA: YouTube Music-eko hitzak erakutsiko dira automatikoki bestelako iturriko egon ezean. Ez daude sinkronizatuta normalean</string>
     <string name="remove_download_playlist_desc">Deskargatutako abesti guztiak kendu zerrenda honetatik</string>
     <string name="share_playlist_desc">Zerrenda partekatu</string>
     <string name="delete_playlist_desc">Zerrenda betirako ezabatu</string>
@@ -170,7 +169,6 @@
     <string name="restart_required">Berrabiaraztea beharrezkoa!</string>
     <string name="density_restart_message">Pantailaren dentsitatearen aldaketak berrabiarazi ondoren izango du eragina. Orain berrabiarazi?</string>
     <string name="swipe_song_to_remove">Irristatu abestia erreprodukzio-zerrendatik kentzeko</string>
-    <string name="lyrics_from_provider">%s-tik ateratako hitzak</string>
     <string name="hide_status_bar_fullscreen">Pantaila osoan egoera-barra ezkutatu</string>
     <string name="hide_status_bar_fullscreen_desc">Egoera-barra ezkutatu hitzak pantaila osoko moduan daudenean</string>
     <string name="lyrics_glow_effect">Hitz-distiratsuen efektua gaitu</string>
@@ -185,9 +183,6 @@
     <string name="lyrics_text_size">Hitzen letra-tamaina</string>
     <string name="lyrics_line_spacing">Hitzen lerroartea</string>
     <string name="enable_better_lyrics">Better Lyrics gaitu</string>
-    <string name="enable_paxsenix">Paxsenix gaitu</string>
-    <string name="enable_lyricsplus">LyricsPlus gaitu</string>
-    <string name="enable_lyricsplus_desc">Iturri ezberdinetako hitz sinkronizatuak</string>
     <string name="auto_scroll">Birsinkronizatu</string>
     <string name="loudness_level_quiet">Isila (-19 dB)</string>
     <string name="deleting">Ezabatzen…</string>
@@ -220,12 +215,7 @@
     <string name="show_interval_indicator_desc">Tarte-instrumental luzeetan aurrerapen-barra bat erakusten du</string>
     <string name="respect_agent_positioning">Agentearen posizioa errespetatu</string>
     <string name="respect_agent_positioning_desc">Hitzak agentearen rolarekiko lerrokatu (atzeko planoko hitzak, adib.)</string>
-    <string name="enable_lrclib_desc">Komunitateak gidatutako hitz sinkronizatuak datu-basea</string>
-    <string name="enable_kugou_desc">KuGou-tik, musika-plataforma Txinatar ezagun batetik, ateratzen ditu hitzak</string>
     <string name="enable_better_lyrics_desc">Edozein abestirako silabaz-silaba sinkronizatutako hitzak, karaokerako ezinhobeak</string>
-    <string name="enable_paxsenix_desc">Paxsenix API-ko kalitate handiko sinkronizatutako hitzak</string>
-    <string name="lyrics_provider_selection">Hornitzaile aukeraketa</string>
-    <string name="lyrics_provider_selection_desc">Aukeratu zein hitz-hornitzaile dauden gaituta</string>
     <string name="enable_song_cache">Abestien cachea gaitu</string>
     <string name="enable_song_cache_desc">Abestiak automatikoki cachean gorde etorkizunean azkarrago erreproduzitu ahal izateko</string>
     <string name="show_uploaded_playlist">Igotakoak zerrenda ikusi</string>
@@ -239,8 +229,6 @@
     <string name="skip_silence_instant_desc">Aurrera salto egin isiluneetan musikaren abiadura handitu beharrean</string>
     <string name="sort_ascending">Goranzko ordena</string>
     <string name="sort_descending">Beheranzko ordena</string>
-    <string name="lyrics_provider_priority">Hitzen hornitzailearen lehentasuna</string>
-    <string name="lyrics_provider_priority_desc">Arrastatu hornitzaileak lehentasunaren arabera ordenatzeko. Gorago egoteak lehentasun handiagoa esan nahi du</string>
     <string name="experimental_lyrics">Hitz esperimentalak</string>
     <string name="experimental_lyrics_desc">Gaitu animazio eta errendimendu hobea duten hitzen osagai esperimental berria</string>
     <string name="experimental_lyrics_beta_title">Eginbide esperimentala</string>
@@ -499,7 +487,5 @@
     <string name="stream_source_web_creator_desc">Web sortzaile bezeroa.</string>
     <string name="mixes">Nahasketak</string>
     <string name="and">eta</string>
-    <string name="enable_zemer">Zemer gaitu</string>
-    <string name="enable_zemer_desc">Musika judutarrarentzako hitzak</string>
     <string name="show_most_stats_playlists">Erakutsi asteko eta hilabeteko erreprodukzio zerrenda entzunenak</string>
 </resources>

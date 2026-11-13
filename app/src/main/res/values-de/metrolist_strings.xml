@@ -387,15 +387,6 @@
     <string name="daily_discover_based_on">Basierend auf %1$s</string>
     <string name="daily_discover_for_fans_of">Für Fans von %1$s</string>
     <string name="from_the_community">Aus der Community</string>
-    <string name="enable_lrclib_desc">Von der Community betriebene Datenbank für synchronisierte Songtexte</string>
-    <string name="enable_kugou_desc">Nimmt Songtexte von KuGou, einer beliebten chinesischen Musikplattform</string>
-    <string name="youtube_music_lyrics_note">HINWEIS: Songtexte von YouTube Music werden automatisch angezeigt, wenn keine andere Quelle verfügbar ist. Sie sind in der Regel nicht synchronisiert</string>
-    <string name="enable_lyricsplus">LyricsPlus-Song-Text-Anbieter aktivieren</string>
-    <string name="enable_lyricsplus_desc">Synchronisierte Songtexte aus mehreren Quellen</string>
-    <string name="lyrics_provider_selection">Auswahl des Anbieters</string>
-    <string name="lyrics_provider_selection_desc">Wählen Sie aus, welche Anbieter von Songtexten aktiviert werden sollen</string>
-    <string name="lyrics_provider_priority">Liedtext-Anbieter-Priorität</string>
-    <string name="lyrics_provider_priority_desc">Ziehen, um die Anbieter neu anzuordnen. Höhere Position bedeutet höhere Priorität</string>
     <string name="changelog">Änderungsprotokoll</string>
     <string name="changelog_empty">Kein Änderungsprotokoll verfügbar</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -585,7 +576,6 @@
     <string name="alarm_battery_optimization_desc">Deaktivieren Sie die Akkuoptimierung, um die Zuverlässigkeit des Alarms im Hintergrund zu verbessern</string>
     <string name="android_auto_target_playlist_not_set">Es wurde keine Playliste ausgewählt. Wähle eine in den Android Auto-Einstellungen aus.</string>
     <string name="android_auto_target_playlist_auto">Nicht festgelegt</string>
-    <string name="lyrics_from_provider">Songtext aus %s</string>
     <string name="hide_status_bar_fullscreen">Statusleiste im Vollbildmodus ausblenden</string>
     <string name="hide_status_bar_fullscreen_desc">Die Statusleiste ausblenden, wenn der Vollbildmodus für Liedtexte aktiv ist</string>
     <string name="show_interval_indicator">Anzeige des Intervalls anzeigen</string>
@@ -598,8 +588,6 @@
     <string name="lyrics_animation_slide">Folie</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Im Stil von Apple Music</string>
-    <string name="enable_paxsenix">Paxsenix-Songtext-Anbieter aktivieren</string>
-    <string name="enable_paxsenix_desc">Hochwertige, synchronisierte Liedtexte von der Paxsenix-API</string>
     <string name="experimental_lyrics">Experimentelle Songtexte</string>
     <string name="experimental_lyrics_desc">Aktivieren Sie die neue experimentelle Liedtext-Komponente mit verbesserten Animationen und höherer Leistung</string>
     <string name="experimental_lyrics_beta_title">Experimentelle Funktion</string>
@@ -701,10 +689,8 @@
     <string name="error_explicit_login_recommended">Die Wiedergabe expliziter Songs funktioniert besser, wenn Sie bei einem Konto angemeldet sind.</string>
     <string name="error_no_internet_connection">Keine Internet Verbindung</string>
     <string name="error_offline_playback">Du bist offline. Verbinde dich mit dem Internet oder spiele ein heruntergelades Lied ab.</string>
-    <string name="enable_zemer_desc">Songtexte für jüdische Musik</string>
     <string name="playlist_created_locally">YouTube-Synchronisierung fehlgeschlagen. Playlist lokal erstellt.</string>
     <string name="update_available_message">Apple Music %s steht zum Download bereit.</string>
     <string name="update_action">Update</string>
-    <string name="enable_zemer">Zemer aktivieren</string>
     <string name="force_bottom_navbar">Navigationsleiste unten erzwingen</string>
 </resources>
