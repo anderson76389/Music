@@ -254,8 +254,6 @@
     <string name="use_login_for_browse_desc">Maaari nitong maimpluwensyahan kung anong kontento ang makikita mo at halimbawa ay nagpapakita ng mga premium-only na album kung naka-log in ka gamit ang isang Premium account</string>
     <string name="disable_screenshot">Patayin ang screenshot</string>
     <string name="disable_screenshot_desc">Kapag naka-on ang opsyong ito, hindi pinagana ang mga screenshot at view ng aplikasyon sa Mga Kamakailan.</string>
-    <string name="enable_lrclib">Paganahin ang LrcLib lyrics provider</string>
-    <string name="enable_kugou">Paganahin ang KuGou lyrics provider</string>
     <string name="hide_explicit">Itago ang malalaswang nilalaman</string>
     <string name="backup_restore">I-backup at ibalik</string>
     <string name="action_backup">Backup</string>
