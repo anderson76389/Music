@@ -378,15 +378,6 @@
     <string name="restart">Repornire</string>
     <string name="restart_required">Repornire necesară!</string>
     <string name="density_restart_message">Modificarea densității afișajului va avea efect după repornirea aplicației. Repornești acum?</string>
-    <string name="enable_lrclib_desc">Bază de date pentru versuri sincronizate condusă de comunitate</string>
-    <string name="enable_kugou_desc">Preia versurile de pe KuGou, o platformă populară chinezească de muzică</string>
-    <string name="youtube_music_lyrics_note">NOTĂ: Versurile de pe YouTube Music vor fi afișate automat atunci când alte versuri nu sunt disponibile. Acestea nu sunt de obicei sincronizate</string>
-    <string name="enable_lyricsplus">Activează LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Versuri sincronizate din mai multe surse</string>
-    <string name="lyrics_provider_selection">Selecția de furnizori</string>
-    <string name="lyrics_provider_selection_desc">Alege ce furnizori de versuri sunt activați</string>
-    <string name="lyrics_provider_priority">Prioritatea furnizorilor de versuri</string>
-    <string name="lyrics_provider_priority_desc">Trage pentru a reordona furnizorii după preferințe. O poziție mai înaltă înseamnă prioritate mai mare</string>
     <string name="changelog">Jurnal de modificări</string>
     <string name="changelog_empty">Niciun jurnal de modificări disponibil</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -597,7 +588,6 @@
     <string name="mini_player_background_not_available">Indisponibil atunci când mini-playerul nou este dezactivat</string>
     <string name="your_daily_discover">Descoperirile tale zilnice</string>
     <string name="parsed_from_link">S-a analizat din link</string>
-    <string name="lyrics_from_provider">Versuri de la %s</string>
     <string name="hide_status_bar_fullscreen">Ascunde bara de status în modul ecran complet</string>
     <string name="hide_status_bar_fullscreen_desc">Ascunde bara de status atunci când versurile sunt afișate în modul ecran complet</string>
     <string name="show_interval_indicator">Afișează indicatorul de intervale</string>
@@ -610,8 +600,6 @@
     <string name="lyrics_animation_slide">Glisare</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Stilul Apple Music</string>
-    <string name="enable_paxsenix">Activează Paxsenix</string>
-    <string name="enable_paxsenix_desc">Versuri sincronizate de înaltă calitate de la API-ul Paxsenix</string>
     <string name="experimental_lyrics">Versuri experimentale</string>
     <string name="experimental_lyrics_desc">Activează noua componentă experimentală pentru versuri cu animații și performanță îmbunătățite</string>
     <string name="experimental_lyrics_beta_title">Caracteristică experimentală</string>
@@ -708,8 +696,6 @@
     <string name="error_no_internet_connection">Fără conexiune la internet</string>
     <string name="error_offline_playback">Ești offline. Conectează-te la internet sau redă o piesă descărcată pentru redare offline.</string>
     <string name="error_explicit_login_recommended">Redarea explicită funcționează cel mai bine cu un cont autentificat.</string>
-    <string name="enable_zemer">Activează Zemer</string>
-    <string name="enable_zemer_desc">Versuri pentru muzica evreiască</string>
     <string name="update_available_message">Apple Music %s este gata de descărcare.</string>
     <string name="update_action">Actualizează</string>
 </resources>

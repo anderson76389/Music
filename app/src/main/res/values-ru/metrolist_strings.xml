@@ -381,15 +381,6 @@
     <string name="restart">Перезапустить</string>
     <string name="restart_required">Требуется перезапуск!</string>
     <string name="density_restart_message">Изменение плотности интерфейса вступит в силу после перезапуска приложения. Перезапустить сейчас?</string>
-    <string name="enable_lrclib_desc">База синхронизированных текстов от сообщества</string>
-    <string name="enable_kugou_desc">Загружает тексты из популярной китайской платформы KuGou</string>
-    <string name="youtube_music_lyrics_note">ПРИМЕЧАНИЕ: Тексты из YouTube Music отображаются автоматически при отсутствии других источников. Обычно они не синхронизированы</string>
-    <string name="enable_lyricsplus">Включить LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Синхронизированные тексты из нескольких источников</string>
-    <string name="lyrics_provider_selection">Выбор источников</string>
-    <string name="lyrics_provider_selection_desc">Выберите, какие источники текстов использовать</string>
-    <string name="lyrics_provider_priority">Приоритет источников текстов</string>
-    <string name="lyrics_provider_priority_desc">Перетащите для изменения порядка. Чем выше источник в списке, тем выше его приоритет</string>
     <string name="changelog">Список изменений</string>
     <string name="changelog_empty">Список изменений недоступен</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -602,7 +593,6 @@
     <string name="transparent">Прозрачный</string>
     <string name="mini_player_background_not_available">Недоступно, если отключен новый дизайн мини‑плеера</string>
     <string name="your_daily_discover">Ваши открытия дня</string>
-    <string name="lyrics_from_provider">Текст песни из %s</string>
     <string name="hide_status_bar_fullscreen">Скрывать строку состояния в полноэкранном режиме</string>
     <string name="hide_status_bar_fullscreen_desc">Скрывать строку состояния, когда включён полноэкранный режим текста</string>
     <string name="show_interval_indicator">Показывать индикатор проигрыша</string>
@@ -615,8 +605,6 @@
     <string name="lyrics_animation_slide">Скольжение</string>
     <string name="lyrics_animation_karaoke">Караоке</string>
     <string name="lyrics_animation_apple">В стиле Apple Music</string>
-    <string name="enable_paxsenix">Включить Paxsenix</string>
-    <string name="enable_paxsenix_desc">Высококачественные синхронизированные тексты через API Paxsenix</string>
     <string name="experimental_lyrics">Экспериментальный текст</string>
     <string name="experimental_lyrics_desc">Включить новый экспериментальный компонент текста с улучшенной анимацией и производительностью</string>
     <string name="experimental_lyrics_beta_title">Экспериментальная функция</string>
@@ -714,8 +702,6 @@
     <string name="error_no_internet_connection">Нет подключения к интернету</string>
     <string name="error_offline_playback">Вы не в сети. Подключитесь к интернету или включите трек, скачанный для прослушивания офлайн.</string>
     <string name="playlist_created_locally">Ошибка синхронизации с YouTube. Плейлист создан локально.</string>
-    <string name="enable_zemer">Включить Zemer</string>
-    <string name="enable_zemer_desc">Тексты еврейских песен</string>
     <string name="update_available_message">Apple Music %s готов к загрузке.</string>
     <string name="update_action">Обновить</string>
     <string name="force_bottom_navbar">Всегда использовать нижнюю панель навигации</string>

@@ -374,15 +374,6 @@
     <string name="player_background_solid">Sólido</string>
     <string name="resume_on_bluetooth_connect">Retomar com conexão do Bluetooth</string>
     <string name="lyrics_romanize_as_main">Mostrar letras romanizadas como principal</string>
-    <string name="enable_lrclib_desc">Biblioteca de letras sincronizadas feitas pela comunidade</string>
-    <string name="enable_kugou_desc">Pega as letras do KuGou, uma plataforma chinesa popular de música</string>
-    <string name="youtube_music_lyrics_note">OBSERVAÇÃO: Letras do YouTube Music serão mostradas automaticamente quando não houver outras fontes disponíveis. As letras do YTM geralmente não são sincronizadas</string>
-    <string name="enable_lyricsplus">Ativar LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Letras sincronizadas de diversas fontes</string>
-    <string name="lyrics_provider_selection">Fonte das letras</string>
-    <string name="lyrics_provider_selection_desc">Escolha quais fontes de letras serão ativadas</string>
-    <string name="lyrics_provider_priority">Prioridade de provedor de letras</string>
-    <string name="lyrics_provider_priority_desc">Arraste para reordenar provedores por sua preferência. Mais ao topo significa maior prioridade</string>
     <string name="changelog">Novidades</string>
     <string name="changelog_empty">Sem novidades no momento</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -596,7 +587,6 @@
     <string name="transparent">Transparente</string>
     <string name="mini_player_background_not_available">Indisponível quando o novo design do mini reprodutor está desativado</string>
     <string name="your_daily_discover">Sua descoberta diária</string>
-    <string name="lyrics_from_provider">Letras de %s</string>
     <string name="hide_status_bar_fullscreen">Ocultar barra de status em tela cheia</string>
     <string name="hide_status_bar_fullscreen_desc">Oculta a barra de status quando o modo letras em tela cheia está ativado</string>
     <string name="show_interval_indicator">Mostras indicador de intervalo</string>
@@ -609,8 +599,6 @@
     <string name="lyrics_animation_slide">Deslizar</string>
     <string name="lyrics_animation_karaoke">Karaokê</string>
     <string name="lyrics_animation_apple">Estilo do Apple Music</string>
-    <string name="enable_paxsenix">Ativar Paxsenix</string>
-    <string name="enable_paxsenix_desc">Letras sincronizadas de alta qualidade da API do Paxsenix</string>
     <string name="experimental_lyrics">Letras experimentais</string>
     <string name="experimental_lyrics_desc">Ativar o novo componente de letras experimentais com animações e desempenho melhorados</string>
     <string name="experimental_lyrics_beta_title">Recurso experimental</string>
@@ -709,7 +697,5 @@
     <string name="error_explicit_login_recommended">A reprodução de conteúdo explícito funciona melhor com uma conta conectada.</string>
     <string name="playlist_created_locally">Sincronização do YouTube falhou. Playlist criada localmente.</string>
     <string name="update_action">Atualizar</string>
-    <string name="enable_zemer">Ativar Zemer</string>
-    <string name="enable_zemer_desc">Letras por Jewish music</string>
     <string name="update_available_message">Apple Music %s está pronto para download.</string>
 </resources>
