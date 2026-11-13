@@ -378,14 +378,6 @@
     <string name="restart">Riavvia</string>
     <string name="restart_required">Il riavvio è necessario!</string>
     <string name="density_restart_message">Il cambio della densità dello schermo si applicherà dopo aver riavviato l\'app. Riavvia ora?</string>
-    <string name="enable_lrclib_desc">Database di testi sincronizzati gestito dalla comunità</string>
-    <string name="enable_kugou_desc">Ottiene i testi da KuGou, una piattaforma cinese popolare di musica</string>
-    <string name="youtube_music_lyrics_note">NOTA: i testi tratti da YouTube Music saranno mostrati automaticamente quando nessun\'altra fonte è disponibile. Solitamente non sono sincronizzati</string>
-    <string name="enable_lyricsplus">Attiva LyricsPlus</string>
-    <string name="enable_lyricsplus_desc">Testi sincronizzati da più fonti</string>
-    <string name="lyrics_provider_selection">Selezione del fornitore</string>
-    <string name="lyrics_provider_selection_desc">Scegli quali fornitori di testi utilizzare</string>
-    <string name="lyrics_provider_priority">Priorità dei fornitori di testi</string>
     <string name="check_for_updates_button">Controlla aggiornamenti</string>
     <string name="hide_changelog">Nascondi le novità</string>
     <string name="view_changelog">Mostra le novità</string>
@@ -397,7 +389,6 @@
     <string name="error_episode_save">Errore nel salvare l\'episodio</string>
     <string name="error_episode_remove">Errore nel rimuovere l\'episodio</string>
     <string name="error_podcast_subscribe">Errore nel seguire il podcast</string>
-    <string name="lyrics_provider_priority_desc">Trascina per riordinare i fornitori in base alle preferenze. Una posizione più alta significa una priorità più alta</string>
     <string name="changelog">Novità</string>
     <string name="changelog_empty">Nessuna novità disponibile</string>
     <string name="github_releases_url">https://github.com/anderson76389/Music/releases</string>
@@ -596,7 +587,6 @@
     <string name="mini_player_background_not_available">Non disponibile quando il nuovo mini lettore è disabilitato</string>
     <string name="your_daily_discover">La scoperta di oggi</string>
     <string name="time_transfer_warning">ATTENZIONE: non è possibile annullare questa azione una volta completata. Crea un file di backup prima di procedere. Puoi scegliere come destinazione solo brani con almeno una riproduzione</string>
-    <string name="lyrics_from_provider">Testi da %s</string>
     <string name="parsed_from_link">Analizzato dal collegamento</string>
     <string name="hide_status_bar_fullscreen">Nascondi la barra di stato a schermo intero</string>
     <string name="hide_status_bar_fullscreen_desc">Nascondi la barra di stato quando la modalità a schermo intero dei testi è attiva</string>
@@ -610,8 +600,6 @@
     <string name="lyrics_animation_slide">Scorrimento</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Stile Apple Music</string>
-    <string name="enable_paxsenix">Abilita Paxsenix</string>
-    <string name="enable_paxsenix_desc">Testi sincronizzati di alta qualità tramite API Paxsenix</string>
     <string name="experimental_lyrics">Testi sperimentali</string>
     <string name="experimental_lyrics_desc">Abilita il nuovo componente sperimentale dei testi con animazioni e prestazioni migliorate</string>
     <string name="experimental_lyrics_beta_title">Funzionalità sperimentale</string>
@@ -707,8 +695,6 @@
     <string name="error_explicit_login_recommended">La riproduzione esplicita funziona meglio se si è fatto l\'accesso.</string>
     <string name="error_offline_playback">Sei disconnesso. Connettiti a internet o riproduci una traccia scaricata per riprodurla offline.</string>
     <string name="error_no_internet_connection">Nessuna connessione a internet</string>
-    <string name="enable_zemer">Attiva Zemer</string>
-    <string name="enable_zemer_desc">Testi per musica in ebraico</string>
     <string name="playlist_created_locally">Sincronizzazione con YouTube fallita. La playlist è stata creata localmente.</string>
     <string name="update_available_message">Apple Music %s è pronto per essere scaricato.</string>
     <string name="update_action">Aggiorna</string>

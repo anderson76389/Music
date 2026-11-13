@@ -82,15 +82,6 @@
     <string name="lyrics_romanize_as_main">Tunjuk lirik dirumikan sebagai lirik utama</string>
     <string name="restart">Mulakan semula</string>
     <string name="restart_required">Mula semula diperlukan!</string>
-    <string name="enable_lrclib_desc">Pangkalan data sinkronisasi lirik yang dipacu komuniti</string>
-    <string name="enable_kugou_desc">Mengambil lirik daripada KuGou, Platform muzik yang terkenal di China</string>
-    <string name="youtube_music_lyrics_note">NOTA: Lirik daripada YouTube Music akan diguna-pakai jika tiada sumber lain. Kebiasaannya lirik mereka tidak diselaras</string>
-    <string name="enable_lyricsplus">Aktifkan LyricPlus</string>
-    <string name="enable_lyricsplus_desc">Lirik yang diselaraskan dari pelbagai sumber</string>
-    <string name="lyrics_provider_selection">Pilihan penyedia</string>
-    <string name="lyrics_provider_selection_desc">Pilih penyedia lirik yang akan diaktifkan</string>
-    <string name="lyrics_provider_priority">Pengutamaan penyedia lirik</string>
-    <string name="lyrics_provider_priority_desc">Seret untuk menyusun semula penyedia lirik mengikut keutamaan. Semakin tinggi posisi, semakin tinggi keutamaan pengunaan pembekal tersebut</string>
     <string name="changelog">Log Perubahan</string>
     <string name="changelog_empty">Tiada log perubahan tersedia</string>
     <string name="view_on_github">Lihat di GitHub</string>

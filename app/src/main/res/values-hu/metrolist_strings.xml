@@ -220,19 +220,10 @@
     <string name="restart">Újraindítás</string>
     <string name="restart_required">Újraindítás szükséges!</string>
     <string name="density_restart_message">Az új kijelző sűrűség újraindítás után lép érvénybe. Újra kívánja indítani az alkalmazást?</string>
-    <string name="enable_lrclib_desc">Közösség alapú dalszöveg szinkronizálás adatbázis</string>
-    <string name="enable_kugou_desc">A közkedvelt KuGou kínai dalszöveg platformról való letöltés</string>
-    <string name="youtube_music_lyrics_note">MEGJEGYZÉS: Ha nem áll rendelkezésre más forrás, a Youtube Music dalszöveg jelenik meg. Utóbbi általában nincs összhangban a zenével</string>
-    <string name="enable_lyricsplus">LyricsPlus engedélyezése</string>
-    <string name="enable_lyricsplus_desc">Összehangolt dalszövegek több forrásból</string>
-    <string name="lyrics_provider_selection">Szolgáltató kiválasztása</string>
-    <string name="lyrics_provider_selection_desc">Válassza ki mely dalszöveg szolgáltatót akarja engedélyezni</string>
     <string name="enable_song_cache">Zene cache-elés engedélyezése</string>
     <string name="enable_song_cache_desc">Zenék automatikus cache-elése a jövőbeli gyors lejátszáshoz</string>
     <string name="prevent_duplicate_tracks_in_queue">Duplikált számok eltávolítása a lejátszási sorból</string>
     <string name="prevent_duplicate_tracks_in_queue_desc">Amennyiben a már a korábban a listában megtalálható dalt újra hozzá kívánja adni, a korábbi dal törlésre kerül az újbóli listázás helyett</string>
-    <string name="lyrics_provider_priority">Dalszöveg szolgáltató sorrend</string>
-    <string name="lyrics_provider_priority_desc">Preferenciájának megfelelően állítsa sorrendbe a szolgáltatókat. Magasabb pozíció magasabb prioritást jelent</string>
     <string name="persistent_shuffle_title">Tartós keverés</string>
     <string name="persistent_shuffle_desc">A keverés bekapcsolva marad új dal vagy lista indításakor is</string>
     <string name="export_playlist">Lista exportálása</string>
@@ -591,7 +582,6 @@
     <string name="android_auto_target_playlist_not_set">Nincs kiválasztva lejátszási lista. Válasszon egyet az Android Auto beállításaiban</string>
     <string name="time_transfer_title">Idő-átvitel</string>
     <string name="parsed_from_link">Linkből elemezve</string>
-    <string name="lyrics_from_provider">%s dalszövegek</string>
     <string name="hide_status_bar_fullscreen">Állapotsáv elrejtése teljes képernyőnél</string>
     <string name="hide_status_bar_fullscreen_desc">Az állapotsáv elrejtése, amikor a teljes képernyős dalszöveg mód aktív</string>
     <string name="show_interval_indicator">Időtartam jelző megjelenítése</string>
@@ -604,8 +594,6 @@
     <string name="lyrics_animation_slide">Csúsztatás</string>
     <string name="lyrics_animation_karaoke">Karaoke</string>
     <string name="lyrics_animation_apple">Apple Music Stílus</string>
-    <string name="enable_paxsenix">Paxsenix engedélyezése</string>
-    <string name="enable_paxsenix_desc">Kiváló minőségű összehangolt dalszövegek a Paxenix API-on keresztül</string>
     <string name="experimental_lyrics">Kísérleti dalszöveg</string>
     <string name="experimental_lyrics_desc">Próbálja ki az új kísérleti dalszöveg opciót, új animációkkal és jobb teljesítménnyel</string>
     <string name="experimental_lyrics_beta_title">Kísérleti funkció</string>
