@@ -31,6 +31,7 @@ import fr.makoff.music.di.ApplicationScope
 import fr.makoff.music.extensions.toEnum
 import fr.makoff.music.extensions.toInetSocketAddress
 import fr.makoff.music.utils.CrashHandler
+import fr.makoff.music.ui.screens.settings.ApkUpdateStorage
 import fr.makoff.music.utils.ArtistNameAliases
 import fr.makoff.music.utils.InnerTubeXPlayer
 import fr.makoff.music.utils.dataStore
@@ -91,6 +92,12 @@ class App :
         // Plant logging before extraction services initialize.
         Timber.plant(Timber.DebugTree())
         InnerTubeXPlayer.initialize(this)
+        // Android replaces the installed package, but DownloadManager retains
+        // our staged ~200 MB installer unless we remove it after the first launch.
+        applicationScope.launch(Dispatchers.IO) {
+            runCatching { ApkUpdateStorage.cleanupIfInstalled(this@App) }
+                .onFailure { Timber.e(it, "Could not reclaim installed update APK") }
+        }
         applicationScope.launch(Dispatchers.IO) {
             fr.makoff.music.downloads.AutoLikedDownloads.observe(this@App, automaticDownloads.get())
         }

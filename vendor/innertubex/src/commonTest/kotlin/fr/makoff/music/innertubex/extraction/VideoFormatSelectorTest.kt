@@ -44,7 +44,7 @@ class VideoFormatSelectorTest {
     }
 
     @Test
-    fun prefersLowerBitrateNativeVideoAtEqualHeight() {
+    fun prefersHigherBitrateNativeVideoAtEqualHeight() {
         val equal =
             listOf(
                 Format(
@@ -64,9 +64,9 @@ class VideoFormatSelectorTest {
                     url = "https://webm",
                 ),
             )
-        assertEquals(247, selectBestVideoFormat(equal)?.itag)
+        assertEquals(136, selectBestVideoFormat(equal)?.itag)
         assertEquals(
-            247,
+            299,
             selectBestVideoFormat(
                 equal +
                     Format(
@@ -82,12 +82,12 @@ class VideoFormatSelectorTest {
     }
 
     @Test
-    fun expensiveVp9DoesNotDisplaceCheaperAvcAtTheSameResolution() {
+    fun higherBitrateAtEqualResolutionWinsWithinThePreferredDecoderClass() {
         val avc = formats.first().copy(bitrate = 2_474_373)
         val vp9 = formats[1].copy(width = 1280, height = 720, bitrate = 7_281_188)
         val av1 = avc.copy(itag = 398, mimeType = "video/mp4; codecs=\"av01\"", bitrate = 1_000_000)
-        assertEquals(avc.itag, selectBestVideoFormat(listOf(vp9, avc, av1))?.itag)
-        assertEquals(vp9.itag, selectBestVideoFormat(listOf(avc, vp9.copy(bitrate = 1_000_000)))?.itag)
+        assertEquals(vp9.itag, selectBestVideoFormat(listOf(vp9, avc, av1))?.itag)
+        assertEquals(avc.itag, selectBestVideoFormat(listOf(avc, vp9.copy(bitrate = 1_000_000)))?.itag)
         assertEquals(vp9.itag, selectBestVideoFormat(listOf(avc.copy(bitrate = 0), vp9))?.itag)
     }
 

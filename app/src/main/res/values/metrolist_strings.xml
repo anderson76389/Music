@@ -907,7 +907,7 @@
     <string name="player_video_label">Vidéo</string>
     <string name="player_video_mode_setting">Mode Son / Vidéo</string>
     <string name="player_video_mode_setting_desc">Son / Vidéo uniquement si un clip est disponible.</string>
-    <string name="player_video_quality_setting">Qualité des clips vidéo</string>
+    <string name="player_video_quality_setting">Qualité vidéo par défaut</string>
     <string name="player_video_quality_best">Meilleure disponible (jusqu’à 2160p)</string>
     <string name="player_video_quality_1080">Jusqu’à 1080p</string>
     <string name="player_video_quality_720">Jusqu’à 720p</string>

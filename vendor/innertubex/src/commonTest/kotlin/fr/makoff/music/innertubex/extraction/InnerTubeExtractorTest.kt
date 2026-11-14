@@ -508,6 +508,10 @@ class InnerTubeExtractorTest {
         runBlocking {
             val response =
                 PROGRESSIVE_AND_ADAPTIVE_VIDEO_RESPONSE
+                    // Keep adaptive video as the highest-quality candidate.
+                    // If its signature cannot be solved, the progressive
+                    // variant remains a usable fallback at this resolution.
+                    .replace("\"bitrate\":5000000,\"width\":1280,\"height\":720", "\"bitrate\":500000,\"width\":1280,\"height\":720")
                     .replace("stream=audio", "stream=audio&n=source")
                     .replace("stream=adaptive", "stream=adaptive&n=source")
             val client = jsonClient(response)
