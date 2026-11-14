@@ -86,6 +86,17 @@ class PlayerVideoModePolicyTest {
         assertFalse(PlayerVideoModePolicy.clipSelectable(false, "abcdefghijk", null, true))
     }
 
+    @Test fun persistentVideoPreferenceOnlyRendersVerifiedClips() {
+        assertTrue(PlayerVideoModePolicy.lockedVideoForTrack(true, true, true, false))
+        // Retain the preference while a clip is loading / absent; never claim
+        // there is video for this particular song.
+        assertFalse(PlayerVideoModePolicy.lockedVideoForTrack(true, true, false, false))
+        assertFalse(PlayerVideoModePolicy.lockedVideoForTrack(true, true, true, true))
+        assertFalse(PlayerVideoModePolicy.lockedVideoForTrack(false, true, true, false))
+        assertFalse(PlayerVideoModePolicy.lockedVideoForTrack(true, false, true, false))
+        assertTrue(PlayerVideoModePolicy.lockedVideoForTrack(true, true, true, false))
+    }
+
     @Test fun videoProbeNeverRunsForNonYoutubeTracksOrCast() {
         assertTrue(PlayerVideoModePolicy.canProbeVideo("abcdefghijk", true, false, false))
         assertFalse(PlayerVideoModePolicy.canProbeVideo("abcdefghijk", false, false, false))

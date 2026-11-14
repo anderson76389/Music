@@ -61,6 +61,8 @@ val SwipeToSongKey = booleanPreferencesKey("SwipeToSong")
 val SwipeToRemoveSongKey = booleanPreferencesKey("SwipeToRemoveSong")
 val UseNewPlayerDesignKey = booleanPreferencesKey("useNewPlayerDesign")
 val PlayerVideoModeEnabledKey = booleanPreferencesKey("playerVideoModeEnabled")
+/** User's persistent Son/Vidéo choice. Video is rendered only if this song has a verified clip. */
+val PlayerVideoPreferredKey = booleanPreferencesKey("playerVideoPreferred")
 val PlayerVideoQualityKey = stringPreferencesKey("playerVideoQuality")
 /** Requested maximum clip height; lower source formats remain eligible. */
 enum class PlayerVideoQuality(val maxHeight: Int) {
