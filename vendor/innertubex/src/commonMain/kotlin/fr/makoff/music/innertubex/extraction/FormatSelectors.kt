@@ -132,7 +132,9 @@ private fun Format.audioContainerRank(): Int =
         else -> 0
     }
 
-// AVC and VP9 both have broad native decoding support; avoid excess bitrate at the same resolution.
+// For the requested resolution, prefer the highest-fidelity native stream.
+// The old comparator preferred the lowest bitrate at equal height, making
+// clips visibly blurrier even with Best quality selected.
 private val videoFormatComparator =
     compareBy<Format> { it.height ?: 0 }
         .thenBy {
@@ -142,4 +144,4 @@ private val videoFormatComparator =
                 "avc1" in codec || "vp09" in codec || "vp9" in codec || "video/mp4" in codec || "video/webm" in codec -> 2
                 else -> 0
             }
-        }.thenByDescending { it.bitrate.takeIf { bitrate -> bitrate > 0 } ?: Int.MAX_VALUE }
+        }.thenBy { it.bitrate.coerceAtLeast(0) }
