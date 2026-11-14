@@ -53,6 +53,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -573,12 +574,14 @@ private fun NewMiniPlayerPlayButton(
                     remember(metadata.thumbnailUrl) {
                         metadata.thumbnailUrl?.resize(120, 120)
                     }
-                AsyncImage(
-                    model = thumbnailUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize().clip(CircleShape),
-                )
+                key(metadata.id) {
+                    AsyncImage(
+                        model = thumbnailUrl,
+                        contentDescription = null,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize().clip(CircleShape),
+                    )
+                }
             }
 
             // Overlay for paused state or muted (guest)
@@ -939,15 +942,17 @@ private fun LegacyMiniMediaInfo(
                 remember(mediaMetadata.thumbnailUrl) {
                     mediaMetadata.thumbnailUrl?.resize(144, 144)
                 }
-            AsyncImage(
-                model = thumbnailUrl,
-                contentDescription = null,
-                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .clip(RoundedCornerShape(ThumbnailCornerRadius)),
-            )
+            key(mediaMetadata.id) {
+                AsyncImage(
+                    model = thumbnailUrl,
+                    contentDescription = null,
+                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                )
+            }
 
             androidx.compose.animation.AnimatedVisibility(visible = error != null, enter = fadeIn(), exit = fadeOut()) {
                 Box(

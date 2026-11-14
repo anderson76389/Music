@@ -87,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -167,6 +168,7 @@ import fr.makoff.music.constants.SquigglySliderKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewPlayerDesignKey
 import fr.makoff.music.constants.PlayerVideoModeEnabledKey
+import fr.makoff.music.constants.PlayerVideoPreferredKey
 import fr.makoff.music.constants.PlayerVideoQuality
 import fr.makoff.music.constants.PlayerVideoQualityKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
@@ -230,6 +232,7 @@ fun BottomSheetPlayer(
             defaultValue = true,
         )
     val playerVideoModeEnabled by rememberPreference(PlayerVideoModeEnabledKey, defaultValue = true)
+    val (preferVideo, setPreferVideo) = rememberPreference(PlayerVideoPreferredKey, defaultValue = false)
     val playerVideoQuality by rememberEnumPreference(PlayerVideoQualityKey, PlayerVideoQuality.BEST)
     val selectorTheme by rememberEnumPreference(PlayerVideoThemeModeKey, PlayerVideoThemeMode.AUTO)
     val selectorCustomColorInt by rememberPreference(PlayerVideoCustomColorKey, defaultValue = 0xFF9158BC.toInt())
@@ -309,10 +312,9 @@ fun BottomSheetPlayer(
             }
         }
     val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
-    // Keep the active video choice at the PLAYER level. Portrait and landscape
-    // render different artwork subtrees; state inside either one was being lost
-    // on every rotation. A saved track ID also survives Activity recreation.
-    var selectedVideoId by rememberSaveable { mutableStateOf<String?>(null) }
+    // The preferred Son/Vidéo tab is saved in DataStore, NOT tied to the
+    // currently playing ID. On an audio-only track we show its artwork while
+    // retaining the preference for the next playable clip and app restart.
     // Save only the verified clip ID (never a temporary signed stream URL), so
     // turning the phone can reuse the official Song/Video pairing immediately.
     var verifiedVideoPairOwner by rememberSaveable { mutableStateOf<String?>(null) }
@@ -355,26 +357,18 @@ fun BottomSheetPlayer(
             }
         },
     )
-    // OFF takes effect in the same frame and never restores stale video state.
-    LaunchedEffect(playerVideoModeEnabled, activeVideoId) {
-        if (!playerVideoModeEnabled || selectedVideoId != activeVideoId) selectedVideoId = null
-    }
-    val selectedVideoForTrack = playerVideoModeEnabled &&
-        selectedVideoId != null && selectedVideoId == mediaMetadata?.id
+    // Never show video until THIS track has a proven playable stream.
+    // The saved user choice survives next/previous, unavailable clips, collapse,
+    // rotation and a process restart. Disabling the setting still wins immediately.
+    val selectedVideoForTrack = PlayerVideoModePolicy.lockedVideoForTrack(
+        modeEnabled = playerVideoModeEnabled,
+        preferVideo = preferVideo,
+        playableClip = videoPreview.clip != null,
+        casting = isCasting,
+    )
     val videoModeActive = PlayerVideoModePolicy.videoModeActive(
         selectedVideoForTrack, playerVideoModeEnabled, state.isExpanded, isCasting,
     )
-    LaunchedEffect(selectedVideoForTrack, playerVideoModeEnabled, isCasting, videoPreview) {
-        if (selectedVideoForTrack && PlayerVideoModePolicy.shouldResetVideoSelection(
-                modeEnabled = playerVideoModeEnabled,
-                casting = isCasting,
-                lookupFinished = videoPreview.lookupFinished,
-                hasPlayableClip = videoPreview.clip != null,
-            )
-        ) {
-            selectedVideoId = null
-        }
-    }
     val preparedVideoPlayer = rememberPreparedVideoPlayer(
         clip = videoPreview.clip,
         audioId = activeVideoId,
@@ -404,7 +398,7 @@ fun BottomSheetPlayer(
         isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE,
     )
     // Android back and the exit button both restore the normal music layout.
-    BackHandler(enabled = fullscreenLandscapeVideo) { selectedVideoId = null }
+    BackHandler(enabled = fullscreenLandscapeVideo) { setPreferVideo(false) }
     val keepScreenOn = (isPlaying && isKeepScreenOn) || videoModeActive
 
     // Video alone enables device-sensor rotation (including with orientation
@@ -850,13 +844,11 @@ fun BottomSheetPlayer(
             ) {
                 when (playerBackground) {
                     PlayerBackgroundStyle.BLUR -> {
-                        AnimatedContent(
-                            targetState = mediaMetadata?.thumbnailUrl,
-                            transitionSpec = {
-                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
-                            },
-                            label = "blurBackground",
-                        ) { thumbnailUrl ->
+                        // Do not crossfade the previous song's cover onto the next
+                        // one. Key the blurred layer to the active media ID; the
+                        // stationary surface remains underneath while Coil loads.
+                        key(mediaMetadata?.id) {
+                            val thumbnailUrl = mediaMetadata?.thumbnailUrl
                             if (thumbnailUrl != null) {
                                 Box(modifier = Modifier.alpha(backgroundAlpha)) {
                                     AsyncImage(
@@ -915,19 +907,21 @@ fun BottomSheetPlayer(
                                 // retain enough contrast in all supported themes.
                                 Box(Modifier.fillMaxSize().alpha(backgroundAlpha)) {
                                     if (state.isExpanded && !mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
-                                        AsyncImage(
-                                            model = ImageRequest.Builder(context)
-                                                .data(mediaMetadata?.thumbnailUrl)
-                                                .size(120, 120)
-                                                .allowHardware(false)
-                                                .build(),
-                                            contentDescription = null,
-                                            contentScale = ContentScale.Crop,
-                                            modifier = Modifier
-                                                .fillMaxSize()
-                                                .blur(artworkBlurRadius)
-                                                .alpha(0.56f),
-                                        )
+                                        key(mediaMetadata?.id) {
+                                            AsyncImage(
+                                                model = ImageRequest.Builder(context)
+                                                    .data(mediaMetadata?.thumbnailUrl)
+                                                    .size(120, 120)
+                                                    .allowHardware(false)
+                                                    .build(),
+                                                contentDescription = null,
+                                                contentScale = ContentScale.Crop,
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .blur(artworkBlurRadius)
+                                                    .alpha(0.56f),
+                                            )
+                                        }
                                     }
                                     Box(
                                         Modifier
@@ -1692,7 +1686,7 @@ fun BottomSheetPlayer(
                         playerConnection.player.shuffleModeEnabled = !playerConnection.player.shuffleModeEnabled
                     },
                     onRepeatToggle = { playerConnection.player.toggleRepeatMode() },
-                    onExit = { selectedVideoId = null },
+                    onExit = { setPreferVideo(false) },
                     onUnavailable = { videoPreview.clip?.id?.let(onVideoClipUnavailable) },
                     modifier = Modifier.fillMaxSize(),
                 )
@@ -1748,7 +1742,7 @@ fun BottomSheetPlayer(
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
-                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                    setPreferVideo(selected)
                                 },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,
@@ -1829,7 +1823,7 @@ fun BottomSheetPlayer(
                                 isPlaying = isPlaying,
                                 showVideo = selectedVideoForTrack,
                                 onShowVideoChange = { selected ->
-                                    selectedVideoId = if (selected) mediaMetadata?.id else null
+                                    setPreferVideo(selected)
                                 },
                                 playerConnection = playerConnection,
                                 modeTextColor = TextBackgroundColor,

@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
-import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -279,22 +280,17 @@ fun Thumbnail(
         }
     }
 
-    // Update position when song changes
-    LaunchedEffect(mediaMetadata, canSkipPrevious, canSkipNext) {
-        val index = maxOf(0, currentMediaIndex)
-        if (index >= 0 && index < mediaItems.size) {
-            try {
-                thumbnailLazyGridState.animateScrollToItem(index)
-            } catch (e: Exception) {
-                thumbnailLazyGridState.scrollToItem(index)
-            }
-        }
-    }
-
-    LaunchedEffect(playerConnection.player.currentMediaItemIndex) {
-        val index = mediaItemsData.currentIndex
-        if (index >= 0 && index != currentItem) {
-            thumbnailLazyGridState.scrollToItem(index)
+    // Only one scroll owner. The previous pair of competing effects could
+    // briefly re-center the OLD item while the new Media3 metadata arrived.
+    // A skip jumps directly to the current slot; user-driven swipes retain
+    // the grid's native smooth fling/snap behavior.
+    LaunchedEffect(mediaMetadata?.id, currentMediaIndex) {
+        if (currentMediaIndex >= 0 && currentMediaIndex < mediaItems.size &&
+            !thumbnailLazyGridState.isScrollInProgress &&
+            (currentMediaIndex != thumbnailLazyGridState.firstVisibleItemIndex ||
+                thumbnailLazyGridState.firstVisibleItemScrollOffset != 0)
+        ) {
+            thumbnailLazyGridState.scrollToItem(currentMediaIndex)
         }
     }
 
@@ -401,6 +397,7 @@ fun Thumbnail(
                         derivedStateOf { swipeThumbnail && isPlayerExpanded() }
                     }
 
+                    key(mediaMetadata?.id) {
                     LazyHorizontalGrid(
                         state = thumbnailLazyGridState,
                         rows = GridCells.Fixed(1),
@@ -412,12 +409,12 @@ fun Thumbnail(
                             Modifier.fillMaxSize()
                         }
                     ) {
-                        items(
+                        itemsIndexed(
                             items = mediaItems,
-                            key = { item ->
-                                item.mediaId.ifEmpty { "unknown_${item.hashCode()}" }
-                            }
-                        ) { item ->
+                            key = { index, item ->
+                                thumbnailArtworkKey(mediaMetadata?.id, index, item.mediaId)
+                            },
+                        ) { _, item ->
                             ThumbnailItem(
                                 item = item,
                                 dimensions = dimensions,
@@ -434,6 +431,7 @@ fun Thumbnail(
                                 showArtworkCastButton = !showPlayerModeBar,
                             )
                         }
+                    }
                     }
                 }
             }
@@ -498,6 +496,15 @@ private fun ThumbnailHeader(
         }
     }
 }
+
+/**
+ * Include the currently playing song in each carousel key. Compose LazyGrid
+ * otherwise anchors the previously centered item by ID when it moves to the
+ * "previous" slot, briefly flashing its cover before scrollToItem runs.
+ * The index also keeps repeated occurrences of the same queue item distinct.
+ */
+internal fun thumbnailArtworkKey(activeTrackId: String?, position: Int, itemId: String): String =
+    "${activeTrackId.orEmpty()}:${position}:${itemId}"
 
 /**
  * Individual thumbnail item in the carousel.
@@ -664,17 +671,19 @@ private fun ThumbnailImage(
             }
             .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        AsyncImage(
-            model = ImageRequest.Builder(LocalContext.current)
-                .data(artworkUri)
-                .memoryCachePolicy(CachePolicy.ENABLED)
-                .diskCachePolicy(CachePolicy.ENABLED)
-                .networkCachePolicy(CachePolicy.ENABLED)
-                .build(),
-            contentDescription = null,
-            contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
-            modifier = Modifier.fillMaxSize()
-        )
+        key(artworkUri) {
+            AsyncImage(
+                model = ImageRequest.Builder(LocalContext.current)
+                    .data(artworkUri)
+                    .memoryCachePolicy(CachePolicy.ENABLED)
+                    .diskCachePolicy(CachePolicy.ENABLED)
+                    .networkCachePolicy(CachePolicy.ENABLED)
+                    .build(),
+                contentDescription = null,
+                contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
+                modifier = Modifier.fillMaxSize(),
+            )
+        }
     }
 }
 

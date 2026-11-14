@@ -31,6 +31,13 @@ internal object PlayerVideoModePolicy {
         hasPlayableClip: Boolean,
     ): Boolean = enabled && expanded && hasPlayableClip
 
+    /** The persistent user choice survives songs without clips or temporary
+     * Cast, but actual video is displayed only for a verified clip.
+     */
+    fun lockedVideoForTrack(
+        modeEnabled: Boolean, preferVideo: Boolean, playableClip: Boolean, casting: Boolean,
+    ): Boolean = modeEnabled && preferVideo && playableClip && !casting
+
     /** Do not request video for a local/uploaded track, Cast, or malformed ID. */
     fun canProbeVideo(videoId: String?, enabled: Boolean, localOrUploaded: Boolean, casting: Boolean): Boolean =
         enabled && !localOrUploaded && !casting &&
