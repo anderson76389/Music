@@ -16,6 +16,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
+import androidx.media3.common.TrackSelectionParameters
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
 import androidx.media3.datasource.DefaultDataSource
@@ -52,6 +53,21 @@ internal data class PlayerVideoPreview(
     val clip: PlayerVideoClip? = null,
     val lookupFinished: Boolean = false,
 )
+
+/** Apply the stored ceiling to HLS variants as well as directly resolved clips.
+ * The video preview is prebuffered in a tiny/no-surface window, so leave the
+ * viewport unconstrained and prefer the best supported video track within cap.
+ * The audio service is separate and its track quality is not modified.
+ */
+internal fun highestAvailableVideoTracks(
+    current: TrackSelectionParameters,
+    maxHeight: Int,
+): TrackSelectionParameters = current.buildUpon()
+    .setMaxVideoSize(Int.MAX_VALUE, maxHeight)
+    .clearViewportSizeConstraints()
+    .setForceHighestSupportedBitrate(true)
+    .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+    .build()
 
 /**
  * Probes proactively while the mini player is shown, instead of starting two
@@ -203,10 +219,9 @@ internal fun rememberPreparedVideoPlayer(
                 .apply {
                     // HLS variants are adaptive and can exceed the extractor's
                     // chosen direct-format limit unless ExoPlayer also caps height.
-                    trackSelectionParameters = trackSelectionParameters.buildUpon()
-                        .setMaxVideoSize(Int.MAX_VALUE, selected.maxHeight)
-                        .setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
-                        .build()
+                    trackSelectionParameters = highestAvailableVideoTracks(
+                        trackSelectionParameters, selected.maxHeight,
+                    )
                     volume = 0f
                     playWhenReady = false
                     setMediaItem(

@@ -7,7 +7,6 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -30,12 +29,11 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.io.File
 
 class ApkUpdateActivity : ComponentActivity() {
     private val downloads by lazy { requireNotNull(getSystemService(DownloadManager::class.java)) }
     private val preferences by lazy { getSharedPreferences("apk-update", MODE_PRIVATE) }
-    private val apk by lazy { File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates/Apple Music.apk") }
+    private val apk by lazy { ApkUpdateStorage.apkFile(this) }
     private var message by mutableStateOf("")
     private var ready by mutableStateOf(false)
     private var busy by mutableStateOf(false)
