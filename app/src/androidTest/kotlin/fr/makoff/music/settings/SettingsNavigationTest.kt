@@ -100,6 +100,52 @@ class SettingsNavigationTest {
         return instrumentation.uiAutomation.rootInActiveWindow?.let(::find)
     }
 
+    /**
+     * A previous, independent instrumentation suite makes the blue artwork
+     * fixture. The real backup/restore check executed between suites may
+     * restore the WorkManager row without preserving this test-owned image.
+     * Recreate only that local fixture before navigating to Download history:
+     * the UI must still decode and actually draw the saved file URI.
+     */
+    private fun ensureHistoryArtworkFixture() {
+        val title = "Liked album routing test"
+        val work = runBlocking(kotlinx.coroutines.Dispatchers.IO) {
+            androidx.work.WorkManager.getInstance(context)
+                .getWorkInfosByTag(fr.makoff.music.downloads.FolderAudioDownloads.TAG).get()
+                .firstOrNull {
+                    it.state == androidx.work.WorkInfo.State.SUCCEEDED &&
+                        it.tags.contains(fr.makoff.music.downloads.FolderAudioDownloads.TITLE_TAG + title)
+                }
+        }
+        assertNotNull("Completed download-history fixture exists", work)
+        val uri = android.net.Uri.parse(requireNotNull(work!!.outputData.getString("thumbnail")))
+        assertEquals("file", uri.scheme)
+        val path = java.io.File(requireNotNull(uri.path))
+        assertTrue(
+            "Artwork fixture must stay in app-private test storage",
+            path.canonicalPath.startsWith(context.filesDir.canonicalPath + "/history-liked-cover-"),
+        )
+        if (!path.isFile) {
+            val image = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+            try {
+                image.eraseColor(android.graphics.Color.BLUE)
+                path.outputStream().use {
+                    assertTrue("Blue fixture encoded", image.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it))
+                }
+            } finally {
+                image.recycle()
+            }
+        }
+        val decoded = android.graphics.BitmapFactory.decodeFile(path.absolutePath)
+        assertNotNull("Artwork fixture is decodable after backup restore", decoded)
+        try {
+            val pixel = decoded!!.getPixel(decoded.width / 2, decoded.height / 2)
+            assertTrue("Artwork fixture is blue", android.graphics.Color.blue(pixel) > 140 && android.graphics.Color.red(pixel) < 90)
+        } finally {
+            decoded?.recycle()
+        }
+    }
+
     private fun captureFailure() {
         runCatching {
             device.executeShellCommand("screencap -p /data/local/tmp/settings-failure.png")
@@ -522,6 +568,7 @@ class SettingsNavigationTest {
             R.string.download_settings to R.string.folder_audio_recent,
         )
         for ((screen, marker) in screens) {
+            if (screen == R.string.download_settings) ensureHistoryArtworkFixture()
             open(screen)
             findText(marker)
             device.executeShellCommand("screencap -p /data/local/tmp/settings-glass-${screen}.png")
@@ -804,6 +851,7 @@ class SettingsNavigationTest {
                         }
                         if (!blueCoverRendered) SystemClock.sleep(150)
                     }
+                    if (!blueCoverRendered) captureFailure()
                     assertTrue("Actual history artwork rendered", blueCoverRendered)
                     assertTrue("Cover is beside the song title", requireNotNull(imageBounds).right <= titleBounds.left)
                     device.executeShellCommand("screencap -p /data/local/tmp/download-history-covers.png")
