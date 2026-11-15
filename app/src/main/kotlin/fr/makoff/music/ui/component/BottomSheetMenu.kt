@@ -128,6 +128,11 @@ fun BottomSheetMenu(
 ) {
     val focusManager = LocalFocusManager.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    // Unmount the modal immediately after dismissal. A hidden ModalBottomSheet
+    // retained across opens can finish its previous hide animation AFTER the
+    // next tap and close the newly reopened menu (observed in Android 11).
+    // Every new open receives a fresh SheetState and freshly composed content.
+    if (!state.isVisible) return
     val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
 
     AnimatedBottomSheet(
