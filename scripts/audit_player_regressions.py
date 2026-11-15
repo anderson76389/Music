@@ -107,7 +107,8 @@ extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
 assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
 assert '?: DownloadAudioFormat.BEST' in download_format
-assert 'else format.selector' in download_engine
+assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
+assert 'else -> format.selector' in download_format
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
