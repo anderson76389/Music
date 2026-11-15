@@ -75,7 +75,10 @@ assert "thumbnailArtworkKey(mediaMetadata?.id, index, item.mediaId)" in thumbnai
 assert "thumbnailLazyGridState.scrollToItem(currentMediaIndex)" in thumbnail, "Swipe recentering lost"
 assert "val visibleGradientColors" in player
 assert "if (gradientColorsOwner == mediaMetadata?.id)" in player
-assert "targetState = visibleGradientColors.ifEmpty { defaultGradientColors }" in player
+assert 'label = "gradientTop"' in player
+assert 'label = "gradientMiddle"' in player
+assert 'label = "gradientBottom"' in player
+assert 'label = "gradientBackground"' not in player, "Old song artwork retained by whole-layer crossfade"
 assert "artworkThemeColor = visibleGradientColors.firstOrNull()" in player
 assert "var tapHighlight by remember" in player
 assert "if (tapHighlight) {" in player and "tapHighlight = false" in player
@@ -88,6 +91,7 @@ menu = (src / "ui/component/BottomSheetMenu.kt").read_text()
 assert "modifier = modifier.fillMaxHeight()" not in menu
 assert ".heightIn(max = screenHeight * 0.78f)" in menu
 assert "scrimColor = Color.Black.copy(alpha = 0.18f)" in menu
+assert "if (!state.isVisible) return" in menu, "Menu must get fresh modal state after closing"
 # New-player-design three dots live in the collapsed queue bar, not in PlayerMoreMenuButton.
 queue_ui = (src / "ui/player/Queue.kt").read_text()
 assert "var moreTapHighlight by remember" in queue_ui
