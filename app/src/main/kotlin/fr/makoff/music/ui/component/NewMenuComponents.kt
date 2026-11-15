@@ -7,7 +7,6 @@ package fr.makoff.music.ui.component
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,12 +23,9 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -40,7 +36,7 @@ import androidx.compose.ui.unit.dp
 private fun NewActionButton(
     icon: @Composable () -> Unit,
     text: String,
-    onClick: @Composable () -> Unit,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     backgroundColor: Color = MaterialTheme.colorScheme.surfaceVariant,
@@ -58,19 +54,10 @@ private fun NewActionButton(
         label = "content",
     )
 
-    var performAction by remember { mutableStateOf(false) }
-
-    if (performAction) {
-        onClick()
-        LaunchedEffect(Unit) {
-            performAction = false
-        }
-    }
-
     Card(
         modifier =
             modifier
-                .clickable(enabled = enabled) { performAction = true },
+                .clickable(enabled = enabled, onClick = onClick),
         colors =
             CardDefaults.cardColors(
                 containerColor = animatedBackground,
@@ -101,9 +88,8 @@ private fun NewActionButton(
                 style = MaterialTheme.typography.labelMedium,
                 color = animatedContent,
                 textAlign = TextAlign.Center,
-                maxLines = 2,
+                maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.basicMarquee(),
             )
         }
     }
@@ -115,7 +101,9 @@ fun NewActionGrid(
     modifier: Modifier = Modifier,
     columns: Int = 3,
 ) {
-    val rows = actions.chunked(columns)
+    // Keep action names readable on compact phones, without changing the tablet layout.
+    val effectiveColumns = if (LocalConfiguration.current.screenWidthDp < 420) minOf(columns, 2) else columns
+    val rows = actions.chunked(effectiveColumns)
 
     Column(
         modifier = modifier,
@@ -151,7 +139,7 @@ fun NewActionGrid(
                     )
                 }
 
-                repeat(columns - row.size) {
+                repeat(effectiveColumns - row.size) {
                     Spacer(modifier = Modifier.weight(1f))
                 }
             }
@@ -162,7 +150,7 @@ fun NewActionGrid(
 data class NewAction(
     val icon: @Composable () -> Unit,
     val text: String,
-    val onClick: @Composable () -> Unit,
+    val onClick: () -> Unit,
     val enabled: Boolean = true,
     val backgroundColor: Color = Color.Unspecified,
     val contentColor: Color = Color.Unspecified,
