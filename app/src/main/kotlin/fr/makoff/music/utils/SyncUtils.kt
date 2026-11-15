@@ -260,6 +260,8 @@ class SyncUtils @Inject constructor(
     private val queuedOperationKeys = ConcurrentHashMap.newKeySet<String>()
 
     @Volatile private var cachedLastSyncEpoch: Long = 0L
+    @Volatile private var fullSyncInProgress = false
+    @Volatile private var fullSyncHadFailure = false
     private val playlistsBeingModified = ConcurrentHashMap<String, AtomicInteger>()
     private val playlistEditMutex = Mutex()
     // Local intent survives app restarts and YouTube Music's eventually-consistent
@@ -508,6 +510,7 @@ class SyncUtils @Inject constructor(
             } catch (e: Exception) {
                 Timber.w(e, "Attempt ${attempt + 1}/$maxRetries failed")
                 if (attempt == maxRetries - 1) {
+                    if (fullSyncInProgress) fullSyncHadFailure = true
                     return Result.failure(e)
                 }
                 delay(currentDelay)
@@ -549,13 +552,10 @@ class SyncUtils @Inject constructor(
                 return@launch
             }
 
+            // The cooldown begins only after the sync actually finishes,
+            // never when a job is merely queued. An offline or failed sync
+            // must be retryable on the next app open.
             enqueue(SyncOperation.FullSync)
-
-            val now = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
-            cachedLastSyncEpoch = now
-            context.safeDataStoreEdit { settings ->
-                settings[LastFullSyncKey] = now
-            }
         }
     }
 
@@ -774,6 +774,8 @@ class SyncUtils @Inject constructor(
         }
 
 
+        fullSyncInProgress = true
+        fullSyncHadFailure = false
         try {
             // Sync in sequence to avoid overwhelming the API and database
             executeSyncLikedSongs()
@@ -803,11 +805,24 @@ class SyncUtils @Inject constructor(
             executeSyncSavedPlaylists()
             delay(DB_OPERATION_DELAY_MS)
 
-            Timber.d("Full sync completed successfully")
+            if (fullSyncHadFailure) {
+                Timber.w("Full sync incomplete; preserving previous successful sync timestamp for retry")
+            } else {
+                val completedAt = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+                // Persist only a completed pass; a queued request must never
+                // prevent follow-up syncing for the entire cooldown period.
+                context.safeDataStoreEdit { settings ->
+                    settings[LastFullSyncKey] = completedAt
+                }
+                cachedLastSyncEpoch = completedAt
+                Timber.d("Full sync completed successfully")
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Error during full sync")
+        } finally {
+            fullSyncInProgress = false
         }
     }
 
