@@ -64,7 +64,10 @@ class SettingsNavigationTest {
             current()?.let { return it }
             SystemClock.sleep(100)
         } while (SystemClock.elapsedRealtime() < appearDeadline)
-        val x = device.displayWidth / 2
+        // Scroll along the padded edge, away from clickable setting rows. On slow
+        // API 36 emulators a swipe starting on a destructive action can otherwise
+        // trigger its confirmation dialog and hide the control being searched.
+        val x = (device.displayWidth - (8 * context.resources.displayMetrics.density).toInt()).coerceAtLeast(1)
         val top = device.displayHeight * 3 / 10
         val bottom = device.displayHeight * 8 / 10
         for ((forward, limit) in listOf(true to 30, false to 60)) {
@@ -161,8 +164,9 @@ class SettingsNavigationTest {
         val safeTop = (96 * context.resources.displayMetrics.density).toInt()
         repeat(3) {
             if (title.top < safeTop) {
-                device.swipe(device.displayWidth / 2, device.displayHeight * 3 / 10,
-                    device.displayWidth / 2, device.displayHeight * 8 / 10, 40)
+                val safeX = (device.displayWidth - (8 * context.resources.displayMetrics.density).toInt()).coerceAtLeast(1)
+                device.swipe(safeX, device.displayHeight * 3 / 10,
+                    safeX, device.displayHeight * 8 / 10, 40)
                 device.waitForIdle()
                 title = findText(id)
             }
@@ -209,9 +213,12 @@ class SettingsNavigationTest {
         }
         if (!activated) captureFailure()
         assertTrue("Activate $text", activated)
-        instrumentation.waitForIdleSync()
+        // Compose can animate indefinitely (marquee, glass or video thumbnails).
+        // waitForIdleSync() has no timeout and previously stalled the API 36 run
+        // for fifteen minutes. Keep the UI callback assertion, then use a bounded
+        // idle wait: later checks still verify each setting's actual persisted value.
         SystemClock.sleep(500)
-        device.waitForIdle()
+        device.waitForIdle(2_500L)
     }
 
     private fun assertNoRemovedEntries() {
@@ -303,7 +310,14 @@ class SettingsNavigationTest {
         val originalLocales = if (android.os.Build.VERSION.SDK_INT >= 33)
             localeManager?.applicationLocales else null
         try {
-            runBlocking { context.dataStore.edit { it[LiquidGlassEnabledKey] = true; it[DarkModeKey] = DarkMode.OFF.name } }
+            // The Library chip is a persisted user preference. Select the
+            // playlists view explicitly so this visual test is independent of
+            // another test's last-used library tab.
+            runBlocking { context.dataStore.edit {
+                it[LiquidGlassEnabledKey] = true
+                it[DarkModeKey] = DarkMode.OFF.name
+                it[ChipSortTypeKey] = LibraryFilter.PLAYLISTS.name
+            } }
             context.startActivity(Intent(context, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK))
             val account = device.wait(Until.findObject(By.desc(label(R.string.account))), 15000)
@@ -345,6 +359,7 @@ class SettingsNavigationTest {
                 original[LiquidGlassEnabledKey]?.let { prefs[LiquidGlassEnabledKey] = it } ?: prefs.remove(LiquidGlassEnabledKey)
                 original[DarkModeKey]?.let { prefs[DarkModeKey] = it } ?: prefs.remove(DarkModeKey)
                 original[AppLanguageKey]?.let { prefs[AppLanguageKey] = it } ?: prefs.remove(AppLanguageKey)
+                original[ChipSortTypeKey]?.let { prefs[ChipSortTypeKey] = it } ?: prefs.remove(ChipSortTypeKey)
             } }
             val activity = resumedMainActivity()
             instrumentation.runOnMainSync { activity?.finish() }
