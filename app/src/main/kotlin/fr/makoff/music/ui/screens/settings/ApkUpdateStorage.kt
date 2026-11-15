@@ -20,8 +20,14 @@ internal object ApkUpdateStorage {
     private const val PREFS = "apk-update"
     private const val STAGED_APK = "updates/Apple Music.apk"
 
-    fun apkFile(context: Context): File =
-        File(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), STAGED_APK)
+    fun apkFile(context: Context): File {
+        // A null external-files directory must never resolve to a relative
+        // "updates/..." path. DownloadManager requires a real, app-owned path.
+        val directory = requireNotNull(context.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS)) {
+            "Le stockage temporaire des mises à jour est indisponible"
+        }
+        return File(directory, STAGED_APK)
+    }
 
     fun isObsoleteInstaller(
         installedPackage: String,
@@ -31,6 +37,25 @@ internal object ApkUpdateStorage {
     ): Boolean =
         archivePackage == installedPackage && archiveVersion != null &&
             archiveVersion > 0 && archiveVersion <= installedVersion
+
+    /**
+     * An update the user abandons or that fails verification should not leave
+     * a ~200 MB installer in app storage. The only affected file is the fixed,
+     * app-private staging path and its own DownloadManager row; never touch
+     * exported media, downloads, offline tracks, or the player cache.
+     */
+    fun discardPendingInstaller(context: Context) {
+        val preferences = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val downloadId = preferences.getLong("id", -1L)
+        if (downloadId >= 0L) {
+            runCatching {
+                context.getSystemService(DownloadManager::class.java)?.remove(downloadId)
+            }
+        }
+        val staged = apkFile(context)
+        if (staged.isFile && !staged.delete()) return
+        preferences.edit().remove("id").remove("url").apply()
+    }
 
     @Suppress("DEPRECATION")
     fun cleanupIfInstalled(context: Context) {
