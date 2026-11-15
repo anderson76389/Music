@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +40,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -126,6 +127,7 @@ fun BottomSheetMenu(
     background: Color = MaterialTheme.colorScheme.surface,
 ) {
     val focusManager = LocalFocusManager.current
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
 
     AnimatedBottomSheet(
@@ -137,6 +139,8 @@ fun BottomSheetMenu(
         sheetState = sheetState,
         containerColor = background,
         contentColor = MaterialTheme.colorScheme.onSurface,
+        // Keep the player and its artwork visibly present behind the menu.
+        scrimColor = Color.Black.copy(alpha = 0.18f),
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -146,11 +150,12 @@ fun BottomSheetMenu(
                     .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
             )
         },
-        modifier = modifier.fillMaxHeight()
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = screenHeight * 0.78f)
                 .padding(horizontal = 20.dp)
         ) {
             state.content(this)
