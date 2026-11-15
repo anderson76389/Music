@@ -455,8 +455,9 @@ class SyncUtils @Inject constructor(
         SyncOperation.EpisodesForLater,
         SyncOperation.SavedPlaylists,
         SyncOperation.AutoSyncPlaylists,
-        is SyncOperation.SinglePlaylist,
         -> true
+        // FullSync does not cover an arbitrary, explicitly selected playlist.
+        is SyncOperation.SinglePlaylist -> false
         else -> false
     }
 
@@ -806,6 +807,9 @@ class SyncUtils @Inject constructor(
 
             executeSyncSavedPlaylists()
             delay(DB_OPERATION_DELAY_MS)
+            // A full sync coalesces the auto-sync playlist task, so it must
+            // perform that operation before recording completion.
+            executeSyncAutoSyncPlaylists()
 
             if (fullSyncHadFailure || requestedAccount == null || currentSyncAccountKey() != requestedAccount) {
                 Timber.w("Full sync incomplete or account changed; keep the previous completion time")
