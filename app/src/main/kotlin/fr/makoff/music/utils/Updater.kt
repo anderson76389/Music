@@ -78,7 +78,7 @@ object Updater {
      * Get the current app's architecture and variant
      */
     private fun getCurrentAppVariant(): Pair<String, String> {
-        val architecture = BuildConfig.ARCHITECTURE
+        val architecture = android.os.Build.SUPPORTED_ABIS.firstOrNull { it in setOf("arm64-v8a", "armeabi-v7a", "x86_64", "x86") } ?: BuildConfig.ARCHITECTURE
         val variant = if (BuildConfig.CAST_AVAILABLE) "gms" else "foss"
         return architecture to variant
     }
@@ -108,6 +108,12 @@ object Updater {
             
             // Parse architecture and variant from filename
             val (arch, variant) = when {
+                // Small signed APKs use the same application ID and key as the
+                // universal build, so updates replace the existing installation.
+                name.startsWith("Apple.Music-") && name.endsWith(".apk") &&
+                    name.removePrefix("Apple.Music-").removeSuffix(".apk") in
+                    setOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64") ->
+                    name.removePrefix("Apple.Music-").removeSuffix(".apk") to "gms"
                 name == "Apple.Music.apk" || name == "Apple Music.apk" || name == "Metrolist.apk" || name == "MAKOFF-Music-universal.apk" -> "universal" to "gms"
                 name == "MAKOFF-Music.apk" -> "universal" to "foss"
                 name == "MAKOFF-Music-Google-Cast.apk" -> "universal" to "gms"
@@ -240,7 +246,10 @@ object Updater {
     }
 
     internal fun selectUpdateAsset(assets: List<ReleaseAsset>, architecture: String, variant: String): ReleaseAsset? =
-        assets.firstOrNull { it.name == "Apple.Music.apk" && it.architecture == "universal" }
+        // Prefer the exact device ABI when available (HONOR arm64 among them).
+        // Preserve the universal APK for old releases or unsupported devices.
+        assets.firstOrNull { it.name == "Apple.Music-$architecture.apk" && it.variant == variant }
+            ?: assets.firstOrNull { it.name == "Apple.Music.apk" && it.architecture == "universal" }
             ?: assets.firstOrNull { it.name == "Apple Music.apk" && it.architecture == "universal" }
             ?: assets.firstOrNull { it.name == "Metrolist.apk" && it.architecture == "universal" }
             ?: assets.firstOrNull { it.architecture == architecture && it.variant == variant }

@@ -43,6 +43,11 @@ class ApkUpdateActivity : ComponentActivity() {
     private var offerInstall = true
     private val installer = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         message = getString(R.string.apk_update_install_result)
+        // On ROMs returning from the installer without killing our process,
+        // promptly reclaim a successfully installed update, not just at next boot.
+        lifecycleScope.launch(Dispatchers.IO) {
+            runCatching { ApkUpdateStorage.cleanupIfInstalled(this@ApkUpdateActivity) }
+        }
     }
     private val permission = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         awaitingPermission = false
@@ -63,7 +68,7 @@ class ApkUpdateActivity : ComponentActivity() {
                         if (busy) LinearProgressIndicator(progress = { fraction }, modifier = Modifier.fillMaxWidth())
                         if (ready) Button(onClick = ::installApk, enabled = !busy) { Text(stringResource(R.string.apk_update_install)) }
                         if (!busy && !ready) Button(onClick = { startDownload(retry = true) }) { Text(stringResource(R.string.apk_update_retry)) }
-                        TextButton(onClick = { finish() }) { Text(stringResource(R.string.close)) }
+                        TextButton(onClick = ::closeAndDiscard) { Text(stringResource(R.string.close)) }
                     }
                 }
             }
@@ -129,8 +134,23 @@ class ApkUpdateActivity : ComponentActivity() {
                 throw cancelled
             } catch (error: Exception) {
                 message = error.message ?: getString(R.string.apk_update_download_failed)
+                // Failed network downloads and invalid/signature-mismatched
+                // installers must never occupy permanent app storage.
+                withContext(Dispatchers.IO) {
+                    runCatching { ApkUpdateStorage.discardPendingInstaller(this@ApkUpdateActivity) }
+                }
                 busy = false
             }
+        }
+    }
+
+    private fun closeAndDiscard() {
+        poll?.cancel()
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                runCatching { ApkUpdateStorage.discardPendingInstaller(this@ApkUpdateActivity) }
+            }
+            finish()
         }
     }
 

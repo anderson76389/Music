@@ -46,6 +46,30 @@ class UpdaterTest {
         assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Music/releases/download/v1/Apple.Music.apk"))
     }
 
+    @Test fun deviceAbiGetsSmallerSignedPackageAndOthersKeepUniversalFallback() {
+        val prefix = "https://github.com/anderson76389/Music/releases/download/v13.7.0.123/"
+        val assets = Updater.parseAssets(JSONArray("""
+            [
+                {"name":"Apple.Music.apk","browser_download_url":"${prefix}Apple.Music.apk","size":224000000},
+                {"name":"Apple.Music-arm64-v8a.apk","browser_download_url":"${prefix}Apple.Music-arm64-v8a.apk","size":98000000},
+                {"name":"Apple.Music-armeabi-v7a.apk","browser_download_url":"${prefix}Apple.Music-armeabi-v7a.apk","size":88000000},
+                {"name":"Apple.Music-x86_64.apk","browser_download_url":"${prefix}Apple.Music-x86_64.apk","size":100000000},
+                {"name":"Apple.Music-x86.apk","browser_download_url":"${prefix}Apple.Music-x86.apk","size":94000000},
+                {"name":"Apple.Music-unknown.apk","browser_download_url":"${prefix}Apple.Music-unknown.apk","size":100000},
+                {"name":"Apple.Music-arm64-v8a.apk","browser_download_url":"https://example.com/foreign.apk","size":10}
+            ]
+        """))
+        assertEquals(5, assets.size)
+        assertEquals("Apple.Music-arm64-v8a.apk", Updater.selectUpdateAsset(assets, "arm64-v8a", "gms")?.name)
+        assertEquals("Apple.Music-armeabi-v7a.apk", Updater.selectUpdateAsset(assets, "armeabi-v7a", "gms")?.name)
+        assertEquals("Apple.Music-x86_64.apk", Updater.selectUpdateAsset(assets, "x86_64", "gms")?.name)
+        assertEquals("Apple.Music-x86.apk", Updater.selectUpdateAsset(assets, "x86", "gms")?.name)
+        assertEquals("Apple.Music.apk", Updater.selectUpdateAsset(assets, "mips64", "gms")?.name)
+        assertEquals("Apple.Music.apk", Updater.selectUpdateAsset(assets, "arm64-v8a", "foss")?.name)
+        assertEquals("universal", assets.first().architecture)
+        assertEquals("gms", assets[1].variant)
+    }
+
     @Test fun latestReleaseReadsPublishedAndroidCodeAndApk() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             if (request.url.encodedPath.endsWith("/releases/latest")) respond("""{

@@ -8,6 +8,9 @@ if (localPropertiesFile.exists()) {
 }
 
 val baseApplicationId = "fr.makoff.music"
+// Optional only during signed release publication: keep regular debug and
+// universal builds unchanged so existing smoke tests and sideloads stay valid.
+val publishAbiSpecificApks = System.getenv("MUSIC_ABI_SPLITS") == "true"
 val applicationIdOverride = System.getenv("MAKOFF_APPLICATION_ID")?.takeIf { it.isNotBlank() }
 val appNameOverride = System.getenv("MAKOFF_APP_NAME")?.takeIf { it.isNotBlank() }
 val buildCommit =
@@ -49,12 +52,28 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
 
-        ndk {
-            abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+        // The regular build remains universal. ABI split builds must not also
+        // set ndk.abiFilters: AGP treats simultaneous ABI filters and splits as
+        // conflicting configurations.
+        if (!publishAbiSpecificApks) {
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+            }
         }
 
 
         buildConfigField("String", "ARCHITECTURE", "\"universal\"")
+    }
+
+    splits {
+        abi {
+            isEnable = publishAbiSpecificApks
+            reset()
+            include("arm64-v8a", "armeabi-v7a", "x86", "x86_64")
+            // Older Music builds, and unknown device ABIs, can always upgrade
+            // using the signed universal APK.
+            isUniversalApk = true
+        }
     }
 
     flavorDimensions += listOf("variant")
