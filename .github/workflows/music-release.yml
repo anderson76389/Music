@@ -93,7 +93,8 @@ jobs:
           python3 scripts/collect_abi_apks.py app/build/outputs/apk/gms/release dist --universal dist/Apple.Music.apk
           for apk in dist/Apple.Music-*.apk; do
             "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --verbose --print-certs "$apk" > /dev/null
-            "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$apk" | grep -q "package: name='fr.makoff.music'"
+            "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$apk" > /tmp/music-abi-badging.txt
+            grep -q "package: name='fr.makoff.music'" /tmp/music-abi-badging.txt
           done
       - name: Préparer les APK stables pour les essais
         run: |
