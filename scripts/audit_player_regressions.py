@@ -88,6 +88,12 @@ menu = (src / "ui/component/BottomSheetMenu.kt").read_text()
 assert "modifier = modifier.fillMaxHeight()" not in menu
 assert ".heightIn(max = screenHeight * 0.78f)" in menu
 assert "scrimColor = Color.Black.copy(alpha = 0.18f)" in menu
+# New-player-design three dots live in the collapsed queue bar, not in PlayerMoreMenuButton.
+queue_ui = (src / "ui/player/Queue.kt").read_text()
+assert "var moreTapHighlight by remember" in queue_ui
+assert ".background(if (moreTapHighlight) textButtonColor.copy(alpha = 0.28f) else Color.Transparent)" in queue_ui
+assert "moreTapHighlight = true" in queue_ui
+assert "tint = TextBackgroundColor" in queue_ui
 
 # SoundProof must actually act on the player, including late Room hydration.
 soundproof = (src / "playback/SoundProofRepository.kt").read_text()
