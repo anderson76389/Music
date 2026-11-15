@@ -47,12 +47,34 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.security.MessageDigest
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+
+/** A remote deletion snapshot belongs to exactly one signed-in YouTube session.
+ * Never reuse the old unscoped files: an account switch could otherwise
+ * interpret the previous account's likes as removals from the current one.
+ * The digest is only a filename namespace; no cookie is written to disk here.
+ */
+internal fun accountScopedSyncSnapshotFileName(
+    snapshotName: String,
+    authUser: String,
+    cookie: String,
+): String? {
+    if (cookie.isBlank()) return null
+    val fingerprint = MessageDigest.getInstance("SHA-256")
+        .digest((authUser + "\u0000" + cookie).toByteArray(Charsets.UTF_8))
+        .take(12)
+        .joinToString("") { "%02x".format(it) }
+    return "$snapshotName-$fingerprint"
+}
 
 /** Apply a remote bookmark only after it matches the user's most recent local intent. */
 internal fun remoteBookmarkMatchesIntent(pending: Boolean?, remoteLiked: Boolean): Boolean =
@@ -237,7 +259,15 @@ class SyncUtils @Inject constructor(
     private val syncExecutionMutex = Mutex()
     private val queuedOperationKeys = ConcurrentHashMap.newKeySet<String>()
 
-    @Volatile private var cachedLastSyncEpoch: Long = 0L
+    // Each signed-in account has its own successful-sync cooldown; a
+    // global epoch would incorrectly skip the first sync after switching
+    // YouTube Music accounts.
+    private val scopedSyncEpochs = context.getSharedPreferences("ytm_account_sync_epochs", Context.MODE_PRIVATE)
+    private fun currentSyncAccountKey(): String? = accountScopedSyncSnapshotFileName(
+        "last_full_sync", YouTube.authUser.toString(), YouTube.cookie.orEmpty(),
+    )
+    @Volatile private var fullSyncInProgress = false
+    @Volatile private var fullSyncHadFailure = false
     private val playlistsBeingModified = ConcurrentHashMap<String, AtomicInteger>()
     private val playlistEditMutex = Mutex()
     // Local intent survives app restarts and YouTube Music's eventually-consistent
@@ -287,14 +317,36 @@ class SyncUtils @Inject constructor(
     }
 
     // Remote IDs seen by the last complete sync, used to tell remote removals from local-only additions.
+    private fun scopedSnapshot(name: String): File? {
+        require(name in SYNC_SNAPSHOTS)
+        val filename = accountScopedSyncSnapshotFileName(
+            name, YouTube.authUser.toString(), YouTube.cookie.orEmpty(),
+        ) ?: return null
+        return context.filesDir.resolve(filename)
+    }
+
     private fun readSyncSnapshot(name: String): Set<String>? =
         runCatching {
-            context.filesDir.resolve(name).takeIf { it.exists() }?.readLines()?.filterTo(mutableSetOf()) { it.isNotBlank() }
+            scopedSnapshot(name)?.takeIf(File::exists)?.readLines()
+                ?.filterTo(mutableSetOf()) { it.isNotBlank() }
         }.getOrNull()
 
     private fun writeSyncSnapshot(name: String, ids: Set<String>) {
-        runCatching { context.filesDir.resolve(name).writeText(ids.joinToString("\n")) }
-            .onFailure { Timber.w(it, "Failed to write sync snapshot $name") }
+        val target = scopedSnapshot(name) ?: return
+        runCatching {
+            // A crash mid-write must never leave a truncated remote snapshot:
+            // that could produce incorrect removals during the next sync.
+            val temporary = File.createTempFile("sync-snapshot-", ".tmp", context.filesDir)
+            try {
+                temporary.writeText(ids.joinToString("\n"))
+                Files.move(
+                    temporary.toPath(), target.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                )
+            } finally {
+                temporary.delete()
+            }
+        }.onFailure { Timber.w(it, "Failed to write sync snapshot $name") }
     }
     private fun markPlaylistModifying(playlistId: String) {
         playlistsBeingModified.getOrPut(playlistId) { AtomicInteger(0) }.incrementAndGet()
@@ -329,11 +381,6 @@ class SyncUtils @Inject constructor(
     }
 
     init {
-        syncScope.launch {
-            val loaded = context.dataStore.get(LastFullSyncKey, 0L)
-            cachedLastSyncEpoch = maxOf(cachedLastSyncEpoch, loaded)
-        }
-
         startProcessingQueue()
     }
 
@@ -407,9 +454,12 @@ class SyncUtils @Inject constructor(
         SyncOperation.PodcastSubscriptions,
         SyncOperation.EpisodesForLater,
         SyncOperation.SavedPlaylists,
-        SyncOperation.AutoSyncPlaylists,
-        is SyncOperation.SinglePlaylist,
         -> true
+        // Keep explicit playlist syncs queued: re-fetching auto-sync
+        // playlists during every full sync duplicates all saved-playlist
+        // requests, while skipping them loses explicit user operations.
+        SyncOperation.AutoSyncPlaylists,
+        is SyncOperation.SinglePlaylist -> false
         else -> false
     }
 
@@ -464,6 +514,7 @@ class SyncUtils @Inject constructor(
             } catch (e: Exception) {
                 Timber.w(e, "Attempt ${attempt + 1}/$maxRetries failed")
                 if (attempt == maxRetries - 1) {
+                    if (fullSyncInProgress) fullSyncHadFailure = true
                     return Result.failure(e)
                 }
                 delay(currentDelay)
@@ -498,20 +549,17 @@ class SyncUtils @Inject constructor(
                 return@launch
             }
 
-            val lastSync = context.dataStore.get(LastFullSyncKey, 0L)
-            val effectiveLastSync = maxOf(lastSync, cachedLastSyncEpoch)
+            val accountKey = currentSyncAccountKey() ?: return@launch
+            val lastSync = scopedSyncEpochs.getLong(accountKey, 0L)
             val currentTime = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
-            if (effectiveLastSync > 0 && (currentTime - effectiveLastSync) < SYNC_COOLDOWN) {
+            if (lastSync > 0 && (currentTime - lastSync) < SYNC_COOLDOWN) {
                 return@launch
             }
 
+            // The cooldown begins only after the sync actually finishes,
+            // never when a job is merely queued. An offline or failed sync
+            // must be retryable on the next app open.
             enqueue(SyncOperation.FullSync)
-
-            val now = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
-            cachedLastSyncEpoch = now
-            context.safeDataStoreEdit { settings ->
-                settings[LastFullSyncKey] = now
-            }
         }
     }
 
@@ -730,6 +778,9 @@ class SyncUtils @Inject constructor(
         }
 
 
+        fullSyncInProgress = true
+        fullSyncHadFailure = false
+        val requestedAccount = currentSyncAccountKey()
         try {
             // Sync in sequence to avoid overwhelming the API and database
             executeSyncLikedSongs()
@@ -759,11 +810,26 @@ class SyncUtils @Inject constructor(
             executeSyncSavedPlaylists()
             delay(DB_OPERATION_DELAY_MS)
 
-            Timber.d("Full sync completed successfully")
+            if (fullSyncHadFailure || requestedAccount == null || currentSyncAccountKey() != requestedAccount) {
+                Timber.w("Full sync incomplete or account changed; keep the previous completion time")
+            } else {
+                val completedAt = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
+                // The display's last-sync time remains global, while the
+                // cooldown itself is strictly isolated per YouTube account.
+                context.safeDataStoreEdit { settings ->
+                    settings[LastFullSyncKey] = completedAt
+                }
+                check(scopedSyncEpochs.edit().putLong(requestedAccount, completedAt).commit()) {
+                    "Could not persist per-account sync status"
+                }
+                Timber.d("Full sync completed successfully")
+            }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Timber.e(e, "Error during full sync")
+        } finally {
+            fullSyncInProgress = false
         }
     }
 

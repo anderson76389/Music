@@ -5,9 +5,29 @@ import fr.makoff.music.innertube.models.SongItem
 import fr.makoff.music.innertube.pages.PlaylistPage
 import fr.makoff.music.db.entities.PlaylistSongMap
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PlaylistSyncTest {
+    @Test
+    fun `remote snapshots never mix signed-in YouTube accounts`() {
+        val a = accountScopedSyncSnapshotFileName("sync_snapshot_liked_songs", "0", "SAPISID=account-a")
+        val b = accountScopedSyncSnapshotFileName("sync_snapshot_liked_songs", "1", "SAPISID=account-a")
+        val c = accountScopedSyncSnapshotFileName("sync_snapshot_liked_songs", "0", "SAPISID=account-b")
+        val same = accountScopedSyncSnapshotFileName("sync_snapshot_liked_songs", "0", "SAPISID=account-a")
+        assertEquals(a, same)
+        assertNotEquals(a, b)
+        assertNotEquals(a, c)
+        assertFalse(requireNotNull(a).contains("SAPISID"))
+        assertNull(accountScopedSyncSnapshotFileName("sync_snapshot_liked_songs", "0", ""))
+        // The new account has no saved remote snapshot yet, so it cannot
+        // remove older local-only likes based on a different account.
+        assertEquals(emptySet<String>(), idsRemovedRemotely(
+            listOf("liked-by-old-account"), null, setOf("liked-by-new-account"),
+        ))
+    }
     @Test
     fun `incomplete liked songs skip remote removals`() {
         assertEquals(false, hasCompleteLikedSongsResponse(fetchedCount = 296, advertisedCount = 321))

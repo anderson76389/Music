@@ -13,6 +13,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import java.io.File
 import java.io.FileOutputStream
+import java.io.InputStream
+import java.io.OutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipInputStream
 import java.util.zip.ZipOutputStream
@@ -21,6 +23,35 @@ internal object BackupArchive {
     const val SETTINGS = "settings.preferences_pb"
     private val entries = setOf(SETTINGS, InternalDatabase.DB_NAME,
         "${InternalDatabase.DB_NAME}-wal", "${InternalDatabase.DB_NAME}-shm", ArtistNameAliases.BACKUP_FILENAME)
+
+    // Backups contain metadata and settings, not downloaded music. Put finite
+    // limits on both individual entries and the total uncompressed contents.
+    // The limits apply *while* inflating, even when a ZIP header lies about size.
+    internal const val MAX_UNCOMPRESSED_BACKUP_BYTES = 1_073_741_824L
+    internal const val MAX_SETTINGS_BYTES = 8L * 1024 * 1024
+
+    internal fun maxEntryBytes(name: String): Long = when (name) {
+        SETTINGS, ArtistNameAliases.BACKUP_FILENAME -> MAX_SETTINGS_BYTES
+        InternalDatabase.DB_NAME -> 768L * 1024 * 1024
+        "${InternalDatabase.DB_NAME}-wal" -> 256L * 1024 * 1024
+        "${InternalDatabase.DB_NAME}-shm" -> 4L * 1024 * 1024
+        else -> 1L * 1024 * 1024
+    }
+
+    /** Stream without buffering a ZIP entry or trusting its declared length. */
+    internal fun copyEntryBounded(input: InputStream, output: OutputStream?, limit: Long): Long {
+        require(limit > 0) { "Backup size limit exceeded" }
+        val bytes = ByteArray(32 * 1024)
+        var written = 0L
+        while (true) {
+            val count = input.read(bytes)
+            if (count < 0) break
+            written += count
+            require(written <= limit) { "Backup entry exceeds size limit" }
+            output?.write(bytes, 0, count)
+        }
+        return written
+    }
 
     suspend fun readSettings(context: Context, bytes: ByteArray): Preferences =
         preferencesFile(context, bytes) { it.data.first() }
@@ -107,14 +138,30 @@ internal object BackupArchive {
             val stage = File(root, java.util.UUID.randomUUID().toString()).apply { check(mkdirs()) }
             try {
                 val seen = mutableSetOf<String>()
+                var unpackedBytes = 0L
                 val raw = requireNotNull(context.contentResolver.openInputStream(uri))
                 ZipInputStream(raw.buffered()).use { zip ->
                     while (true) {
                         val entry = zip.nextEntry ?: break
-                        if (entry.name in entries) {
-                            require(seen.add(entry.name)) { "Duplicate backup entry" }
-                            File(stage, entry.name).outputStream().use { zip.copyTo(it) }
+                        val remaining = MAX_UNCOMPRESSED_BACKUP_BYTES - unpackedBytes
+                        val allowance = minOf(maxEntryBytes(entry.name), remaining)
+                        require(allowance > 0L && (entry.size < 0L || entry.size <= allowance)) {
+                            "Backup entry is too large"
                         }
+                        val known = entry.name in entries
+                        if (known) require(!entry.isDirectory && seen.add(entry.name)) {
+                            "Duplicate or invalid backup entry"
+                        }
+                        val copied = if (known) {
+                            File(stage, entry.name).outputStream().use { destination ->
+                                copyEntryBounded(zip, destination, allowance)
+                            }
+                        } else {
+                            // Forward-compatible with unknown entries, but even
+                            // ignored data must not inflate without a size bound.
+                            copyEntryBounded(zip, null, allowance)
+                        }
+                        unpackedBytes += copied
                         zip.closeEntry()
                     }
                 }

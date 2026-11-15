@@ -122,7 +122,13 @@ class BackupRestoreViewModel @Inject constructor(
                     while (true) {
                         val entry = zip.nextEntry ?: break
                         if (entry.name == SETTINGS_FILENAME) {
-                            val prefs = BackupArchive.readSettings(context, zip.readBytes())
+                            // The preview must not read an arbitrarily large
+                            // compressed settings entry into memory.
+                            val settings = java.io.ByteArrayOutputStream()
+                            BackupArchive.copyEntryBounded(
+                                zip, settings, BackupArchive.MAX_SETTINGS_BYTES,
+                            )
+                            val prefs = BackupArchive.readSettings(context, settings.toByteArray())
                             val cookie = prefs[InnerTubeCookieKey]
                             val authenticated = cookie?.let { "SAPISID" in parseCookieString(it) } == true
                             return@runBlocking BackupPreviewInfo(
@@ -131,6 +137,13 @@ class BackupRestoreViewModel @Inject constructor(
                                 accountEmail = prefs[AccountEmailKey]?.takeIf(String::isNotBlank),
                                 cookie = if (authenticated) cookie else null,
                             )
+                        } else {
+                            // ZipInputStream.closeEntry() drains the entry.
+                            // Bound even skipped data before advancing.
+                            BackupArchive.copyEntryBounded(
+                                zip, null, BackupArchive.maxEntryBytes(entry.name),
+                            )
+                            zip.closeEntry()
                         }
                     }
                 }
