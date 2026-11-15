@@ -842,13 +842,13 @@
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
     <string name="download_quality_settings">Téléchargements</string>
     <string name="download_format_unified">Qualité et format des téléchargements</string>
-    <string name="download_format_unified_help">Un même format pour les fichiers et le hors ligne. M4A conserve AAC, FLAC convertit sans recréer les détails perdus, et Meilleure qualité choisit le meilleur codec disponible. Les fichiers existants restent inchangés.</string>
+    <string name="download_format_unified_help">Même format pour le hors ligne et les exports. « Meilleure qualité » choisit le meilleur flux disponible ; M4A conserve AAC ; FLAC ne restaure pas la qualité d\'origine.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>
     <string name="download_format_external">Format des fichiers exportés</string>
     <string name="download_format_best">Meilleure qualité disponible — format original</string>
     <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
     <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
-    <string name="download_format_help">Ces choix sont indépendants de la qualité de lecture. La qualité disponible dépend du morceau et de votre compte. Le FLAC est un vrai fichier sans perte après décodage, mais ne restaure pas les détails perdus dans une source compressée et occupe plus de place. M4A exige un flux M4A disponible, sans conversion depuis Opus. Les téléchargements existants sont conservés : supprimez le téléchargement puis relancez-le pour rechercher une meilleure source. Un export réutilise le fichier présent quand son format convient, ou le convertit en FLAC sans nouveau transfert.</string>
+    <string name="download_format_help">Le meilleur flux dépend du titre et du compte YouTube. M4A conserve le flux AAC disponible. FLAC convertit la source sans recréer la qualité perdue et utilise plus d\'espace. Pour améliorer un ancien téléchargement, supprimez-le puis téléchargez-le à nouveau.</string>
     <string name="liquid_glass_theme">Thème Liquid Glass</string>
     <string name="liquid_glass_theme_description">Active le thème verre dans toute l’application. Un redémarrage applique le changement.</string>
     <string name="apk_update_downloading">Téléchargement de la mise à jour…</string>
@@ -885,7 +885,7 @@
     <string name="content_network_section">Réseau et proxy</string>
     <string name="content_top_length">Nombre de titres du classement</string>
     <string name="appearance_managed_by_glass">Géré par Liquid Glass. Ce réglage devient disponible quand ce thème est désactivé.</string>
-    <string name="clear_image_cache_actual_help">Supprime les images mises en cache. Elles seront rechargées quand elles seront disponibles en ligne. Les fichiers audio et leurs pochettes intégrées sont conservés.</string>
+    <string name="clear_image_cache_actual_help">Supprimer les images en cache pour les recharger au besoin. Les musiques et pochettes intégrées sont conservées.</string>
     <string name="player_audio_quality_section">Qualité et traitement audio</string>
     <string name="player_transitions_section">Transitions et navigation dans les titres</string>
     <string name="player_queue_section">File d’attente et recommandations</string>
@@ -896,7 +896,7 @@
     <string name="appearance_navigation_section">Navigation et bibliothèque</string>
     <string name="appearance_player_section">Lecteur plein écran</string>
     <string name="appearance_gestures_section">Gestes et commandes</string>
-    <string name="playback_quality_high_help">Qualité audio maximale disponible pour votre session YouTube. Les téléchargements restent inchangés.</string>
+    <string name="playback_quality_high_help">Meilleur flux audio disponible pour votre compte. Hors ligne inchangé.</string>
     <string name="history_minimum_listen">Écoute minimale pour l’historique</string>
     <string name="download_choose_quality">Qualité du téléchargement</string>
     <string name="download_choice_best_help">Meilleur flux audio disponible pour ce titre et votre session YouTube, sans conversion avec perte supplémentaire.</string>
@@ -932,7 +932,7 @@
     <string name="player_video_theme_cover">Couleurs de la pochette</string>
     <string name="player_video_theme_glass">Liquid Glass</string>
     <string name="soundproof_skip_ai_title">SoundProof : ignorer les artistes IA</string>
-    <string name="soundproof_skip_ai_description">Ignore les artistes signalés IA par SoundProof. Les votes communautaires peuvent se tromper.</string>
+    <string name="soundproof_skip_ai_description">Ignore les artistes signalés IA. Votes communautaires non vérifiés.</string>
     <string name="player_video_theme_preview">Aperçu du lecteur</string>
     <string name="player_video_theme_preview_note">Aperçu interactif. Le mode Pochette suit chaque morceau.</string>
     <string name="player_video_theme_effects">Couleurs et effets</string>
