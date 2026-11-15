@@ -68,6 +68,14 @@ jobs:
           path: app/build/outputs/apk/androidTest/gms/debug/*.apk
           if-no-files-found: error
 
+      - name: Vérifier les APK allégés par architecture
+        run: |
+          # Normal debug APKs were already uploaded above for Android 11/15/16.
+          # The release-only ABI configuration must also compile successfully
+          # in every PR and must not bundle irrelevant .so files.
+          MUSIC_ABI_SPLITS=true ./gradlew :app:assembleGmsDebug
+          python3 scripts/collect_abi_apks.py app/build/outputs/apk/gms/debug "$RUNNER_TEMP/music-abi-debug"
+
   apk-smoke:
     name: Installation et démarrage Android ${{ matrix.api }}
     strategy:
