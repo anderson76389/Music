@@ -236,9 +236,6 @@ fun Thumbnail(
     // Pre-calculate text color based on background style
     val textBackgroundColor = getTextColor(playerBackground)
 
-    // Grid state
-    val thumbnailLazyGridState = rememberLazyGridState()
-
     // Calculate media items data - memoized
     val mediaItemsData by remember(
         playerConnection.player.currentMediaItemIndex,
@@ -253,6 +250,14 @@ fun Thumbnail(
 
     val mediaItems = mediaItemsData.items
     val currentMediaIndex = mediaItemsData.currentIndex
+
+    // A freshly composed LazyGrid defaults to item 0 (the PREVIOUS song when
+    // the carousel holds previous/current/next). The old side-effect jumped
+    // to the middle only after its first draw: the exact stale-cover flash.
+    // Give every track its own scroll state, already centered before layout.
+    val thumbnailLazyGridState = key(mediaMetadata?.id) {
+        rememberLazyGridState(initialFirstVisibleItemIndex = currentMediaIndex.coerceAtLeast(0))
+    }
 
     // Snap behavior - created once per grid state
     val thumbnailSnapLayoutInfoProvider = remember(thumbnailLazyGridState) {

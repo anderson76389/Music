@@ -522,6 +522,9 @@ fun BottomSheetPlayer(
     var gradientColors by remember {
         mutableStateOf<List<Color>>(emptyList())
     }
+    // Palette sampling happens asynchronously. Never render the preceding
+    // track's palette while the newly selected cover is still loading.
+    var gradientColorsOwner by remember { mutableStateOf<String?>(null) }
     val gradientColorsCache = remember { mutableMapOf<String, List<Color>>() }
 
     if (!canSkipNext && automix.isNotEmpty()) {
@@ -544,11 +547,14 @@ fun BottomSheetPlayer(
     val defaultGradientColors = if (glassMode) listOf(Color(0xFF242426), Color(0xFF1C1C1E))
         else listOf(MaterialTheme.colorScheme.surface, MaterialTheme.colorScheme.surfaceVariant)
     val fallbackColor = if (glassMode) Color(0xFF242426).toArgb() else MaterialTheme.colorScheme.surface.toArgb()
+    val visibleGradientColors =
+        if (gradientColorsOwner == mediaMetadata?.id) gradientColors else defaultGradientColors
 
     LaunchedEffect(mediaMetadata?.id, playerBackground, glassMode, selectorTheme) {
         // Sample every song's artwork for the selector, regardless of the
         // player's own background setting.
         if (playerBackground == PlayerBackgroundStyle.GRADIENT || selectorTheme == PlayerVideoThemeMode.COVER) {
+            gradientColorsOwner = mediaMetadata?.id
             gradientColors = gradientColorsCache["${mediaMetadata?.id}_$glassMode"] ?: defaultGradientColors
             val currentMetadata = mediaMetadata
             if (currentMetadata != null && currentMetadata.thumbnailUrl != null) {
@@ -592,6 +598,7 @@ fun BottomSheetPlayer(
                 }
             }
         } else {
+            gradientColorsOwner = mediaMetadata?.id
             gradientColors = emptyList()
         }
     }
@@ -878,13 +885,28 @@ fun BottomSheetPlayer(
                     }
 
                     PlayerBackgroundStyle.GRADIENT -> {
-                        AnimatedContent(
-                            targetState = gradientColors.ifEmpty { defaultGradientColors },
-                            transitionSpec = {
-                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
-                            },
-                            label = "gradientBackground",
-                        ) { colors ->
+                        // AnimatedContent kept the OLD song's complete blurred
+                        // artwork layer alive during its 800 ms fade-out, even
+                        // when the new thumbnail was keyed correctly. Never
+                        // crossfade entire artwork layers between track IDs.
+                        // Animate only solid palette colors (no stale image).
+                        val palette = visibleGradientColors.ifEmpty { defaultGradientColors }
+                        val gradientTop by animateColorAsState(
+                            targetValue = palette.firstOrNull() ?: Color.Black,
+                            animationSpec = tween(260),
+                            label = "gradientTop",
+                        )
+                        val gradientMiddle by animateColorAsState(
+                            targetValue = palette.getOrElse(1) { palette.firstOrNull() ?: Color.Black },
+                            animationSpec = tween(260),
+                            label = "gradientMiddle",
+                        )
+                        val gradientBottom by animateColorAsState(
+                            targetValue = palette.getOrElse(2) { Color.Black },
+                            animationSpec = tween(260),
+                            label = "gradientBottom",
+                        )
+                        val colors = listOf(gradientTop, gradientMiddle, gradientBottom)
                             if (colors.isNotEmpty()) {
                                 val gradientColorStops =
                                     if (colors.size >= 3) {
@@ -943,7 +965,6 @@ fun BottomSheetPlayer(
                                     )
                                 }
                             }
-                        }
                     }
 
                     else -> {
@@ -1728,7 +1749,7 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
-                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                artworkThemeColor = visibleGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
                                 customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
@@ -1809,7 +1830,7 @@ fun BottomSheetPlayer(
                                 videoModeEnabled = playerVideoModeEnabled,
                                 selectorTheme = selectorTheme,
                                 appDarkTheme = LocalLiquidGlassEnabled.current || useDarkTheme,
-                                artworkThemeColor = gradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
+                                artworkThemeColor = visibleGradientColors.firstOrNull() ?: MaterialTheme.colorScheme.primary,
                                 customThemeColor = Color(selectorCustomColorInt),
                                 videoPreview = videoPreview,
                                 videoPlayer = preparedVideoPlayer,
@@ -1908,14 +1929,27 @@ private fun PlayerMoreMenuButton(
     val navController = LocalNavController.current
     val menuState = LocalMenuState.current
     val bottomSheetPageState = LocalBottomSheetPageState.current
-    // Default ripple is scoped to the tap and cannot remain stuck behind a modal sheet.
+    // Do not retain a pressed ripple while an Android modal owns input.
+    // Highlight only for a brief tap, not while the menu is open.
+    var tapHighlight by remember { mutableStateOf(false) }
+    LaunchedEffect(tapHighlight) {
+        if (tapHighlight) {
+            delay(160L)
+            tapHighlight = false
+        }
+    }
     Box(
         contentAlignment = Alignment.Center,
         modifier =
             Modifier
                 .size(40.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .clickable {
+                .background(if (tapHighlight) idleIconColor.copy(alpha = 0.15f) else Color.Transparent)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                ) {
+                    tapHighlight = true
                     menuState.show {
                         PlayerMenu(
                             mediaMetadata = mediaMetadata,

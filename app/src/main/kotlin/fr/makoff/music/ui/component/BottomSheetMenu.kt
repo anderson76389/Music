@@ -6,13 +6,12 @@
 package fr.makoff.music.ui.component
 
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
-import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -40,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
@@ -103,11 +103,17 @@ fun AnimatedBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier.liquidGlass(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), chrome = true, showBorder = false),
+        // A ModalBottomSheet lives in a separate Android dialog window.
+        // Haze/ChromeGlass cannot reliably sample the player behind that
+        // window; applying it to the full modal produced a nearly black
+        // empty area instead of the visible album artwork.
+        // Keep the same rounded Material3 sheet, with a translucent surface.
+        modifier = modifier,
         sheetState = sheetState,
         sheetMaxWidth = sheetMaxWidth,
         shape = shape,
-        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor,
+        containerColor = if (LocalLiquidGlassEnabled.current)
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.90f) else containerColor,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
         scrimColor = scrimColor,
@@ -126,6 +132,12 @@ fun BottomSheetMenu(
     background: Color = MaterialTheme.colorScheme.surface,
 ) {
     val focusManager = LocalFocusManager.current
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    // Unmount the modal immediately after dismissal. A hidden ModalBottomSheet
+    // retained across opens can finish its previous hide animation AFTER the
+    // next tap and close the newly reopened menu (observed in Android 11).
+    // Every new open receives a fresh SheetState and freshly composed content.
+    if (!state.isVisible) return
     val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
 
     AnimatedBottomSheet(
@@ -137,6 +149,8 @@ fun BottomSheetMenu(
         sheetState = sheetState,
         containerColor = background,
         contentColor = MaterialTheme.colorScheme.onSurface,
+        // Keep the player and its artwork visibly present behind the menu.
+        scrimColor = Color.Black.copy(alpha = 0.18f),
         dragHandle = {
             Box(
                 modifier = Modifier
@@ -146,11 +160,12 @@ fun BottomSheetMenu(
                     .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f))
             )
         },
-        modifier = modifier.fillMaxHeight()
+        modifier = modifier
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
+                .heightIn(max = screenHeight * 0.78f)
                 .padding(horizontal = 20.dp)
         ) {
             state.content(this)

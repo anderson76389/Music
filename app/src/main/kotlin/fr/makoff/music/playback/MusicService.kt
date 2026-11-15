@@ -839,6 +839,12 @@ class MusicService :
         currentSong.debounce(1000).collect(scope) { song ->
             updateNotification()
             updateWidgetUI(player.isPlaying)
+            // Queue media items can initially lack artist credits. Retry the
+            // SoundProof lookup as soon as Room hydrates the active song,
+            // otherwise the first track silently bypasses the enabled filter.
+            if (cachedSoundProofSkipAi && song?.song?.id == player.currentMediaItem?.mediaId) {
+                checkSoundProofForCurrent(player.currentMediaItem)
+            }
         }
 
         // Community database downloads happen only after explicit opt-in.
@@ -2258,6 +2264,10 @@ class MusicService :
             .ifEmpty {
                 currentMediaMetadata.value?.takeIf { it.id == candidateId }
                     ?.artists?.map { it.name }.orEmpty()
+            }
+            .ifEmpty {
+                currentSong.value?.takeIf { it.song.id == candidateId }
+                    ?.orderedArtists?.map { it.name }.orEmpty()
             }).filter { it.isNotBlank() }
         if (artists.isEmpty()) {
             consecutiveSoundProofAutoSkips = 0

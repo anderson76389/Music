@@ -117,10 +117,10 @@
     <string name="seek_forward_dynamic">+%1$d secondes en avant</string>
     <string name="seek_backward_dynamic">-%1$d secondes en arrière</string>
     <string name="seek_seconds_addup">Recherche progressive</string>
-    <string name="seek_seconds_addup_description">Lorsque cette option est activée, elle ajoute 5 secondes supplémentaires à chaque saut</string>
+    <string name="seek_seconds_addup_description">Ajouter 5 secondes à chaque saut successif.</string>
     <string name="close">Fermer</string>
     <string name="hide_player_thumbnail">Masquer la miniature du lecteur</string>
-    <string name="hide_player_thumbnail_desc">Remplacez la pochette de l\'album par le logo de l\'application dans le lecteur</string>
+    <string name="hide_player_thumbnail_desc">Afficher le logo à la place de la pochette.</string>
     <string name="disable_load_more_when_repeat_all">Désactiver le chargement automatique en mode « Répéter tout »</string>
     <string name="disable_load_more_when_repeat_all_desc">Ne rien ajouter automatiquement en répétition complète.</string>
     <string name="settings_section_ui">Interface</string>
@@ -288,7 +288,7 @@
     <string name="skip_silence_desc">Passez rapidement les passages silencieux des titres</string>
     <string name="skip_silence_instant">Ignorer instantanément les silences</string>
     <string name="skip_silence_instant_desc">Avancez pendant les silences au lieu d\'accélérer la lecture</string>
-    <string name="persistent_shuffle_desc">Gardez la lecture aléatoire activée lorsque vous démarrez de nouveaux titres ou playlists</string>
+    <string name="persistent_shuffle_desc">Conserver le mode aléatoire entre les lectures.</string>
     <string name="persistent_shuffle_title">Lecture aléatoire continue</string>
     <string name="error_playback_failed">Échec de la lecture</string>
     <string name="error_title">Erreur</string>
@@ -421,7 +421,7 @@
     <string name="pin_to_speed_dial">Épingler à l\'Accès Rapide</string>
     <string name="unpin_from_speed_dial">Détacher de l\'Accès Rapide</string>
     <string name="randomize_home_order">Ordre aléatoire de l\'écran d\'accueil</string>
-    <string name="randomize_home_order_desc">Réorganisez aléatoirement les sections de l\'écran d\'accueil en fonction de priorités pondérées</string>
+    <string name="randomize_home_order_desc">Mélanger l\'ordre des sections de l\'accueil.</string>
     <string name="daily_discover_sounds_like">Cela ressemble à %1$s</string>
     <string name="daily_discover_because_you_listen_to">Parce que vous écoutez %1$s</string>
     <string name="daily_discover_similar_to">Similaire à %1$s</string>
@@ -453,7 +453,7 @@
     <string name="subscribe_to_podcast">Enregistrer le podcast dans la bibliothèque</string>
     <string name="importing_playlist">Importation de la playlist…</string>
     <string name="widget_recognizer_name">Reconnaissance Musicale</string>
-    <string name="widget_recognizer_description">Identifiez les titres diffusés autour de vous directement depuis votre écran d\'accueil</string>
+    <string name="widget_recognizer_description">Reconnaître la musique autour de vous depuis l\'accueil.</string>
     <string name="widget_recognizer_tap_to_search">Appuyez pour identifier un titre</string>
     <string name="widget_recognizer_listening">En cours d\'écoute…</string>
     <string name="widget_recognizer_processing">Identification…</string>
@@ -523,7 +523,7 @@
     <string name="weekly_most_playlist_name">Tops de la semaine</string>
     <string name="monthly_most_playlist_name">Tops du mois</string>
     <string name="enable_song_cache">Activer le cache des titres</string>
-    <string name="enable_song_cache_desc">Mettre automatiquement les titres en cache pour une lecture plus rapide ultérieurement</string>
+    <string name="enable_song_cache_desc">Mettre les titres en cache pour une lecture plus rapide.</string>
     <string name="sleep_timer_stop_after_current_song_title">Arrêter à la fin du titre en cours</string>
     <string name="sleep_timer_stop_after_current_song_description">Attend que le titre en cours de lecture se termine avant de s\'arrêter</string>
     <string name="sleep_timer_fade_out_title">Fondu de sortie</string>
@@ -579,7 +579,7 @@
     <string name="android_auto_visible_sections">Sections visibles</string>
     <string name="android_auto_reorder_hint">Appuyez sur une section pour l\'activer ou la désactiver.\nAppuyez longuement sur la poignée de déplacement pour modifier l\'ordre. La première section s\'affichera par défaut</string>
     <string name="android_auto_youtube_playlists">Afficher les playlists suggérées par YouTube</string>
-    <string name="android_auto_youtube_playlists_desc">Afficher les playlists recommandées par YouTube Music dans la section « Playlists » lors de la navigation avec Android Auto</string>
+    <string name="android_auto_youtube_playlists_desc">Afficher les playlists YouTube Music conseillées dans Android Auto.</string>
     <string name="android_auto_target_playlist">Ajout rapide d\'une destination</string>
     <string name="android_auto_target_playlist_auto">Non défini</string>
     <string name="android_auto_target_playlist_not_set">Aucune playlist n\'est sélectionnée. Choisissez-en une dans les paramètres d\'Android Auto</string>
@@ -670,9 +670,9 @@
     <string name="stream_source_web_creator_desc">Client web Creator.</string>
     <string name="error_job_cancelled">La vidéo ne peut pas être lue. Réessayez ou passez au titre suivant.</string>
     <string name="enable_landscape_scaling">Mise à l\'échelle en paysage</string>
-    <string name="enable_landscape_scaling_desc">Adapter l\'interface utilisateur au mode paysage pour les écrans plus grands</string>
+    <string name="enable_landscape_scaling_desc">Adapter l\'interface aux grands écrans en paysage.</string>
     <string name="enable_dynamic_icon">Couleurs dynamiques des icônes</string>
-    <string name="enable_dynamic_icon_desc">Utilisez les couleurs dynamiques du thème pour l\'icône de l\'application. Lorsque cette option est désactivée, l\'icône affiche des couleurs unies.</string>
+    <string name="enable_dynamic_icon_desc">Adapter les couleurs de l\'icône au thème.</string>
     <string name="kmp_upgrade_title">Apple Music KMP %s est disponible</string>
     <string name="kmp_upgrade_warning">Apple Music KMP est encore en cours de développement. Vous pourriez rencontrer des bugs ou des fonctionnalités incomplètes.</string>
     <string name="kmp_upgrade_action">Essayez KMP</string>
@@ -717,7 +717,7 @@
     <string name="player_video_theme_cover">Couleurs de la pochette</string>
     <string name="player_video_theme_glass">Liquid Glass</string>
     <string name="soundproof_skip_ai_title">SoundProof : ignorer les artistes IA</string>
-    <string name="soundproof_skip_ai_description">Ignore les artistes signalés IA par SoundProof. Les votes communautaires peuvent se tromper.</string>
+    <string name="soundproof_skip_ai_description">Ignore les artistes signalés IA. Votes communautaires non vérifiés.</string>
     <string name="player_video_theme_preview">Aperçu du lecteur</string>
     <string name="player_video_theme_preview_note">Aperçu interactif. Le mode Pochette suit chaque morceau.</string>
     <string name="player_video_theme_effects">Couleurs et effets</string>

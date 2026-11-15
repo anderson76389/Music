@@ -23,6 +23,17 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
     }
 }
 
+/** Exact yt-dlp format expression. BEST always targets the highest audio
+ * available to this session; a low-quality request is explicit only.
+ * Local fixtures use "best" to exercise the file input path.
+ */
+internal fun selectYtDlpAudioFormat(format: DownloadAudioFormat, lowQuality: Boolean, isLocalSource: Boolean): String =
+    when {
+        isLocalSource -> "best"
+        lowQuality && format == DownloadAudioFormat.BEST -> "worstaudio"
+        else -> format.selector
+    }
+
 /** Android's FLAC MediaExtractor may expose decoded PCM; preserve the source codec. */
 internal fun sourceAudioMime(input: java.io.InputStream, trackMime: String): String {
     val header = ByteArray(4)
