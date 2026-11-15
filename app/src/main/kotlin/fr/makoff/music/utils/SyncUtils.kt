@@ -259,7 +259,13 @@ class SyncUtils @Inject constructor(
     private val syncExecutionMutex = Mutex()
     private val queuedOperationKeys = ConcurrentHashMap.newKeySet<String>()
 
-    @Volatile private var cachedLastSyncEpoch: Long = 0L
+    // Each signed-in account has its own successful-sync cooldown; a
+    // global epoch would incorrectly skip the first sync after switching
+    // YouTube Music accounts.
+    private val scopedSyncEpochs = context.getSharedPreferences("ytm_account_sync_epochs", Context.MODE_PRIVATE)
+    private fun currentSyncAccountKey(): String? = accountScopedSyncSnapshotFileName(
+        "last_full_sync", YouTube.authUser.toString(), YouTube.cookie.orEmpty(),
+    )
     @Volatile private var fullSyncInProgress = false
     @Volatile private var fullSyncHadFailure = false
     private val playlistsBeingModified = ConcurrentHashMap<String, AtomicInteger>()
@@ -375,11 +381,6 @@ class SyncUtils @Inject constructor(
     }
 
     init {
-        syncScope.launch {
-            val loaded = context.dataStore.get(LastFullSyncKey, 0L)
-            cachedLastSyncEpoch = maxOf(cachedLastSyncEpoch, loaded)
-        }
-
         startProcessingQueue()
     }
 
@@ -545,10 +546,10 @@ class SyncUtils @Inject constructor(
                 return@launch
             }
 
-            val lastSync = context.dataStore.get(LastFullSyncKey, 0L)
-            val effectiveLastSync = maxOf(lastSync, cachedLastSyncEpoch)
+            val accountKey = currentSyncAccountKey() ?: return@launch
+            val lastSync = scopedSyncEpochs.getLong(accountKey, 0L)
             val currentTime = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
-            if (effectiveLastSync > 0 && (currentTime - effectiveLastSync) < SYNC_COOLDOWN) {
+            if (lastSync > 0 && (currentTime - lastSync) < SYNC_COOLDOWN) {
                 return@launch
             }
 
@@ -776,6 +777,7 @@ class SyncUtils @Inject constructor(
 
         fullSyncInProgress = true
         fullSyncHadFailure = false
+        val requestedAccount = currentSyncAccountKey()
         try {
             // Sync in sequence to avoid overwhelming the API and database
             executeSyncLikedSongs()
@@ -805,16 +807,18 @@ class SyncUtils @Inject constructor(
             executeSyncSavedPlaylists()
             delay(DB_OPERATION_DELAY_MS)
 
-            if (fullSyncHadFailure) {
-                Timber.w("Full sync incomplete; preserving previous successful sync timestamp for retry")
+            if (fullSyncHadFailure || requestedAccount == null || currentSyncAccountKey() != requestedAccount) {
+                Timber.w("Full sync incomplete or account changed; keep the previous completion time")
             } else {
                 val completedAt = LocalDateTime.now().toEpochSecond(ZoneOffset.UTC)
-                // Persist only a completed pass; a queued request must never
-                // prevent follow-up syncing for the entire cooldown period.
+                // The display's last-sync time remains global, while the
+                // cooldown itself is strictly isolated per YouTube account.
                 context.safeDataStoreEdit { settings ->
                     settings[LastFullSyncKey] = completedAt
                 }
-                cachedLastSyncEpoch = completedAt
+                check(scopedSyncEpochs.edit().putLong(requestedAccount, completedAt).commit()) {
+                    "Could not persist per-account sync status"
+                }
                 Timber.d("Full sync completed successfully")
             }
         } catch (e: CancellationException) {
