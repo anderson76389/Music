@@ -7,6 +7,11 @@ adb install "$PREVIOUS_APK"
 adb shell dumpsys package "$package" > smoke-results/upgrade-before.txt
 adb install -r dist/Apple.Music.apk
 adb shell dumpsys package "$package" > smoke-results/upgrade-after.txt
+# The universal APK must be replaceable by the compact APK with exactly the
+# same package ID, version code and signing certificate. This also exercises
+# upgrading from an older universal installation to a per-ABI installation.
+adb install -r dist/Apple.Music-x86_64.apk
+adb shell dumpsys package "$package" > smoke-results/upgrade-compact-x86_64.txt
 compat_work=$(mktemp -d)
 mkdir -p "$compat_work/classes" "$compat_work/dex"
 javac -cp "$ANDROID_HOME/platforms/android-37.0/android.jar" -d "$compat_work/classes" scripts/compat/QueueFormatProbe.java scripts/compat/DownloadEngineProbe.java
@@ -28,10 +33,12 @@ import os
 import re
 before = Path('smoke-results/upgrade-before.txt').read_text()
 after = Path('smoke-results/upgrade-after.txt').read_text()
+compact = Path('smoke-results/upgrade-compact-x86_64.txt').read_text()
 def value(text, key):
     return re.search(rf'{key}=([^\s]+)', text).group(1)
 assert int(value(after, 'versionCode')) == int(os.environ['MUSIC_VERSION_CODE'])
 assert int(value(after, 'versionCode')) > int(value(before, 'versionCode'))
+assert value(compact, 'versionCode') == value(after, 'versionCode')
 assert re.search(r'firstInstallTime=(.*)', before).group(1) == re.search(r'firstInstallTime=(.*)', after).group(1)
 print('UPGRADE_OK: même installation, même signature acceptée, versionCode supérieur')
 PY
