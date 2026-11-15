@@ -106,3 +106,24 @@ for screen, headings in {
     assert groups == headings, (screen, groups)
     assert 'title = stringResource(R.string.misc)' not in source
     print(f'PASS: {screen} coherent section order and headings')
+
+
+# Guard against inert-looking controls and update shortcuts that bypass the installer.
+new_actions = (k/'ui/component/NewMenuComponents.kt').read_text()
+assert 'onClick: @Composable () -> Unit' not in new_actions
+assert 'onClick: () -> Unit' in new_actions
+assert '.clickable(enabled = enabled, onClick = onClick)' in new_actions
+assert 'performAction' not in new_actions
+assert 'effectiveColumns = if (LocalConfiguration.current.screenWidthDp < 420)' in new_actions
+for path in ('ui/screens/settings/SettingsScreen.kt', 'ui/screens/settings/AccountSettings.kt'):
+    source = (k/path).read_text()
+    assert 'ApkUpdateActivity.intent(context, downloadUrl)' in source, path
+    assert 'uriHandler.openUri(downloadUrl)' not in source, path
+for path in ('ui/player/Queue.kt', 'ui/screens/playlist/LocalPlaylistScreen.kt'):
+    source = (k/path).read_text()
+    assert 'Modifier.size(48.dp).draggableHandle()' in source, path
+    assert not re.search(r'onClick\s*=\s*\{\s*\}', source), path
+selector = (k/'ui/component/SongDropdownSelect.kt').read_text()
+assert 'onClick = { /* no-op */ }' not in selector
+assert 'Text(\n                        text = stringResource(R.string.song_dropdown_more_results, remainingCount)' in selector
+print('PASS: menu actions dispatch directly; compact labels, drag handles and integrated update shortcuts guarded')
