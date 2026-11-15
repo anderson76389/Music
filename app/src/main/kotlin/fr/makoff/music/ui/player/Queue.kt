@@ -311,13 +311,26 @@ fun Queue(
 
                     Spacer(modifier = Modifier.weight(1f))
 
+                    // Previously this button was permanently filled, making
+                    // the three dots look selected even before any tap.
+                    var moreTapHighlight by remember { mutableStateOf(false) }
+                    LaunchedEffect(moreTapHighlight) {
+                        if (moreTapHighlight) {
+                            delay(160L)
+                            moreTapHighlight = false
+                        }
+                    }
                     Box(
                         modifier =
                             Modifier
                                 .size(buttonSize)
                                 .clip(CircleShape)
-                                .background(textButtonColor)
-                                .clickable {
+                                .background(if (moreTapHighlight) textButtonColor.copy(alpha = 0.28f) else Color.Transparent)
+                                .clickable(
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                ) {
+                                    moreTapHighlight = true
                                     menuState.show {
                                         PlayerMenu(
                                             mediaMetadata = mediaMetadata,
@@ -339,7 +352,7 @@ fun Queue(
                             painter = painterResource(id = R.drawable.more_vert),
                             contentDescription = stringResource(R.string.more_options),
                             modifier = Modifier.size(iconSize),
-                            tint = iconButtonColor,
+                            tint = TextBackgroundColor,
                         )
                     }
                 }
