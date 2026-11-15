@@ -35,6 +35,8 @@ assert "settings[LastFullSyncKey]" not in auto
 assert "fullSyncHadFailure" in full
 assert "currentSyncAccountKey() != requestedAccount" in full
 assert "scopedSyncEpochs.edit().putLong(requestedAccount, completedAt).commit()" in full
+assert "executeSyncAutoSyncPlaylists()" in full, "Full sync coalesces but skipped auto-sync playlists"
+assert "is SyncOperation.SinglePlaylist -> false" in sync, "Full sync must not swallow an arbitrary playlist request"
 
 # A ZIP can lie about its size or contain a compression bomb. Bound *actual*
 # bytes inflated into staging AND the preview's in-memory settings.
