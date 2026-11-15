@@ -6,7 +6,6 @@
 package fr.makoff.music.ui.component
 
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
-import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -104,11 +103,17 @@ fun AnimatedBottomSheet(
 
     ModalBottomSheet(
         onDismissRequest = onDismissRequest,
-        modifier = modifier.liquidGlass(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp), chrome = true, showBorder = false),
+        // A ModalBottomSheet lives in a separate Android dialog window.
+        // Haze/ChromeGlass cannot reliably sample the player behind that
+        // window; applying it to the full modal produced a nearly black
+        // empty area instead of the visible album artwork.
+        // Keep the same rounded Material3 sheet, with a translucent surface.
+        modifier = modifier,
         sheetState = sheetState,
         sheetMaxWidth = sheetMaxWidth,
         shape = shape,
-        containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor,
+        containerColor = if (LocalLiquidGlassEnabled.current)
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.90f) else containerColor,
         contentColor = contentColor,
         tonalElevation = tonalElevation,
         scrimColor = scrimColor,
