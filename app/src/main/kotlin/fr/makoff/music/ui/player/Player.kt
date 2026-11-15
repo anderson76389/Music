@@ -885,13 +885,28 @@ fun BottomSheetPlayer(
                     }
 
                     PlayerBackgroundStyle.GRADIENT -> {
-                        AnimatedContent(
-                            targetState = visibleGradientColors.ifEmpty { defaultGradientColors },
-                            transitionSpec = {
-                                fadeIn(tween(800)).togetherWith(fadeOut(tween(800)))
-                            },
-                            label = "gradientBackground",
-                        ) { colors ->
+                        // AnimatedContent kept the OLD song's complete blurred
+                        // artwork layer alive during its 800 ms fade-out, even
+                        // when the new thumbnail was keyed correctly. Never
+                        // crossfade entire artwork layers between track IDs.
+                        // Animate only solid palette colors (no stale image).
+                        val palette = visibleGradientColors.ifEmpty { defaultGradientColors }
+                        val gradientTop by animateColorAsState(
+                            targetValue = palette.firstOrNull() ?: Color.Black,
+                            animationSpec = tween(260),
+                            label = "gradientTop",
+                        )
+                        val gradientMiddle by animateColorAsState(
+                            targetValue = palette.getOrElse(1) { palette.firstOrNull() ?: Color.Black },
+                            animationSpec = tween(260),
+                            label = "gradientMiddle",
+                        )
+                        val gradientBottom by animateColorAsState(
+                            targetValue = palette.getOrElse(2) { Color.Black },
+                            animationSpec = tween(260),
+                            label = "gradientBottom",
+                        )
+                        val colors = listOf(gradientTop, gradientMiddle, gradientBottom)
                             if (colors.isNotEmpty()) {
                                 val gradientColorStops =
                                     if (colors.size >= 3) {
@@ -950,7 +965,6 @@ fun BottomSheetPlayer(
                                     )
                                 }
                             }
-                        }
                     }
 
                     else -> {
