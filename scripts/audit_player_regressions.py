@@ -91,6 +91,9 @@ menu = (src / "ui/component/BottomSheetMenu.kt").read_text()
 assert "modifier = modifier.fillMaxHeight()" not in menu
 assert ".heightIn(max = screenHeight * 0.78f)" in menu
 assert "scrimColor = Color.Black.copy(alpha = 0.18f)" in menu
+assert "modifier = modifier.liquidGlass(" not in menu, "Cross-window glass hides the album behind the dialog"
+assert "MaterialTheme.colorScheme.surface.copy(alpha = 0.90f)" in menu
+
 assert "if (!state.isVisible) return" in menu, "Menu must get fresh modal state after closing"
 # New-player-design three dots live in the collapsed queue bar, not in PlayerMoreMenuButton.
 queue_ui = (src / "ui/player/Queue.kt").read_text()
