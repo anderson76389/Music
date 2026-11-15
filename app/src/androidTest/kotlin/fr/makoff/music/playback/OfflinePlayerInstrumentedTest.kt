@@ -536,6 +536,10 @@ class OfflinePlayerInstrumentedTest {
                 main { active.player.currentMediaItem?.mediaId })
             println("PLAYER_MENU_OK: menu dismisses back to expanded player with the same track")
             clickDescription(R.string.more_options)
+            assertNotNull(
+                "Player menu must reopen after Back, not disappear with the prior hide animation",
+                device.wait(Until.findObject(By.text(context.getString(R.string.start_radio))), 5000),
+            )
             var eq = device.wait(Until.findObject(By.text(context.getString(R.string.equalizer))), 3000)
             for (attempt in 0 until 8) {
                 if (eq != null) break
