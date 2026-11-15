@@ -39,16 +39,15 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p previous-apk
-          # Download previous stable APK regardless of historical or new filename.
-          gh release download --repo "$GITHUB_REPOSITORY" --pattern '*.apk' --dir previous-apk
-          # Never select an architecture-specific previous APK for the
-          # universal upgrade check: our smoke emulator is x86_64.
-          previous_apk=previous-apk/Apple.Music.apk
-          if [ ! -f "$previous_apk" ]; then previous_apk=previous-apk/Metrolist.apk; fi
-          if [ ! -f "$previous_apk" ]; then
-            previous_apk=$(find previous-apk -maxdepth 1 -type f -name '*.apk' -print -quit)
+          # Fetch exactly ONE previous universal APK. Downloading all future
+          # per-ABI assets would waste hundreds of MB on each release build.
+          if gh release download --repo "$GITHUB_REPOSITORY" --pattern 'Apple.Music.apk' --dir previous-apk; then
+            previous_apk=previous-apk/Apple.Music.apk
+          else
+            gh release download --repo "$GITHUB_REPOSITORY" --pattern 'Metrolist.apk' --dir previous-apk
+            previous_apk=previous-apk/Metrolist.apk
           fi
-          test -n "$previous_apk" && test -f "$previous_apk"
+          test -f "$previous_apk"
           echo "PREVIOUS_APK=$previous_apk" >> "$GITHUB_ENV"
           python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk "$previous_apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
