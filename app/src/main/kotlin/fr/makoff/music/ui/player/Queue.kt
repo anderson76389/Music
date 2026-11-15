@@ -607,9 +607,9 @@ fun Queue(
                                                 }
                                             }
                                             if (!locked) {
-                                                IconButton(
-                                                    onClick = { },
-                                                    modifier = Modifier.draggableHandle(),
+                                                Box(
+                                                    modifier = Modifier.size(48.dp).draggableHandle(),
+                                                    contentAlignment = Alignment.Center,
                                                 ) {
                                                     Icon(
                                                         painter = painterResource(R.drawable.drag_handle),

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -115,18 +116,11 @@ fun SongSelectDropdown(
                 }
 
                 if (remainingCount > 0) {
-                    DropdownMenuItem(
-                        onClick = { /* no-op */ },
-                        enabled = false,
-                        text = {
-                            Text(
-                                text = stringResource(
-                                    R.string.song_dropdown_more_results,
-                                    remainingCount,
-                                ),
-                            )
-                        },
-                        modifier = Modifier.fillMaxWidth()
+                    // Informational footer, not a disabled action that looks clickable.
+                    Text(
+                        text = stringResource(R.string.song_dropdown_more_results, remainingCount),
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+                        color = androidx.compose.material3.MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
