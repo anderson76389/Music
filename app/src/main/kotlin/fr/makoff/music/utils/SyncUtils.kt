@@ -47,12 +47,34 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import timber.log.Timber
+import java.security.MessageDigest
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
+import java.io.File
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import javax.inject.Inject
 import javax.inject.Singleton
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
+
+/** A remote deletion snapshot belongs to exactly one signed-in YouTube session.
+ * Never reuse the old unscoped files: an account switch could otherwise
+ * interpret the previous account's likes as removals from the current one.
+ * The digest is only a filename namespace; no cookie is written to disk here.
+ */
+internal fun accountScopedSyncSnapshotFileName(
+    snapshotName: String,
+    authUser: String,
+    cookie: String,
+): String? {
+    if (cookie.isBlank()) return null
+    val fingerprint = MessageDigest.getInstance("SHA-256")
+        .digest((authUser + "\u0000" + cookie).toByteArray(Charsets.UTF_8))
+        .take(12)
+        .joinToString("") { "%02x".format(it) }
+    return "$snapshotName-$fingerprint"
+}
 
 /** Apply a remote bookmark only after it matches the user's most recent local intent. */
 internal fun remoteBookmarkMatchesIntent(pending: Boolean?, remoteLiked: Boolean): Boolean =
@@ -287,14 +309,36 @@ class SyncUtils @Inject constructor(
     }
 
     // Remote IDs seen by the last complete sync, used to tell remote removals from local-only additions.
+    private fun scopedSnapshot(name: String): File? {
+        require(name in SYNC_SNAPSHOTS)
+        val filename = accountScopedSyncSnapshotFileName(
+            name, YouTube.authUser.toString(), YouTube.cookie.orEmpty(),
+        ) ?: return null
+        return context.filesDir.resolve(filename)
+    }
+
     private fun readSyncSnapshot(name: String): Set<String>? =
         runCatching {
-            context.filesDir.resolve(name).takeIf { it.exists() }?.readLines()?.filterTo(mutableSetOf()) { it.isNotBlank() }
+            scopedSnapshot(name)?.takeIf(File::exists)?.readLines()
+                ?.filterTo(mutableSetOf()) { it.isNotBlank() }
         }.getOrNull()
 
     private fun writeSyncSnapshot(name: String, ids: Set<String>) {
-        runCatching { context.filesDir.resolve(name).writeText(ids.joinToString("\n")) }
-            .onFailure { Timber.w(it, "Failed to write sync snapshot $name") }
+        val target = scopedSnapshot(name) ?: return
+        runCatching {
+            // A crash mid-write must never leave a truncated remote snapshot:
+            // that could produce incorrect removals during the next sync.
+            val temporary = File.createTempFile("sync-snapshot-", ".tmp", context.filesDir)
+            try {
+                temporary.writeText(ids.joinToString("\n"))
+                Files.move(
+                    temporary.toPath(), target.toPath(),
+                    StandardCopyOption.REPLACE_EXISTING,
+                )
+            } finally {
+                temporary.delete()
+            }
+        }.onFailure { Timber.w(it, "Failed to write sync snapshot $name") }
     }
     private fun markPlaylistModifying(playlistId: String) {
         playlistsBeingModified.getOrPut(playlistId) { AtomicInteger(0) }.incrementAndGet()
