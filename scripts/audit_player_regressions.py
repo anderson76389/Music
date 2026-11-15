@@ -63,3 +63,52 @@ assert "override fun onMediaItemTransition(" in service
 assert "override fun onDestroy()" in service
 
 print("PASS: landscape controls share visibility, use one player, and mode toggles do not block on queue IO")
+
+
+# Cover transition invariants. A lazy carousel with items
+# [previous, current, next] must never start by rendering index 0
+# and only then asynchronously snap to index 1.
+thumbnail = (src / "ui/player/Thumbnail.kt").read_text()
+assert "key(mediaMetadata?.id) {" in thumbnail
+assert "rememberLazyGridState(initialFirstVisibleItemIndex = currentMediaIndex.coerceAtLeast(0))" in thumbnail
+assert "thumbnailArtworkKey(mediaMetadata?.id, index, item.mediaId)" in thumbnail
+assert "thumbnailLazyGridState.scrollToItem(currentMediaIndex)" in thumbnail, "Swipe recentering lost"
+assert "val visibleGradientColors" in player
+assert "if (gradientColorsOwner == mediaMetadata?.id)" in player
+assert "targetState = visibleGradientColors.ifEmpty { defaultGradientColors }" in player
+assert "artworkThemeColor = visibleGradientColors.firstOrNull()" in player
+assert "var tapHighlight by remember" in player
+assert "if (tapHighlight) {" in player and "tapHighlight = false" in player
+more_button = player.split("private fun PlayerMoreMenuButton(", 1)[1]
+assert ".background(if (tapHighlight)" in more_button
+assert "indication = null" in more_button, "Permanent ripple halo on 3-dot button"
+
+# The menu should not paint an opaque full-screen sheet over the player.
+menu = (src / "ui/component/BottomSheetMenu.kt").read_text()
+assert "modifier = modifier.fillMaxHeight()" not in menu
+assert ".heightIn(max = screenHeight * 0.78f)" in menu
+assert "scrimColor = Color.Black.copy(alpha = 0.18f)" in menu
+
+# SoundProof must actually act on the player, including late Room hydration.
+soundproof = (src / "playback/SoundProofRepository.kt").read_text()
+assert "SoundProofPolicy.isAnyArtistReportedAi(credits, known)" in soundproof
+assert "soundProofRepository.shouldSkipArtist(artists)" in service
+assert "player.seekToNextMediaItem()" in service
+assert "currentSong.value?.takeIf { it.song.id == candidateId }" in service
+assert "checkSoundProofForCurrent(player.currentMediaItem)" in service
+assert "SoundProofSkipAiKey" in service
+
+# Quality policy: max-quality is available for playback, internal downloads
+# and exports; FLAC is a conversion, not magically lossless YouTube audio.
+download_format = (src / "downloads/DownloadAudioFormat.kt").read_text()
+download_engine = (src / "downloads/FolderAudioDownload.kt").read_text()
+internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
+extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
+assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
+assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
+assert '?: DownloadAudioFormat.BEST' in download_format
+assert 'else format.selector' in download_engine
+assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
+assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
+assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
+print("PASS: current-song artwork, menu backdrop/interaction, late SoundProof metadata and highest-quality paths guarded")
