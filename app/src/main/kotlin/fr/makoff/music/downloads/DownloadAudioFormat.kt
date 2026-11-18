@@ -11,15 +11,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
-/** Output format, independent of streaming quality. FLAC cannot restore a lossy source. */
+/** Portable export formats; legacy enum values remain to finish queued jobs
+ * created by previous APKs, but cannot be selected for new downloads. */
 enum class DownloadAudioFormat(val label: Int, val selector: String) {
+    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]/bestaudio"),
+    AAC(R.string.download_format_aac, "bestaudio[ext=m4a]/bestaudio"),
+    // Compatibility only for pre-update queued WorkManager jobs.
     BEST(R.string.download_format_best, "bestaudio"),
-    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]"),
     FLAC(R.string.download_format_flac, "bestaudio"),
     ;
 
     companion object {
-        fun parse(value: String?): DownloadAudioFormat = entries.firstOrNull { it.name == value } ?: BEST
+        val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)
+        fun parse(value: String?): DownloadAudioFormat = entries.firstOrNull { it.name == value } ?: M4A
     }
 }
 
@@ -43,11 +47,13 @@ internal fun sourceAudioMime(input: java.io.InputStream, trackMime: String): Str
 
 /** Keep an explicit legacy format instead of silently replacing it with BEST. */
 internal fun Preferences.selectedDownloadFormat(): DownloadAudioFormat {
-    fun valid(value: String?) = DownloadAudioFormat.entries.firstOrNull { it.name == value }
+    fun valid(value: String?) = DownloadAudioFormat.portableChoices.firstOrNull { it.name == value }
+    // A previously saved BEST/FLAC preference automatically becomes M4A;
+    // never silently export Opus after updating to the portable-only picker.
     return valid(this[UnifiedDownloadFormatKey])
-        ?: valid(this[ExternalDownloadFormatKey])?.takeUnless { it == DownloadAudioFormat.BEST }
+        ?: valid(this[ExternalDownloadFormatKey])
         ?: valid(this[InternalDownloadFormatKey])
-        ?: DownloadAudioFormat.BEST
+        ?: DownloadAudioFormat.M4A
 }
 
 internal fun Context.selectedDownloadFormat(): DownloadAudioFormat = runBlocking(Dispatchers.IO) {
