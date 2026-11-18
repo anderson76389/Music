@@ -42,7 +42,7 @@ fun DownloadFormatSettings(
             },
             title = stringResource(R.string.download_format_unified),
             current = selected,
-            values = DownloadAudioFormat.entries.toList(),
+            values = DownloadAudioFormat.available,
             valueText = { stringResource(it.label) },
         )
     }
