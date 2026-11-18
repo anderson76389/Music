@@ -1217,6 +1217,10 @@ fun BottomSheetPlayer(
                 sliderPosition = null
             }
 
+            // Dispose old gesture handlers when the media ID changes; custom
+            // sliders capture onSeek callbacks in pointerInput(valueRange).
+            // Two consecutive songs may have identical durations.
+            key(activeTimelineId) {
             when (if (LocalLiquidGlassEnabled.current) SliderStyle.SLIM else sliderStyle) {
                 SliderStyle.DEFAULT -> {
                     Slider(
@@ -1294,6 +1298,7 @@ fun BottomSheetPlayer(
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                     )
                 }
+            }
             }
 
             Spacer(Modifier.height(4.dp))
