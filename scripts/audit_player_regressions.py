@@ -122,7 +122,9 @@ assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_for
 assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]")' in download_format
 assert 'if (value == AAC.name) AAC else M4A' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'request.addOption("--extract-audio").addOption("--audio-format", "aac")' in download_engine
+assert '"-map", "0:a:0", "-c:a", "copy", "-f", "adts"' in download_engine, "AAC remux must not re-encode"
+assert "nativeM4a.delete()" in download_engine
+assert '"aac" -> "audio/aac"' in download_engine
 assert 'audioQuality = AudioQuality.HIGH' in (src / "playback/DownloadUtil.kt").read_text()
 assert 'if (span > 0f' in (src / "ui/component/WavySlider.kt").read_text()
 assert 'enabled = videoModeEnabled' in (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
