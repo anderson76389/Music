@@ -397,14 +397,19 @@ private fun NewMiniPlayer(
                 MiniPlayerBackgroundStyle.BLUR -> {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         mediaMetadata?.thumbnailUrl?.let { url ->
-                            AsyncImage(
-                                model = url,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .blur(60.dp),
-                            )
+                            // Force a new image subtree for each track. The
+                            // asynchronous blur must never keep a previous
+                            // album cover alive during audio/video transitions.
+                            key(mediaMetadata?.id) {
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .blur(60.dp),
+                                )
+                            }
                             Box(
                                 Modifier
                                     .fillMaxSize()
