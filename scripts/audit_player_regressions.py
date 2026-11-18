@@ -135,7 +135,7 @@ assert 'format == DownloadAudioFormat.M4A' in download_engine
 assert 'request.addOption("--extract-audio")' in download_engine  # hidden legacy import only
 assert 'fun parse(value: String?): DownloadAudioFormat = M4A' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'check(output.extension.equals("m4a", ignoreCase = true))' in download_engine
+assert 'format != DownloadAudioFormat.M4A || output.extension.equals("m4a", ignoreCase = true)' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
