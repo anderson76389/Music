@@ -119,11 +119,11 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
                 initialize(context)
-                if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                // Original M4A/AAC needs no ffmpeg conversion; preserve quality.
             } catch (failure: LinkageError) {
                 throw IOException("Download engine initialization failed", failure)
             }
@@ -138,9 +138,7 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format != DownloadAudioFormat.M4A) {
-                request.addOption("--extract-audio").addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
-            }
+            // Highest native M4A only, no Opus, FLAC, re-encode or audio transcoding.
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
             if (cookie.isNotBlank()) {
@@ -152,24 +150,16 @@ internal object YtDlpAudioEngine {
             val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
-            check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "FLAC conversion failed" }
-            check(format != DownloadAudioFormat.M4A || output.extension == "m4a") { "M4A unavailable" }
+            check(output.extension.equals("m4a", ignoreCase = true)) { "AAC/M4A unavailable for this track" }
             output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
         source ?: return null
-        return when {
-            format == DownloadAudioFormat.BEST && source.extension.lowercase() == "webm" ->
-                download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
-                    format = DownloadAudioFormat.BEST) { }
-            format == DownloadAudioFormat.BEST -> source
-            format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
-            format == DownloadAudioFormat.M4A -> { source.delete(); null }
-            source.extension == "flac" -> source
-            else -> download(context, source.toURI().toString(), File(directory, "converted"), processId,
-                format = DownloadAudioFormat.FLAC) { }
-        }
+        // A cached Opus/FLAC/WebM download cannot be renamed as M4A; get
+        // YouTube's actual best AAC source instead. Never convert lossy Opus.
+        return source.takeIf { it.extension.equals("m4a", ignoreCase = true) }
+
     }
 }
 
