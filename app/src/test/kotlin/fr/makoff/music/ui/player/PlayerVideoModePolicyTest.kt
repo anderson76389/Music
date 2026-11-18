@@ -27,10 +27,10 @@ class PlayerVideoModePolicyTest {
         )
     }
 
-    @Test fun noClipKeepsHeaderEmptyWithoutClaimingVideoIsAvailable() {
+    @Test fun missingClipStillShowsBothTabsWithoutClaimingVideoIsPlayable() {
         assertTrue(PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
             PlayerVideoModePolicy.HeaderMode.LOADING)
-        assertFalse(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = false))
+        assertTrue(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = false))
     }
 
     @Test fun videoSelectorNeverOverlaysOldNowPlayingHeader() {
@@ -52,9 +52,9 @@ class PlayerVideoModePolicyTest {
         )
     }
 
-    @Test fun modeIsEnabledByDefaultOnlyForPlayableVideos() {
+    @Test fun selectedModeBarIsAlwaysVisibleEvenBeforeVideoLookup() {
         assertTrue(PlayerVideoModePolicy.showSelector(true, true, true))
-        assertFalse(PlayerVideoModePolicy.showSelector(true, true, false))
+        assertTrue(PlayerVideoModePolicy.showSelector(true, true, false))
     }
 
     @Test fun disablingModeAlwaysRestoresTheClassicHeader() {
