@@ -31,6 +31,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import fr.makoff.music.R
+import fr.makoff.music.ui.component.ReleaseChangesContent
+import fr.makoff.music.utils.currentReleaseChanges
 import fr.makoff.music.utils.ReleaseInfo
 import fr.makoff.music.utils.Updater
 
@@ -196,7 +198,13 @@ fun ReleaseItem(release: ReleaseInfo) {
             shape = RoundedCornerShape(16.dp)
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
-                MarkdownText(release.description)
+                if (currentReleaseChanges(release.description).isNotEmpty()) {
+                    ReleaseChangesContent(release.description)
+                } else {
+                    // Preserve readable historic changelogs, whose older
+                    // GitHub releases did not have version-scoped sections.
+                    MarkdownText(release.description)
+                }
             }
         }
     }
