@@ -1409,7 +1409,19 @@ class MainActivity : FragmentActivity() {
                             }
                             AlertDialog(
                                 onDismissRequest = dismissUpdate,
-                                title = { Text(stringResource(R.string.update_available_title)) },
+                                title = {
+                                    Column {
+                                        Text(
+                                            text = stringResource(R.string.update_available_title),
+                                            style = MaterialTheme.typography.titleLarge,
+                                        )
+                                        Text(
+                                            text = "Version ${update.release.versionName}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
+                                },
                                 text = {
                                     Column(
                                         modifier =
@@ -1439,13 +1451,39 @@ class MainActivity : FragmentActivity() {
                                         }
                                         Text(
                                             text = stringResource(R.string.changelog),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.onSurface,
+                                            modifier = Modifier.padding(top = 18.dp, bottom = 10.dp),
                                         )
-                                        Text(
-                                            text = update.release.description.ifBlank { stringResource(R.string.changelog_empty) },
-                                            style = MaterialTheme.typography.bodySmall,
-                                        )
+                                        val highlights = remember(update.release.description) {
+                                            fr.makoff.music.utils.ReleaseHighlights.forPopup(update.release.description)
+                                        }
+                                        if (highlights.isEmpty()) {
+                                            Text(
+                                                text = stringResource(R.string.changelog_empty),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        } else {
+                                            highlights.forEach { highlight ->
+                                                Row(
+                                                    modifier = Modifier.padding(vertical = 5.dp),
+                                                    verticalAlignment = Alignment.Top,
+                                                ) {
+                                                    Text(
+                                                        text = "•",
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.padding(end = 10.dp),
+                                                    )
+                                                    Text(
+                                                        text = highlight,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 confirmButton = {
