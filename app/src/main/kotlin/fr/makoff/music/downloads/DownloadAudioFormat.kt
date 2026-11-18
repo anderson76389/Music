@@ -24,7 +24,11 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
 
     companion object {
         val userChoices: List<DownloadAudioFormat> = listOf(M4A)
-        fun parse(value: String?): DownloadAudioFormat = M4A
+        // Existing offline DownloadRequest URIs may explicitly contain BEST
+        // or FLAC. Honor that saved format on playback; only NEW user-facing
+        // selections are fixed to M4A.
+        fun parse(value: String?): DownloadAudioFormat =
+            entries.firstOrNull { it.name == value } ?: M4A
     }
 }
 
