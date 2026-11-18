@@ -19,7 +19,7 @@ for p in (r/'app').rglob('*'):
 assert 'audioQuality = AudioQuality.HIGH' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'context.selectedDownloadFormat()' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'context.selectedDownloadFormat()' in (k/'downloads/FolderAudioDownload.kt').read_text()
-assert 'fun parse(value: String?): DownloadAudioFormat = M4A' in (k/'downloads/DownloadAudioFormat.kt').read_text()
+assert 'entries.firstOrNull { it.name == value } ?: M4A' in (k/'downloads/DownloadAudioFormat.kt').read_text()
 assert 'bestaudio[ext=m4a]' in (k/'downloads/DownloadAudioFormat.kt').read_text()
 assert 'defaultValue = AudioQuality.HIGH' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 print('PASS: Discord absent from application; high-quality defaults for player and downloads')
