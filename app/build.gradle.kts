@@ -223,6 +223,14 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Robolectric fetches instrumented Android SDK jars at test runtime, outside
+// Gradle dependency resolution. Its default repo1.maven.org endpoint can
+// intermittently 404 in GitHub Actions and fail unrelated test classes.
+// Prefer Maven Central's canonical endpoint for every local unit-test task.
+tasks.withType<org.gradle.api.tasks.testing.Test>().configureEach {
+    systemProperty("robolectric.dependency.repo.url", "https://repo.maven.apache.org/maven2")
+}
+
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
     compilerOptions {
         freeCompilerArgs.addAll(
