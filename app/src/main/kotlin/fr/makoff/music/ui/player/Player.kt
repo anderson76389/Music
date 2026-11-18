@@ -327,10 +327,16 @@ fun BottomSheetPlayer(
     // This subtree survives collapsing the expanded player, so neither the
     // network probe nor the video prebuffer restarts on every reopen.
     val activeVideoId = mediaMetadata?.id
-    val videoIsLocalOrUploaded = currentSong?.song?.isLocal == true ||
-        currentSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
-    val videoIsMusicClip = mediaMetadata?.isVideoSong == true || currentSong?.song?.isVideo == true
+    // Room's enriched currentSong arrives asynchronously after the Media3
+    // metadata event. Never use PREVIOUS-song flags/credits to probe the new
+    // song's clip; doing so causes Son/Vidéo tabs to appear late or incorrectly.
+    val matchedVideoSong = currentSong?.takeIf { it.song.id == activeVideoId }
+    val videoIsLocalOrUploaded = matchedVideoSong?.song?.isLocal == true ||
+        matchedVideoSong?.song?.isUploaded == true || mediaMetadata?.uploadEntityId != null
+    val videoIsMusicClip = mediaMetadata?.isVideoSong == true ||
+        matchedVideoSong?.song?.isVideo == true
     val videoArtistNames = mediaMetadata?.artists?.map { it.name }.orEmpty()
+        .ifEmpty { matchedVideoSong?.orderedArtists?.map { it.name }.orEmpty() }
     var failedVideoClipIds by remember(activeVideoId, playerVideoModeEnabled, playerVideoQuality) { mutableStateOf(emptySet<String>()) }
     val videoPreview = rememberPlayerVideoPreview(
         videoId = activeVideoId,
