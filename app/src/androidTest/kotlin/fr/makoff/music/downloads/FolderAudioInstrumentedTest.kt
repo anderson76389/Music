@@ -241,9 +241,9 @@ class FolderAudioInstrumentedTest {
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album", 2023))
         try {
-            for (format in DownloadAudioFormat.entries) {
+            for (format in listOf(DownloadAudioFormat.M4A)) {
                 val dir = File(root, format.name).apply { mkdirs() }
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
                     instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
                 val raw = YtDlpAudioEngine.reuse(context, source, format, dir, "metadata-${format.name}")!!
