@@ -47,8 +47,8 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
     val scope = rememberCoroutineScope()
     val preferences by context.dataStore.data.collectAsState(initial = emptyPreferences())
     var choosing by rememberSaveable { mutableStateOf(false) }
-    var selected by rememberSaveable { mutableStateOf(DownloadAudioFormat.BEST) }
-    var pending by rememberSaveable { mutableStateOf(DownloadAudioFormat.BEST) }
+    var selected by rememberSaveable { mutableStateOf(DownloadAudioFormat.M4A) }
+    var pending by rememberSaveable { mutableStateOf(DownloadAudioFormat.M4A) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) scope.launch {
             try {
@@ -83,7 +83,7 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
             },
         ) {
             Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).selectableGroup()) {
-                DownloadAudioFormat.entries.forEach { format ->
+                DownloadAudioFormat.available.forEach { format ->
                     Row(
                         Modifier.fillMaxWidth().selectable(selected = selected == format,
                             role = Role.RadioButton, onClick = { selected = format }).padding(vertical = 10.dp),
@@ -95,6 +95,7 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
                             Text(stringResource(when (format) {
                                 DownloadAudioFormat.BEST -> R.string.download_choice_best_help
                                 DownloadAudioFormat.M4A -> R.string.download_choice_m4a_help
+                                DownloadAudioFormat.AAC -> R.string.download_choice_aac_help
                                 DownloadAudioFormat.FLAC -> R.string.download_choice_flac_help
                             }), style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
