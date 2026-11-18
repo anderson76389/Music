@@ -138,12 +138,6 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format == DownloadAudioFormat.AAC) {
-                // Preserve the highest quality native AAC where possible;
-                // yt-dlp/ffmpeg remuxes the AAC audio to an .aac ADTS export.
-                request.addOption("--extract-audio").addOption("--audio-format", "aac")
-                request.addOption("--audio-quality", "0")
-            }
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
             if (cookie.isNotBlank()) {
@@ -152,13 +146,32 @@ internal object YtDlpAudioEngine {
                 request.addOption("--cookies", jar.absolutePath)
             }
             YoutubeDL.getInstance().execute(request, processId) { percent, _, _ -> progress(percent) }
-            val output = directory.listFiles().orEmpty().singleOrNull {
-                it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
-            } ?: throw IOException("No completed audio file")
-            check(output.extension.lowercase() == (if (format == DownloadAudioFormat.AAC) "aac" else "m4a")) {
-                "Requested AAC/M4A audio unavailable"
+            val nativeM4a = directory.listFiles().orEmpty().singleOrNull {
+                it.isFile && it.name.startsWith("audio.") && it.extension.lowercase() == "m4a" && it.length() > 0
+            } ?: throw IOException("No highest-quality native M4A/AAC stream")
+            if (format != DownloadAudioFormat.AAC) return@runInterruptible nativeM4a
+            // AAC in an .m4a container and ADTS .aac contains the SAME AAC
+            // frames. Stream-copy without decoding/re-encoding, so selecting
+            // a portable .aac NEVER reduces the available audio quality.
+            val output = File(directory, "audio.aac")
+            val command = listOf(
+                File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so").absolutePath,
+                "-nostdin", "-y", "-loglevel", "error", "-i", nativeM4a.absolutePath,
+                "-map", "0:a:0", "-c:a", "copy", "-f", "adts", output.absolutePath,
+            )
+            val process = ProcessBuilder(command)
+                .redirectErrorStream(true)
+                .redirectOutput(File(directory, "aac-remux.log"))
+                .start()
+            try {
+                if (!process.waitFor(120, java.util.concurrent.TimeUnit.SECONDS) ||
+                    process.exitValue() != 0 || !output.isFile || output.length() == 0L
+                ) throw IOException("Lossless AAC remux failed")
+                nativeM4a.delete()
+                output
+            } finally {
+                if (process.isAlive) process.destroyForcibly()
             }
-            output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
