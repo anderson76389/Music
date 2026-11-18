@@ -199,6 +199,7 @@ import fr.makoff.music.ui.theme.MusicTheme
 import fr.makoff.music.ui.theme.extractThemeColor
 import fr.makoff.music.ui.utils.appBarScrollBehavior
 import fr.makoff.music.ui.utils.resetHeightOffset
+import fr.makoff.music.ui.component.ReleaseNotesContent
 import fr.makoff.music.utils.ReleaseInfo
 import fr.makoff.music.utils.SearchRoutes
 import fr.makoff.music.utils.SyncUtils
@@ -1417,17 +1418,10 @@ class MainActivity : FragmentActivity() {
                                                 .heightIn(max = 480.dp)
                                                 .verticalScroll(rememberScrollState()),
                                     ) {
-                                        Text(
-                                            text =
-                                                stringResource(
-                                                    if (update.isKmp) {
-                                                        R.string.kmp_upgrade_title
-                                                    } else {
-                                                        R.string.update_available_message
-                                                    },
-                                                    update.release.versionName,
-                                                ),
-                                            style = MaterialTheme.typography.bodyMedium,
+                                        ReleaseNotesContent(
+                                            description = update.release.description,
+                                            versionName = update.release.versionName,
+                                            modifier = Modifier.padding(vertical = 8.dp),
                                         )
                                         if (update.isKmp) {
                                             Text(
@@ -1437,15 +1431,6 @@ class MainActivity : FragmentActivity() {
                                                 modifier = Modifier.padding(top = 12.dp),
                                             )
                                         }
-                                        Text(
-                                            text = stringResource(R.string.changelog),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
-                                        )
-                                        Text(
-                                            text = update.release.description.ifBlank { stringResource(R.string.changelog_empty) },
-                                            style = MaterialTheme.typography.bodySmall,
-                                        )
                                     }
                                 },
                                 confirmButton = {
