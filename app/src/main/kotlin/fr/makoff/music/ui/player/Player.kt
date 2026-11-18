@@ -1228,7 +1228,7 @@ fun BottomSheetPlayer(
                             }
                         },
                         onValueChangeFinished = commitTimelineSeek,
-                        enabled = true,
+                        enabled = seekableDuration > 0L,
                         colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                     )
@@ -1246,6 +1246,7 @@ fun BottomSheetPlayer(
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                             colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                             isPlaying = effectiveIsPlaying,
+                            enabled = seekableDuration > 0L,
                         )
                     } else {
                         WavySlider(
@@ -1258,6 +1259,7 @@ fun BottomSheetPlayer(
                             colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                             isPlaying = effectiveIsPlaying,
+                            enabled = seekableDuration > 0L,
                         )
                     }
                 }
@@ -1277,7 +1279,7 @@ fun BottomSheetPlayer(
                             }
                         },
                         onValueChangeFinished = commitTimelineSeek,
-                        enabled = true,
+                        enabled = seekableDuration > 0L,
                         thumb = {
                             if (LocalLiquidGlassEnabled.current) Box(Modifier.size(8.dp).background(Color.White, RoundedCornerShape(50)))
                             else Spacer(modifier = Modifier.size(0.dp))
