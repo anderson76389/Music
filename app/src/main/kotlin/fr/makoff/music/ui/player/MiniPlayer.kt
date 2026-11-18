@@ -152,7 +152,11 @@ fun MiniPlayer(
     val useNewMiniPlayerDesign by rememberPreference(UseNewMiniPlayerDesignKey, true)
 
     // Create stable progress state - doesn't cause recomposition on position changes
-    val progressState = remember { ProgressState(positionState, durationState) }
+    // Position/duration state instances change when the active song changes.
+    // Do not pin the ring to the very first song's state forever.
+    val progressState = remember(positionState, durationState) {
+        ProgressState(positionState, durationState)
+    }
 
     val playerLabel = stringResource(R.string.player)
     val accessibleModifier = modifier.semantics { contentDescription = playerLabel }
