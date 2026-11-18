@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -49,6 +50,12 @@ jobs:
           fi
           test -f "$previous_apk"
           echo "PREVIOUS_APK=$previous_apk" >> "$GITHUB_ENV"
+          # Capture the exact source SHA of the previous published release,
+          # so the popup never repeats changes from older versions.
+          if gh release download --repo "$GITHUB_REPOSITORY" --pattern 'BUILD.txt' --dir previous-apk; then
+            previous_source_sha=$(sed -n 's/^SOURCE_SHA=//p' previous-apk/BUILD.txt | head -n 1)
+            echo "PREVIOUS_SOURCE_SHA=$previous_source_sha" >> "$GITHUB_ENV"
+          fi
           python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk "$previous_apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
       - name: Restore private publication key
@@ -72,6 +79,7 @@ jobs:
           keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           python3 scripts/audit_player_regressions.py
+          python3 scripts/test_release_notes.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
           mkdir -p dist
@@ -129,20 +137,7 @@ jobs:
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           printf 'MUSIC_VERSION_CODE=%s\nMUSIC_VERSION_NAME=%s\nSOURCE_SHA=%s\n' "$MUSIC_VERSION_CODE" "$MUSIC_VERSION_NAME" "$SOURCE_SHA" > dist/BUILD.txt
           (cd dist && sha256sum Apple.Music.apk Apple.Music-*.apk Metrolist.apk MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
-          cat > notes.txt <<'NOTES'
-          ## Apple Music pour Android
-
-          - **Apple.Music-arm64-v8a.apk** : APK allégé recommandé pour les téléphones Android modernes 64 bits, dont HONOR Magic V6.
-          - **Apple.Music-armeabi-v7a.apk**, **Apple.Music-x86.apk**, **Apple.Music-x86_64.apk** : APK allégés selon l'architecture de l'appareil.
-          - **Apple.Music.apk** : APK universel pour les appareils et anciennes versions qui ne sélectionnent pas encore les APK allégés.
-          - **Metrolist.apk** : copie identique de l'APK universel pour préserver les mises à jour des anciennes versions.
-          - Toutes les variantes ont le même identifiant Android et la même clé de signature ; la mise à jour remplace l'installation existante.
-          - Les APK par architecture sont vérifiés comme réellement plus petits que l'APK universel, et inclus aux sommes de contrôle SHA-256.
-
-          APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
-          NOTES
-          cat CHANGEMENTS-VERSION.txt >> notes.txt
-          printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
+          python3 scripts/release_notes.py --previous-source "${PREVIOUS_SOURCE_SHA:-}" --source-sha "$SOURCE_SHA" --output notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Apple Music $RELEASE_TAG" --notes-file notes.txt
           fi
