@@ -20,6 +20,10 @@ import java.util.concurrent.TimeUnit
 /** Write portable tags and cover art without decoding/re-encoding the audio packets. */
 internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File,
     releaseYear: Int? = media.album?.year): File {
+    // Raw ADTS AAC is a simple audio bitstream without a portable album-art
+    // container. Do not inject cover video streams or tags that break decoders.
+    // M4A is recommended when the user wants artwork and song metadata.
+    if (source.extension.equals("aac", ignoreCase = true)) return source
     val thumbnailUrls = exportArtworkUrls(media.thumbnailUrl, media.id)
     var cover: Cover? = null
     for (url in thumbnailUrls) {

@@ -25,11 +25,16 @@ internal object PlayerVideoModePolicy {
     fun suppressLegacyThumbnailHeader(modeEnabled: Boolean, expanded: Boolean): Boolean =
         modeEnabled || expanded
 
+    // The user opted into Son/Vidéo: show both controls *immediately* on
+    // every track, including local songs and tracks with no known video.
+    // Video availability only enables/disables its tab; it never determines
+    // whether the bar itself is composed.
+    @Suppress("UNUSED_PARAMETER")
     fun showSelector(
         enabled: Boolean,
         expanded: Boolean,
         hasPlayableClip: Boolean,
-    ): Boolean = enabled && expanded && hasPlayableClip
+    ): Boolean = enabled && expanded
 
     /** The persistent user choice survives songs without clips or temporary
      * Cast, but actual video is displayed only for a verified clip.

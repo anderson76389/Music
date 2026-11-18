@@ -842,11 +842,12 @@
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
     <string name="download_quality_settings">Téléchargements</string>
     <string name="download_format_unified">Qualité et format des téléchargements</string>
-    <string name="download_format_unified_help">Même format pour le hors ligne et les exports. « Meilleure qualité » choisit le meilleur flux disponible ; M4A conserve AAC ; FLAC ne restaure pas la qualité d\'origine.</string>
+    <string name="download_format_unified_help">M4A (AAC) conseillé pour Windows, Android et la plupart des lecteurs compatibles. AAC brut (.aac) n\'intègre pas de pochette et sa compatibilité dépend du lecteur. Le meilleur flux disponible est utilisé, sans inventer de qualité audio.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>
     <string name="download_format_external">Format des fichiers exportés</string>
     <string name="download_format_best">Meilleure qualité disponible — format original</string>
-    <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
+    <string name="download_format_m4a">M4A (AAC) — qualité maximale, recommandé</string>
+    <string name="download_format_aac">AAC (.aac) — fichier audio brut</string>
     <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
     <string name="download_format_help">Le meilleur flux dépend du titre et du compte YouTube. M4A conserve le flux AAC disponible. FLAC convertit la source sans recréer la qualité perdue et utilise plus d\'espace. Pour améliorer un ancien téléchargement, supprimez-le puis téléchargez-le à nouveau.</string>
     <string name="liquid_glass_theme">Thème Liquid Glass</string>
@@ -900,7 +901,8 @@
     <string name="history_minimum_listen">Écoute minimale pour l’historique</string>
     <string name="download_choose_quality">Qualité du téléchargement</string>
     <string name="download_choice_best_help">Meilleur flux audio disponible pour ce titre et votre session YouTube, sans conversion avec perte supplémentaire.</string>
-    <string name="download_choice_m4a_help">Meilleur flux AAC/M4A disponible, conservé en M4A. Aucune reconversion depuis Opus.</string>
+    <string name="download_choice_m4a_help">Meilleur AAC/M4A natif disponible en priorité ; conversion en AAC uniquement si la source ne propose pas de M4A. Pochettes et métadonnées conservées.</string>
+    <string name="download_choice_aac_help">Flux AAC brut (.aac), sans pochette intégrée. Conseillé seulement si votre lecteur prend en charge ce format ; M4A reste le choix le plus compatible.</string>
     <string name="download_choice_flac_help">Meilleur flux disponible converti en FLAC. La source YouTube reste compressée avec perte : le FLAC ne restitue pas les détails perdus.</string>
     <string name="player_cover_toggle">Pochette : lecture ou pause</string>
     <string name="player_cover_label">Son</string>
@@ -944,4 +946,5 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
+    <string name="update_this_version">Ce qui change dans cette version</string>
 </resources>

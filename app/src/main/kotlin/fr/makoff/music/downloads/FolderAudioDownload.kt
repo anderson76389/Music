@@ -119,11 +119,11 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
                 initialize(context)
-                if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                if (format != DownloadAudioFormat.BEST) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
             } catch (failure: LinkageError) {
                 throw IOException("Download engine initialization failed", failure)
             }
@@ -138,8 +138,11 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format != DownloadAudioFormat.M4A) {
-                request.addOption("--extract-audio").addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
+            when (format) {
+                DownloadAudioFormat.M4A -> request.addOption("--extract-audio").addOption("--audio-format", "m4a")
+                DownloadAudioFormat.AAC -> request.addOption("--extract-audio").addOption("--audio-format", "aac")
+                DownloadAudioFormat.FLAC -> request.addOption("--extract-audio").addOption("--audio-format", "flac")
+                DownloadAudioFormat.BEST -> Unit // Old queued jobs only
             }
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
@@ -154,6 +157,7 @@ internal object YtDlpAudioEngine {
             } ?: throw IOException("No completed audio file")
             check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "FLAC conversion failed" }
             check(format != DownloadAudioFormat.M4A || output.extension == "m4a") { "M4A unavailable" }
+            check(format != DownloadAudioFormat.AAC || output.extension == "aac") { "AAC unavailable" }
             output
         }
 
@@ -164,13 +168,48 @@ internal object YtDlpAudioEngine {
                 download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
                     format = DownloadAudioFormat.BEST) { }
             format == DownloadAudioFormat.BEST -> source
-            format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
+            format == DownloadAudioFormat.M4A && source.extension.equals("m4a", ignoreCase = true) -> source
             format == DownloadAudioFormat.M4A -> { source.delete(); null }
+            format == DownloadAudioFormat.AAC && source.extension.equals("aac", ignoreCase = true) -> source
+            format == DownloadAudioFormat.AAC && source.extension.equals("m4a", ignoreCase = true) ->
+                remuxNativeAac(context, source, directory)
+            format == DownloadAudioFormat.AAC -> { source.delete(); null }
             source.extension == "flac" -> source
             else -> download(context, source.toURI().toString(), File(directory, "converted"), processId,
                 format = DownloadAudioFormat.FLAC) { }
         }
     }
+
+    /** AAC in an M4A container is already the desired codec. A raw .aac
+     * export needs only ADTS packaging, not a second lossy encoding step.
+     */
+    private suspend fun remuxNativeAac(context: Context, source: File, directory: File): File =
+        runInterruptible(Dispatchers.IO) {
+            com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+            val outputDir = File(directory, "portable-aac").apply { check(isDirectory || mkdirs()) }
+            val output = File(outputDir, "audio.aac")
+            val ffmpeg = File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so")
+            val process = ProcessBuilder(
+                ffmpeg.absolutePath, "-nostdin", "-y", "-loglevel", "error",
+                "-i", source.absolutePath, "-map", "0:a:0", "-c:a", "copy",
+                "-f", "adts", output.absolutePath,
+            ).redirectErrorStream(true).redirectOutput(File(outputDir, "ffmpeg.log")).apply {
+                environment()["LD_LIBRARY_PATH"] = listOf("python", "ffmpeg", "aria2c")
+                    .joinToString(":") {
+                        File(context.noBackupFilesDir, "youtubedl-android/packages/$it/usr/lib").absolutePath
+                    }
+            }.start()
+            try {
+                check(process.waitFor(90, java.util.concurrent.TimeUnit.SECONDS)) { "AAC remux timed out" }
+                check(process.exitValue() == 0 && output.isFile && output.length() > 0L) { "AAC remux failed" }
+                output
+            } catch (error: Exception) {
+                output.delete()
+                throw error
+            } finally {
+                if (process.isAlive) process.destroyForcibly()
+            }
+        }
 }
 
 internal fun youtubeCookieJar(cookie: String): String = buildString {
@@ -191,6 +230,7 @@ internal fun audioFileName(title: String, extension: String): String {
 
 internal fun audioMime(extension: String): String = when (extension.lowercase()) {
     "m4a", "mp4" -> "audio/mp4"
+    "aac" -> "audio/aac"
     "webm" -> "audio/webm"
     "opus", "ogg" -> "audio/ogg"
     "mp3" -> "audio/mpeg"

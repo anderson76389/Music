@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0 # Needed to generate the exact changes since the previous published SHA
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -48,6 +49,10 @@ jobs:
             previous_apk=previous-apk/Metrolist.apk
           fi
           test -f "$previous_apk"
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern 'BUILD.txt' --dir previous-apk
+          previous_sha=$(sed -n 's/^SOURCE_SHA=//p' previous-apk/BUILD.txt | head -n 1)
+          [[ "$previous_sha" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "Missing previous release source SHA"; exit 1; }
+          echo "PREVIOUS_SOURCE_SHA=$previous_sha" >> "$GITHUB_ENV"
           echo "PREVIOUS_APK=$previous_apk" >> "$GITHUB_ENV"
           python3 scripts/release_version.py --run-number "$GITHUB_RUN_NUMBER" --previous-apk "$previous_apk" --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt2" --github-env "$GITHUB_ENV"
           echo "SOURCE_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
@@ -72,6 +77,7 @@ jobs:
           keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           python3 scripts/audit_player_regressions.py
+          python3 scripts/test_generate_release_notes.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
           mkdir -p dist
@@ -129,19 +135,18 @@ jobs:
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           printf 'MUSIC_VERSION_CODE=%s\nMUSIC_VERSION_NAME=%s\nSOURCE_SHA=%s\n' "$MUSIC_VERSION_CODE" "$MUSIC_VERSION_NAME" "$SOURCE_SHA" > dist/BUILD.txt
           (cd dist && sha256sum Apple.Music.apk Apple.Music-*.apk Metrolist.apk MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
-          cat > notes.txt <<'NOTES'
-          ## Apple Music pour Android
+          python3 scripts/generate_release_notes.py --previous "$PREVIOUS_SOURCE_SHA" --current "$SOURCE_SHA" > notes.txt
+          cat >> notes.txt <<'NOTES'
 
-          - **Apple.Music-arm64-v8a.apk** : APK allégé recommandé pour les téléphones Android modernes 64 bits, dont HONOR Magic V6.
-          - **Apple.Music-armeabi-v7a.apk**, **Apple.Music-x86.apk**, **Apple.Music-x86_64.apk** : APK allégés selon l'architecture de l'appareil.
-          - **Apple.Music.apk** : APK universel pour les appareils et anciennes versions qui ne sélectionnent pas encore les APK allégés.
-          - **Metrolist.apk** : copie identique de l'APK universel pour préserver les mises à jour des anciennes versions.
-          - Toutes les variantes ont le même identifiant Android et la même clé de signature ; la mise à jour remplace l'installation existante.
-          - Les APK par architecture sont vérifiés comme réellement plus petits que l'APK universel, et inclus aux sommes de contrôle SHA-256.
+          ## Installer Music
 
-          APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
+          - **Apple.Music-arm64-v8a.apk** : pour les téléphones Android 64 bits, dont HONOR Magic V6.
+          - **Apple.Music.apk** : APK universelle ; autres architectures disponibles dans les fichiers joints.
+          - Toutes les APK sont signées avec la même clé et remplacent la version installée sans la désinstaller.
+          - **SIGNATURE.txt** et **SHA256SUMS.txt** permettent de vérifier les APK publiées.
+
+          Chaque release décrit uniquement les changements fusionnés depuis la version précédente. Les tests automatisés couvrent compilation, installation et mise à jour ; ils ne remplacent pas les essais de lecture réelle sur appareil.
           NOTES
-          cat CHANGEMENTS-VERSION.txt >> notes.txt
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Apple Music $RELEASE_TAG" --notes-file notes.txt

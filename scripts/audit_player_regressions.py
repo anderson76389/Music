@@ -118,11 +118,21 @@ download_engine = (src / "downloads/FolderAudioDownload.kt").read_text()
 internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
 assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
-assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
-assert '?: DownloadAudioFormat.BEST' in download_format
+assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]/bestaudio")' in download_format
+assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]/bestaudio")' in download_format
+assert "portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)" in download_format
+assert "DownloadAudioFormat.portableChoices.forEach" in (src / "downloads/DownloadChoiceDialog.kt").read_text()
+assert '?: DownloadAudioFormat.M4A' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
 assert 'else -> format.selector' in download_format
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
+video_policy = (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
+switcher = (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert "): Boolean = enabled && expanded" in video_policy, "Mode bar must not wait for a fetched video URL"
+assert "enabled = videoModeEnabled," in switcher
+assert "videoAvailable = hasPlayableClip && !isCasting" in switcher
+assert "enabled = enabled," in switcher, "Video tab must remain disabled until a clip exists"
+assert "if (hasPlayableClip && !isCasting && videoPlayer != null && showModeBar)" in switcher
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
 print("PASS: current-song artwork, menu backdrop/interaction, late SoundProof metadata and highest-quality paths guarded")
