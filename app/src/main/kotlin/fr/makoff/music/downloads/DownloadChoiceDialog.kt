@@ -47,8 +47,8 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
     val scope = rememberCoroutineScope()
     val preferences by context.dataStore.data.collectAsState(initial = emptyPreferences())
     var choosing by rememberSaveable { mutableStateOf(false) }
-    var selected by rememberSaveable { mutableStateOf(DownloadAudioFormat.BEST) }
-    var pending by rememberSaveable { mutableStateOf(DownloadAudioFormat.BEST) }
+    var selected by rememberSaveable { mutableStateOf(DownloadAudioFormat.M4A) }
+    var pending by rememberSaveable { mutableStateOf(DownloadAudioFormat.M4A) }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
         if (uri != null) scope.launch {
             try {
@@ -92,11 +92,7 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
                         RadioButton(selected = selected == format, onClick = null)
                         Column(Modifier.weight(1f).padding(start = 12.dp)) {
                             Text(stringResource(format.label))
-                            Text(stringResource(when (format) {
-                                DownloadAudioFormat.BEST -> R.string.download_choice_best_help
-                                DownloadAudioFormat.M4A -> R.string.download_choice_m4a_help
-                                DownloadAudioFormat.FLAC -> R.string.download_choice_flac_help
-                            }), style = MaterialTheme.typography.bodySmall,
+                            Text(stringResource(R.string.download_choice_m4a_help), style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
