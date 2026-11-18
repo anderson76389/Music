@@ -3,36 +3,32 @@ package fr.makoff.music.downloads
 import fr.makoff.music.R
 import android.content.Context
 import androidx.datastore.preferences.core.Preferences
-import fr.makoff.music.constants.UnifiedDownloadFormatKey
-import fr.makoff.music.constants.InternalDownloadFormatKey
-import fr.makoff.music.constants.ExternalDownloadFormatKey
 import fr.makoff.music.utils.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 
-/** Output format, independent of streaming quality. FLAC cannot restore a lossy source. */
+/** One portable download format: the highest available original AAC in M4A.
+ * AAC is the codec, M4A its broadly supported container (PCs, MP3 players).
+ * The previous BEST/FLAC preferences are migrated on read; no Opus or
+ * misleading lossless transcode is presented to the user.
+ */
 enum class DownloadAudioFormat(val label: Int, val selector: String) {
-    BEST(R.string.download_format_best, "bestaudio"),
-    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]"),
-    FLAC(R.string.download_format_flac, "bestaudio"),
-    ;
+    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]");
 
     companion object {
-        fun parse(value: String?): DownloadAudioFormat = entries.firstOrNull { it.name == value } ?: BEST
+        fun parse(value: String?): DownloadAudioFormat = M4A
     }
 }
 
-/** Exact yt-dlp format expression. BEST always targets the highest audio
- * available to this session; a low-quality request is explicit only.
- * Local fixtures use "best" to exercise the file input path.
+/** Never fall back to Opus or a worse AAC track. Unsupported tracks fail
+ * clearly rather than silently producing an incompatible file.
  */
-internal fun selectYtDlpAudioFormat(format: DownloadAudioFormat, lowQuality: Boolean, isLocalSource: Boolean): String =
-    when {
-        isLocalSource -> "best"
-        lowQuality && format == DownloadAudioFormat.BEST -> "worstaudio"
-        else -> format.selector
-    }
+internal fun selectYtDlpAudioFormat(
+    format: DownloadAudioFormat,
+    lowQuality: Boolean,
+    isLocalSource: Boolean,
+): String = if (isLocalSource) "best" else format.selector
 
 /** Android's FLAC MediaExtractor may expose decoded PCM; preserve the source codec. */
 internal fun sourceAudioMime(input: java.io.InputStream, trackMime: String): String {
@@ -41,14 +37,10 @@ internal fun sourceAudioMime(input: java.io.InputStream, trackMime: String): Str
     return if (header.toString(Charsets.US_ASCII) == "fLaC") "audio/flac" else trackMime
 }
 
-/** Keep an explicit legacy format instead of silently replacing it with BEST. */
-internal fun Preferences.selectedDownloadFormat(): DownloadAudioFormat {
-    fun valid(value: String?) = DownloadAudioFormat.entries.firstOrNull { it.name == value }
-    return valid(this[UnifiedDownloadFormatKey])
-        ?: valid(this[ExternalDownloadFormatKey])?.takeUnless { it == DownloadAudioFormat.BEST }
-        ?: valid(this[InternalDownloadFormatKey])
-        ?: DownloadAudioFormat.BEST
-}
+/** Migrate legacy BEST/FLAC preference values safely to portable AAC/M4A.
+ * Existing cached files need not be deleted; only new downloads are affected.
+ */
+internal fun Preferences.selectedDownloadFormat(): DownloadAudioFormat = DownloadAudioFormat.M4A
 
 internal fun Context.selectedDownloadFormat(): DownloadAudioFormat = runBlocking(Dispatchers.IO) {
     dataStore.data.first().selectedDownloadFormat()
