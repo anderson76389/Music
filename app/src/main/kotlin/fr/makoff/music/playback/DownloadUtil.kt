@@ -386,7 +386,9 @@ constructor(
                 // New/retried downloads must not mix bytes from a previous quality or container.
                 downloadCache.removeResource(mediaMetadata.id)
                 songUrlCache.invalidate(mediaMetadata.id)
-                val selectedFormat = requestedFormat ?: context.selectedDownloadFormat()
+                val selectedFormat = DownloadAudioFormat.parse(
+                    (requestedFormat ?: context.selectedDownloadFormat()).name,
+                )
                 val request =
                     DownloadRequest
                         .Builder(mediaMetadata.id, mediaMetadata.id.toUri().buildUpon()

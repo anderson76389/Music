@@ -842,11 +842,13 @@
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
     <string name="download_quality_settings">Téléchargements</string>
     <string name="download_format_unified">Qualité et format des téléchargements</string>
-    <string name="download_format_unified_help">Même format pour le hors ligne et les exports. « Meilleure qualité » choisit le meilleur flux disponible ; M4A conserve AAC ; FLAC ne restaure pas la qualité d\'origine.</string>
+    <string name="download_format_unified_help">M4A (AAC) recommandé : qualité maximale disponible, compatible avec la plupart des ordinateurs et appareils. AAC brut pour lecteurs compatibles uniquement.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>
     <string name="download_format_external">Format des fichiers exportés</string>
     <string name="download_format_best">Meilleure qualité disponible — format original</string>
     <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
+    <string name="download_format_aac">AAC (.aac) — meilleur flux AAC disponible</string>
+    <string name="download_choice_aac_help">Fichier AAC brut pour certains lecteurs portables. M4A est recommandé pour la compatibilité.</string>
     <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
     <string name="download_format_help">Le meilleur flux dépend du titre et du compte YouTube. M4A conserve le flux AAC disponible. FLAC convertit la source sans recréer la qualité perdue et utilise plus d\'espace. Pour améliorer un ancien téléchargement, supprimez-le puis téléchargez-le à nouveau.</string>
     <string name="liquid_glass_theme">Thème Liquid Glass</string>

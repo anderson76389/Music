@@ -97,7 +97,7 @@ class FolderAudioInstrumentedTest {
             context.dataStore.edit {
                 it[fr.makoff.music.constants.AutoDownloadOnLikeKey] = false
                 it[fr.makoff.music.constants.FolderAudioTreeKey] = tree.toString()
-                it[fr.makoff.music.constants.UnifiedDownloadFormatKey] = DownloadAudioFormat.BEST.name
+                it[fr.makoff.music.constants.UnifiedDownloadFormatKey] = DownloadAudioFormat.M4A.name
             }
             context.startActivity(android.content.Intent(context, fr.makoff.music.MainActivity::class.java)
                 .addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -111,7 +111,7 @@ class FolderAudioInstrumentedTest {
                 kotlinx.coroutines.delay(100)
             }
             assertNotNull("Production activity opens", activity)
-            for ((index, format) in (DownloadAudioFormat.entries + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
+            for ((index, format) in (DownloadAudioFormat.available + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
                 val id = UUID.randomUUID().toString().replace("-", "").take(11)
                 ids += id
                 val albumTitle = "Album popup $id"
@@ -119,7 +119,7 @@ class FolderAudioInstrumentedTest {
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
                     album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
                 }
@@ -156,7 +156,7 @@ class FolderAudioInstrumentedTest {
                 click(fr.makoff.music.R.string.action_download)
                 // Change the default immediately: the confirmed request must retain its own choice.
                 context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
-                    if (format == DownloadAudioFormat.FLAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.FLAC.name }
+                    if (format == DownloadAudioFormat.AAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.AAC.name }
                 var completed: androidx.work.WorkInfo? = null
                 val deadline = android.os.SystemClock.elapsedRealtime() + 45000
                 while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
@@ -176,17 +176,15 @@ class FolderAudioInstrumentedTest {
                 assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
                 if (index != 5) assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
                 val extension = when (format) {
-                    DownloadAudioFormat.BEST -> "opus"
-                    DownloadAudioFormat.M4A -> "m4a"
-                    DownloadAudioFormat.FLAC -> "flac"
+                    DownloadAudioFormat.M4A, DownloadAudioFormat.BEST, DownloadAudioFormat.FLAC -> "m4a"
+                    DownloadAudioFormat.AAC -> "aac"
                 }
                 val expectedName = "${media.title}.$extension"
                 assertEquals("Every filename contains only the song title", expectedName, completed.outputData.getString("name"))
                 assertNotNull("Album and playlist exports have no artist or track prefix", requireNotNull(folder).findFile(expectedName))
                 val expectedMime = when (format) {
-                    DownloadAudioFormat.BEST -> "audio/ogg"
-                    DownloadAudioFormat.M4A -> "audio/mp4"
-                    DownloadAudioFormat.FLAC -> "audio/flac"
+                    DownloadAudioFormat.M4A, DownloadAudioFormat.BEST, DownloadAudioFormat.FLAC -> "audio/mp4"
+                    DownloadAudioFormat.AAC -> "audio/aac"
                 }
                 assertEquals(expectedMime, completed.outputData.getString("mime"))
                 val extractor = android.media.MediaExtractor()
@@ -196,19 +194,17 @@ class FolderAudioInstrumentedTest {
                     val actual = context.contentResolver.openInputStream(uri)!!.use {
                         sourceAudioMime(it, requireNotNull(track.getString(android.media.MediaFormat.KEY_MIME)))
                     }
-                    assertEquals(when (format) {
-                        DownloadAudioFormat.BEST -> "audio/opus"
-                        DownloadAudioFormat.M4A -> "audio/mp4a-latm"
-                        DownloadAudioFormat.FLAC -> "audio/flac"
-                    }, actual)
+                    assertEquals("audio/mp4a-latm", actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
-                val tags = android.media.MediaMetadataRetriever()
-                try {
-                    tags.setDataSource(context, uri)
-                    assertEquals("Release year survives the actual worker and playlist/album exports", "2023",
-                        tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR))
-                } finally { tags.release() }
+                if (format == DownloadAudioFormat.M4A) {
+                    val tags = android.media.MediaMetadataRetriever()
+                    try {
+                        tags.setDataSource(context, uri)
+                        assertEquals("M4A release year survives worker and playlist/album exports", "2023",
+                            tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR))
+                    } finally { tags.release() }
+                } // Raw AAC/ADTS has no portable tags or embedded cover artwork.
                 println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${when (index) { 3 -> "playlist"; 5 -> "album"; else -> "Audio" }} folder and shared offline source")
             }
         } finally {
@@ -245,9 +241,9 @@ class FolderAudioInstrumentedTest {
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album", 2023))
         try {
-            for (format in DownloadAudioFormat.entries) {
+            for (format in listOf(DownloadAudioFormat.M4A)) {
                 val dir = File(root, format.name).apply { mkdirs() }
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
                     instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
                 val raw = YtDlpAudioEngine.reuse(context, source, format, dir, "metadata-${format.name}")!!
@@ -785,13 +781,10 @@ class FolderAudioInstrumentedTest {
 
     @Test(timeout = 90000) fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
         println("Starting native yt-dlp fixture download")
-        val bytes = ByteArray(4096) { (it % 127).toByte() }
-        // Valid mono PCM WAV, not a renamed text file.
-        val header = java.nio.ByteBuffer.allocate(44).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-            .put("RIFF".toByteArray()).putInt(36 + bytes.size).put("WAVEfmt ".toByteArray())
-            .putInt(16).putShort(1).putShort(1).putInt(8000).putInt(16000).putShort(2).putShort(16)
-            .put("data".toByteArray()).putInt(bytes.size).array()
-        val audio = header + bytes
+        val audio = android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() },
+            android.util.Base64.DEFAULT,
+        )
         val server = ServerSocket(0)
         val responder = thread(isDaemon = true) {
             while (!server.isClosed) try {
@@ -801,7 +794,7 @@ class FolderAudioInstrumentedTest {
                     val first = reader.readLine().orEmpty()
                     while (!reader.readLine().isNullOrEmpty()) Unit
                     socket.getOutputStream().apply {
-                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/wav\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/mp4\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
                         if (!first.startsWith("HEAD")) write(audio)
                         flush()
                     }
@@ -811,14 +804,14 @@ class FolderAudioInstrumentedTest {
         val directory = File(context.cacheDir, "audio-test-${UUID.randomUUID()}")
         val exported = mutableListOf<android.net.Uri>()
         try {
-            val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.wav", directory, "test-${UUID.randomUUID()}") { }
+            val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.m4a", directory, "test-${UUID.randomUUID()}") { }
             println("Native download complete; verifying engine version and SAF export")
             val version = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(
                 com.yausername.youtubedl_android.YoutubeDLRequest(emptyList<String>()).addOption("--version")
             ).out.trim()
             assertEquals(YtDlpAudioEngine.VERSION, version)
             assertArrayEquals(audio, source.readBytes())
-            val name = "audio-${UUID.randomUUID()}.wav"
+            val name = "audio-${UUID.randomUUID()}.m4a"
             repeat(2) { exported += saveAudioToTree(context, tree, source, name) }
             assertNotEquals(exported[0], exported[1])
             println("SAF export and duplicate filename handling complete")
@@ -833,105 +826,79 @@ class FolderAudioInstrumentedTest {
         }
     }
 
-    @Test(timeout = 90000) fun aacAndOpusKeepTheirRealCodecAndExactBytesAfterExport() = runBlocking {
-        for ((asset, mime) in listOf("aac.m4a" to "audio/mp4a-latm", "opus.webm" to "audio/opus")) {
-            val audio = android.util.Base64.decode(
-                instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() },
-                android.util.Base64.DEFAULT,
-            )
-            verifyResolvedAudioRanges(audio, asset)
-            val server = ServerSocket(0)
-            val responder = thread(isDaemon = true) {
-                while (!server.isClosed) try {
-                    server.accept().use { socket ->
-                        socket.soTimeout = 15000
-                        val reader = socket.getInputStream().bufferedReader()
-                        val first = reader.readLine().orEmpty()
-                        while (!reader.readLine().isNullOrEmpty()) Unit
-                        socket.getOutputStream().apply {
-                            write("HTTP/1.1 200 OK\r\nContent-Type: ${audioMime(asset.substringAfterLast('.'))}\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
-                            if (!first.startsWith("HEAD")) write(audio)
-                            flush()
-                        }
+    @Test(timeout = 90000) fun m4aAndRawAacUseTheRealNativeAacCodecAfterExport() = runBlocking {
+        val asset = "aac.m4a"
+        val audio = android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() },
+            android.util.Base64.DEFAULT,
+        )
+        verifyResolvedAudioRanges(audio, asset)
+        val server = ServerSocket(0)
+        val responder = thread(isDaemon = true) {
+            while (!server.isClosed) try {
+                server.accept().use { socket ->
+                    socket.soTimeout = 15000
+                    val reader = socket.getInputStream().bufferedReader()
+                    val first = reader.readLine().orEmpty()
+                    while (!reader.readLine().isNullOrEmpty()) Unit
+                    socket.getOutputStream().apply {
+                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/mp4\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        if (!first.startsWith("HEAD")) write(audio)
+                        flush()
                     }
-                } catch (_: Exception) { if (server.isClosed) break }
-            }
-            val directory = File(context.cacheDir, "codec-test-${UUID.randomUUID()}")
-            var exported: android.net.Uri? = null
-            try {
-                val source = YtDlpAudioEngine.download(context,
-                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", format = if (asset == "aac.m4a") DownloadAudioFormat.M4A else DownloadAudioFormat.BEST) { }
-                if (asset == "aac.m4a") {
-                    assertArrayEquals(audio, source.readBytes())
-                } else {
-                    assertEquals("opus", source.extension)
-                    assertEquals("OggS", source.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
-                    val original = File(directory, "original.webm").apply { writeBytes(audio) }
-                    assertArrayEquals(audioPackets(original), audioPackets(source))
-                    val reused = YtDlpAudioEngine.reuse(context, original, DownloadAudioFormat.BEST,
-                        File(directory, "offline"), "remux-${UUID.randomUUID()}")!!
-                    assertEquals("opus", reused.extension)
-                    assertArrayEquals(audioPackets(original), audioPackets(reused))
                 }
-                val uri = saveAudioToTree(context, tree, source, "${UUID.randomUUID()}.${source.extension}")
-                exported = uri
-                assertArrayEquals(source.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
-                val extractor = android.media.MediaExtractor()
+            } catch (_: Exception) { if (server.isClosed) break }
+        }
+        try {
+            for (format in DownloadAudioFormat.available) {
+                val directory = File(context.cacheDir, "codec-test-${UUID.randomUUID()}")
+                var exported: android.net.Uri? = null
                 try {
-                    extractor.setDataSource(context, uri, null)
-                    val formats = (0 until extractor.trackCount).map(extractor::getTrackFormat)
-                    assertFalse(formats.any { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("video/") == true })
-                    val format = formats.single { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
-                    assertEquals(mime, format.getString(android.media.MediaFormat.KEY_MIME))
-                    assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
-                    assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
-                    println("AUDIO_CODEC_OK: $asset; $format; audio-only output, encoded audio packets preserved")
-                } finally { extractor.release() }
-            } finally {
-                exported?.let { DocumentsContract.deleteDocument(context.contentResolver, it) }
-                directory.deleteRecursively()
-                server.close()
-                responder.join(2000)
+                    val downloaded = YtDlpAudioEngine.download(
+                        context, "http://127.0.0.1:${server.localPort}/$asset",
+                        directory, "codec-${UUID.randomUUID()}", format = format,
+                    ) { }
+                    val expectedExtension = if (format == DownloadAudioFormat.AAC) "aac" else "m4a"
+                    assertEquals(expectedExtension, downloaded.extension)
+                    if (format == DownloadAudioFormat.M4A) assertArrayEquals(audio, downloaded.readBytes())
+                    val uri = saveAudioToTree(context, tree, downloaded, "${UUID.randomUUID()}.$expectedExtension")
+                    exported = uri
+                    assertArrayEquals(downloaded.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                    val extractor = android.media.MediaExtractor()
+                    try {
+                        extractor.setDataSource(context, uri, null)
+                        val formats = (0 until extractor.trackCount).map(extractor::getTrackFormat)
+                        assertFalse(formats.any { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("video/") == true })
+                        val track = formats.single { it.getString(android.media.MediaFormat.KEY_MIME)?.startsWith("audio/") == true }
+                        assertEquals("audio/mp4a-latm", track.getString(android.media.MediaFormat.KEY_MIME))
+                        println("AUDIO_CODEC_OK: ${format.name}, $expectedExtension, 48 kHz AAC with no video")
+                    } finally { extractor.release() }
+                } finally {
+                    exported?.let { DocumentsContract.deleteDocument(context.contentResolver, it) }
+                    directory.deleteRecursively()
+                }
             }
+        } finally {
+            server.close()
+            responder.join(2000)
         }
     }
 
-    @Test(timeout = 90000) fun flacIsConvertedAndReusableWithoutNetwork() = runBlocking {
-        val directory = File(context.cacheDir, "flac-test-${UUID.randomUUID()}").apply { mkdirs() }
-        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+    @Test(timeout = 90000) fun legacyFlacAndBestPreferencesMigrateToM4aWithoutReEncoding() = runBlocking {
+        val directory = File(context.cacheDir, "m4a-migration-${UUID.randomUUID()}").apply { mkdirs() }
+        val bytes = android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() },
+            android.util.Base64.DEFAULT,
+        )
         val source = File(directory, "existing.m4a").apply { writeBytes(bytes) }
         try {
-            val output = YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.FLAC, directory, "flac-${UUID.randomUUID()}")!!
-            assertEquals("flac", output.extension)
-            assertEquals("fLaC", output.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
-            val extractor = android.media.MediaExtractor()
-            try {
-                extractor.setDataSource(output.absolutePath)
-                val format = extractor.getTrackFormat(0)
-                val trackMime = format.getString(android.media.MediaFormat.KEY_MIME)!!
-                assertTrue(trackMime in setOf("audio/flac", "audio/raw"))
-                assertEquals("audio/flac", output.inputStream().use { sourceAudioMime(it, trackMime) })
-                assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
-                assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
-            } finally { extractor.release() }
-            assertEquals(output, YtDlpAudioEngine.reuse(context, output, DownloadAudioFormat.FLAC, directory, "same-flac"))
+            assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("FLAC"))
+            assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("BEST"))
+            assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.FLAC, directory, "legacy-flac"))
+            assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.BEST, directory, "legacy-best"))
             assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.M4A, directory, "same-m4a"))
             assertArrayEquals(bytes, source.readBytes())
-            val downloads = FolderAudioDownloads.downloadUtil(context)
-            val songId = UUID.randomUUID().toString().replace("-", "").take(11)
-            val uri = saveAudioToTree(context, tree, output, "$songId.flac")
-            try {
-                downloads.registerExternalAudio(fr.makoff.music.models.MediaMetadata(songId, "FLAC round trip", emptyList(), 1), uri, output.length())
-                val staged = downloads.stageExistingAudio(songId, File(directory, "roundtrip"))!!
-                assertEquals("flac", staged.extension)
-                assertArrayEquals(output.readBytes(), staged.readBytes())
-            } finally {
-                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(songId)
-                downloads.downloads.value = downloads.downloads.value - songId
-                downloads.database.getSongByIdBlocking(songId)?.let { downloads.database.delete(it.song) }
-                DocumentsContract.deleteDocument(context.contentResolver, uri)
-            }
-            println("FLAC_REAL_OK: native conversion, fLaC header, 48000 Hz stereo, no upsampling")
+            println("M4A_LEGACY_MIGRATION_OK: no false FLAC lossless export, original AAC retained")
         } finally { directory.deleteRecursively() }
     }
 

@@ -19,7 +19,11 @@ for p in (r/'app').rglob('*'):
 assert 'audioQuality = AudioQuality.HIGH' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'context.selectedDownloadFormat()' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'context.selectedDownloadFormat()' in (k/'downloads/FolderAudioDownload.kt').read_text()
-assert '?: DownloadAudioFormat.BEST' in (k/'downloads/DownloadAudioFormat.kt').read_text()
+download_formats = (k/'downloads/DownloadAudioFormat.kt').read_text()
+assert 'val available = listOf(M4A, AAC)' in download_formats
+assert 'if (value == AAC.name) AAC else M4A' in download_formats
+assert '"bestaudio[ext=m4a]"' in download_formats
+assert '?: DownloadAudioFormat.BEST' not in download_formats
 assert 'defaultValue = AudioQuality.HIGH' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 print('PASS: Discord absent from application; high-quality defaults for player and downloads')
 

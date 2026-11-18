@@ -309,9 +309,16 @@ class OfflinePlayerInstrumentedTest {
                 device.findObjects(By.desc(context.getString(R.string.more_options)))
                     .none { it.visibleBounds.top < coverBounds.top },
             )
-            assertNull(
-                "An audio-only track must never display a video selector",
+            val disabledVideoTab = requireNotNull(
                 device.findObject(By.desc(context.getString(R.string.player_video_label))),
+            )
+            assertFalse(
+                "The video tab must be visible but disabled on audio-only tracks",
+                disabledVideoTab.isEnabled,
+            )
+            assertNotNull(
+                "Audio tab must be visible immediately on audio-only tracks",
+                device.findObject(By.desc(context.getString(R.string.player_cover_label))),
             )
             assertNotNull(
                 "The compact player must still provide its collapse control",

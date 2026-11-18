@@ -20,6 +20,11 @@ import java.util.concurrent.TimeUnit
 /** Write portable tags and cover art without decoding/re-encoding the audio packets. */
 internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMetadata, track: Int, directory: File,
     releaseYear: Int? = media.album?.year): File {
+    // ADTS .aac has no portable container for album art or ID3-style tags.
+    // FFmpeg cannot mux an attached JPEG into this stream and would fail the
+    // entire export. Keep the original AAC bytes untouched. Choose M4A to
+    // preserve artwork, title, album, artist and track metadata.
+    if (source.extension.equals("aac", ignoreCase = true)) return source
     val thumbnailUrls = exportArtworkUrls(media.thumbnailUrl, media.id)
     var cover: Cover? = null
     for (url in thumbnailUrls) {

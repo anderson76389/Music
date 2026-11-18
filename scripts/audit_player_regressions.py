@@ -111,17 +111,27 @@ assert "currentSong.value?.takeIf { it.song.id == candidateId }" in service
 assert "checkSoundProofForCurrent(player.currentMediaItem)" in service
 assert "SoundProofSkipAiKey" in service
 
-# Quality policy: max-quality is available for playback, internal downloads
-# and exports; FLAC is a conversion, not magically lossless YouTube audio.
+# Export must offer only M4A/AAC and preserve native highest-quality AAC
+# regardless of a separate low-bandwidth playback setting.
 download_format = (src / "downloads/DownloadAudioFormat.kt").read_text()
 download_engine = (src / "downloads/FolderAudioDownload.kt").read_text()
 internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
-assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
+assert 'val available = listOf(M4A, AAC)' in download_format
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
-assert '?: DownloadAudioFormat.BEST' in download_format
-assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'else -> format.selector' in download_format
+assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]")' in download_format
+assert 'if (value == AAC.name) AAC else M4A' in download_format
+assert '.addOption("-f", selectYtDlpAudioFormat(' in download_engine
+assert 'url.startsWith("file:")' in download_engine
+assert 'setOf("127.0.0.1", "localhost", "::1")' in download_engine
+assert '"-map", "0:a:0", "-c:a", "copy", "-f", "adts"' in download_engine, "AAC remux must not re-encode"
+assert "nativeM4a.delete()" in download_engine
+assert '"aac" -> "audio/aac"' in download_engine
+assert 'audioQuality = AudioQuality.HIGH' in (src / "playback/DownloadUtil.kt").read_text()
+assert 'if (span > 0f' in (src / "ui/component/WavySlider.kt").read_text()
+assert 'enabled = videoModeEnabled' in (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert 'enabled = !video || videoAvailable' in (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert '): Boolean = enabled && expanded' in (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service

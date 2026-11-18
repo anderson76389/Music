@@ -50,19 +50,20 @@ class FolderAudioNameTest {
         assertEquals("Album", collectionFolder("\u202eAlbum\u200b", "album-id"))
         assertFalse(collectionFolder("..", "album-id").contains('/'))
     }
-    @Test fun unifiedFormatPreservesAnExplicitLegacyChoice() {
+    @Test fun legacyPreferencesAlwaysMigrateToHighestQualityM4aOrAac() {
         val prefs = androidx.datastore.preferences.core.mutablePreferencesOf()
         prefs[fr.makoff.music.constants.InternalDownloadFormatKey] = "FLAC"
         prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "BEST"
-        assertEquals(DownloadAudioFormat.FLAC, prefs.selectedDownloadFormat())
-        prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "M4A"
         assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
+        prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "AAC"
+        assertEquals(DownloadAudioFormat.AAC, prefs.selectedDownloadFormat())
         prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "BEST"
-        assertEquals(DownloadAudioFormat.BEST, prefs.selectedDownloadFormat())
+        assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         for (format in DownloadAudioFormat.entries) {
             prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = format.name
-            assertEquals(format, prefs.selectedDownloadFormat())
+            assertEquals(DownloadAudioFormat.parse(format.name), prefs.selectedDownloadFormat())
         }
+        assertEquals(listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.AAC), DownloadAudioFormat.available)
     }
     @Test fun readableFileNamesKeepLongTitlesAndNoTechnicalIdentifier() {
         assertEquals("W.opus", audioFileName("W", "opus"))
@@ -79,6 +80,7 @@ class FolderAudioNameTest {
         val name = audioFileName("🎵".repeat(200), "m4a")
         assertTrue(name.toByteArray(Charsets.UTF_8).size < 255)
         assertEquals("audio/mp4", audioMime("m4a"))
+        assertEquals("audio/aac", audioMime("aac"))
         assertEquals("audio/webm", audioMime("webm"))
     }
 }
