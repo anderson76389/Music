@@ -42,6 +42,7 @@ import fr.makoff.music.R
 import fr.makoff.music.constants.CheckForUpdatesKey
 import fr.makoff.music.constants.UpdateNotificationsEnabledKey
 import fr.makoff.music.ui.component.IconButton
+import fr.makoff.music.ui.component.ReleaseNotesCard
 import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.ui.utils.backToMain
@@ -238,14 +239,9 @@ fun UpdaterScreen(
 
             if (showChangelog && changelogContent != null) {
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    text = changelogContent!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                )
+                // Match the update popup: show just the current release's
+                // structured user-visible changes, never raw GitHub boilerplate.
+                ReleaseNotesCard()
             }
         }
 
