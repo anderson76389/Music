@@ -136,7 +136,12 @@ internal object YtDlpAudioEngine {
                 .addOption("--socket-timeout", 30)
                 .addOption("--retries", 3)
                 .addOption("--fixup", "never")
-                .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
+                .addOption("-f", selectYtDlpAudioFormat(
+                    format, lowQuality, url.startsWith("file:") ||
+                        runCatching {
+                            android.net.Uri.parse(url).host in setOf("127.0.0.1", "localhost", "::1")
+                        }.getOrDefault(false),
+                ))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
