@@ -845,7 +845,7 @@ class FolderAudioInstrumentedTest {
                     val first = reader.readLine().orEmpty()
                     while (!reader.readLine().isNullOrEmpty()) Unit
                     socket.getOutputStream().apply {
-                        write("HTTP/1.1 200 OK\\r\\nContent-Type: audio/mp4\\r\\nContent-Length: ${audio.size}\\r\\nConnection: close\\r\\n\\r\\n".toByteArray())
+                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/mp4\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
                         if (!first.startsWith("HEAD")) write(audio)
                         flush()
                     }
