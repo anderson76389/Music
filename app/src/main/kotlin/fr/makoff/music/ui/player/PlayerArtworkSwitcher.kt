@@ -473,11 +473,19 @@ internal fun VideoOnlySurface(
                     // TextureView even in Son mode. Native view alpha (not
                     // Compose graphics alpha) plus cover drawn ABOVE it
                     // prevents the clip from ever appearing on the artwork.
-                    textureView.alpha = if (visible) 1f else 0f
                     if (textureView.tag !== videoPlayer) {
+                        // Rotation or layout replacement creates a NEW native
+                        // TextureView. A first frame rendered into the OLD
+                        // surface cannot certify this one is ready. Hide it
+                        // until the decoder actually renders on the new view.
+                        firstFrameRendered = false
                         videoPlayer.setVideoTextureView(textureView)
                         textureView.tag = videoPlayer
                     }
+                    // In particular, never reveal a stale TextureView buffer
+                    // immediately after selecting Vidéo or rotating the phone.
+                    textureView.alpha =
+                        if (visible && firstFrameRendered) 1f else 0f
                 },
                 onRelease = { textureView ->
                     // Conditional clear never detaches a replacement surface
@@ -489,7 +497,9 @@ internal fun VideoOnlySurface(
                 },
             )
             AnimatedVisibility(
-                visible = visible && (!firstFrameRendered || !videoReady),
+                // Keep the last valid video frame displayed during short rebuffering
+                // rather than flashing back to an opaque loading screen.
+                visible = visible && !firstFrameRendered,
                 enter = fadeIn(animationSpec = tween(100)),
                 exit = fadeOut(animationSpec = tween(180)),
             ) {

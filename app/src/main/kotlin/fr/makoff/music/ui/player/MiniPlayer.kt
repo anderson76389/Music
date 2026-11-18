@@ -152,7 +152,11 @@ fun MiniPlayer(
     val useNewMiniPlayerDesign by rememberPreference(UseNewMiniPlayerDesignKey, true)
 
     // Create stable progress state - doesn't cause recomposition on position changes
-    val progressState = remember { ProgressState(positionState, durationState) }
+    // Position/duration state instances change when the active song changes.
+    // Do not pin the ring to the very first song's state forever.
+    val progressState = remember(positionState, durationState) {
+        ProgressState(positionState, durationState)
+    }
 
     val playerLabel = stringResource(R.string.player)
     val accessibleModifier = modifier.semantics { contentDescription = playerLabel }
@@ -393,14 +397,19 @@ private fun NewMiniPlayer(
                 MiniPlayerBackgroundStyle.BLUR -> {
                     if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
                         mediaMetadata?.thumbnailUrl?.let { url ->
-                            AsyncImage(
-                                model = url,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .blur(60.dp),
-                            )
+                            // Force a new image subtree for each track. The
+                            // asynchronous blur must never keep a previous
+                            // album cover alive during audio/video transitions.
+                            key(mediaMetadata?.id) {
+                                AsyncImage(
+                                    model = url,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .blur(60.dp),
+                                )
+                            }
                             Box(
                                 Modifier
                                     .fillMaxSize()
