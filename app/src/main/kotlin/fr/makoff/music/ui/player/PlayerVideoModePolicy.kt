@@ -2,7 +2,8 @@ package fr.makoff.music.ui.player
 
 /**
  * The mode header and classic "Now Playing" header are mutually exclusive.
- * A mode selector must never be shown for local tracks or unavailable clips.
+ * The mode selector always appears immediately when enabled, while its
+ * video action stays disabled until a playable clip is verified.
  */
 internal object PlayerVideoModePolicy {
     enum class HeaderMode { SELECTOR, CLASSIC, LOADING }
@@ -29,7 +30,7 @@ internal object PlayerVideoModePolicy {
         enabled: Boolean,
         expanded: Boolean,
         hasPlayableClip: Boolean,
-    ): Boolean = enabled && expanded && hasPlayableClip
+    ): Boolean = enabled && expanded
 
     /** The persistent user choice survives songs without clips or temporary
      * Cast, but actual video is displayed only for a verified clip.
@@ -45,8 +46,8 @@ internal object PlayerVideoModePolicy {
             videoId.all { it.isLetterOrDigit() || it == '_' || it == '-' }
 
     /**
-     * Only a confirmed usable stream may enable the Son/Vidéo tabs.
-     * An official counterpart alone is not proof the clip can be played.
+     * Only a confirmed usable stream may enable the VIDEO action.
+     * A visible disabled video tab never means that a clip exists.
      */
     fun clipSelectable(
         youtubeTrack: Boolean,
