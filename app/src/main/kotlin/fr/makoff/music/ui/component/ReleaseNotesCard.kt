@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
@@ -18,18 +19,57 @@ import fr.makoff.music.R
 import fr.makoff.music.utils.Updater
 import fr.makoff.music.utils.currentReleaseChanges
 
-/** Only this release's real fixes, in a short, readable, structured card.
- * No GitHub boilerplate, unrelated older changes or raw Markdown syntax.
+/** Shared presentation for the ACTUAL in-app update dialog, settings and card.
+ * No accumulated GitHub notes and no Markdown formatting shown literally.
  */
+@Composable
+fun ReleaseChangesContent(description: String, modifier: Modifier = Modifier) {
+    val groups = currentReleaseChanges(description)
+    if (groups.isEmpty()) {
+        Text(
+            text = stringResource(R.string.changelog_empty),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier,
+        )
+        return
+    }
+
+    Column(modifier = modifier.fillMaxWidth()) {
+        groups.forEachIndexed { index, group ->
+            if (index > 0) {
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.52f),
+                    modifier = Modifier.padding(vertical = 12.dp),
+                )
+            }
+            Text(
+                text = group.title,
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(bottom = 7.dp),
+            )
+            group.items.forEach { item ->
+                Text(
+                    text = "• $item",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                )
+            }
+        }
+    }
+}
+
+/** A compact premium-looking card showing only what's new in THIS APK. */
 @Composable
 fun ReleaseNotesCard() {
     val releaseInfo = Updater.getCachedLatestRelease() ?: return
-    val groups = currentReleaseChanges(releaseInfo.description)
-    if (groups.isEmpty()) return
+    if (currentReleaseChanges(releaseInfo.description).isEmpty()) return
 
     Card(
         modifier = Modifier.padding(horizontal = 16.dp).fillMaxWidth(),
-        shape = androidx.compose.foundation.shape.RoundedCornerShape(22.dp),
+        shape = RoundedCornerShape(22.dp),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
@@ -46,28 +86,7 @@ fun ReleaseNotesCard() {
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 2.dp, bottom = 12.dp),
             )
-            groups.forEachIndexed { index, group ->
-                if (index > 0) {
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.52f),
-                        modifier = Modifier.padding(vertical = 12.dp),
-                    )
-                }
-                Text(
-                    text = group.title,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(bottom = 7.dp),
-                )
-                group.items.forEach { item ->
-                    Text(
-                        text = "• $item",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    )
-                }
-            }
+            ReleaseChangesContent(releaseInfo.description)
         }
     }
     Spacer(modifier = Modifier.height(16.dp))
