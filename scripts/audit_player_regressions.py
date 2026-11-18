@@ -149,6 +149,9 @@ assert "remember(positionState, durationState)" in mini, "Mini-player ring stuck
 assert "key(mediaMetadata?.id)" in mini, "Old blurred mini cover could persist"
 assert "if (span > 0f && span.isFinite() && value.isFinite())" in wavy
 assert "firstFrameRendered = false" in switcher
+assert "val matchedVideoSong = currentSong?.takeIf { it.song.id == activeVideoId }" in player
+assert "matchedVideoSong?.song?.isVideo" in player
+assert "matchedVideoSong?.orderedArtists" in player
 assert "if (visible && firstFrameRendered) 1f else 0f" in switcher
 assert "visible = visible && !firstFrameRendered" in switcher
 print("PASS: current-song timer, valid seek ranges, Cast, mini ring, and fresh video surface guarded")
