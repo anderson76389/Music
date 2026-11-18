@@ -9,7 +9,7 @@ class DownloadAudioFormatSelectorTest {
         for (legacy in listOf(null, "BEST", "FLAC", "M4A", "OPUS", "AAC", "")) {
             assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse(legacy))
         }
-        assertEquals(listOf(DownloadAudioFormat.M4A), DownloadAudioFormat.entries.toList())
+        assertEquals(listOf(DownloadAudioFormat.M4A), DownloadAudioFormat.userChoices)
     }
 
     @Test fun highestNativeM4aIsAlwaysSelectedNotOpus() {
