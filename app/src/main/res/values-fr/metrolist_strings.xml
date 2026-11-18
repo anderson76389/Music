@@ -729,4 +729,6 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
+    <string name="download_format_aac">AAC (.aac) — meilleure qualité</string>
+    <string name="download_choice_aac_help">AAC brut, pour lecteurs portables compatibles. M4A est recommandé.</string>
 </resources>
