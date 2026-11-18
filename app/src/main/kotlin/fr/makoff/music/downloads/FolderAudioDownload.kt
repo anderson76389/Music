@@ -195,6 +195,7 @@ internal fun audioFileName(title: String, extension: String): String {
 
 internal fun audioMime(extension: String): String = when (extension.lowercase()) {
     "m4a", "mp4" -> "audio/mp4"
+    "aac" -> "audio/aac"
     "webm" -> "audio/webm"
     "opus", "ogg" -> "audio/ogg"
     "mp3" -> "audio/mpeg"
