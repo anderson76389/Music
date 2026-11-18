@@ -107,7 +107,7 @@ internal fun PlayerArtworkSwitcher(
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
     // Video stream extraction and buffering now belong to BottomSheetPlayer,
-    // which survives collapse. Never show Son/Vidéo for a merely guessed clip.
+    // which survives collapse. Always show the mode bar immediately; disable Vidéo until ready.
     val clip = videoPreview.clip
     val hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = videoId != null,
@@ -116,7 +116,7 @@ internal fun PlayerArtworkSwitcher(
         hasResolvedStream = clip != null && videoPlayer != null,
     )
     val showModeBar = PlayerVideoModePolicy.showSelector(
-        enabled = videoModeEnabled && !isCasting,
+        enabled = videoModeEnabled,
         expanded = isExpanded,
         hasPlayableClip = hasPlayableClip,
     )
@@ -155,6 +155,7 @@ internal fun PlayerArtworkSwitcher(
             videoLabel = videoLabel,
             songTitle = songTitle,
             showVideo = showVideo,
+            videoAvailable = hasPlayableClip && !isCasting,
             headerMode = headerMode,
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
@@ -165,7 +166,7 @@ internal fun PlayerArtworkSwitcher(
                 onShowVideoChange(false)
             },
             onVideoClick = {
-                if (videoPlayer != null && showModeBar) {
+                if (hasPlayableClip && !isCasting && videoPlayer != null && showModeBar) {
                     onShowVideoChange(true)
                 }
             },
@@ -209,6 +210,7 @@ private fun PlayerModeTopBar(
     videoLabel: String,
     songTitle: String?,
     showVideo: Boolean,
+    videoAvailable: Boolean,
     headerMode: PlayerVideoModePolicy.HeaderMode,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
@@ -231,6 +233,7 @@ private fun PlayerModeTopBar(
                 audioLabel = audioLabel,
                 videoLabel = videoLabel,
                 showVideo = showVideo,
+                videoAvailable = videoAvailable,
                 onAudioClick = onAudioClick,
                 onVideoClick = onVideoClick,
                 selectorTheme = selectorTheme,
@@ -300,8 +303,10 @@ internal fun PlayerModePills(
     artworkThemeColor: Color,
     customThemeColor: Color,
     modifier: Modifier = Modifier,
+    videoAvailable: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
+    val videoUnavailableDescription = stringResource(R.string.player_video_unavailable)
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
     val activeThemeColor = if (selectorTheme == PlayerVideoThemeMode.CUSTOM) customThemeColor else artworkThemeColor
     val coverDark = activeThemeColor.luminance() < 0.48f
@@ -372,6 +377,7 @@ internal fun PlayerModePills(
         ) {
             listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
                 val selected = showVideo == video
+                val enabled = !video || videoAvailable
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -392,6 +398,7 @@ internal fun PlayerModePills(
                         )
                         .selectable(
                             selected = selected,
+                            enabled = enabled,
                             role = Role.Tab,
                             onClick = if (video) onVideoClick else onAudioClick,
                         ),
@@ -401,8 +408,9 @@ internal fun PlayerModePills(
                         painter = painterResource(
                             if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
                         ),
-                        contentDescription = label,
-                        tint = if (selected) selectedForeground else unselectedForeground,
+                        contentDescription = if (video && !videoAvailable) "$label — $videoUnavailableDescription" else label,
+                        tint = if (!enabled) unselectedForeground.copy(alpha = 0.35f)
+                            else if (selected) selectedForeground else unselectedForeground,
                         modifier = Modifier.size(16.dp),
                     )
                 }
