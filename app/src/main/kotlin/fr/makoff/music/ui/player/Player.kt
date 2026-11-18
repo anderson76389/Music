@@ -491,33 +491,52 @@ fun BottomSheetPlayer(
     // Seed from the player's current values so re-entering composition on resume shows the real
     // time immediately instead of flashing 0:00 until the first poll fires. runCatching guards the
     // player-not-ready race; the poll loop corrects duration if it isn't known yet.
-    val positionState = remember { mutableLongStateOf(runCatching { playerConnection.player.currentPosition }.getOrDefault(0L)) }
-    val durationState = remember {
-        mutableLongStateOf(
-            (mediaMetadata?.duration?.takeIf { it > 0 }?.toLong()?.times(1000L))
-                ?: runCatching { playerConnection.player.duration }.getOrDefault(0L).coerceAtLeast(0L),
-        )
+    // Reset the clock BEFORE the new song is drawn. Reusing the old state
+    // flashed the outgoing track's minutes under the incoming title, notably
+    // when Son/Vidéo lookup triggers an extra recomposition.
+    val activeTimelineId = mediaMetadata?.id
+    val positionState = remember(playerConnection, activeTimelineId) {
+        mutableLongStateOf(runCatching {
+            PlayerTimelinePolicy.positionMs(
+                activeTimelineId, playerConnection.player.currentMediaItem?.mediaId,
+                playerConnection.player.currentPosition,
+            )
+        }.getOrDefault(0L))
+    }
+    val durationState = remember(playerConnection, activeTimelineId) {
+        mutableLongStateOf(runCatching {
+            PlayerTimelinePolicy.durationMs(
+                activeTimelineId, playerConnection.player.currentMediaItem?.mediaId,
+                playerConnection.player.duration, mediaMetadata?.duration?.toLong(),
+            )
+        }.getOrDefault(0L))
     }
 
     // Convenience accessors for local use
     var position by positionState
     var duration by durationState
 
-    val effectivePosition by remember {
-        derivedStateOf {
-            if (isCasting) {
-                castPosition
-            } else {
-                position
-            }
+    // Do not wrap these in unkeyed remember/derivedStateOf: the captured Cast
+    // mode and Cast clock then become stale after changing playback modes.
+    var sliderPosition by remember(activeTimelineId) { mutableStateOf<Long?>(null) }
+    var lastManualSeekTime by remember(activeTimelineId) { mutableLongStateOf(0L) }
+    var pendingCastSeek by remember(activeTimelineId) { mutableLongStateOf(-1L) }
+    val effectiveDuration = if (isCasting) {
+        castDuration.takeIf { it > 0L } ?: 0L
+    } else duration
+    val effectivePosition = if (isCasting) {
+        if (pendingCastSeek >= 0L && System.currentTimeMillis() - lastManualSeekTime < 1_500L)
+            pendingCastSeek else castPosition
+    } else position
+    val shownPosition = PlayerTimelinePolicy.displayPosition(
+        sliderPosition ?: effectivePosition, effectiveDuration,
+    )
+    LaunchedEffect(isCasting, lastManualSeekTime) {
+        if (isCasting && pendingCastSeek >= 0L) {
+            delay(1_500L)
+            pendingCastSeek = -1L
         }
     }
-
-    var sliderPosition by remember {
-        mutableStateOf<Long?>(null)
-    }
-    // Track when we last manually set position to avoid Cast overwriting it
-    var lastManualSeekTime by remember { mutableLongStateOf(0L) }
 
     var gradientColors by remember {
         mutableStateOf<List<Color>>(emptyList())
@@ -743,31 +762,29 @@ fun BottomSheetPlayer(
         mutableStateOf(false)
     }
 
-    // Position update - only for local playback
-    // When casting, we use castPosition directly to avoid sync issues
-    // Use isPlaying instead of playbackState to ensure continuous updates during playback
-    LaunchedEffect(isPlaying, isCasting) {
-        if (!isCasting && isPlaying) {
-            while (isActive) {
-                delay(100) // Update more frequently for smoother progress bar
-                if (sliderPosition == null) { // Only update if user isn't dragging
-                    position = playerConnection.player.currentPosition
-                    // Don't clobber a valid (metadata-derived) duration with 0/UNSET mid-resolve.
-                    playerConnection.player.duration.takeIf { it > 0 }?.let { duration = it }
-                }
-            }
-        }
-    }
-
-    // Also update position when playback state changes (e.g., song change, seek)
-    LaunchedEffect(playbackState, mediaMetadata?.id) {
+    // One authoritative clock: the audio service. Poll also while paused or
+    // buffering so an external seek is reflected without another play/pause.
+    // Never copy the outgoing stream's duration while the new track resolves.
+    LaunchedEffect(activeTimelineId, playbackState, isPlaying, isCasting) {
         if (!isCasting) {
-            position = playerConnection.player.currentPosition
-            // Prefer the song's known duration (from metadata, available instantly from the restored
-            // queue) so the slider range is right even when restored paused / before the stream
-            // resolves; fall back to the player's duration once it is known.
-            duration = (mediaMetadata?.duration?.takeIf { it > 0 }?.toLong()?.times(1000L))
-                ?: playerConnection.player.duration
+            while (isActive) {
+                val audioPlayer = playerConnection.player
+                val playerId = audioPlayer.currentMediaItem?.mediaId
+                val nextDuration = PlayerTimelinePolicy.durationMs(
+                    activeTimelineId, playerId, audioPlayer.duration,
+                    mediaMetadata?.duration?.toLong(),
+                )
+                duration = nextDuration
+                if (sliderPosition == null) {
+                    position = PlayerTimelinePolicy.displayPosition(
+                        PlayerTimelinePolicy.positionMs(
+                            activeTimelineId, playerId, audioPlayer.currentPosition,
+                        ),
+                        nextDuration,
+                    )
+                }
+                delay(if (isPlaying) 180L else 400L)
+            }
         }
     }
 
@@ -785,19 +802,6 @@ fun BottomSheetPlayer(
         }
 
         previousMediaId = currentId
-    }
-
-    // When casting, use Cast position/duration directly
-    // But wait a bit after manual seeks to let Cast catch up
-    LaunchedEffect(isCasting, castPosition, castDuration) {
-        if (isCasting && sliderPosition == null) {
-            val timeSinceManualSeek = System.currentTimeMillis() - lastManualSeekTime
-            if (timeSinceManualSeek > 1500) {
-                // Only update from Cast if we haven't manually seeked recently
-                position = castPosition
-                if (castDuration > 0) duration = castDuration
-            }
-        }
     }
 
     val dismissedBound = QueuePeekHeight + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding()
