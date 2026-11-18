@@ -309,10 +309,13 @@ class OfflinePlayerInstrumentedTest {
                 device.findObjects(By.desc(context.getString(R.string.more_options)))
                     .none { it.visibleBounds.top < coverBounds.top },
             )
-            assertNull(
-                "An audio-only track must never display a video selector",
-                device.findObject(By.desc(context.getString(R.string.player_video_label))),
-            )
+            // The controls are present immediately on ALL tracks. Only
+            // the video action is unavailable for this local audio fixture.
+            val unavailableVideoTab = requireNotNull(
+                device.findObject(By.descContains(context.getString(R.string.player_video_label)))
+            ) { "Son/Vidéo must appear immediately even without a video clip" }
+            assertFalse("No local clip: Vidéo must be disabled, not black-screened",
+                unavailableVideoTab.isEnabled)
             assertNotNull(
                 "The compact player must still provide its collapse control",
                 device.findObject(By.desc(context.getString(R.string.player_collapse_label))),
