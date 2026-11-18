@@ -106,8 +106,9 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    // Video stream extraction and buffering now belong to BottomSheetPlayer,
-    // which survives collapse. Never show Son/Vidéo for a merely guessed clip.
+    // Extraction and prebuffer survive sheet collapse. Render the two tabs
+    // immediately for EVERY song if enabled; only the Video ACTION depends
+    // on proving that a usable video stream exists.
     val clip = videoPreview.clip
     val hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = videoId != null,
@@ -116,7 +117,7 @@ internal fun PlayerArtworkSwitcher(
         hasResolvedStream = clip != null && videoPlayer != null,
     )
     val showModeBar = PlayerVideoModePolicy.showSelector(
-        enabled = videoModeEnabled && !isCasting,
+        enabled = videoModeEnabled,
         expanded = isExpanded,
         hasPlayableClip = hasPlayableClip,
     )
@@ -128,7 +129,7 @@ internal fun PlayerArtworkSwitcher(
         modeEnabled = videoModeEnabled && isExpanded,
     )
     val playerImage: @Composable () -> Unit = {
-        if (showModeBar && videoId != null && clip != null && videoPlayer != null) {
+        if (showModeBar && hasPlayableClip && videoId != null && clip != null && videoPlayer != null) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 // Mount the decoder surface behind the artwork so its FIRST
                 // frame is decoded before the Vidéo tap. Native TextureView
@@ -155,6 +156,7 @@ internal fun PlayerArtworkSwitcher(
             videoLabel = videoLabel,
             songTitle = songTitle,
             showVideo = showVideo,
+            videoAvailable = hasPlayableClip && !isCasting,
             headerMode = headerMode,
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
@@ -165,7 +167,7 @@ internal fun PlayerArtworkSwitcher(
                 onShowVideoChange(false)
             },
             onVideoClick = {
-                if (videoPlayer != null && showModeBar) {
+                if (videoPlayer != null && hasPlayableClip && !isCasting) {
                     onShowVideoChange(true)
                 }
             },
@@ -209,6 +211,7 @@ private fun PlayerModeTopBar(
     videoLabel: String,
     songTitle: String?,
     showVideo: Boolean,
+    videoAvailable: Boolean,
     headerMode: PlayerVideoModePolicy.HeaderMode,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
@@ -231,6 +234,7 @@ private fun PlayerModeTopBar(
                 audioLabel = audioLabel,
                 videoLabel = videoLabel,
                 showVideo = showVideo,
+                videoAvailable = videoAvailable,
                 onAudioClick = onAudioClick,
                 onVideoClick = onVideoClick,
                 selectorTheme = selectorTheme,
@@ -293,6 +297,7 @@ internal fun PlayerModePills(
     audioLabel: String,
     videoLabel: String,
     showVideo: Boolean,
+    videoAvailable: Boolean = true,
     onAudioClick: () -> Unit,
     onVideoClick: () -> Unit,
     selectorTheme: PlayerVideoThemeMode,
@@ -392,6 +397,7 @@ internal fun PlayerModePills(
                         )
                         .selectable(
                             selected = selected,
+                            enabled = !video || videoAvailable,
                             role = Role.Tab,
                             onClick = if (video) onVideoClick else onAudioClick,
                         ),
@@ -402,7 +408,8 @@ internal fun PlayerModePills(
                             if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
                         ),
                         contentDescription = label,
-                        tint = if (selected) selectedForeground else unselectedForeground,
+                        tint = if (video && !videoAvailable) unselectedForeground.copy(alpha = 0.34f)
+                            else if (selected) selectedForeground else unselectedForeground,
                         modifier = Modifier.size(16.dp),
                     )
                 }
