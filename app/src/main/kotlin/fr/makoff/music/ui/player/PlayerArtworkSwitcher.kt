@@ -485,7 +485,7 @@ internal fun VideoOnlySurface(
                     // In particular, never reveal a stale TextureView buffer
                     // immediately after selecting Vidéo or rotating the phone.
                     textureView.alpha =
-                        if (visible && firstFrameRendered && videoReady) 1f else 0f
+                        if (visible && firstFrameRendered) 1f else 0f
                 },
                 onRelease = { textureView ->
                     // Conditional clear never detaches a replacement surface
@@ -497,7 +497,9 @@ internal fun VideoOnlySurface(
                 },
             )
             AnimatedVisibility(
-                visible = visible && (!firstFrameRendered || !videoReady),
+                // Keep the last valid video frame displayed during short rebuffering
+                // rather than flashing back to an opaque loading screen.
+                visible = visible && !firstFrameRendered,
                 enter = fadeIn(animationSpec = tween(100)),
                 exit = fadeOut(animationSpec = tween(180)),
             ) {
