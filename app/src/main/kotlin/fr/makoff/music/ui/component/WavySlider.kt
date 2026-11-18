@@ -58,8 +58,14 @@ fun WavySlider(
         Stroke(width = strokeWidthPx, cap = StrokeCap.Round) 
     }
     
-    val normalizedValue = ((value - valueRange.start) / (valueRange.endInclusive - valueRange.start))
-        .coerceIn(0f, 1f)
+    // Media3 reports an unknown duration while a song/clip resolves. A
+    // 0..0 range previously produced 0f/0f = NaN and corrupted the wave
+    // position, especially during rapid Son/Vidéo or next-track changes.
+    val span = valueRange.endInclusive - valueRange.start
+    val normalizedValue =
+        if (span > 0f && span.isFinite() && value.isFinite()) {
+            ((value - valueRange.start) / span).coerceIn(0f, 1f)
+        } else 0f
     
     var isDragging by remember { mutableStateOf(false) }
     var dragValue by remember { mutableFloatStateOf(normalizedValue) }
