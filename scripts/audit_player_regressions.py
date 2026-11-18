@@ -130,7 +130,7 @@ internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
 assert 'val userChoices: List<DownloadAudioFormat> = listOf(M4A)' in download_format
-assert 'fun parse(value: String?): DownloadAudioFormat = M4A' in download_format
+assert 'entries.firstOrNull { it.name == value } ?: M4A' in download_format
 assert 'format == DownloadAudioFormat.M4A' in download_engine
 assert 'request.addOption("--extract-audio")' in download_engine  # hidden legacy import only
 assert 'fun parse(value: String?): DownloadAudioFormat = M4A' in download_format
