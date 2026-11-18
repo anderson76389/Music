@@ -126,3 +126,29 @@ assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
 print("PASS: current-song artwork, menu backdrop/interaction, late SoundProof metadata and highest-quality paths guarded")
+
+
+# Timer / seek regression safeguards: a previous track must not own the next
+# song's timeline, and zero/unknown duration must never turn wavy UI into NaN.
+timeline = (src / "ui/player/PlayerTimelinePolicy.kt").read_text()
+mini = (src / "ui/player/MiniPlayer.kt").read_text()
+wavy = (src / "ui/component/WavySlider.kt").read_text()
+switcher = (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert "currentId == playerId" in timeline
+assert "playerDurationMs != C.TIME_UNSET" not in timeline or "it != C.TIME_UNSET" in timeline
+assert "playerPositionMs.coerceAtLeast(0L)" in timeline
+assert "metadataDurationSeconds" in timeline and ".times(1_000L)" in timeline
+assert "remember(playerConnection, activeTimelineId)" in player
+assert "LaunchedEffect(activeTimelineId, playbackState, isPlaying, isCasting)" in player
+assert "PlayerTimelinePolicy.durationMs(" in player
+assert "PlayerTimelinePolicy.positionMs(" in player
+assert "PlayerTimelinePolicy.seekPosition(it, seekableDuration)" in player
+assert "key(activeTimelineId) {" in player, "Old slider pointerInput must not survive a song change"
+assert "val effectivePosition by remember {" not in player, "Cast mode was captured stale"
+assert "remember(positionState, durationState)" in mini, "Mini-player ring stuck on initial song"
+assert "key(mediaMetadata?.id)" in mini, "Old blurred mini cover could persist"
+assert "if (span > 0f && span.isFinite() && value.isFinite())" in wavy
+assert "firstFrameRendered = false" in switcher
+assert "if (visible && firstFrameRendered) 1f else 0f" in switcher
+assert "visible = visible && !firstFrameRendered" in switcher
+print("PASS: current-song timer, valid seek ranges, Cast, mini ring, and fresh video surface guarded")
