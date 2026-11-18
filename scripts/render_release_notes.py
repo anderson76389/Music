@@ -46,9 +46,30 @@ def summarize(compare: dict) -> str:
     groups = {}
     seen = set()
     for commit in commits:
-        raw = commit.get("commit", {}).get("message", "").splitlines()[0].strip()
+        message = commit.get("commit", {}).get("message", "")
+        raw = message.splitlines()[0].strip() if message else ""
         if not raw:
             continue
+        # Maintainers can add succinct, French, user-facing change bullets to
+        # squash commits. These are MORE accurate than guessing from a short
+        # technical subject and still belong only to this release's commits.
+        if "\nRelease-Notes:\n" in message:
+            footer = message.split("\nRelease-Notes:\n", 1)[1]
+            wrote = False
+            for line in footer.splitlines():
+                match_note = re.fullmatch(
+                    r"- \[(Nouveautés|Corrections|Fluidité et performances|Améliorations)\]\s+(.+)",
+                    line.strip(),
+                )
+                if match_note:
+                    category, item = match_note.groups()
+                    item = item.strip().rstrip(".")[:200]
+                    if item and item.casefold() not in seen:
+                        groups.setdefault(category, []).append(item)
+                        seen.add(item.casefold())
+                        wrote = True
+            if wrote:
+                continue
         match = re.fullmatch(r"([a-z]+)(?:\(([^)]+)\))?!?:\s*(.+)", raw)
         if match:
             kind, scope, title = match.groups()
