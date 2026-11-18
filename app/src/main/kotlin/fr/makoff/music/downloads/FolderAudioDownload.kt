@@ -159,10 +159,13 @@ internal object YtDlpAudioEngine {
                 "-nostdin", "-y", "-loglevel", "error", "-i", nativeM4a.absolutePath,
                 "-map", "0:a:0", "-c:a", "copy", "-f", "adts", output.absolutePath,
             )
-            val process = ProcessBuilder(command)
+            val builder = ProcessBuilder(command)
                 .redirectErrorStream(true)
                 .redirectOutput(File(directory, "aac-remux.log"))
-                .start()
+            val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
+            builder.environment()["LD_LIBRARY_PATH"] = listOf("python", "ffmpeg", "aria2c")
+                .joinToString(":") { File(runtime, "$it/usr/lib").absolutePath }
+            val process = builder.start()
             try {
                 if (!process.waitFor(120, java.util.concurrent.TimeUnit.SECONDS) ||
                     process.exitValue() != 0 || !output.isFile || output.length() == 0L
