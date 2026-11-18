@@ -30,6 +30,14 @@ def summarize_subject(subject: str) -> str | None:
         "fix": "Correctif", "feat": "Nouveauté", "perf": "Performance",
         "refactor": "Amélioration",
     }[kind.lower()]).replace("/", " / ").replace("_", " ")
+    labels = {
+        "player": "Lecteur", "downloads": "Téléchargements",
+        "download": "Téléchargements", "release": "Mises à jour",
+        "updater": "Mises à jour", "audio": "Audio",
+        "sync": "Synchronisation", "backup": "Sauvegardes",
+        "ui": "Interface", "video": "Vidéo", "quality": "Qualité",
+    }
+    area = labels.get(area.lower(), area)
     return f"**{area[0].upper() + area[1:]}** — {details[0].upper() + details[1:]}"
 
 def notes_since(previous: str, current: str = "HEAD") -> str:
