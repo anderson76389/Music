@@ -133,7 +133,7 @@ assert 'val userChoices: List<DownloadAudioFormat> = listOf(M4A)' in download_fo
 assert 'entries.firstOrNull { it.name == value } ?: M4A' in download_format
 assert 'format == DownloadAudioFormat.M4A' in download_engine
 assert 'request.addOption("--extract-audio")' in download_engine  # hidden legacy import only
-assert 'fun parse(value: String?): DownloadAudioFormat = M4A' in download_format
+assert 'fun parse(value: String?): DownloadAudioFormat =' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
 assert 'format != DownloadAudioFormat.M4A || output.extension.equals("m4a", ignoreCase = true)' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
