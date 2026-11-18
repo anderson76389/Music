@@ -45,6 +45,7 @@ import fr.makoff.music.ui.component.IconButton
 import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.ui.utils.backToMain
+import fr.makoff.music.ui.component.ReleaseNotesContent
 import fr.makoff.music.utils.Updater
 import fr.makoff.music.utils.UpdateNotifications
 import fr.makoff.music.utils.rememberPreference
@@ -238,13 +239,10 @@ fun UpdaterScreen(
 
             if (showChangelog && changelogContent != null) {
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    text = changelogContent!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
+                ReleaseNotesContent(
+                    description = changelogContent!!,
+                    versionName = latestVersion.orEmpty(),
+                    modifier = Modifier.padding(16.dp),
                 )
             }
         }
