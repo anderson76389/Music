@@ -285,6 +285,8 @@ constructor(
                     header.take(4) == listOf(0x1a.toByte(), 0x45.toByte(), 0xdf.toByte(), 0xa3.toByte()) -> "webm"
                     header.take(4).toByteArray().toString(Charsets.US_ASCII) == "OggS" -> if (mime == "audio/opus") "opus" else "ogg"
                     header.drop(4).take(4).toByteArray().toString(Charsets.US_ASCII) == "ftyp" -> "m4a"
+                    header.size >= 2 && (header[0].toInt() and 0xFF) == 0xFF &&
+                        (header[1].toInt() and 0xF0) == 0xF0 && mime == "audio/mp4a-latm" -> "aac"
                     mime == "audio/mpeg" -> "mp3"
                     header.take(4).toByteArray().toString(Charsets.US_ASCII) == "fLaC" || mime == "audio/flac" -> "flac"
                     else -> error("Unsupported cached audio container")
