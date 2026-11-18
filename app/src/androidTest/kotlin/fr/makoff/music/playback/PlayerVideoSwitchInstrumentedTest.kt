@@ -2,6 +2,9 @@ package fr.makoff.music.playback
 
 import android.content.Intent
 import android.os.SystemClock
+import android.view.View
+import android.view.ViewGroup
+import android.view.TextureView
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -70,6 +73,12 @@ class PlayerVideoSwitchInstrumentedTest {
 
     private fun click(label: String) {
         requireNotNull(device.wait(Until.findObject(By.desc(label)), 5_000L)) { "Missing video control: $label" }.click()
+    }
+
+    private fun textureView(root: View): TextureView? = when (root) {
+        is TextureView -> root
+        is ViewGroup -> (0 until root.childCount).firstNotNullOfOrNull { textureView(root.getChildAt(it)) }
+        else -> null
     }
 
     private fun fixture(name: String): File = File(context.cacheDir, "switch-$name").apply {
@@ -171,9 +180,17 @@ class PlayerVideoSwitchInstrumentedTest {
             }
             assertSame(video, videoRef.get())
             assertTrue(main { audio.playWhenReady })
+            // The muted TextureView stays attached for fast switching, but
+            // must be completely hidden when Son owns the artwork.
+            await("Son tab leaked a native video layer") {
+                main { textureView(requireNotNull(activity).window.decorView)?.alpha == 0f }
+            }
             click(videoLabel)
             await("No real video frame rendered") {
                 main { (video.videoDecoderCounters?.renderedOutputBufferCount ?: 0) > 0 }
+            }
+            await("Video tab never revealed its own first rendered frame") {
+                main { textureView(requireNotNull(activity).window.decorView)?.alpha == 1f }
             }
             click("fixture-video-surface")
             await("Video tap did not pause both clocks") { main { !audio.playWhenReady && !video.playWhenReady } }
@@ -196,6 +213,9 @@ class PlayerVideoSwitchInstrumentedTest {
                 main { context.resources.configuration.orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE &&
                     videoRef.get() === video && video.playWhenReady &&
                     (video.videoDecoderCounters?.renderedOutputBufferCount ?: 0) > framesBeforeRotation }
+            }
+            await("New landscape TextureView did not reveal a fresh video frame") {
+                main { textureView(requireNotNull(activity).window.decorView)?.alpha == 1f }
             }
             device.setOrientationNatural()
             device.pressHome()
