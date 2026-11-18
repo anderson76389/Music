@@ -106,8 +106,8 @@ internal fun PlayerArtworkSwitcher(
     val unavailable = stringResource(R.string.player_video_unavailable)
     val coverLabel = stringResource(R.string.player_cover_label)
     val videoLabel = stringResource(R.string.player_video_label)
-    // Video stream extraction and buffering now belong to BottomSheetPlayer,
-    // which survives collapse. Never show Son/Vidéo for a merely guessed clip.
+    // Keep the tabs mounted from the FIRST frame on every song. Discovering
+    // the playable video is asynchronous, but must never delay the selector.
     val clip = videoPreview.clip
     val hasPlayableClip = PlayerVideoModePolicy.clipSelectable(
         youtubeTrack = videoId != null,
@@ -155,6 +155,7 @@ internal fun PlayerArtworkSwitcher(
             videoLabel = videoLabel,
             songTitle = songTitle,
             showVideo = showVideo,
+            videoAvailable = hasPlayableClip,
             headerMode = headerMode,
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
@@ -209,6 +210,7 @@ private fun PlayerModeTopBar(
     videoLabel: String,
     songTitle: String?,
     showVideo: Boolean,
+    videoAvailable: Boolean,
     headerMode: PlayerVideoModePolicy.HeaderMode,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
@@ -232,6 +234,7 @@ private fun PlayerModeTopBar(
                 videoLabel = videoLabel,
                 showVideo = showVideo,
                 onAudioClick = onAudioClick,
+                videoAvailable = videoAvailable,
                 onVideoClick = onVideoClick,
                 selectorTheme = selectorTheme,
                 appDarkTheme = appDarkTheme,
@@ -300,6 +303,7 @@ internal fun PlayerModePills(
     artworkThemeColor: Color,
     customThemeColor: Color,
     modifier: Modifier = Modifier,
+    videoAvailable: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
@@ -392,6 +396,7 @@ internal fun PlayerModePills(
                         )
                         .selectable(
                             selected = selected,
+                            enabled = !video || videoAvailable,
                             role = Role.Tab,
                             onClick = if (video) onVideoClick else onAudioClick,
                         ),
@@ -402,7 +407,8 @@ internal fun PlayerModePills(
                             if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
                         ),
                         contentDescription = label,
-                        tint = if (selected) selectedForeground else unselectedForeground,
+                        tint = if (video && !videoAvailable) unselectedForeground.copy(alpha = 0.38f)
+                            else if (selected) selectedForeground else unselectedForeground,
                         modifier = Modifier.size(16.dp),
                     )
                 }

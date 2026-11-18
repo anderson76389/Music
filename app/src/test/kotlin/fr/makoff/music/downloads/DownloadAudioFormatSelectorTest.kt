@@ -3,22 +3,34 @@ package fr.makoff.music.downloads
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Source selection is independent of the player's streaming-quality setting. */
+/** Download format: portable, highest-quality original AAC in an M4A container. */
 class DownloadAudioFormatSelectorTest {
-    @Test fun defaultAndBestAlwaysRequestHighestAvailableYouTubeAudio() {
-        assertEquals(DownloadAudioFormat.BEST, DownloadAudioFormat.parse(null))
-        assertEquals("bestaudio", selectYtDlpAudioFormat(DownloadAudioFormat.BEST, lowQuality = false, isLocalSource = false))
-        assertEquals("bestaudio", selectYtDlpAudioFormat(DownloadAudioFormat.FLAC, lowQuality = false, isLocalSource = false))
+    @Test fun defaultAndLegacyFormatsMigrateToM4a() {
+        for (value in listOf(null, "M4A", "OPUS", "AAC", "")) {
+            assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse(value))
+        }
+        // An existing offline request stores its original codec/format
+        // explicitly; it must keep playing without migration or network.
+        assertEquals(DownloadAudioFormat.BEST, DownloadAudioFormat.parse("BEST"))
+        assertEquals(DownloadAudioFormat.FLAC, DownloadAudioFormat.parse("FLAC"))
+        assertEquals(listOf(DownloadAudioFormat.M4A), DownloadAudioFormat.userChoices)
     }
 
-    @Test fun originalM4aIsRequiredInsteadOfLossyTranscoding() {
-        assertEquals("bestaudio[ext=m4a]", selectYtDlpAudioFormat(DownloadAudioFormat.M4A, lowQuality = false, isLocalSource = false))
-        assertEquals("bestaudio[ext=m4a]", selectYtDlpAudioFormat(DownloadAudioFormat.M4A, lowQuality = true, isLocalSource = false))
+    @Test fun highestNativeM4aIsAlwaysSelectedNotOpus() {
+        assertEquals(
+            "bestaudio[ext=m4a]",
+            selectYtDlpAudioFormat(DownloadAudioFormat.M4A, lowQuality = false, isLocalSource = false),
+        )
+        // Old "low quality" flags must never downgrade a portable download.
+        assertEquals(
+            "bestaudio[ext=m4a]",
+            selectYtDlpAudioFormat(DownloadAudioFormat.M4A, lowQuality = true, isLocalSource = false),
+        )
     }
 
-    @Test fun lowQualityMustBeRequestedExplicitly() {
-        assertEquals("worstaudio", selectYtDlpAudioFormat(DownloadAudioFormat.BEST, lowQuality = true, isLocalSource = false))
-        assertEquals("best", selectYtDlpAudioFormat(DownloadAudioFormat.BEST, lowQuality = true, isLocalSource = true))
-        assertEquals("best", selectYtDlpAudioFormat(DownloadAudioFormat.FLAC, lowQuality = false, isLocalSource = true))
+    @Test fun localFixtureDoesNotRequireYoutubeFormatMetadata() {
+        assertEquals("best", selectYtDlpAudioFormat(
+            DownloadAudioFormat.M4A, lowQuality = false, isLocalSource = true,
+        ))
     }
 }

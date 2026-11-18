@@ -177,6 +177,7 @@ import fr.makoff.music.playback.MusicService
 import fr.makoff.music.playback.MusicService.MusicBinder
 import fr.makoff.music.playback.PlayerConnection
 import fr.makoff.music.playback.queues.YouTubeQueue
+import fr.makoff.music.ui.component.ReleaseChangesContent
 import fr.makoff.music.ui.component.AccountSettingsDialog
 import fr.makoff.music.ui.component.AppNavigationBar
 import fr.makoff.music.ui.component.AppNavigationRail
@@ -1409,7 +1410,13 @@ class MainActivity : FragmentActivity() {
                             }
                             AlertDialog(
                                 onDismissRequest = dismissUpdate,
-                                title = { Text(stringResource(R.string.update_available_title)) },
+                                shape = RoundedCornerShape(24.dp),
+                                title = {
+                                    Text(
+                                        text = stringResource(R.string.update_available_title),
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                },
                                 text = {
                                     Column(
                                         modifier =
@@ -1427,7 +1434,8 @@ class MainActivity : FragmentActivity() {
                                                     },
                                                     update.release.versionName,
                                                 ),
-                                            style = MaterialTheme.typography.bodyMedium,
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.primary,
                                         )
                                         if (update.isKmp) {
                                             Text(
@@ -1442,9 +1450,9 @@ class MainActivity : FragmentActivity() {
                                             style = MaterialTheme.typography.titleSmall,
                                             modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
                                         )
-                                        Text(
-                                            text = update.release.description.ifBlank { stringResource(R.string.changelog_empty) },
-                                            style = MaterialTheme.typography.bodySmall,
+                                        ReleaseChangesContent(
+                                            description = update.release.description,
+                                            modifier = Modifier.padding(bottom = 4.dp),
                                         )
                                     }
                                 },

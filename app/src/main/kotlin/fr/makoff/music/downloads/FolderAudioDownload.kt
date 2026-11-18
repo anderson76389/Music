@@ -119,11 +119,15 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
                 initialize(context)
-                if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                // No conversion for the only user-selectable AAC/M4A output.
+                // The legacy codecs are retained only for existing files/tests.
+                if (format != DownloadAudioFormat.M4A) {
+                    com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                }
             } catch (failure: LinkageError) {
                 throw IOException("Download engine initialization failed", failure)
             }
@@ -139,7 +143,10 @@ internal object YtDlpAudioEngine {
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
             if (format != DownloadAudioFormat.M4A) {
-                request.addOption("--extract-audio").addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
+                // Internal compatibility for pre-existing Opus/FLAC exports.
+                // New UI requests always specify M4A and never enter here.
+                request.addOption("--extract-audio")
+                    .addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
             }
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
@@ -152,24 +159,32 @@ internal object YtDlpAudioEngine {
             val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
-            check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "FLAC conversion failed" }
-            check(format != DownloadAudioFormat.M4A || output.extension == "m4a") { "M4A unavailable" }
+            check(format != DownloadAudioFormat.M4A || output.extension.equals("m4a", ignoreCase = true)) {
+                "AAC/M4A unavailable for this track"
+            }
+            check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "Legacy FLAC conversion failed" }
             output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
         source ?: return null
         return when {
+            // New export: accept only native AAC/M4A. Never transcode Opus
+            // under an M4A filename: retrieve the AAC stream instead.
+            format == DownloadAudioFormat.M4A -> source.takeIf {
+                it.extension.equals("m4a", ignoreCase = true)
+            }
+            // Historical formats can still be read and tested without
+            // surfacing their choices in new export dialogs.
             format == DownloadAudioFormat.BEST && source.extension.lowercase() == "webm" ->
                 download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
                     format = DownloadAudioFormat.BEST) { }
             format == DownloadAudioFormat.BEST -> source
-            format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
-            format == DownloadAudioFormat.M4A -> { source.delete(); null }
             source.extension == "flac" -> source
             else -> download(context, source.toURI().toString(), File(directory, "converted"), processId,
                 format = DownloadAudioFormat.FLAC) { }
         }
+
     }
 }
 

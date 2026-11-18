@@ -111,7 +111,7 @@ class FolderAudioInstrumentedTest {
                 kotlinx.coroutines.delay(100)
             }
             assertNotNull("Production activity opens", activity)
-            for ((index, format) in (DownloadAudioFormat.entries + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
+            for ((index, format) in List(6) { DownloadAudioFormat.M4A }.withIndex()) {
                 val id = UUID.randomUUID().toString().replace("-", "").take(11)
                 ids += id
                 val albumTitle = "Album popup $id"
@@ -119,7 +119,7 @@ class FolderAudioInstrumentedTest {
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
                     album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
                 }
@@ -141,22 +141,12 @@ class FolderAudioInstrumentedTest {
                     }
                 }
                 click(fr.makoff.music.R.string.action_download)
-                assertTrue("Quality popup appears before work starts", device.wait(androidx.test.uiautomator.Until.hasObject(
-                    androidx.test.uiautomator.By.text(context.getString(fr.makoff.music.R.string.download_choose_quality))), 5000))
-                assertTrue("Opening the popup must not queue a download", androidx.work.WorkManager.getInstance(context)
-                    .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
-                if (index == 0) {
-                    device.executeShellCommand("screencap -p /data/local/tmp/download-quality-popup.png")
-                    click(android.R.string.cancel)
-                    assertTrue("Cancel must not queue a download", androidx.work.WorkManager.getInstance(context)
-                        .getWorkInfosByTag(FolderAudioDownloads.SONG_TAG + id).get().isEmpty())
-                    click(fr.makoff.music.R.string.action_download)
-                }
-                click(format.label)
-                click(fr.makoff.music.R.string.action_download)
+                assertFalse("With only AAC/M4A, no obsolete quality picker should appear",
+                    device.hasObject(androidx.test.uiautomator.By.text(
+                        context.getString(fr.makoff.music.R.string.download_choose_quality))))
                 // Change the default immediately: the confirmed request must retain its own choice.
                 context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
-                    if (format == DownloadAudioFormat.FLAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.FLAC.name }
+                    if (index % 2 == 0) DownloadAudioFormat.FLAC.name else DownloadAudioFormat.BEST.name }
                 var completed: androidx.work.WorkInfo? = null
                 val deadline = android.os.SystemClock.elapsedRealtime() + 45000
                 while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {

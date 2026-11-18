@@ -30,7 +30,9 @@ class PlayerVideoModePolicyTest {
     @Test fun noClipKeepsHeaderEmptyWithoutClaimingVideoIsAvailable() {
         assertTrue(PlayerVideoModePolicy.headerMode(false, false, modeEnabled = true) ==
             PlayerVideoModePolicy.HeaderMode.LOADING)
-        assertFalse(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = false))
+        // Tabs are now immediate on ALL songs. Vidéo itself stays disabled
+        // until a stream resolves; the old blank/5-second header is gone.
+        assertTrue(PlayerVideoModePolicy.showSelector(enabled = true, expanded = true, hasPlayableClip = false))
     }
 
     @Test fun videoSelectorNeverOverlaysOldNowPlayingHeader() {
@@ -52,9 +54,12 @@ class PlayerVideoModePolicyTest {
         )
     }
 
-    @Test fun modeIsEnabledByDefaultOnlyForPlayableVideos() {
+    @Test fun selectorIsImmediateForEverySongWhenEnabled() {
         assertTrue(PlayerVideoModePolicy.showSelector(true, true, true))
-        assertFalse(PlayerVideoModePolicy.showSelector(true, true, false))
+        assertTrue(PlayerVideoModePolicy.showSelector(true, true, false))
+        assertTrue(PlayerVideoModePolicy.showSelector(true, true, false))
+        assertFalse(PlayerVideoModePolicy.showSelector(false, true, true))
+        assertFalse(PlayerVideoModePolicy.showSelector(true, false, true))
     }
 
     @Test fun disablingModeAlwaysRestoresTheClassicHeader() {

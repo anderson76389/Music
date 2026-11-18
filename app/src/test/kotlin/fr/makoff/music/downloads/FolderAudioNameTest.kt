@@ -50,18 +50,18 @@ class FolderAudioNameTest {
         assertEquals("Album", collectionFolder("\u202eAlbum\u200b", "album-id"))
         assertFalse(collectionFolder("..", "album-id").contains('/'))
     }
-    @Test fun unifiedFormatPreservesAnExplicitLegacyChoice() {
+    @Test fun oldFormatsAutomaticallyMigrateToPortableAacM4aForNewDownloads() {
         val prefs = androidx.datastore.preferences.core.mutablePreferencesOf()
         prefs[fr.makoff.music.constants.InternalDownloadFormatKey] = "FLAC"
         prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "BEST"
-        assertEquals(DownloadAudioFormat.FLAC, prefs.selectedDownloadFormat())
+        assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         prefs[fr.makoff.music.constants.ExternalDownloadFormatKey] = "M4A"
         assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "BEST"
-        assertEquals(DownloadAudioFormat.BEST, prefs.selectedDownloadFormat())
+        assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         for (format in DownloadAudioFormat.entries) {
             prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = format.name
-            assertEquals(format, prefs.selectedDownloadFormat())
+            assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         }
     }
     @Test fun readableFileNamesKeepLongTitlesAndNoTechnicalIdentifier() {

@@ -72,6 +72,7 @@ jobs:
           keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           python3 scripts/audit_player_regressions.py
+          python3 scripts/test_release_notes.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
           mkdir -p dist
@@ -129,7 +130,16 @@ jobs:
           git archive --format=zip --output=dist/MAKOFF-Music-source.zip HEAD
           printf 'MUSIC_VERSION_CODE=%s\nMUSIC_VERSION_NAME=%s\nSOURCE_SHA=%s\n' "$MUSIC_VERSION_CODE" "$MUSIC_VERSION_NAME" "$SOURCE_SHA" > dist/BUILD.txt
           (cd dist && sha256sum Apple.Music.apk Apple.Music-*.apk Metrolist.apk MAKOFF-Music-source.zip SIGNATURE.txt BUILD.txt > SHA256SUMS.txt)
-          cat > notes.txt <<'NOTES'
+          # Compare the last INSTALLED RELEASE's source commit with this exact
+          # signed APK. Never show accumulated or hand-written old changelogs.
+          mkdir -p previous-apk
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern 'BUILD.txt' --dir previous-apk --clobber
+          previous_sha="$(sed -n 's/^SOURCE_SHA=//p' previous-apk/BUILD.txt | head -n 1)"
+          [[ "$previous_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Previous published source SHA missing"; exit 1; }
+          gh api "repos/$GITHUB_REPOSITORY/compare/${previous_sha}...${SOURCE_SHA}" > release-comparison.json
+          python3 scripts/render_release_notes.py release-comparison.json NOTES-VERSION.txt
+          cp NOTES-VERSION.txt notes.txt
+          cat >> notes.txt <<'NOTES'
           ## Apple Music pour Android
 
           - **Apple.Music-arm64-v8a.apk** : APK allégé recommandé pour les téléphones Android modernes 64 bits, dont HONOR Magic V6.
@@ -141,7 +151,7 @@ jobs:
 
           APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
           NOTES
-          cat CHANGEMENTS-VERSION.txt >> notes.txt
+          # Only changes made since the previous published APK are displayed.
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Apple Music $RELEASE_TAG" --notes-file notes.txt

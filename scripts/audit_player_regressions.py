@@ -65,6 +65,17 @@ assert "override fun onDestroy()" in service
 print("PASS: landscape controls share visibility, use one player, and mode toggles do not block on queue IO")
 
 
+# Show the selector on the first composed frame, even if this song has
+# no video at all. The unplayable Video tab is non-interactive until ready.
+policy = (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
+switcher = (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert "): Boolean = enabled && expanded" in policy
+assert "): Boolean = enabled && expanded && hasPlayableClip" not in policy
+assert "videoAvailable = hasPlayableClip" in switcher
+assert "enabled = !video || videoAvailable" in switcher
+assert "if (videoPlayer != null && showModeBar)" in switcher
+print("PASS: Son/Vidéo selector appears immediately without false video playback")
+
 # Cover transition invariants. A lazy carousel with items
 # [previous, current, next] must never start by rendering index 0
 # and only then asynchronously snap to index 1.
@@ -117,11 +128,14 @@ download_format = (src / "downloads/DownloadAudioFormat.kt").read_text()
 download_engine = (src / "downloads/FolderAudioDownload.kt").read_text()
 internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
-assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
-assert '?: DownloadAudioFormat.BEST' in download_format
+assert 'val userChoices: List<DownloadAudioFormat> = listOf(M4A)' in download_format
+assert 'entries.firstOrNull { it.name == value } ?: M4A' in download_format
+assert 'format == DownloadAudioFormat.M4A' in download_engine
+assert 'request.addOption("--extract-audio")' in download_engine  # hidden legacy import only
+assert 'fun parse(value: String?): DownloadAudioFormat =' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'else -> format.selector' in download_format
+assert 'format != DownloadAudioFormat.M4A || output.extension.equals("m4a", ignoreCase = true)' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
