@@ -14,9 +14,16 @@ import kotlinx.coroutines.runBlocking
  * misleading lossless transcode is presented to the user.
  */
 enum class DownloadAudioFormat(val label: Int, val selector: String) {
-    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]");
+    M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]"),
+    // Legacy internal converters retained for existing cached files and
+    // compatibility tests. NEVER exposed as selectable output formats.
+    @Deprecated("Legacy only; all new downloads use native AAC/M4A")
+    BEST(R.string.download_format_best, "bestaudio"),
+    @Deprecated("Legacy only; all new downloads use native AAC/M4A")
+    FLAC(R.string.download_format_flac, "bestaudio");
 
     companion object {
+        val userChoices: List<DownloadAudioFormat> = listOf(M4A)
         fun parse(value: String?): DownloadAudioFormat = M4A
     }
 }
@@ -28,7 +35,14 @@ internal fun selectYtDlpAudioFormat(
     format: DownloadAudioFormat,
     lowQuality: Boolean,
     isLocalSource: Boolean,
-): String = if (isLocalSource) "best" else format.selector
+): String = when {
+    isLocalSource -> "best"
+    // The only UI-selected option always requests the best native AAC source.
+    format == DownloadAudioFormat.M4A -> format.selector
+    // Keep old conversion paths working solely for old file/fixture tests.
+    lowQuality && format == DownloadAudioFormat.BEST -> "worstaudio"
+    else -> format.selector
+}
 
 /** Android's FLAC MediaExtractor may expose decoded PCM; preserve the source codec. */
 internal fun sourceAudioMime(input: java.io.InputStream, trackMime: String): String {
