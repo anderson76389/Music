@@ -65,6 +65,17 @@ assert "override fun onDestroy()" in service
 print("PASS: landscape controls share visibility, use one player, and mode toggles do not block on queue IO")
 
 
+# Show the selector on the first composed frame, even if this song has
+# no video at all. The unplayable Video tab is non-interactive until ready.
+policy = (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
+switcher = (src / "ui/player/PlayerArtworkSwitcher.kt").read_text()
+assert "): Boolean = enabled && expanded" in policy
+assert "): Boolean = enabled && expanded && hasPlayableClip" not in policy
+assert "videoAvailable = hasPlayableClip" in switcher
+assert "enabled = !video || videoAvailable" in switcher
+assert "if (videoPlayer != null && showModeBar)" in switcher
+print("PASS: Son/Vidéo selector appears immediately without false video playback")
+
 # Cover transition invariants. A lazy carousel with items
 # [previous, current, next] must never start by rendering index 0
 # and only then asynchronously snap to index 1.
