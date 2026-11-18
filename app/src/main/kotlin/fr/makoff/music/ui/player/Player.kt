@@ -537,6 +537,17 @@ fun BottomSheetPlayer(
             pendingCastSeek = -1L
         }
     }
+    // The mini-player progress ring reads the same State instances; keep
+    // those synchronized with Cast rather than the paused local ExoPlayer.
+    LaunchedEffect(isCasting, castPosition, castDuration, pendingCastSeek) {
+        if (isCasting) {
+            duration = castDuration.coerceAtLeast(0L)
+            position = PlayerTimelinePolicy.displayPosition(
+                pendingCastSeek.takeIf { it >= 0L } ?: castPosition,
+                duration,
+            )
+        }
+    }
 
     var gradientColors by remember {
         mutableStateOf<List<Color>>(emptyList())
