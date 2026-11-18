@@ -37,7 +37,7 @@ def summarize_subject(subject: str) -> str | None:
         "sync": "Synchronisation", "backup": "Sauvegardes",
         "ui": "Interface", "video": "Vidéo", "quality": "Qualité",
     }
-    area = labels.get(area.lower(), area)
+    area = " / ".join(labels.get(part.lower(), part) for part in area.split(" / "))
     return f"**{area[0].upper() + area[1:]}** — {details[0].upper() + details[1:]}"
 
 def notes_since(previous: str, current: str = "HEAD") -> str:
