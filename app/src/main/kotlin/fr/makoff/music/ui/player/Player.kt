@@ -1197,30 +1197,37 @@ fun BottomSheetPlayer(
 
             Spacer(Modifier.height(16.dp))
 
+            // Every visual slider and the time labels share the same bounded
+            // position and duration, even in video mode or while Cast seeks.
+            val seekableDuration = effectiveDuration.coerceAtLeast(0L)
+            val commitTimelineSeek: () -> Unit = {
+                val requested = sliderPosition?.let {
+                    PlayerTimelinePolicy.seekPosition(it, seekableDuration)
+                }
+                if (requested != null) {
+                    if (isCasting) {
+                        castHandler?.seekTo(requested)
+                        lastManualSeekTime = System.currentTimeMillis()
+                        pendingCastSeek = requested
+                    } else if (playerConnection.player.currentMediaItem?.mediaId == activeTimelineId) {
+                        playerConnection.player.seekTo(requested)
+                        position = requested
+                    }
+                }
+                sliderPosition = null
+            }
+
             when (if (LocalLiquidGlassEnabled.current) SliderStyle.SLIM else sliderStyle) {
                 SliderStyle.DEFAULT -> {
                     Slider(
-                        value = (sliderPosition ?: effectivePosition).toFloat(),
-                        valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                        value = shownPosition.toFloat(),
+                        valueRange = 0f..seekableDuration.toFloat(),
                         onValueChange = {
                             run {
                                 sliderPosition = it.toLong()
                             }
                         },
-                        onValueChangeFinished = {
-                            run {
-                                sliderPosition?.let {
-                                    if (isCasting) {
-                                        castHandler?.seekTo(it)
-                                        lastManualSeekTime = System.currentTimeMillis()
-                                    } else {
-                                        playerConnection.player.seekTo(it)
-                                    }
-                                    position = it
-                                }
-                                sliderPosition = null
-                            }
-                        },
+                        onValueChangeFinished = commitTimelineSeek,
                         enabled = true,
                         colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                         modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
@@ -1230,46 +1237,24 @@ fun BottomSheetPlayer(
                 SliderStyle.WAVY -> {
                     if (squigglySlider) {
                         SquigglySlider(
-                            value = (sliderPosition ?: effectivePosition).toFloat(),
-                            valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                            value = shownPosition.toFloat(),
+                            valueRange = 0f..seekableDuration.toFloat(),
                             onValueChange = {
                                 sliderPosition = it.toLong()
                             },
-                            onValueChangeFinished = {
-                                sliderPosition?.let {
-                                    if (isCasting) {
-                                        castHandler?.seekTo(it)
-                                        lastManualSeekTime = System.currentTimeMillis()
-                                    } else {
-                                        playerConnection.player.seekTo(it)
-                                    }
-                                    position = it
-                                }
-                                sliderPosition = null
-                            },
+                            onValueChangeFinished = commitTimelineSeek,
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                             colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                             isPlaying = effectiveIsPlaying,
                         )
                     } else {
                         WavySlider(
-                            value = (sliderPosition ?: effectivePosition).toFloat(),
-                            valueRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat()),
+                            value = shownPosition.toFloat(),
+                            valueRange = 0f..seekableDuration.toFloat(),
                             onValueChange = {
                                 sliderPosition = it.toLong()
                             },
-                            onValueChangeFinished = {
-                                sliderPosition?.let {
-                                    if (isCasting) {
-                                        castHandler?.seekTo(it)
-                                        lastManualSeekTime = System.currentTimeMillis()
-                                    } else {
-                                        playerConnection.player.seekTo(it)
-                                    }
-                                    position = it
-                                }
-                                sliderPosition = null
-                            },
+                            onValueChangeFinished = commitTimelineSeek,
                             colors = PlayerSliderColors.getSliderColors(textButtonColor, playerBackground, useDarkTheme),
                             modifier = Modifier.padding(horizontal = PlayerHorizontalPadding),
                             isPlaying = effectiveIsPlaying,
@@ -1278,8 +1263,8 @@ fun BottomSheetPlayer(
                 }
 
                 SliderStyle.SLIM -> {
-                    val sliderValue = (sliderPosition ?: effectivePosition).toFloat()
-                    val sliderRange = 0f..(if (duration == C.TIME_UNSET) 0f else duration.toFloat())
+                    val sliderValue = shownPosition.toFloat()
+                    val sliderRange = 0f..seekableDuration.toFloat()
                     val sliderState = remember(sliderRange) {
                         SliderState(value = sliderValue, trackRange = sliderRange)
                     }
@@ -1291,20 +1276,7 @@ fun BottomSheetPlayer(
                                 sliderPosition = it.toLong()
                             }
                         },
-                        onValueChangeFinished = {
-                            run {
-                                sliderPosition?.let {
-                                    if (isCasting) {
-                                        castHandler?.seekTo(it)
-                                        lastManualSeekTime = System.currentTimeMillis()
-                                    } else {
-                                        playerConnection.player.seekTo(it)
-                                    }
-                                    position = it
-                                }
-                                sliderPosition = null
-                            }
-                        },
+                        onValueChangeFinished = commitTimelineSeek,
                         enabled = true,
                         thumb = {
                             if (LocalLiquidGlassEnabled.current) Box(Modifier.size(8.dp).background(Color.White, RoundedCornerShape(50)))
@@ -1333,7 +1305,7 @@ fun BottomSheetPlayer(
                         .padding(horizontal = PlayerHorizontalPadding + 4.dp),
             ) {
                 Text(
-                    text = makeTimeString(sliderPosition ?: effectivePosition),
+                    text = makeTimeString(shownPosition),
                     style = MaterialTheme.typography.labelMedium,
                     color = TextBackgroundColor,
                     maxLines = 1,
@@ -1341,7 +1313,7 @@ fun BottomSheetPlayer(
                 )
 
                 Text(
-                    text = if (duration != C.TIME_UNSET) makeTimeString(duration) else "",
+                    text = if (seekableDuration > 0L) makeTimeString(seekableDuration) else "",
                     style = MaterialTheme.typography.labelMedium,
                     color = TextBackgroundColor,
                     maxLines = 1,
