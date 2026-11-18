@@ -121,7 +121,9 @@ assert 'val available = listOf(M4A, AAC)' in download_format
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
 assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]")' in download_format
 assert 'if (value == AAC.name) AAC else M4A' in download_format
-assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
+assert '.addOption("-f", selectYtDlpAudioFormat(' in download_engine
+assert 'url.startsWith("file:")' in download_engine
+assert 'setOf("127.0.0.1", "localhost", "::1")' in download_engine
 assert '"-map", "0:a:0", "-c:a", "copy", "-f", "adts"' in download_engine, "AAC remux must not re-encode"
 assert "nativeM4a.delete()" in download_engine
 assert '"aac" -> "audio/aac"' in download_engine
