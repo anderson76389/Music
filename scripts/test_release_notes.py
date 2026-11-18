@@ -24,6 +24,22 @@ assert "Robolectric" not in notes
 assert "Detailed code" not in notes
 assert notes.count("\n- ") == 2
 assert "Anciennes" not in notes
+structured = module.summarize({
+    "status": "ahead",
+    "commits": [{
+        "commit": {
+            "message": "fix(player): technical slug\\n\\nRelease-Notes:\\n"
+                "- [Nouveautés] Boutons Son/Vidéo visibles immédiatement\\n"
+                "- [Corrections] Export AAC/M4A natif sans conversion\\n"
+                "- [Améliorations] Texte des mises à jour limité à cette version"
+        }
+    }],
+})
+assert "Boutons Son/Vidéo visibles immédiatement" in structured
+assert "Export AAC/M4A natif" in structured
+assert "Texte des mises à jour" in structured
+assert "technical slug" not in structured
+assert structured.count("\\n- ") == 3
 try:
     module.summarize({"status": "identical", "commits": []})
     raise AssertionError("Refused missing compare did not fail")
