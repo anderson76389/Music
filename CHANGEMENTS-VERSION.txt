@@ -1,4 +1,5 @@
-- **Son/Vidéo :** les deux boutons restent visibles dès l’ouverture du lecteur, pour tous les morceaux lorsque l’option est activée. Le bouton Vidéo reste désactivé seulement si aucun clip n’est encore disponible.
-- **Téléchargements audio :** choix simplifié à M4A et AAC. Sélection du meilleur flux AAC/M4A original disponible, sans exporter Opus ou FLAC. Les anciens réglages sont automatiquement ramenés à M4A.
-- **Compatibilité :** M4A est recommandé pour les lecteurs MP3 et PC, avec les métadonnées et la pochette ; AAC brut est disponible pour les lecteurs compatibles.
-- **Mises à jour :** les nouveautés du pop-up correspondent désormais uniquement aux changements publiés dans cette version, avec une présentation plus lisible.
+- **Pochettes intégrées :** les fichiers audio exportés en M4A et Opus doivent contenir la véritable couverture du morceau. Si aucune image exploitable n’est disponible, l’export échoue explicitement au lieu d’enregistrer un fichier sans pochette.
+- **Formats audio :** M4A (meilleur flux AAC original, recommandé pour la compatibilité) et Opus (meilleur flux Opus original) sont les deux choix proposés. Les deux conservent l’audio sans réencodage, avec les titres, artistes et pochettes intégrés. Opus nécessite un lecteur compatible.
+- **Clips vidéo :** le réglage par défaut « Meilleure qualité disponible » n’impose plus de plafond 1080p ou 2160p. La qualité réellement obtenue dépend du clip, des flux disponibles et des capacités de l’appareil.
+- **Paramètres et menus :** la qualité vidéo passe en haut de Lecteur ; « Télécharger » est la première action des menus à trois points, avec une description raccourcie.
+- **Radios :** suppression des actions « Démarrer la radio », de la radio automatique dans l’accueil et la recherche et de la commande de radio Android Auto ; la lecture normale reste disponible.
