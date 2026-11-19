@@ -688,7 +688,7 @@ fun HomeScreen(
     val accountImageUrl by viewModel.accountImageUrl.collectAsStateWithLifecycle()
     val innerTubeCookie by rememberPreference(InnerTubeCookieKey, "")
     val (randomizeHomeOrder) = rememberPreference(RandomizeHomeOrderKey, true)
-    val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    // Radio-based automatic queues are intentionally disabled.
 
     LaunchedEffect(Unit) { viewModel.loadHomeData() }
 
@@ -819,7 +819,7 @@ fun HomeScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                if (autoRadioQueue) {
+                                                if (false) {
                                                     YouTubeQueue.radio(it.toMediaMetadata())
                                                 } else {
                                                     ListQueue(
@@ -919,7 +919,7 @@ fun HomeScreen(
                                 is SongItem -> {
                                     run {
                                         playerConnection.playQueue(
-                                            if (autoRadioQueue) {
+                                            if (false) {
                                                 YouTubeQueue(
                                                     item.endpoint ?: WatchEndpoint(
                                                         videoId = item.id,
@@ -1503,7 +1503,7 @@ fun HomeScreen(
                                                                                             when (randomItem) {
                                                                                                 is SongItem -> {
                                                                                                     playerConnection.playQueue(
-                                                                                                        if (autoRadioQueue) {
+                                                                                                        if (false) {
                                                                                                             YouTubeQueue(
                                                                                                                 randomItem.endpoint
                                                                                                                     ?: WatchEndpoint(
@@ -1593,7 +1593,7 @@ fun HomeScreen(
                                                                                             is SongItem -> {
                                                                                                 run {
                                                                                                     playerConnection.playQueue(
-                                                                                                        if (autoRadioQueue) {
+                                                                                                        if (false) {
                                                                                                             YouTubeQueue(
                                                                                                                 item.endpoint
                                                                                                                     ?: WatchEndpoint(
@@ -1833,7 +1833,7 @@ fun HomeScreen(
                                                                         playerConnection.togglePlayPause()
                                                                     } else {
                                                                         playerConnection.playQueue(
-                                                                            if (autoRadioQueue) {
+                                                                            if (false) {
                                                                                 YouTubeQueue.radio(
                                                                                     song.toMediaMetadata(),
                                                                                 )
@@ -1952,7 +1952,7 @@ fun HomeScreen(
                                                         val mediaMetadata = song?.toMediaMetadata()
                                                         if (mediaMetadata != null) {
                                                             playerConnection.playQueue(
-                                                                if (autoRadioQueue) {
+                                                                if (false) {
                                                                     YouTubeQueue(
                                                                         song.endpoint ?: WatchEndpoint(videoId = song.id),
                                                                         mediaMetadata,
@@ -2155,7 +2155,7 @@ fun HomeScreen(
                                                                         playerConnection.togglePlayPause()
                                                                     } else {
                                                                         playerConnection.playQueue(
-                                                                            if (autoRadioQueue) {
+                                                                            if (false) {
                                                                                 YouTubeQueue.radio(
                                                                                     song.toMediaMetadata(),
                                                                                 )
@@ -2380,7 +2380,7 @@ fun HomeScreen(
                                                                 onClick = {
                                                                     run {
                                                                         playerConnection.playQueue(
-                                                                            if (autoRadioQueue) {
+                                                                            if (false) {
                                                                                 YouTubeQueue(
                                                                                     song.endpoint ?: WatchEndpoint(videoId = song.id),
                                                                                     song.toMediaMetadata(),
