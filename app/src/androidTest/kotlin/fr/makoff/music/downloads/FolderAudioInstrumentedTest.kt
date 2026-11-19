@@ -777,13 +777,12 @@ class FolderAudioInstrumentedTest {
 
     @Test(timeout = 90000) fun ytDlpDownloadsRealBytesAndExportsThroughSafWithoutOverwriting() = runBlocking {
         println("Starting native yt-dlp fixture download")
-        val bytes = ByteArray(4096) { (it % 127).toByte() }
-        // Valid mono PCM WAV, not a renamed text file.
-        val header = java.nio.ByteBuffer.allocate(44).order(java.nio.ByteOrder.LITTLE_ENDIAN)
-            .put("RIFF".toByteArray()).putInt(36 + bytes.size).put("WAVEfmt ".toByteArray())
-            .putInt(16).putShort(1).putShort(1).putInt(8000).putInt(16000).putShort(2).putShort(16)
-            .put("data".toByteArray()).putInt(bytes.size).array()
-        val audio = header + bytes
+        // Download a REAL AAC-in-M4A fixture instead of testing an obsolete
+        // WAV output format the portable exporter no longer supports.
+        val audio = android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() },
+            android.util.Base64.DEFAULT,
+        )
         val server = ServerSocket(0)
         val responder = thread(isDaemon = true) {
             while (!server.isClosed) try {
@@ -793,7 +792,7 @@ class FolderAudioInstrumentedTest {
                     val first = reader.readLine().orEmpty()
                     while (!reader.readLine().isNullOrEmpty()) Unit
                     socket.getOutputStream().apply {
-                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/wav\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
+                        write("HTTP/1.1 200 OK\r\nContent-Type: audio/mp4\r\nContent-Length: ${audio.size}\r\nConnection: close\r\n\r\n".toByteArray())
                         if (!first.startsWith("HEAD")) write(audio)
                         flush()
                     }
@@ -803,14 +802,14 @@ class FolderAudioInstrumentedTest {
         val directory = File(context.cacheDir, "audio-test-${UUID.randomUUID()}")
         val exported = mutableListOf<android.net.Uri>()
         try {
-            val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.wav", directory, "test-${UUID.randomUUID()}") { }
+            val source = YtDlpAudioEngine.download(context, "http://127.0.0.1:${server.localPort}/sample.m4a", directory, "test-${UUID.randomUUID()}") { }
             println("Native download complete; verifying engine version and SAF export")
             val version = com.yausername.youtubedl_android.YoutubeDL.getInstance().execute(
                 com.yausername.youtubedl_android.YoutubeDLRequest(emptyList<String>()).addOption("--version")
             ).out.trim()
             assertEquals(YtDlpAudioEngine.VERSION, version)
             assertArrayEquals(audio, source.readBytes())
-            val name = "audio-${UUID.randomUUID()}.wav"
+            val name = "audio-${UUID.randomUUID()}.m4a"
             repeat(2) { exported += saveAudioToTree(context, tree, source, name) }
             assertNotEquals(exported[0], exported[1])
             println("SAF export and duplicate filename handling complete")
