@@ -279,7 +279,6 @@ fun PlayerMenu(
         item { Spacer(modifier = Modifier.height(12.dp)) }
 
         item {
-            val startingRadioText = stringResource(R.string.starting_radio)
             NewActionGrid(
                 actions =
                     listOfNotNull(
