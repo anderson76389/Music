@@ -110,7 +110,6 @@ import fr.makoff.music.LocalArtistNameAliases
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
-import fr.makoff.music.constants.AutoRadioQueueKey
 import fr.makoff.music.constants.GridItemSize
 import fr.makoff.music.constants.GridItemsSizeKey
 import fr.makoff.music.constants.GridThumbnailHeight
@@ -130,8 +129,6 @@ import fr.makoff.music.db.entities.Song
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.models.toMediaMetadata
 import fr.makoff.music.playback.queues.ListQueue
-import fr.makoff.music.playback.queues.LocalAlbumRadio
-import fr.makoff.music.playback.queues.YouTubeAlbumRadio
 import fr.makoff.music.playback.queues.YouTubeQueue
 import fr.makoff.music.ui.component.AlbumGridItem
 import fr.makoff.music.ui.component.ArtistGridItem
