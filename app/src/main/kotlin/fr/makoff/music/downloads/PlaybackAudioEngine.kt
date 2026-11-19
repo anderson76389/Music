@@ -37,7 +37,7 @@ internal object PlaybackAudioEngine {
                 connectivityManager = requireNotNull(context.getSystemService<ConnectivityManager>()),
                 contentHints = ContentHints(isExplicit = isExplicit, isUploaded = isUploaded),
                 allowBoundedRange = true,
-                preferM4a = true,
+                preferM4a = format != DownloadAudioFormat.OPUS,
             ).getOrThrow()
             val mime = stream.format.mimeType.substringBefore(';').trim()
             val extension = when (mime) {
@@ -46,9 +46,13 @@ internal object PlaybackAudioEngine {
                 "audio/ogg" -> "ogg"
                 else -> throw IOException("Unsupported resolved audio container")
             }
-            // A requested M4A must remain AAC from the source, never re-encoded Opus.
-            if (extension != "m4a")
+            // Never disguise a codec: M4A requires an AAC/MP4 source,
+            // while Opus keeps native Opus packets in an Ogg container.
+            if (format == DownloadAudioFormat.OPUS) {
+                if (extension !in setOf("webm", "ogg")) throw IOException("Resolved source is not Opus")
+            } else if (extension != "m4a") {
                 throw IOException("Resolved source is not M4A")
+            }
             val file = File(resolved, "audio.$extension")
             downloadResolvedAudio(
                 client, stream.streamUrl, stream.streamHeaders,
