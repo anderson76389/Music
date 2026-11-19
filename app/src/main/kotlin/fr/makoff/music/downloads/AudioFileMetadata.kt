@@ -52,7 +52,8 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             throw cancelled
         } catch (_: Exception) { /* Artwork failure must not discard completed audio. */ }
     }
-    val artwork = cover
+    val artwork = cover ?: throw IOException("La pochette du morceau est indisponible : export annulé plutôt que sans couverture")
+    if (source.extension.equals("aac", ignoreCase = true)) throw IOException("AAC brut ne permet pas une pochette intégrée : utilisez M4A ou Opus")
     return runInterruptible(Dispatchers.IO) {
         try {
             YtDlpAudioEngine.initialize(context)
@@ -65,11 +66,11 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             "-nostdin", "-y", "-loglevel", "error", "-i", source.absolutePath)
         // Raw ADTS .aac has no standard embedded album-art container.
         // M4A exports retain their album cover, year, title and artist.
-        if (artwork != null && !ogg && source.extension.lowercase() != "aac") {
+        if (!ogg) {
             val image = File(outputDir, "cover.jpg").apply { writeBytes(artwork.bytes) }
             args += listOf("-i", image.absolutePath)
         }
-        if (artwork != null && ogg) {
+        if (ogg) {
             val picture = ByteArrayOutputStream()
             DataOutputStream(picture).use { data ->
                 data.writeInt(3)
@@ -85,8 +86,8 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             }
             args += listOf("-f", "ffmetadata", "-i", metadata.absolutePath)
         }
-        args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", if (artwork != null && ogg) "1" else "-1")
-        if (artwork != null && !ogg && source.extension.lowercase() != "aac")
+        args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", if (ogg) "1" else "-1")
+        if (!ogg)
             args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
         fun tag(key: String, value: String?) {
             value?.replace("\u0000", "")?.take(4096)?.takeIf { it.isNotBlank() }?.let { args += listOf("-metadata", "$key=$it") }
@@ -100,7 +101,7 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             tag("year", year)
         }
         if (track > 0) tag("track", track.toString())
-        if (source.extension.lowercase() == "aac") args += listOf("-f", "adts")
+        if (source.extension.lowercase() == "opus") args += listOf("-f", "opus")
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
         val builder = ProcessBuilder(args).redirectErrorStream(true).redirectOutput(File(outputDir, "ffmpeg.log"))
