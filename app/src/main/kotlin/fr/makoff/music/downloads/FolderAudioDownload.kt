@@ -119,6 +119,47 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
+    /** Losslessly remux existing AAC packets from MP4 into a portable ADTS .aac.
+     * yt-dlp --audio-format aac can leave an already-AAC M4A unchanged;
+     * relying on its output extension made real exports fail on Android.
+     */
+    private fun remuxPortableAac(context: Context, source: File, directory: File): File {
+        require(source.extension.equals("m4a", ignoreCase = true))
+        val target = File(directory, "audio.aac")
+        val temp = File(directory, "audio.aac.part")
+        val log = File(directory, "aac-remux.log")
+        val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
+        val command = listOf(
+            File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so").absolutePath,
+            "-nostdin", "-y", "-loglevel", "error", "-i", source.absolutePath,
+            "-map", "0:a:0", "-vn", "-c:a", "copy", "-map_metadata", "-1",
+            "-f", "adts", temp.absolutePath,
+        )
+        val builder = ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log)
+        builder.environment()["LD_LIBRARY_PATH"] = listOf("python", "ffmpeg", "aria2c")
+            .joinToString(":") { File(runtime, "$it/usr/lib").absolutePath }
+        val process = builder.start()
+        try {
+            check(process.waitFor(120, java.util.concurrent.TimeUnit.SECONDS)) { "AAC remux timed out" }
+            check(process.exitValue() == 0 && temp.isFile && temp.length() > 7L) {
+                "AAC remux failed"
+            }
+            temp.inputStream().use { input ->
+                val head = ByteArray(2)
+                check(input.read(head) == 2 &&
+                    (head[0].toInt() and 0xFF) == 0xFF &&
+                    (head[1].toInt() and 0xF0) == 0xF0) { "Not an ADTS AAC file" }
+            }
+            check(temp.renameTo(target)) { "Could not finalize portable AAC" }
+            source.delete()
+            return target
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
+            temp.delete()
+            log.delete()
+        }
+    }
+
     suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
@@ -138,12 +179,8 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format == DownloadAudioFormat.AAC) {
-                // Extract the best available original AAC stream from MP4,
-                // then change only its container to ADTS .aac via ffmpeg.
-                // Never transcode from Opus (or invent extra bitrate).
-                request.addOption("--extract-audio").addOption("--audio-format", "aac")
-            }
+            // Select the highest native AAC/M4A stream without postprocessing.
+            // For .aac the explicit stream-copy remux below is deterministic.
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
             if (cookie.isNotBlank()) {
@@ -155,10 +192,11 @@ internal object YtDlpAudioEngine {
             val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
-            check(output.extension.lowercase() == if (format == DownloadAudioFormat.AAC) "aac" else "m4a") {
-                "Portable AAC audio unavailable"
+            check(output.extension.equals("m4a", ignoreCase = true)) {
+                "Original AAC-in-M4A audio unavailable"
             }
-            output
+            if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)
+            else output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
