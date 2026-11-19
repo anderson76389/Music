@@ -280,7 +280,7 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    ListQueue(title = item.title, items = listOf(item.toMediaItem())),
+                                                    ListQueue(title = item.title, items = listOf(item.toMediaMetadata().toMediaItem())),
                                                 )
                                                 onDismiss()
                                             }
@@ -549,7 +549,7 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                ListQueue(title = item.title, items = listOf(item.toMediaItem())),
+                                                ListQueue(title = item.title, items = listOf(item.toMediaMetadata().toMediaItem())),
                                             )
                                             onDismiss()
                                         }
