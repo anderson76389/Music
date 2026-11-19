@@ -3,28 +3,29 @@ package fr.makoff.music.downloads
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Only original AAC-in-M4A is selected; raw AAC is a container remux. */
+/** Only native M4A (AAC) and Ogg Opus are offered to new downloads. */
 class DownloadAudioFormatSelectorTest {
-    @Test fun defaultIsHighestCompatibleM4aAndOldPreferencesAreMigrated() {
+    @Test fun defaultIsBestM4aAndLegacyPreferencesMigrate() {
         assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse(null))
         assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("BEST"))
         assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("FLAC"))
-        assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("OPUS"))
-        assertEquals(DownloadAudioFormat.AAC, DownloadAudioFormat.parse("AAC"))
-        assertEquals(listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.AAC), DownloadAudioFormat.portableChoices)
+        assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("AAC"))
+        assertEquals(DownloadAudioFormat.M4A, DownloadAudioFormat.parse("unknown"))
+        assertEquals(DownloadAudioFormat.OPUS, DownloadAudioFormat.parse("OPUS"))
+        assertEquals(listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.OPUS), DownloadAudioFormat.portableChoices)
     }
 
-    @Test fun bothFormatsRequestBestOriginalAacSourceEvenWithOldLowQualityFlag() {
-        for (format in DownloadAudioFormat.entries) {
+    @Test fun originalBestCodecIsRequestedRegardlessOfLegacyLowQuality() {
+        for (low in listOf(false, true)) {
             assertEquals("bestaudio[ext=m4a]",
-                selectYtDlpAudioFormat(format, lowQuality = false, isLocalSource = false))
-            assertEquals("bestaudio[ext=m4a]",
-                selectYtDlpAudioFormat(format, lowQuality = true, isLocalSource = false))
+                selectYtDlpAudioFormat(DownloadAudioFormat.M4A, low, false))
+            assertEquals("bestaudio[acodec=opus]",
+                selectYtDlpAudioFormat(DownloadAudioFormat.OPUS, low, false))
         }
     }
 
     @Test fun localFixtureInputRemainsReadableByYtDlp() {
         assertEquals("best", selectYtDlpAudioFormat(DownloadAudioFormat.M4A, false, true))
-        assertEquals("best", selectYtDlpAudioFormat(DownloadAudioFormat.AAC, false, true))
+        assertEquals("best", selectYtDlpAudioFormat(DownloadAudioFormat.OPUS, false, true))
     }
 }
