@@ -1452,13 +1452,6 @@ class MusicService :
                     .build(),
                 CommandButton
                     .Builder()
-                    .setDisplayName(getString(R.string.start_radio))
-                    .setIconResId(R.drawable.radio)
-                    .setSessionCommand(CommandToggleStartRadio)
-                    .setEnabled(currentSong.value != null)
-                    .build(),
-                CommandButton
-                    .Builder()
                     .setDisplayName(getString(R.string.android_auto_target_playlist))
                     .setIconResId(R.drawable.playlist_add)
                     .setSessionCommand(CommandAddToTargetPlaylist)
