@@ -37,7 +37,7 @@ internal object PlaybackAudioEngine {
                 connectivityManager = requireNotNull(context.getSystemService<ConnectivityManager>()),
                 contentHints = ContentHints(isExplicit = isExplicit, isUploaded = isUploaded),
                 allowBoundedRange = true,
-                preferM4a = format == DownloadAudioFormat.M4A,
+                preferM4a = true,
             ).getOrThrow()
             val mime = stream.format.mimeType.substringBefore(';').trim()
             val extension = when (mime) {
@@ -47,7 +47,7 @@ internal object PlaybackAudioEngine {
                 else -> throw IOException("Unsupported resolved audio container")
             }
             // A requested M4A must remain AAC from the source, never re-encoded Opus.
-            if (format == DownloadAudioFormat.M4A && extension != "m4a")
+            if (extension != "m4a")
                 throw IOException("Resolved source is not M4A")
             val file = File(resolved, "audio.$extension")
             downloadResolvedAudio(

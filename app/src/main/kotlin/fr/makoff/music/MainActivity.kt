@@ -200,6 +200,7 @@ import fr.makoff.music.ui.theme.extractThemeColor
 import fr.makoff.music.ui.utils.appBarScrollBehavior
 import fr.makoff.music.ui.utils.resetHeightOffset
 import fr.makoff.music.utils.ReleaseInfo
+import fr.makoff.music.utils.ReleaseNotesFormatter
 import fr.makoff.music.utils.SearchRoutes
 import fr.makoff.music.utils.SyncUtils
 import fr.makoff.music.utils.ArtistNameAliases
@@ -1409,7 +1410,20 @@ class MainActivity : FragmentActivity() {
                             }
                             AlertDialog(
                                 onDismissRequest = dismissUpdate,
-                                title = { Text(stringResource(R.string.update_available_title)) },
+                                title = {
+                                    Column {
+                                        Text(
+                                            stringResource(R.string.update_available_title),
+                                            style = MaterialTheme.typography.headlineSmall,
+                                        )
+                                        Text(
+                                            "Version ${update.release.versionName}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(top = 4.dp),
+                                        )
+                                    }
+                                },
                                 text = {
                                     Column(
                                         modifier =
@@ -1418,16 +1432,11 @@ class MainActivity : FragmentActivity() {
                                                 .verticalScroll(rememberScrollState()),
                                     ) {
                                         Text(
-                                            text =
-                                                stringResource(
-                                                    if (update.isKmp) {
-                                                        R.string.kmp_upgrade_title
-                                                    } else {
-                                                        R.string.update_available_message
-                                                    },
-                                                    update.release.versionName,
-                                                ),
+                                            text = if (update.isKmp)
+                                                stringResource(R.string.kmp_upgrade_title, update.release.versionName)
+                                            else "Voici les améliorations de cette mise à jour :",
                                             style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
                                         if (update.isKmp) {
                                             Text(
@@ -1437,15 +1446,39 @@ class MainActivity : FragmentActivity() {
                                                 modifier = Modifier.padding(top = 12.dp),
                                             )
                                         }
+                                        val changes = ReleaseNotesFormatter.changes(update.release.description)
                                         Text(
-                                            text = stringResource(R.string.changelog),
-                                            style = MaterialTheme.typography.titleSmall,
-                                            modifier = Modifier.padding(top = 16.dp, bottom = 8.dp),
+                                            text = "Nouveautés",
+                                            style = MaterialTheme.typography.titleMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                            modifier = Modifier.padding(top = 18.dp, bottom = 10.dp),
                                         )
-                                        Text(
-                                            text = update.release.description.ifBlank { stringResource(R.string.changelog_empty) },
-                                            style = MaterialTheme.typography.bodySmall,
-                                        )
+                                        if (changes.isEmpty()) {
+                                            Text(
+                                                stringResource(R.string.changelog_empty),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        } else {
+                                            changes.forEach { change ->
+                                                Row(
+                                                    verticalAlignment = Alignment.Top,
+                                                    modifier = Modifier.padding(bottom = 10.dp),
+                                                ) {
+                                                    Text(
+                                                        "•",
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        style = MaterialTheme.typography.titleMedium,
+                                                        modifier = Modifier.padding(end = 10.dp),
+                                                    )
+                                                    Text(
+                                                        change,
+                                                        style = MaterialTheme.typography.bodyMedium,
+                                                        color = MaterialTheme.colorScheme.onSurface,
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 },
                                 confirmButton = {

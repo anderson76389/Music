@@ -117,11 +117,16 @@ download_format = (src / "downloads/DownloadAudioFormat.kt").read_text()
 download_engine = (src / "downloads/FolderAudioDownload.kt").read_text()
 internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
-assert 'BEST(R.string.download_format_best, "bestaudio")' in download_format
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
-assert '?: DownloadAudioFormat.BEST' in download_format
+assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]")' in download_format
+assert "val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)" in download_format
+assert 'else -> M4A' in download_format
+assert '"bestaudio[ext=m4a]"' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'else -> format.selector' in download_format
+assert 'private fun remuxPortableAac(' in download_engine
+assert '"-c:a", "copy"' in download_engine
+assert '"-f", "adts"' in download_engine
+assert 'if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
@@ -155,3 +160,13 @@ assert "matchedVideoSong?.orderedArtists" in player
 assert "if (visible && firstFrameRendered) 1f else 0f" in switcher
 assert "visible = visible && !firstFrameRendered" in switcher
 print("PASS: current-song timer, valid seek ranges, Cast, mini ring, and fresh video surface guarded")
+
+# A mode selector must not appear 5 seconds after expanding the player.
+assert "fun showSelector(" in (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
+assert "enabled && expanded" in (src / "ui/player/PlayerVideoModePolicy.kt").read_text()
+assert "videoEnabled = videoSelectable" in switcher
+# Published notes must be version-scoped, not re-used forever.
+release_workflow = (root / ".github/workflows/music-release.yml").read_text()
+assert "scripts/release_notes.py" in release_workflow
+assert "cat CHANGEMENTS-VERSION.txt >> notes.txt" not in release_workflow
+print("PASS: persistent Son/Vidéo tabs, portable AAC/M4A and release-scoped notes")

@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import fr.makoff.music.R
 import fr.makoff.music.utils.Updater
+import fr.makoff.music.utils.ReleaseNotesFormatter
 
 @Composable
 fun ReleaseNotesCard() {
@@ -43,11 +44,22 @@ fun ReleaseNotesCard() {
                 style = MaterialTheme.typography.titleLarge
             )
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = releaseInfo.description,
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.padding(vertical = 2.dp)
-            )
+            val changes = ReleaseNotesFormatter.changes(releaseInfo.description)
+            if (changes.isEmpty()) {
+                Text(
+                    stringResource(R.string.changelog_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                changes.forEach { change ->
+                    Text(
+                        text = "• $change",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(vertical = 5.dp),
+                    )
+                }
+            }
         }
     }
     Spacer(modifier = Modifier.height(16.dp))

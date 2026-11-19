@@ -46,6 +46,7 @@ import fr.makoff.music.ui.component.Material3SettingsGroup
 import fr.makoff.music.ui.component.Material3SettingsItem
 import fr.makoff.music.ui.utils.backToMain
 import fr.makoff.music.utils.Updater
+import fr.makoff.music.utils.ReleaseNotesFormatter
 import fr.makoff.music.utils.UpdateNotifications
 import fr.makoff.music.utils.rememberPreference
 import kotlinx.coroutines.Dispatchers
@@ -238,14 +239,16 @@ fun UpdaterScreen(
 
             if (showChangelog && changelogContent != null) {
                 Spacer(Modifier.height(12.dp))
-                Text(
-                    text = changelogContent!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                )
+                val changes = ReleaseNotesFormatter.changes(changelogContent.orEmpty())
+                Column(Modifier.fillMaxWidth().padding(16.dp)) {
+                    if (changes.isEmpty()) {
+                        Text(stringResource(R.string.changelog_empty),
+                            style = MaterialTheme.typography.bodyMedium)
+                    } else changes.forEach { change ->
+                        Text("• $change", style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(bottom = 9.dp))
+                    }
+                }
             }
         }
 

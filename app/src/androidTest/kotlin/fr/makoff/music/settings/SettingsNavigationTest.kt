@@ -742,11 +742,16 @@ class SettingsNavigationTest {
                     assertFalse("Download-format helper paragraph removed", device.hasObject(By.text(label(R.string.download_format_unified_help))))
                     open(R.string.download_format_unified)
                     findText(R.string.download_format_m4a)
-                    findText(R.string.download_format_flac)
-                    findText(R.string.download_format_best)
+                    findText(R.string.download_format_aac)
+                    assertFalse("Legacy FLAC must not be offered", visibleControls().any {
+                        it.text == label(R.string.download_format_flac)
+                    })
+                    assertFalse("Legacy BEST must not be offered", visibleControls().any {
+                        it.text == label(R.string.download_format_best)
+                    })
                     device.pressBack()
                     device.waitForIdle()
-                    println("AUDIO_DOWNLOAD_FORMAT_OK: BEST/M4A/FLAC chooser reachable in Audio")
+                    println("AUDIO_DOWNLOAD_FORMAT_OK: M4A/AAC-only chooser reachable in Audio")
                     listOf(R.string.player_audio_quality_section, R.string.player_transitions_section,
                         R.string.download_quality_settings,
                         R.string.listen_history, R.string.search_history).forEach { findText(it) }
@@ -907,7 +912,7 @@ class SettingsNavigationTest {
                     val keys = listOf(UnifiedDownloadFormatKey, InternalDownloadFormatKey, ExternalDownloadFormatKey)
                     val original = runBlocking { context.dataStore.data.first() }
                     try {
-                        for (format in fr.makoff.music.downloads.DownloadAudioFormat.entries) {
+                        for (format in fr.makoff.music.downloads.DownloadAudioFormat.portableChoices) {
                             open(R.string.download_format_unified)
                             open(format.label)
                             awaitPreference("unified download format ${format.name}") {
@@ -920,7 +925,7 @@ class SettingsNavigationTest {
                             original[key]?.let { prefs[key] = it } ?: prefs.remove(key)
                         } } }
                     }
-                    println("DOWNLOAD_FORMAT_SETTINGS_OK: unified BEST/M4A/FLAC selection updates both download paths")
+                    println("DOWNLOAD_FORMAT_SETTINGS_OK: unified M4A/AAC selection updates both download paths")
                     assertFalse("Storage has no native-download explanatory paragraph", visibleControls().any { it.text == label(R.string.folder_audio_native) })
                     val libraryBefore = runBlocking { context.dataStore.data.first() }
                     open(R.string.downloaded_songs)

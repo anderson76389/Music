@@ -63,7 +63,9 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         val ogg = source.extension.lowercase() in setOf("ogg", "opus")
         val args = mutableListOf(File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so").absolutePath,
             "-nostdin", "-y", "-loglevel", "error", "-i", source.absolutePath)
-        if (artwork != null && !ogg) {
+        // Raw ADTS .aac has no standard embedded album-art container.
+        // M4A exports retain their album cover, year, title and artist.
+        if (artwork != null && !ogg && source.extension.lowercase() != "aac") {
             val image = File(outputDir, "cover.jpg").apply { writeBytes(artwork.bytes) }
             args += listOf("-i", image.absolutePath)
         }
@@ -84,7 +86,8 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             args += listOf("-f", "ffmetadata", "-i", metadata.absolutePath)
         }
         args += listOf("-map", "0:a:0", "-c:a", "copy", "-map_metadata", if (artwork != null && ogg) "1" else "-1")
-        if (artwork != null && !ogg) args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
+        if (artwork != null && !ogg && source.extension.lowercase() != "aac")
+            args += listOf("-map", "1:v:0", "-c:v", "copy", "-disposition:v:0", "attached_pic")
         fun tag(key: String, value: String?) {
             value?.replace("\u0000", "")?.take(4096)?.takeIf { it.isNotBlank() }?.let { args += listOf("-metadata", "$key=$it") }
         }
@@ -97,6 +100,7 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
             tag("year", year)
         }
         if (track > 0) tag("track", track.toString())
+        if (source.extension.lowercase() == "aac") args += listOf("-f", "adts")
         args += output.absolutePath
         val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
         val builder = ProcessBuilder(args).redirectErrorStream(true).redirectOutput(File(outputDir, "ffmpeg.log"))

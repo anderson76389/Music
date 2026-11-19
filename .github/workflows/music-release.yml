@@ -23,6 +23,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          fetch-depth: 0
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -141,7 +142,11 @@ jobs:
 
           APK signés avec la clé privée du projet. Tests unitaires, installation/démarrage des deux APK et remplacement de l’APK précédent sur émulateur Android 11 réussis. Android 8.0 minimum. Les essais de lecture réelle, de connexion et de diffusion sur appareils restent distincts de ce contrôle automatisé.
           NOTES
-          cat CHANGEMENTS-VERSION.txt >> notes.txt
+          # Read changes compared with the last published signed release. An
+          # unchanged CHANGEMENTS-VERSION.txt must never be shown again.
+          PREVIOUS_SOURCE="$(gh release view --repo "$GITHUB_REPOSITORY" --json targetCommitish --jq .targetCommitish 2>/dev/null || true)"
+          python3 scripts/release_notes.py --previous "$PREVIOUS_SOURCE" --output current-release-changes.txt
+          cat current-release-changes.txt >> notes.txt
           printf '\nSources : `%s`\n' "$SOURCE_SHA" >> notes.txt
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" --draft --target "$SOURCE_SHA" --title "Apple Music $RELEASE_TAG" --notes-file notes.txt

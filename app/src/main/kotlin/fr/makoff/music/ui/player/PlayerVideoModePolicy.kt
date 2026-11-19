@@ -29,7 +29,10 @@ internal object PlayerVideoModePolicy {
         enabled: Boolean,
         expanded: Boolean,
         hasPlayableClip: Boolean,
-    ): Boolean = enabled && expanded && hasPlayableClip
+    ): Boolean = enabled && expanded
+    // Always reserve the same centered Son/Vidéo row for every track while
+    // enabled. The video action itself is available only after a playable
+    // clip resolves, and stays disabled for tracks without video.
 
     /** The persistent user choice survives songs without clips or temporary
      * Cast, but actual video is displayed only for a verified clip.

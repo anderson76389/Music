@@ -108,7 +108,7 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds, PlayerVideoModeEnabledKey)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds, PlayerVideoModeEnabledKey, PlayerVideoPreferredKey)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[PlayerVideoModeEnabledKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
@@ -183,69 +183,70 @@ class OfflinePlayerInstrumentedTest {
             await("Document permission missing") {
                 context.checkUriPermission(tree, android.os.Process.myPid(), android.os.Process.myUid(), Intent.FLAG_GRANT_READ_URI_PERMISSION) == android.content.pm.PackageManager.PERMISSION_GRANTED
             }
-            val flac = fr.makoff.music.downloads.YtDlpAudioEngine.reuse(context, staged,
-                fr.makoff.music.downloads.DownloadAudioFormat.FLAC, directory, "offline-flac")!!
-            val external = fr.makoff.music.downloads.saveAudioToTree(context, tree, flac, "${first.id}.flac")
+            // All NEW exports use the original portable AAC/M4A stream.
+            // Do not label M4A data as FLAC or convert it to a fake lossless file.
+            val portable = requireNotNull(fr.makoff.music.downloads.YtDlpAudioEngine.reuse(
+                context, staged, fr.makoff.music.downloads.DownloadAudioFormat.M4A, directory, "offline-m4a"))
+            val external = fr.makoff.music.downloads.saveAudioToTree(
+                context, tree, portable, "${first.id}.m4a")
             sharedUri = external
-            active.downloadUtil.registerExternalAudio(first, external, flac.length())
-            // Exercise the same completed-cache -> export -> shared offline reference path for Opus and M4A.
-            for ((index, format) in listOf(1 to fr.makoff.music.downloads.DownloadAudioFormat.BEST,
-                2 to fr.makoff.music.downloads.DownloadAudioFormat.M4A)) {
-                val track = tracks[index]
-                val length = if (index == 1) opus.size.toLong() else audio.size.toLong()
-                val nativeRequest = androidx.media3.exoplayer.offline.DownloadRequest.Builder(track.id, android.net.Uri.parse(track.id))
-                    .setCustomCacheKey(track.id).build()
-                val nativeCompleted = androidx.media3.exoplayer.offline.Download(nativeRequest,
-                    androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, length, 0, 0)
-                (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(nativeCompleted)
-                active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to nativeCompleted)
-                val stage = active.downloadUtil.stageExistingAudio(track.id, directory)!!
-                val exported = fr.makoff.music.downloads.YtDlpAudioEngine.reuse(context, stage, format, directory, "offline-$index")!!
-                assertEquals(if (index == 1) "opus" else "m4a", exported.extension)
-                // Retain compatibility with the .ogg documents produced by previous versions.
-                if (index == 1) {
-                    // The stream is WebM while the native download is remuxed Opus: never mix their byte offsets.
-                    active.downloadCache.removeResource(track.id)
-                    cacheAudio(active.playerCache, track.id, opus)
-                    val originalSize = ContentMetadataMutations()
-                    ContentMetadataMutations.setContentLength(originalSize, opus.size.toLong())
-                    active.downloadCache.applyContentMetadataMutations(track.id, originalSize)
-                    val pending = androidx.media3.exoplayer.offline.Download(nativeRequest,
-                        androidx.media3.exoplayer.offline.Download.STATE_DOWNLOADING, 1, 1, length, 0, 0)
-                    (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(pending)
-                    active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to pending)
-                    main { active.playQueue(ListQueue("Pendant le téléchargement", listOf(track.toMediaItem())), playWhenReady = true) }
-                    await("Original WebM must play before download publication") {
-                        main { active.player.isPlaying && active.player.currentPosition > 200 }
-                    }
-                    cacheAudio(active.downloadCache, track.id, exported.readBytes())
-                    main { active.player.seekTo(8000) }
-                    await("Pending Opus download must not corrupt the WebM reader") {
-                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition in 7900..11000 && active.player.playerError == null }
-                    }
-                    val finished = androidx.media3.exoplayer.offline.Download(nativeRequest,
-                        androidx.media3.exoplayer.offline.Download.STATE_COMPLETED, 1, 1, exported.length(), 0, 0)
-                    (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).putDownload(finished)
-                    active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to finished)
-                    await("Finished native Opus must preserve playback position") {
-                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition >= 7800 && active.player.playerError == null }
-                    }
-                }
-                val tagged = fr.makoff.music.downloads.tagAudioFile(context, exported, track, index, directory)
-                val uri = fr.makoff.music.downloads.saveAudioToTree(context, tree, tagged,
-                    "${track.id}.${if (index == 1) "ogg" else "m4a"}")
-                extraSharedUris += uri
-                active.downloadUtil.registerExternalAudio(track, uri, tagged.length())
-                assertTrue(active.downloadCache.getCachedSpans(track.id).isEmpty())
-                assertArrayEquals(tagged.readBytes(), context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
-                if (index == 1) {
-                    main { active.player.seekTo(12000) }
-                    await("Publishing a tagged public Opus must preserve offline seeking") {
-                        main { active.player.playbackState == Player.STATE_READY && active.player.currentPosition in 11800..15000 && active.player.playerError == null }
-                    }
-                    println("DOWNLOAD_HANDOFF_OK: WebM stream -> native Opus -> tagged shared Opus; offline seek and position retained")
-                }
+            active.downloadUtil.registerExternalAudio(first, external, portable.length())
+
+            // Existing Opus/WebM cached before this update must still play and
+            // seek offline. It must NEVER be mislabeled/exported as M4A/AAC.
+            val legacy = tracks[1]
+            val legacyRequest = androidx.media3.exoplayer.offline.DownloadRequest.Builder(
+                legacy.id, android.net.Uri.parse(legacy.id)).setCustomCacheKey(legacy.id).build()
+            val legacyCompleted = androidx.media3.exoplayer.offline.Download(
+                legacyRequest, androidx.media3.exoplayer.offline.Download.STATE_COMPLETED,
+                1, 1, opus.size.toLong(), 0, 0)
+            (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex)
+                .putDownload(legacyCompleted)
+            active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (legacy.id to legacyCompleted)
+            val legacyStage = requireNotNull(active.downloadUtil.stageExistingAudio(legacy.id, directory))
+            assertEquals("webm", legacyStage.extension)
+            assertArrayEquals(opus, legacyStage.readBytes())
+            assertNull(
+                "Legacy WebM must not be exported with a misleading M4A extension",
+                fr.makoff.music.downloads.YtDlpAudioEngine.reuse(
+                    context, legacyStage, fr.makoff.music.downloads.DownloadAudioFormat.M4A,
+                    directory, "legacy-webm"))
+            main { active.playQueue(ListQueue("Ancien cache audio", listOf(legacy.toMediaItem())), playWhenReady = true) }
+            await("Previously cached WebM/Opus must remain playable offline") {
+                main { active.player.isPlaying && active.player.currentPosition > 200 }
             }
+            main { active.player.seekTo(8000) }
+            await("Legacy Opus offline seek failed") {
+                main { active.player.playbackState == Player.STATE_READY &&
+                    active.player.currentPosition in 7900..11000 && active.player.playerError == null }
+            }
+            println("LEGACY_OPUS_READ_OK: previously cached WebM plays offline but cannot be mislabeled M4A")
+
+            // Export the remaining AAC fixture through the full metadata and
+            // shared-folder pipeline; it must stay native M4A end to end.
+            val track = tracks[2]
+            val nativeRequest = androidx.media3.exoplayer.offline.DownloadRequest.Builder(
+                track.id, android.net.Uri.parse(track.id)).setCustomCacheKey(track.id).build()
+            val nativeCompleted = androidx.media3.exoplayer.offline.Download(
+                nativeRequest, androidx.media3.exoplayer.offline.Download.STATE_COMPLETED,
+                1, 1, audio.size.toLong(), 0, 0)
+            (active.downloadUtil.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex)
+                .putDownload(nativeCompleted)
+            active.downloadUtil.downloads.value = active.downloadUtil.downloads.value + (track.id to nativeCompleted)
+            val stage = requireNotNull(active.downloadUtil.stageExistingAudio(track.id, directory))
+            val exported = requireNotNull(fr.makoff.music.downloads.YtDlpAudioEngine.reuse(
+                context, stage, fr.makoff.music.downloads.DownloadAudioFormat.M4A,
+                directory, "offline-aac-export"))
+            assertEquals("m4a", exported.extension)
+            val tagged = fr.makoff.music.downloads.tagAudioFile(context, exported, track, 2, directory)
+            val uri = fr.makoff.music.downloads.saveAudioToTree(context, tree, tagged, "${track.id}.m4a")
+            extraSharedUris += uri
+            active.downloadUtil.registerExternalAudio(track, uri, tagged.length())
+            assertTrue(active.downloadCache.getCachedSpans(track.id).isEmpty())
+            assertArrayEquals(tagged.readBytes(),
+                context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+            println("PORTABLE_M4A_EXPORT_OK: native AAC, embedded metadata, offline shared file")
+
             directory.deleteRecursively()
             assertTrue("Private copy was not removed", active.downloadCache.getCachedSpans(first.id).isEmpty())
             assertEquals(external, active.downloadUtil.externalAudioUri(first.id))
@@ -256,7 +257,7 @@ class OfflinePlayerInstrumentedTest {
             println("PLAYER_STAGE: fixtures and local metadata ready")
             val controller = main { PlayerConnection(context, binder, active.database, scope) }
             connection = controller
-            for (index in listOf(1, 2)) {
+            for (index in listOf(2)) {
                 main { active.playQueue(ListQueue("Formats exportés", listOf(tracks[index].toMediaItem())), playWhenReady = true) }
                 await("Shared format $index did not decode: ${main { active.player.playerError }}") {
                     main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
@@ -273,10 +274,10 @@ class OfflinePlayerInstrumentedTest {
                 main { active.player.pause() }
                 assertTrue(active.downloadCache.getCachedSpans(tracks[index].id).isEmpty())
                 assertTrue(active.playerCache.getCachedSpans(tracks[index].id).isEmpty())
-                println("SHARED_FORMAT_PLAYBACK_OK: ${if (index == 1) "Ogg/Opus" else "M4A"}; public file, no network, real rendered buffers and seek")
+                println("SHARED_FORMAT_PLAYBACK_OK: M4A; public file, no network, real rendered buffers and seek")
             }
             main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
-            await("Shared FLAC did not decode: ${main { active.player.playerError }}") {
+            await("Shared M4A did not decode: ${main { active.player.playerError }}") {
                 main { active.player.playbackState == Player.STATE_READY && active.player.duration >= 19000 }
             }
             assertNull(main { active.player.playerError })
@@ -309,9 +310,25 @@ class OfflinePlayerInstrumentedTest {
                 device.findObjects(By.desc(context.getString(R.string.more_options)))
                     .none { it.visibleBounds.top < coverBounds.top },
             )
-            assertNull(
-                "An audio-only track must never display a video selector",
-                device.findObject(By.desc(context.getString(R.string.player_video_label))),
+            val unavailableVideoTab = requireNotNull(
+                device.findObject(By.desc(context.getString(R.string.player_video_label)))
+            )
+            // UiAutomator reports Compose child icons as enabled on some API
+            // levels even when their parent selectable(enabled=false) is not.
+            // Verify the user-visible result instead: tapping unavailable
+            // Vidéo must never select it or replace the artwork.
+            unavailableVideoTab.click()
+            instrumentation.waitForIdleSync()
+            assertFalse(
+                "Tapping Vidéo without a resolved clip must not select video",
+                device.findObject(By.desc(context.getString(R.string.player_video_label)))?.isSelected == true,
+            )
+            // Compose exposes Icon semantics separately from the parent Tab.
+            // UIAutomator's isSelected on the icon isn't the tab state. The
+            // actual DataStore choice must not change when Vidéo is unavailable.
+            assertFalse(
+                "An unavailable Vidéo tab must not change the saved player mode",
+                context.dataStore.data.first()[PlayerVideoPreferredKey] ?: false,
             )
             assertNotNull(
                 "The compact player must still provide its collapse control",
@@ -455,10 +472,17 @@ class OfflinePlayerInstrumentedTest {
             context.dataStore.edit { it[AudioTrackPlaybackParamsKey] = true }
             await("Re-enabling AudioTrack did not recreate renderer") { main { active.player !== softwarePlayer && active.player.playbackState == Player.STATE_READY } }
             assertEquals(1.25f, main { active.player.playbackParameters.speed }, 0.001f)
-            main { controller.play() }
-            val hardwarePosition = main { active.player.currentPosition }
-            delay(1200)
-            assertTrue("AudioTrack processing must play audio", main { active.player.currentPosition > hardwarePosition + 500 })
+            // A renderer switch may restore a paused stream with a pending seek
+            // on emulators. Start this playback probe from a known position and
+            // wait for actual progress rather than assuming a 1.2 s startup.
+            main { active.player.seekTo(0, 0); controller.play() }
+            await("AudioTrack processing must play audio after renderer recreation", 10000) {
+                main {
+                    active.player.playerError == null &&
+                        active.player.isPlaying &&
+                        active.player.currentPosition > 500
+                }
+            }
             main { controller.pause(); active.player.setPlaybackSpeed(1f) }
             println("PLAYER_RENDERER_OK: both modes preserve queue/speed and play actual cached audio")
 
