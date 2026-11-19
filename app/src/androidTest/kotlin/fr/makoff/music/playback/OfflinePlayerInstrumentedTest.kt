@@ -313,9 +313,19 @@ class OfflinePlayerInstrumentedTest {
             val unavailableVideoTab = requireNotNull(
                 device.findObject(By.desc(context.getString(R.string.player_video_label)))
             )
+            // UiAutomator reports Compose child icons as enabled on some API
+            // levels even when their parent selectable(enabled=false) is not.
+            // Verify the user-visible result instead: tapping unavailable
+            // Vidéo must never select it or replace the artwork.
+            unavailableVideoTab.click()
+            instrumentation.waitForIdleSync()
             assertFalse(
-                "Son/Vidéo must be visible immediately, but Video disabled without a clip",
-                unavailableVideoTab.isEnabled,
+                "Tapping Vidéo without a resolved clip must not select video",
+                device.findObject(By.desc(context.getString(R.string.player_video_label)))?.isSelected == true,
+            )
+            assertTrue(
+                "Son must remain selected for an audio-only song",
+                device.findObject(By.desc(context.getString(R.string.player_cover_label)))?.isSelected == true,
             )
             assertNotNull(
                 "The compact player must still provide its collapse control",
