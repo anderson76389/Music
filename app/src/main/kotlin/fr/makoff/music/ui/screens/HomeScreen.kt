@@ -415,27 +415,6 @@ fun CommunityPlaylistCard(
 
                 IconButton(
                     onClick = {
-                        run {
-                            item.playlist.radioEndpoint?.let {
-                                playerConnection?.playQueue(YouTubeQueue(it))
-                            }
-                        }
-                    },
-                    modifier =
-                        Modifier
-                            .size(48.dp)
-                            .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f), CircleShape),
-                ) {
-                    Icon(
-                        painter = painterResource(R.drawable.radio),
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier = Modifier.size(24.dp),
-                    )
-                }
-
-                IconButton(
-                    onClick = {
                         scope.launch(Dispatchers.IO) {
                             if (dbPlaylist?.playlist == null) {
                                 val playlistEntity =
@@ -2480,7 +2459,7 @@ fun HomeScreen(
                             if (local) {
                                 when (val luckyItem = allLocalItems.random()) {
                                     is Song -> {
-                                        playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
+                                        playerConnection.playQueue(ListQueue(title = luckyItem.title, items = listOf(luckyItem.toMediaItem())))
                                     }
 
                                     is Album -> {
@@ -2489,7 +2468,7 @@ fun HomeScreen(
                                                 database.albumWithSongs(luckyItem.id).first()
                                             }
                                         albumWithSongs?.let {
-                                            playerConnection.playQueue(LocalAlbumRadio(it))
+                                            playerConnection.playQueue(ListQueue(title = luckyItem.title, items = it.songs.map { song -> song.toMediaItem() }))
                                         }
                                     }
 
@@ -2500,17 +2479,17 @@ fun HomeScreen(
                             } else {
                                 when (val luckyItem = allYtItems.random()) {
                                     is SongItem -> {
-                                        playerConnection.playQueue(YouTubeQueue.radio(luckyItem.toMediaMetadata()))
+                                        playerConnection.playQueue(ListQueue(title = luckyItem.title, items = listOf(luckyItem.toMediaItem())))
                                     }
 
                                     is AlbumItem -> {
-                                        playerConnection.playQueue(YouTubeAlbumRadio(luckyItem.playlistId))
+                                        YouTube.album(luckyItem.id).getOrNull()?.songs?.takeIf { it.isNotEmpty() }?.let { songs ->
+                                            playerConnection.playQueue(ListQueue(title = luckyItem.title, items = songs.map { it.toMediaItem() }))
+                                        }
                                     }
 
                                     is ArtistItem -> {
-                                        luckyItem.radioEndpoint?.let {
-                                            playerConnection.playQueue(YouTubeQueue(it))
-                                        }
+                                        navController.navigate("artist/${luckyItem.id}")
                                     }
 
                                     is PlaylistItem -> {
