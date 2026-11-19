@@ -35,7 +35,7 @@ def notes(previous: str, root: pathlib.Path) -> str:
             subjects = []
         clean = []
         for subject in subjects:
-            title = re.sub(r"^(fix|feat|perf|refactor|docs|test|ci|chore)(\\([^)]*\\))?:\\s*", "", subject, flags=re.I).strip()
+            title = re.sub(r"^(fix|feat|perf|refactor|docs|test|ci|chore)(\([^)]*\))?:\s*", "", subject, flags=re.I).strip()
             if not title or title.lower().startswith(("merge ", "release ")):
                 continue
             if title not in clean:
