@@ -108,7 +108,7 @@ class OfflinePlayerInstrumentedTest {
         }
         val keys = listOf(AutoplayKey, AutoLoadMoreKey, AutoRadioQueueKey, PersistentQueueKey,
             CrossfadeEnabledKey, AudioOffload, SkipSilenceKey, SkipSilenceInstantKey, AutoDownloadOnLikeKey, LiquidGlassEnabledKey,
-            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds, PlayerVideoModeEnabledKey)
+            AudioTrackPlaybackParamsKey, EnableGoogleCastKey, EnableSongCacheKey, SeekExtraSeconds, PlayerVideoModeEnabledKey, PlayerVideoPreferredKey)
         val before = context.dataStore.data.first()
         context.dataStore.edit { prefs -> keys.forEach { prefs[it] = false }; prefs[LiquidGlassEnabledKey] = true; prefs[AudioTrackPlaybackParamsKey] = true; prefs[EnableSongCacheKey] = true; prefs[PlayerVideoModeEnabledKey] = true; prefs[AudioQualityKey] = AudioQuality.HIGH.name }
         val future = CompletableFuture<MusicService.MusicBinder>()
@@ -323,9 +323,12 @@ class OfflinePlayerInstrumentedTest {
                 "Tapping Vidéo without a resolved clip must not select video",
                 device.findObject(By.desc(context.getString(R.string.player_video_label)))?.isSelected == true,
             )
-            assertTrue(
-                "Son must remain selected for an audio-only song",
-                device.findObject(By.desc(context.getString(R.string.player_cover_label)))?.isSelected == true,
+            // Compose exposes Icon semantics separately from the parent Tab.
+            // UIAutomator's isSelected on the icon isn't the tab state. The
+            // actual DataStore choice must not change when Vidéo is unavailable.
+            assertFalse(
+                "An unavailable Vidéo tab must not change the saved player mode",
+                context.dataStore.data.first()[PlayerVideoPreferredKey] ?: false,
             )
             assertNotNull(
                 "The compact player must still provide its collapse control",
