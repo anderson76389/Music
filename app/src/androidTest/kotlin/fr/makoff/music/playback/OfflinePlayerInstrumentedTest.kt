@@ -548,7 +548,7 @@ class OfflinePlayerInstrumentedTest {
             main { active.playerVolume.value = previousVolume }
             println("PLAYER_VOLUME_OK: visible slider changes actual player volume")
             clickDescription(R.string.more_options)
-            assertNotNull("Player menu opens", device.wait(Until.findObject(By.text(context.getString(R.string.start_radio))), 5000))
+            assertNotNull("Player menu opens", device.wait(Until.findObject(By.text(context.getString(R.string.action_download))), 5000))
             delay(1200)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-player-menu.png")
             device.pressBack()
@@ -562,7 +562,7 @@ class OfflinePlayerInstrumentedTest {
             clickDescription(R.string.more_options)
             assertNotNull(
                 "Player menu must reopen after Back, not disappear with the prior hide animation",
-                device.wait(Until.findObject(By.text(context.getString(R.string.start_radio))), 5000),
+                device.wait(Until.findObject(By.text(context.getString(R.string.action_download))), 5000),
             )
             var eq = device.wait(Until.findObject(By.text(context.getString(R.string.equalizer))), 3000)
             for (attempt in 0 until 8) {

@@ -63,7 +63,6 @@ import fr.makoff.music.innertube.models.SongItem
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
-import fr.makoff.music.constants.AutoRadioQueueKey
 import fr.makoff.music.constants.SuggestionItemHeight
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.models.toMediaMetadata
@@ -107,7 +106,7 @@ fun OnlineSearchScreen(
 
     val lazyListState = rememberLazyListState()
 
-    val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    // All search results now start ordinary queues instead of a radio.
 
     LaunchedEffect(Unit) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }
@@ -247,14 +246,10 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    if (autoRadioQueue) {
-                                                        YouTubeQueue.radio(item.toMediaMetadata())
-                                                    } else {
-                                                        ListQueue(
-                                                            title = item.title,
-                                                            items = listOf(item.toMediaItem())
-                                                        )
-                                                    }
+                                                    ListQueue(
+                                                        title = item.title,
+                                                        items = listOf(item.toMediaItem())
+                                                    )
                                                 )
                                                 onDismiss()
                                             }
@@ -285,7 +280,7 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    YouTubeQueue.radio(item.toMediaMetadata()),
+                                                    ListQueue(title = item.title, items = listOf(item.toMediaMetadata().toMediaItem())),
                                                 )
                                                 onDismiss()
                                             }
@@ -520,14 +515,10 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                if (autoRadioQueue) {
-                                                    YouTubeQueue.radio(item.toMediaMetadata())
-                                                } else {
-                                                    ListQueue(
-                                                        title = item.title,
-                                                        items = listOf(item.toMediaItem())
-                                                    )
-                                                }
+                                                ListQueue(
+                                                    title = item.title,
+                                                    items = listOf(item.toMediaItem())
+                                                )
                                             )
                                             onDismiss()
                                         }
@@ -558,7 +549,7 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                YouTubeQueue.radio(item.toMediaMetadata()),
+                                                ListQueue(title = item.title, items = listOf(item.toMediaMetadata().toMediaItem())),
                                             )
                                             onDismiss()
                                         }

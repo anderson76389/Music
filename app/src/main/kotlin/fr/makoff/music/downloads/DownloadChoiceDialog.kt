@@ -96,6 +96,7 @@ internal fun rememberAudioDownloadAction(onDownload: (Uri, DownloadAudioFormat) 
                                 DownloadAudioFormat.BEST -> R.string.download_choice_best_help
                                 DownloadAudioFormat.M4A -> R.string.download_choice_m4a_help
                                 DownloadAudioFormat.AAC -> R.string.download_choice_aac_help
+                                DownloadAudioFormat.OPUS -> R.string.download_choice_opus_help
                                 DownloadAudioFormat.FLAC -> R.string.download_choice_flac_help
                             }), style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)

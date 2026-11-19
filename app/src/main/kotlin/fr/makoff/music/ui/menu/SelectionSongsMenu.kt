@@ -295,6 +295,9 @@ fun SelectionSongMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        item { Material3MenuGroup(items = listOf(unifiedDownload)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
         item {
             NewActionGrid(
                 actions =
@@ -501,7 +504,7 @@ fun SelectionSongMenu(
             Material3MenuGroup(
                 items =
                     buildList {
-                        add(
+                        addAll(listOfNotNull(
                             when (downloadState) {
                                 Download.STATE_COMPLETED -> {
                                     Material3MenuItemData(
@@ -537,22 +540,9 @@ fun SelectionSongMenu(
                                     )
                                 }
 
-                                else -> {
-                                    Material3MenuItemData(
-                                        title = { Text(text = stringResource(R.string.action_download)) },
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.download),
-                                                contentDescription = null,
-                                            )
-                                        },
-                                        onClick = {
-                                            unifiedDownload.onClick?.invoke()
-                                        },
-                                    )
-                                }
+                                else -> null
                             },
-                        )
+                        ))
                         onRemoveFromCache?.let { removeFromCache ->
                             add(
                                 Material3MenuItemData(
@@ -767,6 +757,9 @@ fun SelectionMediaMetadataMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        item { Material3MenuGroup(items = listOf(unifiedDownload)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
         item {
             Material3MenuGroup(
                 items =
@@ -914,7 +907,7 @@ fun SelectionMediaMetadataMenu(
                                 },
                             ),
                         )
-                        add(
+                        addAll(listOfNotNull(
                             when (downloadState) {
                                 Download.STATE_COMPLETED -> {
                                     Material3MenuItemData(
@@ -956,22 +949,9 @@ fun SelectionMediaMetadataMenu(
                                     )
                                 }
 
-                                else -> {
-                                    Material3MenuItemData(
-                                        title = { Text(text = stringResource(R.string.action_download)) },
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.download),
-                                                contentDescription = null,
-                                            )
-                                        },
-                                        onClick = {
-                                            unifiedDownload.onClick?.invoke()
-                                        },
-                                    )
-                                }
+                                else -> null
                             },
-                        )
+                        ))
                     },
             )
         }

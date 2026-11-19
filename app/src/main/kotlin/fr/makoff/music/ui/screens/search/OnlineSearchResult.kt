@@ -87,7 +87,6 @@ import fr.makoff.music.innertube.models.YTItem
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
-import fr.makoff.music.constants.AutoRadioQueueKey
 import fr.makoff.music.constants.HideVideoSongsKey
 import fr.makoff.music.constants.MiniPlayerBottomSpacing
 import fr.makoff.music.constants.MiniPlayerHeight
@@ -160,7 +159,7 @@ fun OnlineSearchResult(
 
     val pauseSearchHistory by rememberPreference(PauseSearchHistoryKey, defaultValue = false)
     val hideVideoSongs by rememberPreference(HideVideoSongsKey, defaultValue = false)
-    val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    // Radio mode was removed; always play the selected song normally.
 
     BackHandler(enabled = isSearchFocused) {
         isSearchFocused = false
@@ -311,17 +310,10 @@ fun OnlineSearchResult(
                                         playerConnection.togglePlayPause()
                                     } else {
                                         playerConnection.playQueue(
-                                            if (autoRadioQueue) {
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata(),
-                                                )
-                                            } else {
-                                                ListQueue(
-                                                    title = item.title,
-                                                    items = listOf(item.toMediaItem())
-                                                )
-                                            }
+                                            ListQueue(
+                                                title = item.title,
+                                                items = listOf(item.toMediaItem())
+                                            )
                                         )
                                     }
                                 }

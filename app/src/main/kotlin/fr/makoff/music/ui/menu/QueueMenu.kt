@@ -267,34 +267,15 @@ fun QueueMenu(
             bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
         ),
     ) {
+        // The primary export action is always the first item in the three-dot menu.
+        // It remains available even for songs cached inside the app.
+        item { Material3MenuGroup(items = listOf(folderAudioItem)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
         // Quick actions grid
         item {
             NewActionGrid(
                 actions = listOf(
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.radio),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.start_radio),
-                        onClick = {
-                            onDismiss()
-                            val currentMediaId = playerConnection.player.currentMediaItemIndex.let {
-                                playerConnection.player.getMediaItemAt(it).mediaId
-                            }
-                            if (mediaMetadata.id == currentMediaId) {
-                                playerConnection.startRadioSeamlessly()
-                            } else {
-                                playerConnection.playQueue(
-                                    YouTubeQueue.radio(mediaMetadata)
-                                )
-                            }
-                        }
-                    ),
                     NewAction(
                         icon = {
                             Icon(
@@ -385,9 +366,6 @@ fun QueueMenu(
         item {
             Material3MenuGroup(
                 items = listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
                     when (download?.state) {
                         Download.STATE_COMPLETED -> {
                             Material3MenuItemData(

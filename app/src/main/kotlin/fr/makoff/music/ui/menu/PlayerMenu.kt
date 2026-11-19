@@ -273,29 +273,15 @@ fun PlayerMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        // The primary export action is always the first item in the three-dot menu.
+        // It remains available even for songs cached inside the app.
+        item { Material3MenuGroup(items = listOf(folderAudioItem)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
         item {
-            val startingRadioText = stringResource(R.string.starting_radio)
             NewActionGrid(
                 actions =
                     listOfNotNull(
-                        run {
-                            NewAction(
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.radio),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                },
-                                text = stringResource(R.string.start_radio),
-                                onClick = {
-                                    Toast.makeText(context, startingRadioText, Toast.LENGTH_SHORT).show()
-                                    playerConnection.startRadioSeamlessly()
-                                    onDismiss()
-                                },
-                            )
-                        },
                         NewAction(
                             icon = {
                                 Icon(
@@ -481,9 +467,6 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(

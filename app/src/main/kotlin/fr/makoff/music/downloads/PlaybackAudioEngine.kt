@@ -30,6 +30,14 @@ internal object PlaybackAudioEngine {
         progress: (Float) -> Unit,
     ): File {
         require(videoId.matches(Regex("[A-Za-z0-9_-]{11}")))
+        // The native player may prefer AAC. For explicit Opus, request the
+        // original highest-bitrate Opus format instead of accepting AAC.
+        if (format == DownloadAudioFormat.OPUS) {
+            return YtDlpAudioEngine.download(
+                context, "https://www.youtube.com/watch?v=$videoId",
+                directory, processId, cookie, format = format, progress = progress,
+            )
+        }
         val resolved = File(directory, "resolved")
         try {
             val stream = InnerTubeXPlayer.playerResponseForPlayback(

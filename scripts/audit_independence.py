@@ -20,7 +20,7 @@ assert 'audioQuality = AudioQuality.HIGH' in (k/'playback/DownloadUtil.kt').read
 assert 'context.selectedDownloadFormat()' in (k/'playback/DownloadUtil.kt').read_text()
 assert 'context.selectedDownloadFormat()' in (k/'downloads/FolderAudioDownload.kt').read_text()
 assert 'else -> M4A' in (k/'downloads/DownloadAudioFormat.kt').read_text()
-assert 'val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)' in (k/'downloads/DownloadAudioFormat.kt').read_text()
+assert 'val portableChoices: List<DownloadAudioFormat> = listOf(M4A, OPUS)' in (k/'downloads/DownloadAudioFormat.kt').read_text()
 assert 'defaultValue = AudioQuality.HIGH' in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 print('PASS: Discord absent from application; high-quality defaults for player and downloads')
 

@@ -58,10 +58,12 @@ class FolderAudioNameTest {
         prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "BEST"
         assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "AAC"
-        assertEquals(DownloadAudioFormat.AAC, prefs.selectedDownloadFormat())
+        assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
         prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "M4A"
         assertEquals(DownloadAudioFormat.M4A, prefs.selectedDownloadFormat())
-        assertEquals(listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.AAC),
+        prefs[fr.makoff.music.constants.UnifiedDownloadFormatKey] = "OPUS"
+        assertEquals(DownloadAudioFormat.OPUS, prefs.selectedDownloadFormat())
+        assertEquals(listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.OPUS),
             DownloadAudioFormat.portableChoices)
     }
     @Test fun readableFileNamesKeepLongTitlesAndNoTechnicalIdentifier() {

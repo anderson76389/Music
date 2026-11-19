@@ -405,34 +405,6 @@ fun PlaylistMenu(
                 items =
                     buildList {
                         run {
-                            playlist.playlist.browseId?.let { browseId ->
-                                add(
-                                    Material3MenuItemData(
-                                        title = { Text(text = stringResource(R.string.start_radio)) },
-                                        description = { Text(text = stringResource(R.string.start_radio_desc)) },
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.radio),
-                                                contentDescription = null,
-                                            )
-                                        },
-                                        onClick = {
-                                            coroutineScope.launch(Dispatchers.IO) {
-                                                YouTube.playlist(browseId).getOrNull()?.playlist?.let { playlistItem ->
-                                                    playlistItem.radioEndpoint?.let { radioEndpoint ->
-                                                        withContext(Dispatchers.Main) {
-                                                            playerConnection.playQueue(YouTubeQueue(radioEndpoint))
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            onDismiss()
-                                        },
-                                    ),
-                                )
-                            }
-                        }
-                        run {
                             add(
                                 Material3MenuItemData(
                                     title = { Text(text = stringResource(R.string.play_next)) },

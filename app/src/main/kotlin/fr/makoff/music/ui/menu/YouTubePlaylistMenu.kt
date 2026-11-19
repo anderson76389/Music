@@ -453,25 +453,6 @@ fun YouTubePlaylistMenu(
                                     ),
                                 )
                             }
-                            playlist.radioEndpoint?.let { radioEndpoint ->
-                                add(
-                                    NewAction(
-                                        icon = {
-                                            Icon(
-                                                painter = painterResource(R.drawable.radio),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(28.dp),
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        },
-                                        text = stringResource(R.string.start_radio),
-                                        onClick = {
-                                            playerConnection.playQueue(YouTubeQueue(radioEndpoint))
-                                            onDismiss()
-                                        },
-                                    ),
-                                )
-                            }
                         }
                     },
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 16.dp),

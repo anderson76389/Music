@@ -16,27 +16,27 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
     BEST(R.string.download_format_best, "bestaudio"),
     M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]"),
     AAC(R.string.download_format_aac, "bestaudio[ext=m4a]"),
+    OPUS(R.string.download_format_opus, "bestaudio[acodec=opus]"),
     FLAC(R.string.download_format_flac, "bestaudio"),
     ;
 
     companion object {
-        // Previously saved BEST/FLAC selections migrate to portable AAC-in-M4A.
-        // The old enum constants stay binary-compatible with existing WorkManager
-        // jobs; no new download can silently export Opus, WebM or fake lossless.
+        // M4A stays the default. Obsolete BEST/AAC/FLAC settings migrate to M4A.
+        // Keep their enum members for previously queued WorkManager jobs.
         fun parse(value: String?): DownloadAudioFormat = when (value) {
-            AAC.name -> AAC
+            OPUS.name -> OPUS
             else -> M4A
         }
-        val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)
+        val portableChoices: List<DownloadAudioFormat> = listOf(M4A, OPUS)
     }
 }
 
-/** Exact yt-dlp format expression. BEST always targets the highest audio
- * available to this session; a low-quality request is explicit only.
- * Local fixtures use "best" to exercise the file input path.
+/** Preserve the best original stream of the requested codec (no transcoding).
+ * A failed Opus match must fail explicitly, never silently export Vorbis/AAC.
+ * The legacy low-quality flag never degrades the chosen original stream.
  */
 internal fun selectYtDlpAudioFormat(format: DownloadAudioFormat, lowQuality: Boolean, isLocalSource: Boolean): String =
-    if (isLocalSource) "best" else "bestaudio[ext=m4a]"
+    if (isLocalSource) "best" else if (format == DownloadAudioFormat.OPUS) "bestaudio[acodec=opus]" else "bestaudio[ext=m4a]"
 
 
 /** Android's FLAC MediaExtractor may expose decoded PCM; preserve the source codec. */

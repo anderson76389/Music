@@ -119,7 +119,7 @@ class FolderAudioInstrumentedTest {
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
                     album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
-                val asset = "aac.m4a"
+                val asset = if (format == DownloadAudioFormat.OPUS) "opus.webm" else "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
                 }
@@ -156,7 +156,7 @@ class FolderAudioInstrumentedTest {
                 click(fr.makoff.music.R.string.action_download)
                 // Change the default immediately: the confirmed request must retain its own choice.
                 context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
-                    if (format == DownloadAudioFormat.AAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.AAC.name }
+                    if (format == DownloadAudioFormat.OPUS) DownloadAudioFormat.M4A.name else DownloadAudioFormat.OPUS.name }
                 var completed: androidx.work.WorkInfo? = null
                 val deadline = android.os.SystemClock.elapsedRealtime() + 45000
                 while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
@@ -175,11 +175,11 @@ class FolderAudioInstrumentedTest {
                 }
                 assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
                 if (index != 5) assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
-                val extension = if (format == DownloadAudioFormat.AAC) "aac" else "m4a"
+                val extension = if (format == DownloadAudioFormat.OPUS) "opus" else "m4a"
                 val expectedName = "${media.title}.$extension"
                 assertEquals("Every filename contains only the song title", expectedName, completed.outputData.getString("name"))
                 assertNotNull("Album and playlist exports have no artist or track prefix", requireNotNull(folder).findFile(expectedName))
-                val expectedMime = if (format == DownloadAudioFormat.AAC) "audio/aac" else "audio/mp4"
+                val expectedMime = if (format == DownloadAudioFormat.OPUS) "audio/ogg" else "audio/mp4"
                 assertEquals(expectedMime, completed.outputData.getString("mime"))
                 val extractor = android.media.MediaExtractor()
                 try {
@@ -188,7 +188,7 @@ class FolderAudioInstrumentedTest {
                     val actual = context.contentResolver.openInputStream(uri)!!.use {
                         sourceAudioMime(it, requireNotNull(track.getString(android.media.MediaFormat.KEY_MIME)))
                     }
-                    assertEquals("audio/mp4a-latm", actual)
+                    assertEquals(if (format == DownloadAudioFormat.OPUS) "audio/opus" else "audio/mp4a-latm", actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
                 val tags = android.media.MediaMetadataRetriever()
@@ -235,11 +235,10 @@ class FolderAudioInstrumentedTest {
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album", 2023))
         try {
-            // Only M4A supports embedded artwork and ordinary MP4 tags;
-            // raw .aac is validated separately for its audio codec.
-            for (format in listOf(DownloadAudioFormat.M4A)) {
+            // Both exported containers MUST embed the actual source cover.
+            for (format in DownloadAudioFormat.portableChoices) {
                 val dir = File(root, format.name).apply { mkdirs() }
-                val asset = "aac.m4a"
+                val asset = if (format == DownloadAudioFormat.OPUS) "opus.webm" else "aac.m4a"
                 val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
                     instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
                 val raw = YtDlpAudioEngine.reuse(context, source, format, dir, "metadata-${format.name}")!!
@@ -433,8 +432,16 @@ class FolderAudioInstrumentedTest {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         var activity: fr.makoff.music.MainActivity? = null
         val before = context.dataStore.data.first()
+        // The exported file now requires actual per-song artwork. Use a
+        // deterministic local fixture instead of a track with no thumbnail.
+        val cover = File(context.cacheDir, "missing-cleanup-cover-${UUID.randomUUID()}.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.MAGENTA)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        bitmap.recycle()
         val tracks = (0..4).map { index -> fr.makoff.music.models.MediaMetadata(
-            UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1) }
+            UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString()) }
         val source = File(context.cacheDir, "missing-cleanup.m4a").apply { writeBytes(android.util.Base64.decode(
             instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
         val documents = mutableListOf<android.net.Uri>()
@@ -536,6 +543,7 @@ class FolderAudioInstrumentedTest {
                 downloads.database.songEntity(track.id)?.let { downloads.database.delete(it) }
             }
             source.delete()
+            cover.delete()
             instrumentation.runOnMainSync { activity?.finish() }
             context.dataStore.updateData { before }
         }
@@ -626,7 +634,13 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun likingAutomaticallyExportsToLikedFolderAndKeepsOfflineReference() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val cover = File(context.cacheDir, "liked-cover-$id.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.CYAN)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        bitmap.recycle()
         val media = fr.makoff.music.models.MediaMetadata(id, "Liked audio test", emptyList(), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("auto-album-$id", "Album $id"))
         val prefs = context.dataStore.data.first()
         val enabled = fr.makoff.music.constants.AutoDownloadOnLikeKey
@@ -688,6 +702,7 @@ class FolderAudioInstrumentedTest {
             downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
             listOfNotNull(original, exported).forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
             source.delete()
+            cover.delete()
             context.dataStore.edit {
                 prefs[enabled]?.let { value -> it[enabled] = value } ?: it.remove(enabled)
                 prefs[destination]?.let { value -> it[destination] = value } ?: it.remove(destination)
