@@ -160,11 +160,49 @@ internal object YtDlpAudioEngine {
         }
     }
 
+    /** Ogg Opus can carry a METADATA_BLOCK_PICTURE unlike raw AAC or WebM.
+     * Copy the original packets; do not downsample or transcode YouTube audio.
+     */
+    private fun remuxOriginalOpus(context: Context, source: File, directory: File): File {
+        require(source.extension.lowercase() in setOf("webm", "ogg", "opus"))
+        if (source.extension.equals("opus", ignoreCase = true)) return source
+        val target = File(directory, "audio.opus")
+        val temp = File(directory, "audio.opus.part")
+        val log = File(directory, "opus-remux.log")
+        val runtime = File(context.noBackupFilesDir, "youtubedl-android/packages")
+        val command = listOf(
+            File(context.applicationInfo.nativeLibraryDir, "libffmpeg.so").absolutePath,
+            "-nostdin", "-y", "-loglevel", "error", "-i", source.absolutePath,
+            "-map", "0:a:0", "-vn", "-c:a", "copy", "-f", "opus", temp.absolutePath,
+        )
+        val builder = ProcessBuilder(command).redirectErrorStream(true).redirectOutput(log)
+        builder.environment()["LD_LIBRARY_PATH"] = listOf("python", "ffmpeg", "aria2c")
+            .joinToString(":") { File(runtime, "$it/usr/lib").absolutePath }
+        val process = builder.start()
+        try {
+            check(process.waitFor(120, java.util.concurrent.TimeUnit.SECONDS)) { "Opus remux timed out" }
+            check(process.exitValue() == 0 && temp.isFile && temp.length() > 8L) { "Opus remux failed" }
+            temp.inputStream().use { input ->
+                val header = ByteArray(4)
+                check(input.read(header) == 4 && header.contentEquals("OggS".toByteArray())) {
+                    "Opus export is not an Ogg container"
+                }
+            }
+            check(temp.renameTo(target)) { "Could not finalize Opus" }
+            source.delete()
+            return target
+        } finally {
+            if (process.isAlive) process.destroyForcibly()
+            temp.delete()
+            log.delete()
+        }
+    }
+
     suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
                 initialize(context)
-                if (format == DownloadAudioFormat.AAC) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                if (format == DownloadAudioFormat.AAC || format == DownloadAudioFormat.OPUS) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
             } catch (failure: LinkageError) {
                 throw IOException("Download engine initialization failed", failure)
             }
@@ -192,23 +230,31 @@ internal object YtDlpAudioEngine {
             val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
-            check(output.extension.equals("m4a", ignoreCase = true)) {
-                "Original AAC-in-M4A audio unavailable"
+            if (format == DownloadAudioFormat.OPUS) {
+                check(output.extension.lowercase() in setOf("webm", "ogg", "opus")) {
+                    "Original Opus audio unavailable"
+                }
+                remuxOriginalOpus(context, output, directory)
+            } else {
+                check(output.extension.equals("m4a", ignoreCase = true)) {
+                    "Original AAC-in-M4A audio unavailable"
+                }
+                if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)
+                else output
             }
-            if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)
-            else output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
         source ?: return null
         return when {
+            format == DownloadAudioFormat.OPUS && source.extension.lowercase() in setOf("opus", "webm", "ogg") ->
+                remuxOriginalOpus(context, source, directory)
+            format == DownloadAudioFormat.M4A && source.extension.equals("m4a", true) -> source
             format == DownloadAudioFormat.AAC && source.extension.equals("aac", true) -> source
-            format != DownloadAudioFormat.AAC && source.extension.equals("m4a", true) -> source
             format == DownloadAudioFormat.AAC && source.extension.equals("m4a", true) ->
                 download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
                     format = DownloadAudioFormat.AAC) { }
-            // Offline ExoPlayer may have cached Opus/WebM. Do not copy it
-            // under a misleading AAC filename: resolve the original M4A.
+            // Do not rename an old WebM/Opus stream to M4A, or vice versa.
             else -> null
         }
     }
