@@ -87,7 +87,6 @@ import fr.makoff.music.innertube.models.YTItem
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
-import fr.makoff.music.constants.AutoRadioQueueKey
 import fr.makoff.music.constants.HideVideoSongsKey
 import fr.makoff.music.constants.MiniPlayerBottomSpacing
 import fr.makoff.music.constants.MiniPlayerHeight
