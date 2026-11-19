@@ -269,32 +269,15 @@ fun QueueMenu(
     ) {
         // Quick actions grid
         item {
+            if (download?.state !in setOf(
+                Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
+            )) {
+                Material3MenuGroup(items = listOf(folderAudioItem))
+            }
+        }
+        item {
             NewActionGrid(
                 actions = listOf(
-                    NewAction(
-                        icon = {
-                            Icon(
-                                painter = painterResource(R.drawable.radio),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.start_radio),
-                        onClick = {
-                            onDismiss()
-                            val currentMediaId = playerConnection.player.currentMediaItemIndex.let {
-                                playerConnection.player.getMediaItemAt(it).mediaId
-                            }
-                            if (mediaMetadata.id == currentMediaId) {
-                                playerConnection.startRadioSeamlessly()
-                            } else {
-                                playerConnection.playQueue(
-                                    YouTubeQueue.radio(mediaMetadata)
-                                )
-                            }
-                        }
-                    ),
                     NewAction(
                         icon = {
                             Icon(
@@ -385,10 +368,8 @@ fun QueueMenu(
         item {
             Material3MenuGroup(
                 items = listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
-                    when (download?.state) {
+
+when (download?.state) {
                         Download.STATE_COMPLETED -> {
                             Material3MenuItemData(
                                 title = {
