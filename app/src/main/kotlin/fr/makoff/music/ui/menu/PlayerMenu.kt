@@ -273,6 +273,11 @@ fun PlayerMenu(
                 bottom = 8.dp + WindowInsets.systemBars.asPaddingValues().calculateBottomPadding(),
             ),
     ) {
+        // The primary export action is always the first item in the three-dot menu.
+        // It remains available even for songs cached inside the app.
+        item { Material3MenuGroup(items = listOf(folderAudioItem)) }
+        item { Spacer(modifier = Modifier.height(12.dp)) }
+
         item {
             val startingRadioText = stringResource(R.string.starting_radio)
             NewActionGrid(
@@ -463,9 +468,6 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
                         when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(
