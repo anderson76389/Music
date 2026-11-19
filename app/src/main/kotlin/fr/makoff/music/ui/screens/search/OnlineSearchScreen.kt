@@ -63,7 +63,6 @@ import fr.makoff.music.innertube.models.SongItem
 import fr.makoff.music.LocalDatabase
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
-import fr.makoff.music.constants.AutoRadioQueueKey
 import fr.makoff.music.constants.SuggestionItemHeight
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.models.toMediaMetadata
@@ -281,7 +280,7 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    YouTubeQueue.radio(item.toMediaMetadata()),
+                                                    ListQueue(title = item.title, items = listOf(item.toMediaItem())),
                                                 )
                                                 onDismiss()
                                             }
@@ -550,7 +549,7 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                YouTubeQueue.radio(item.toMediaMetadata()),
+                                                ListQueue(title = item.title, items = listOf(item.toMediaItem())),
                                             )
                                             onDismiss()
                                         }
