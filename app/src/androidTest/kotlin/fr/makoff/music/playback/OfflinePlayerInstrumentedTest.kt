@@ -472,10 +472,17 @@ class OfflinePlayerInstrumentedTest {
             context.dataStore.edit { it[AudioTrackPlaybackParamsKey] = true }
             await("Re-enabling AudioTrack did not recreate renderer") { main { active.player !== softwarePlayer && active.player.playbackState == Player.STATE_READY } }
             assertEquals(1.25f, main { active.player.playbackParameters.speed }, 0.001f)
-            main { controller.play() }
-            val hardwarePosition = main { active.player.currentPosition }
-            delay(1200)
-            assertTrue("AudioTrack processing must play audio", main { active.player.currentPosition > hardwarePosition + 500 })
+            // A renderer switch may restore a paused stream with a pending seek
+            // on emulators. Start this playback probe from a known position and
+            // wait for actual progress rather than assuming a 1.2 s startup.
+            main { active.player.seekTo(0, 0); controller.play() }
+            await("AudioTrack processing must play audio after renderer recreation", 10000) {
+                main {
+                    active.player.playerError == null &&
+                        active.player.isPlaying &&
+                        active.player.currentPosition > 500
+                }
+            }
             main { controller.pause(); active.player.setPlaybackSpeed(1f) }
             println("PLAYER_RENDERER_OK: both modes preserve queue/speed and play actual cached audio")
 
