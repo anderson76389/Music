@@ -274,28 +274,17 @@ fun PlayerMenu(
             ),
     ) {
         item {
+            if (download?.state !in setOf(
+                Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
+            )) {
+                Material3MenuGroup(items = listOf(folderAudioItem))
+            }
+        }
+        item {
             val startingRadioText = stringResource(R.string.starting_radio)
             NewActionGrid(
                 actions =
                     listOfNotNull(
-                        run {
-                            NewAction(
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.radio),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(32.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                },
-                                text = stringResource(R.string.start_radio),
-                                onClick = {
-                                    Toast.makeText(context, startingRadioText, Toast.LENGTH_SHORT).show()
-                                    playerConnection.startRadioSeamlessly()
-                                    onDismiss()
-                                },
-                            )
-                        },
                         NewAction(
                             icon = {
                                 Icon(
@@ -481,10 +470,8 @@ fun PlayerMenu(
             Material3MenuGroup(
                 items =
                     listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
-                        when (download?.state) {
+
+when (download?.state) {
                             Download.STATE_COMPLETED -> {
                                 Material3MenuItemData(
                                     title = {
