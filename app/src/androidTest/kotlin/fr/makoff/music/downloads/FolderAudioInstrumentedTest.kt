@@ -119,7 +119,7 @@ class FolderAudioInstrumentedTest {
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
                     album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
-                val asset = "aac.m4a"
+                val asset = if (format == DownloadAudioFormat.OPUS) "opus.webm" else "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
                 }
@@ -156,7 +156,7 @@ class FolderAudioInstrumentedTest {
                 click(fr.makoff.music.R.string.action_download)
                 // Change the default immediately: the confirmed request must retain its own choice.
                 context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
-                    if (format == DownloadAudioFormat.AAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.AAC.name }
+                    if (format == DownloadAudioFormat.OPUS) DownloadAudioFormat.M4A.name else DownloadAudioFormat.OPUS.name }
                 var completed: androidx.work.WorkInfo? = null
                 val deadline = android.os.SystemClock.elapsedRealtime() + 45000
                 while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
@@ -175,11 +175,11 @@ class FolderAudioInstrumentedTest {
                 }
                 assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
                 if (index != 5) assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
-                val extension = if (format == DownloadAudioFormat.AAC) "aac" else "m4a"
+                val extension = if (format == DownloadAudioFormat.OPUS) "opus" else "m4a"
                 val expectedName = "${media.title}.$extension"
                 assertEquals("Every filename contains only the song title", expectedName, completed.outputData.getString("name"))
                 assertNotNull("Album and playlist exports have no artist or track prefix", requireNotNull(folder).findFile(expectedName))
-                val expectedMime = if (format == DownloadAudioFormat.AAC) "audio/aac" else "audio/mp4"
+                val expectedMime = if (format == DownloadAudioFormat.OPUS) "audio/ogg" else "audio/mp4"
                 assertEquals(expectedMime, completed.outputData.getString("mime"))
                 val extractor = android.media.MediaExtractor()
                 try {
@@ -188,7 +188,7 @@ class FolderAudioInstrumentedTest {
                     val actual = context.contentResolver.openInputStream(uri)!!.use {
                         sourceAudioMime(it, requireNotNull(track.getString(android.media.MediaFormat.KEY_MIME)))
                     }
-                    assertEquals("audio/mp4a-latm", actual)
+                    assertEquals(if (format == DownloadAudioFormat.OPUS) "audio/opus" else "audio/mp4a-latm", actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
                 val tags = android.media.MediaMetadataRetriever()
@@ -851,7 +851,7 @@ class FolderAudioInstrumentedTest {
             var exported: android.net.Uri? = null
             try {
                 val source = YtDlpAudioEngine.download(context,
-                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", format = if (asset == "aac.m4a") DownloadAudioFormat.M4A else DownloadAudioFormat.BEST) { }
+                    "http://127.0.0.1:${server.localPort}/$asset", directory, "codec-${UUID.randomUUID()}", format = if (asset == "aac.m4a") DownloadAudioFormat.M4A else DownloadAudioFormat.OPUS) { }
                 if (asset == "aac.m4a") {
                     assertArrayEquals(audio, source.readBytes())
                 } else {
@@ -859,7 +859,7 @@ class FolderAudioInstrumentedTest {
                     assertEquals("OggS", source.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
                     val original = File(directory, "original.webm").apply { writeBytes(audio) }
                     assertArrayEquals(audioPackets(original), audioPackets(source))
-                    val reused = YtDlpAudioEngine.reuse(context, original, DownloadAudioFormat.BEST,
+                    val reused = YtDlpAudioEngine.reuse(context, original, DownloadAudioFormat.OPUS,
                         File(directory, "offline"), "remux-${UUID.randomUUID()}")!!
                     assertEquals("opus", reused.extension)
                     assertArrayEquals(audioPackets(original), audioPackets(reused))
