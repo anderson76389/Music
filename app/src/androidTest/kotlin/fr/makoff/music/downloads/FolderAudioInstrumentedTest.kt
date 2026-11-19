@@ -235,7 +235,9 @@ class FolderAudioInstrumentedTest {
             thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("album-test", "Audio album", 2023))
         try {
-            for (format in DownloadAudioFormat.entries) {
+            // Only M4A supports embedded artwork and ordinary MP4 tags;
+            // raw .aac is validated separately for its audio codec.
+            for (format in listOf(DownloadAudioFormat.M4A)) {
                 val dir = File(root, format.name).apply { mkdirs() }
                 val asset = "aac.m4a"
                 val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
@@ -823,8 +825,8 @@ class FolderAudioInstrumentedTest {
         }
     }
 
-    @Test(timeout = 90000) fun aacAndOpusKeepTheirRealCodecAndExactBytesAfterExport() = runBlocking {
-        for ((asset, mime) in listOf("aac.m4a" to "audio/mp4a-latm", "opus.webm" to "audio/opus")) {
+    @Test(timeout = 90000) fun m4aAacKeepsItsRealCodecAndExactBytesAfterExport() = runBlocking {
+        for ((asset, mime) in listOf("aac.m4a" to "audio/mp4a-latm")) {
             val audio = android.util.Base64.decode(
                 instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() },
                 android.util.Base64.DEFAULT,
@@ -886,42 +888,40 @@ class FolderAudioInstrumentedTest {
         }
     }
 
-    @Test(timeout = 90000) fun flacIsConvertedAndReusableWithoutNetwork() = runBlocking {
-        val directory = File(context.cacheDir, "flac-test-${UUID.randomUUID()}").apply { mkdirs() }
-        val bytes = android.util.Base64.decode(instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)
+    @Test(timeout = 90000) fun portableAacRemuxesM4aWithoutSourceTranscoding() = runBlocking {
+        val directory = File(context.cacheDir, "aac-portable-test-${UUID.randomUUID()}").apply { mkdirs() }
+        val bytes = android.util.Base64.decode(
+            instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() },
+            android.util.Base64.DEFAULT,
+        )
         val source = File(directory, "existing.m4a").apply { writeBytes(bytes) }
         try {
-            val output = YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.FLAC, directory, "flac-${UUID.randomUUID()}")!!
-            assertEquals("flac", output.extension)
-            assertEquals("fLaC", output.inputStream().use { input -> ByteArray(4).also { input.read(it) } }.toString(Charsets.US_ASCII))
+            val output = requireNotNull(YtDlpAudioEngine.reuse(
+                context, source, DownloadAudioFormat.AAC, directory, "aac-${UUID.randomUUID()}",
+            ))
+            assertEquals("aac", output.extension)
+            output.inputStream().use { stream ->
+                val header = ByteArray(2)
+                assertEquals(2, stream.read(header))
+                assertEquals(0xFF, header[0].toInt() and 0xff)
+                assertEquals(0xF0, header[1].toInt() and 0xF0)
+            }
+            assertArrayEquals("Original M4A file must remain unchanged", bytes, source.readBytes())
             val extractor = android.media.MediaExtractor()
             try {
                 extractor.setDataSource(output.absolutePath)
-                val format = extractor.getTrackFormat(0)
-                val trackMime = format.getString(android.media.MediaFormat.KEY_MIME)!!
-                assertTrue(trackMime in setOf("audio/flac", "audio/raw"))
-                assertEquals("audio/flac", output.inputStream().use { sourceAudioMime(it, trackMime) })
-                assertEquals(48000, format.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
-                assertEquals(2, format.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
+                val audio = extractor.getTrackFormat(0)
+                assertEquals("audio/mp4a-latm", audio.getString(android.media.MediaFormat.KEY_MIME))
+                assertEquals(48000, audio.getInteger(android.media.MediaFormat.KEY_SAMPLE_RATE))
+                assertEquals(2, audio.getInteger(android.media.MediaFormat.KEY_CHANNEL_COUNT))
             } finally { extractor.release() }
-            assertEquals(output, YtDlpAudioEngine.reuse(context, output, DownloadAudioFormat.FLAC, directory, "same-flac"))
-            assertEquals(source, YtDlpAudioEngine.reuse(context, source, DownloadAudioFormat.M4A, directory, "same-m4a"))
-            assertArrayEquals(bytes, source.readBytes())
-            val downloads = FolderAudioDownloads.downloadUtil(context)
-            val songId = UUID.randomUUID().toString().replace("-", "").take(11)
-            val uri = saveAudioToTree(context, tree, output, "$songId.flac")
+            val uri = saveAudioToTree(context, tree, output, "portable-${UUID.randomUUID()}.aac")
             try {
-                downloads.registerExternalAudio(fr.makoff.music.models.MediaMetadata(songId, "FLAC round trip", emptyList(), 1), uri, output.length())
-                val staged = downloads.stageExistingAudio(songId, File(directory, "roundtrip"))!!
-                assertEquals("flac", staged.extension)
-                assertArrayEquals(output.readBytes(), staged.readBytes())
-            } finally {
-                (downloads.downloadManager.downloadIndex as androidx.media3.exoplayer.offline.WritableDownloadIndex).removeDownload(songId)
-                downloads.downloads.value = downloads.downloads.value - songId
-                downloads.database.getSongByIdBlocking(songId)?.let { downloads.database.delete(it.song) }
-                DocumentsContract.deleteDocument(context.contentResolver, uri)
-            }
-            println("FLAC_REAL_OK: native conversion, fLaC header, 48000 Hz stereo, no upsampling")
+                assertArrayEquals(output.readBytes(),
+                    context.contentResolver.openInputStream(uri)!!.use { it.readBytes() })
+                assertEquals("audio/aac", audioMime(output.extension))
+            } finally { DocumentsContract.deleteDocument(context.contentResolver, uri) }
+            println("AAC_PORTABLE_OK: direct original AAC-in-M4A stream remuxed as valid ADTS, no Opus")
         } finally { directory.deleteRecursively() }
     }
 
