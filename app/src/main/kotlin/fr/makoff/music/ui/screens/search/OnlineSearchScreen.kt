@@ -107,7 +107,7 @@ fun OnlineSearchScreen(
 
     val lazyListState = rememberLazyListState()
 
-    val autoRadioQueue by rememberPreference(AutoRadioQueueKey, defaultValue = true)
+    // All search results now start ordinary queues instead of a radio.
 
     LaunchedEffect(Unit) {
         snapshotFlow { lazyListState.firstVisibleItemScrollOffset }
@@ -247,7 +247,7 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    if (autoRadioQueue) {
+                                                    if (false) {
                                                         YouTubeQueue.radio(item.toMediaMetadata())
                                                     } else {
                                                         ListQueue(
@@ -520,7 +520,7 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                if (autoRadioQueue) {
+                                                if (false) {
                                                     YouTubeQueue.radio(item.toMediaMetadata())
                                                 } else {
                                                     ListQueue(
