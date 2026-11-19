@@ -432,8 +432,16 @@ class FolderAudioInstrumentedTest {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         var activity: fr.makoff.music.MainActivity? = null
         val before = context.dataStore.data.first()
+        // The exported file now requires actual per-song artwork. Use a
+        // deterministic local fixture instead of a track with no thumbnail.
+        val cover = File(context.cacheDir, "missing-cleanup-cover-${UUID.randomUUID()}.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.MAGENTA)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        bitmap.recycle()
         val tracks = (0..4).map { index -> fr.makoff.music.models.MediaMetadata(
-            UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1) }
+            UUID.randomUUID().toString().replace("-", "").take(11), "Cleanup test $index", emptyList(), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString()) }
         val source = File(context.cacheDir, "missing-cleanup.m4a").apply { writeBytes(android.util.Base64.decode(
             instrumentation.context.assets.open("audio/aac.m4a.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
         val documents = mutableListOf<android.net.Uri>()
@@ -535,6 +543,7 @@ class FolderAudioInstrumentedTest {
                 downloads.database.songEntity(track.id)?.let { downloads.database.delete(it) }
             }
             source.delete()
+            cover.delete()
             instrumentation.runOnMainSync { activity?.finish() }
             context.dataStore.updateData { before }
         }
@@ -625,7 +634,13 @@ class FolderAudioInstrumentedTest {
     @Test(timeout = 90000) fun likingAutomaticallyExportsToLikedFolderAndKeepsOfflineReference() = runBlocking {
         val downloads = FolderAudioDownloads.downloadUtil(context)
         val id = UUID.randomUUID().toString().replace("-", "").take(11)
+        val cover = File(context.cacheDir, "liked-cover-$id.jpg")
+        val bitmap = android.graphics.Bitmap.createBitmap(64, 64, android.graphics.Bitmap.Config.ARGB_8888)
+        bitmap.eraseColor(android.graphics.Color.CYAN)
+        cover.outputStream().use { bitmap.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, it) }
+        bitmap.recycle()
         val media = fr.makoff.music.models.MediaMetadata(id, "Liked audio test", emptyList(), 1,
+            thumbnailUrl = android.net.Uri.fromFile(cover).toString(),
             album = fr.makoff.music.models.MediaMetadata.Album("auto-album-$id", "Album $id"))
         val prefs = context.dataStore.data.first()
         val enabled = fr.makoff.music.constants.AutoDownloadOnLikeKey
