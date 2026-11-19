@@ -16,6 +16,7 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
     BEST(R.string.download_format_best, "bestaudio"),
     M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]"),
     AAC(R.string.download_format_aac, "bestaudio[ext=m4a]"),
+    OPUS(R.string.download_format_opus, "bestaudio[acodec=opus]"),
     FLAC(R.string.download_format_flac, "bestaudio"),
     ;
 
@@ -24,10 +25,10 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
         // The old enum constants stay binary-compatible with existing WorkManager
         // jobs; no new download can silently export Opus, WebM or fake lossless.
         fun parse(value: String?): DownloadAudioFormat = when (value) {
-            AAC.name -> AAC
+            OPUS.name -> OPUS
             else -> M4A
         }
-        val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)
+        val portableChoices: List<DownloadAudioFormat> = listOf(M4A, OPUS)
     }
 }
 
@@ -36,7 +37,7 @@ enum class DownloadAudioFormat(val label: Int, val selector: String) {
  * Local fixtures use "best" to exercise the file input path.
  */
 internal fun selectYtDlpAudioFormat(format: DownloadAudioFormat, lowQuality: Boolean, isLocalSource: Boolean): String =
-    if (isLocalSource) "best" else "bestaudio[ext=m4a]"
+    if (isLocalSource) "best" else if (format == DownloadAudioFormat.OPUS) "bestaudio[acodec=opus]" else "bestaudio[ext=m4a]"
 
 
 /** Android's FLAC MediaExtractor may expose decoded PCM; preserve the source codec. */
