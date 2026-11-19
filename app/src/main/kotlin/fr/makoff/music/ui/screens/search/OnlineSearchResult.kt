@@ -311,17 +311,10 @@ fun OnlineSearchResult(
                                         playerConnection.togglePlayPause()
                                     } else {
                                         playerConnection.playQueue(
-                                            if (false) {
-                                                YouTubeQueue(
-                                                    WatchEndpoint(videoId = item.id),
-                                                    item.toMediaMetadata(),
-                                                )
-                                            } else {
-                                                ListQueue(
-                                                    title = item.title,
-                                                    items = listOf(item.toMediaItem())
-                                                )
-                                            }
+                                            ListQueue(
+                                                title = item.title,
+                                                items = listOf(item.toMediaItem())
+                                            )
                                         )
                                     }
                                 }
