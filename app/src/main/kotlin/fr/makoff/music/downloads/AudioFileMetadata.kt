@@ -53,6 +53,12 @@ internal suspend fun tagAudioFile(context: Context, source: File, media: MediaMe
         } catch (_: Exception) { /* Artwork failure must not discard completed audio. */ }
     }
     val artwork = cover
+    // Never publish a new M4A or Opus export without an embedded cover.
+    // Google/YouTube artwork URLs are attempted above; a missing image must
+    // be an explicit export failure, not an apparently successful bare file.
+    if (source.extension.lowercase() in setOf("m4a", "opus", "ogg") && artwork == null) {
+        throw IOException("No usable cover image for ${media.title}; audio export was not published")
+    }
     return runInterruptible(Dispatchers.IO) {
         try {
             YtDlpAudioEngine.initialize(context)
