@@ -75,7 +75,7 @@ fun rememberFolderAudioItem(media: MediaMetadata, downloadInLiked: Boolean = fal
     }
     return Material3MenuItemData(
         title = { Text(stringResource(R.string.action_download)) },
-        description = { Text(stringResource(R.string.folder_audio_description)) },
+
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
         onClick = requestDownload,
     )
@@ -232,7 +232,7 @@ fun rememberFolderCollectionItem(kind: String, title: String, id: String,
     val requestDownload = rememberAudioDownloadAction { uri, format -> enqueue(uri, format) }
     return Material3MenuItemData(
         title = { Text(stringResource(if (loading) R.string.folder_audio_waiting else R.string.action_download)) },
-        description = { Text(stringResource(R.string.folder_collection_description, kind, title)) },
+
         icon = { Icon(painterResource(R.drawable.download), contentDescription = null) },
         onClick = { if (!loading) requestDownload() },
     )
