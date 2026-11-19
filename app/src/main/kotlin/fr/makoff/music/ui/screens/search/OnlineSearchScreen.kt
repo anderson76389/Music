@@ -247,14 +247,10 @@ fun OnlineSearchScreen(
                                                 playerConnection.togglePlayPause()
                                             } else {
                                                 playerConnection.playQueue(
-                                                    if (false) {
-                                                        YouTubeQueue.radio(item.toMediaMetadata())
-                                                    } else {
-                                                        ListQueue(
-                                                            title = item.title,
-                                                            items = listOf(item.toMediaItem())
-                                                        )
-                                                    }
+                                                    ListQueue(
+                                                        title = item.title,
+                                                        items = listOf(item.toMediaItem())
+                                                    )
                                                 )
                                                 onDismiss()
                                             }
@@ -520,14 +516,10 @@ fun OnlineSearchScreen(
                                             playerConnection.togglePlayPause()
                                         } else {
                                             playerConnection.playQueue(
-                                                if (false) {
-                                                    YouTubeQueue.radio(item.toMediaMetadata())
-                                                } else {
-                                                    ListQueue(
-                                                        title = item.title,
-                                                        items = listOf(item.toMediaItem())
-                                                    )
-                                                }
+                                                ListQueue(
+                                                    title = item.title,
+                                                    items = listOf(item.toMediaItem())
+                                                )
                                             )
                                             onDismiss()
                                         }
