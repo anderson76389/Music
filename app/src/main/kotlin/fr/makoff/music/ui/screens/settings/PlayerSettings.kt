@@ -332,6 +332,22 @@ fun PlayerSettings(
                 title = stringResource(R.string.settings_player_entry),
                 items = listOf(
                     Material3SettingsItem(
+                        icon = painterResource(R.drawable.graphic_eq),
+                        title = { Text(stringResource(R.string.player_video_quality_setting)) },
+                        description = {
+                            Text(
+                                when (playerVideoQuality) {
+                                    PlayerVideoQuality.BEST -> stringResource(R.string.player_video_quality_best)
+                                    PlayerVideoQuality.FULL_HD -> stringResource(R.string.player_video_quality_1080)
+                                    PlayerVideoQuality.HD -> stringResource(R.string.player_video_quality_720)
+                                    PlayerVideoQuality.ECONOMY -> stringResource(R.string.player_video_quality_480)
+                                }
+                            )
+                        },
+                        enabled = playerVideoModeEnabled,
+                        onClick = { showVideoQualityDialog = true },
+                    ),
+                    Material3SettingsItem(
                         icon = painterResource(R.drawable.slow_motion_video),
                         title = { Text(stringResource(R.string.player_video_mode_setting)) },
                         description = { Text(stringResource(R.string.player_video_mode_setting_desc)) },
@@ -357,22 +373,6 @@ fun PlayerSettings(
                         title = { Text(stringResource(R.string.player_video_theme_setting)) },
                         description = { Text(videoThemeLabel(playerVideoThemeMode)) },
                         onClick = { navController.navigate("settings/player/video_theme") },
-                    ),
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.graphic_eq),
-                        title = { Text(stringResource(R.string.player_video_quality_setting)) },
-                        description = {
-                            Text(
-                                when (playerVideoQuality) {
-                                    PlayerVideoQuality.BEST -> stringResource(R.string.player_video_quality_best)
-                                    PlayerVideoQuality.FULL_HD -> stringResource(R.string.player_video_quality_1080)
-                                    PlayerVideoQuality.HD -> stringResource(R.string.player_video_quality_720)
-                                    PlayerVideoQuality.ECONOMY -> stringResource(R.string.player_video_quality_480)
-                                }
-                            )
-                        },
-                        enabled = playerVideoModeEnabled,
-                        onClick = { showVideoQualityDialog = true },
                     ),
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.person),
@@ -872,29 +872,6 @@ fun PlayerSettings(
                             )
                         },
                         onClick = { onAutoplayChange(!autoplay) }
-                    ),
-                )
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.radio),
-                        title = { Text(stringResource(R.string.auto_radio_queue)) },
-                        description = { Text(stringResource(R.string.auto_radio_queue_desc)) },
-                        trailingContent = {
-                            Switch(
-                                checked = autoRadioQueue,
-                                onCheckedChange = onAutoRadioQueueChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter = painterResource(
-                                            id = if (autoRadioQueue) R.drawable.check else R.drawable.close
-                                        ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize)
-                                    )
-                                }
-                            )
-                        },
-                        onClick = { onAutoRadioQueueChange(!autoRadioQueue) }
                     ),
                 )
                 add(
