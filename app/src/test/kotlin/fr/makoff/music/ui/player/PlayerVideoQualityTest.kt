@@ -9,7 +9,7 @@ import org.junit.Test
 
 class PlayerVideoQualityTest {
     @Test fun availableVideoResolutionsAreOrderedAndCapped() {
-        assertEquals(2160, PlayerVideoQuality.BEST.maxHeight)
+        assertEquals(Int.MAX_VALUE, PlayerVideoQuality.BEST.maxHeight)
         assertEquals(1080, PlayerVideoQuality.FULL_HD.maxHeight)
         assertEquals(720, PlayerVideoQuality.HD.maxHeight)
         assertEquals(480, PlayerVideoQuality.ECONOMY.maxHeight)
@@ -20,7 +20,7 @@ class PlayerVideoQualityTest {
             TrackSelectionParameters.DEFAULT,
             PlayerVideoQuality.BEST.maxHeight,
         )
-        assertEquals(2160, quality.maxVideoHeight)
+        assertEquals(Int.MAX_VALUE, quality.maxVideoHeight)
         assertEquals(Int.MAX_VALUE, quality.maxVideoWidth)
         assertEquals(Int.MAX_VALUE, quality.viewportWidth)
         assertEquals(Int.MAX_VALUE, quality.viewportHeight)
