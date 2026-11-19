@@ -119,7 +119,8 @@ internal_engine = (src / "downloads/PlaybackAudioEngine.kt").read_text()
 extractor = (src / "utils/InnerTubeXPlayer.kt").read_text()
 assert 'M4A(R.string.download_format_m4a, "bestaudio[ext=m4a]")' in download_format
 assert 'AAC(R.string.download_format_aac, "bestaudio[ext=m4a]")' in download_format
-assert "val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)" in download_format
+assert "val portableChoices: List<DownloadAudioFormat> = listOf(M4A, OPUS)" in download_format
+assert "bestaudio[acodec=opus]" in download_format
 assert 'else -> M4A' in download_format
 assert '"bestaudio[ext=m4a]"' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
@@ -127,6 +128,8 @@ assert 'private fun remuxPortableAac(' in download_engine
 assert '"-c:a", "copy"' in download_engine
 assert '"-f", "adts"' in download_engine
 assert 'if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)' in download_engine
+assert "private fun remuxOriginalOpus(" in download_engine
+assert '"-f", "opus"' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
@@ -169,4 +172,4 @@ assert "videoEnabled = videoSelectable" in switcher
 release_workflow = (root / ".github/workflows/music-release.yml").read_text()
 assert "scripts/release_notes.py" in release_workflow
 assert "cat CHANGEMENTS-VERSION.txt >> notes.txt" not in release_workflow
-print("PASS: persistent Son/Vidéo tabs, portable AAC/M4A and release-scoped notes")
+print("PASS: persistent Son/Vidéo tabs, original M4A/Opus exports and release-scoped notes")
