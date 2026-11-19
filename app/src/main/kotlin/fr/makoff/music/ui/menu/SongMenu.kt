@@ -578,22 +578,6 @@ fun SongMenu(
                     listOfNotNull(
                         run {
                             Material3MenuItemData(
-                                title = { Text(text = stringResource(R.string.start_radio)) },
-                                description = { Text(text = stringResource(R.string.start_radio_desc)) },
-                                icon = {
-                                    Icon(
-                                        painter = painterResource(R.drawable.radio),
-                                        contentDescription = null,
-                                    )
-                                },
-                                onClick = {
-                                    onDismiss()
-                                    playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-                                },
-                            )
-                        },
-                        run {
-                            Material3MenuItemData(
                                 title = { Text(text = stringResource(R.string.play_next)) },
                                 description = { Text(text = stringResource(R.string.play_next_desc)) },
                                 icon = {
