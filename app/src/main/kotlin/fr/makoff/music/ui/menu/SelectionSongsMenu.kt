@@ -504,7 +504,7 @@ fun SelectionSongMenu(
             Material3MenuGroup(
                 items =
                     buildList {
-                        add(
+                        addAll(listOfNotNull(
                             when (downloadState) {
                                 Download.STATE_COMPLETED -> {
                                     Material3MenuItemData(
@@ -542,7 +542,7 @@ fun SelectionSongMenu(
 
                                 else -> null
                             },
-                        )
+                        ))
                         onRemoveFromCache?.let { removeFromCache ->
                             add(
                                 Material3MenuItemData(
@@ -907,7 +907,7 @@ fun SelectionMediaMetadataMenu(
                                 },
                             ),
                         )
-                        add(
+                        addAll(listOfNotNull(
                             when (downloadState) {
                                 Download.STATE_COMPLETED -> {
                                     Material3MenuItemData(
@@ -951,7 +951,7 @@ fun SelectionMediaMetadataMenu(
 
                                 else -> null
                             },
-                        )
+                        ))
                     },
             )
         }
