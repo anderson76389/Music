@@ -274,30 +274,6 @@ fun QueueMenu(
                     NewAction(
                         icon = {
                             Icon(
-                                painter = painterResource(R.drawable.radio),
-                                contentDescription = null,
-                                modifier = Modifier.size(28.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        },
-                        text = stringResource(R.string.start_radio),
-                        onClick = {
-                            onDismiss()
-                            val currentMediaId = playerConnection.player.currentMediaItemIndex.let {
-                                playerConnection.player.getMediaItemAt(it).mediaId
-                            }
-                            if (mediaMetadata.id == currentMediaId) {
-                                playerConnection.startRadioSeamlessly()
-                            } else {
-                                playerConnection.playQueue(
-                                    YouTubeQueue.radio(mediaMetadata)
-                                )
-                            }
-                        }
-                    ),
-                    NewAction(
-                        icon = {
-                            Icon(
                                 painter = painterResource(R.drawable.playlist_add),
                                 contentDescription = null,
                                 modifier = Modifier.size(28.dp),
