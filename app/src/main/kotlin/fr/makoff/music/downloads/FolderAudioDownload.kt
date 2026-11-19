@@ -164,7 +164,7 @@ internal object YtDlpAudioEngine {
      * into an actual Ogg/Opus container, which supports embedded cover art.
      * ffmpeg rejects non-Opus input rather than re-encoding or mislabelling it.
      */
-    private fun remuxOriginalOpus(context: Context, source: File, directory: File): File {
+    private fun remuxOriginalOpus(context: Context, source: File, directory: File, deleteSourceAfterSuccess: Boolean = false): File {
         require(source.extension.lowercase() in setOf("webm", "opus", "ogg"))
         check(directory.isDirectory || directory.mkdirs())
         val target = File(directory, "audio.opus")
@@ -193,6 +193,7 @@ internal object YtDlpAudioEngine {
                 }
             }
             check(temp.renameTo(target)) { "Could not finalize original Opus" }
+            if (deleteSourceAfterSuccess) check(source.delete()) { "Could not remove redundant WebM transport" }
             return target
         } finally {
             if (process.isAlive) process.destroyForcibly()
@@ -237,7 +238,7 @@ internal object YtDlpAudioEngine {
                 check(output.extension.lowercase() in setOf("webm", "opus", "ogg")) {
                     "Original Opus stream unavailable"
                 }
-                remuxOriginalOpus(context, output, File(directory, "opus-remux"))
+                remuxOriginalOpus(context, output, File(directory, "opus-remux"), deleteSourceAfterSuccess = true)
             } else {
                 check(output.extension.equals("m4a", ignoreCase = true)) {
                     "Original AAC-in-M4A audio unavailable"
