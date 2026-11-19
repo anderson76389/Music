@@ -702,6 +702,7 @@ class FolderAudioInstrumentedTest {
             downloads.database.songEntity(id)?.let { downloads.database.delete(it) }
             listOfNotNull(original, exported).forEach { runCatching { DocumentsContract.deleteDocument(context.contentResolver, it) } }
             source.delete()
+            cover.delete()
             context.dataStore.edit {
                 prefs[enabled]?.let { value -> it[enabled] = value } ?: it.remove(enabled)
                 prefs[destination]?.let { value -> it[destination] = value } ?: it.remove(destination)
