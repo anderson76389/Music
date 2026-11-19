@@ -84,28 +84,6 @@ fun YouTubeArtistMenu(
         item {
             NewActionGrid(
                 actions = buildList {
-                    run {
-                        artist.radioEndpoint?.let { watchEndpoint ->
-                            add(
-                                NewAction(
-                                    icon = {
-                                        Icon(
-                                            painter = painterResource(R.drawable.radio),
-                                            contentDescription = null,
-                                            modifier = Modifier.size(28.dp),
-                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                        )
-                                    },
-                                    text = stringResource(R.string.start_radio),
-                                    onClick = {
-                                        playerConnection.playQueue(YouTubeQueue(watchEndpoint))
-                                        onDismiss()
-                                    }
-                                )
-                            )
-                        }
-                    }
-
                     add(
                         NewAction(
                             icon = {
