@@ -842,11 +842,13 @@
     <string name="folder_audio_internal_busy">Un téléchargement interne est encore en cours. Attendez sa fin, puis relancez l’export pour réutiliser le fichier.</string>
     <string name="download_quality_settings">Téléchargements</string>
     <string name="download_format_unified">Qualité et format des téléchargements</string>
-    <string name="download_format_unified_help">M4A (conseillé, pochettes et tags) ou AAC (.aac). Meilleure piste AAC disponible, sans Opus, MP3 ou fausse qualité FLAC.</string>
+    <string name="download_format_unified_help">M4A (AAC, recommandé pour la compatibilité) ou Opus (meilleur flux d’origine). Les deux conservent la pochette et les tags intégrés.</string>
     <string name="download_format_internal">Format des téléchargements internes</string>
     <string name="download_format_external">Format des fichiers exportés</string>
     <string name="download_format_best">Meilleure qualité disponible — format original</string>
     <string name="download_format_m4a">M4A — meilleur flux AAC disponible</string>
+    <string name="download_format_opus">Opus — meilleur flux disponible, avec pochette</string>
+    <string name="download_choice_opus_help">Meilleur flux Opus d’origine, enregistré en .opus (Ogg), sans réencodage. Pochette intégrée.</string>
     <string name="download_format_aac">AAC — fichier .aac portable</string>
     <string name="download_format_flac">FLAC — conversion de la meilleure source</string>
     <string name="download_format_help">Le meilleur flux dépend du titre et du compte YouTube. M4A conserve le flux AAC disponible. FLAC convertit la source sans recréer la qualité perdue et utilise plus d\'espace. Pour améliorer un ancien téléchargement, supprimez-le puis téléchargez-le à nouveau.</string>
@@ -910,7 +912,7 @@
     <string name="player_video_mode_setting">Mode Son / Vidéo</string>
     <string name="player_video_mode_setting_desc">Son / Vidéo uniquement si un clip est disponible.</string>
     <string name="player_video_quality_setting">Qualité vidéo par défaut</string>
-    <string name="player_video_quality_best">Meilleure disponible (jusqu’à 2160p)</string>
+    <string name="player_video_quality_best">Meilleure qualité disponible</string>
     <string name="player_video_quality_1080">Jusqu’à 1080p</string>
     <string name="player_video_quality_720">Jusqu’à 720p</string>
     <string name="player_video_quality_480">Économie de données (480p)</string>
