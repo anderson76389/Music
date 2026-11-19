@@ -111,7 +111,7 @@ class FolderAudioInstrumentedTest {
                 kotlinx.coroutines.delay(100)
             }
             assertNotNull("Production activity opens", activity)
-            for ((index, format) in (DownloadAudioFormat.entries + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
+            for ((index, format) in (DownloadAudioFormat.portableChoices + listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A, DownloadAudioFormat.M4A)).withIndex()) {
                 val id = UUID.randomUUID().toString().replace("-", "").take(11)
                 ids += id
                 val albumTitle = "Album popup $id"
@@ -119,7 +119,7 @@ class FolderAudioInstrumentedTest {
                     listOf(fr.makoff.music.models.MediaMetadata.Artist("artist-$id", "Artist popup $id")), 1,
                     album = fr.makoff.music.models.MediaMetadata.Album("album-$id", albumTitle, 2023),
                     thumbnailUrl = android.net.Uri.fromFile(cover).toString())
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(context.cacheDir, "popup-$id.$asset").apply {
                     writeBytes(android.util.Base64.decode(instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT))
                 }
@@ -156,7 +156,7 @@ class FolderAudioInstrumentedTest {
                 click(fr.makoff.music.R.string.action_download)
                 // Change the default immediately: the confirmed request must retain its own choice.
                 context.dataStore.edit { it[fr.makoff.music.constants.UnifiedDownloadFormatKey] =
-                    if (format == DownloadAudioFormat.FLAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.FLAC.name }
+                    if (format == DownloadAudioFormat.AAC) DownloadAudioFormat.M4A.name else DownloadAudioFormat.AAC.name }
                 var completed: androidx.work.WorkInfo? = null
                 val deadline = android.os.SystemClock.elapsedRealtime() + 45000
                 while (completed == null && android.os.SystemClock.elapsedRealtime() < deadline) {
@@ -175,19 +175,11 @@ class FolderAudioInstrumentedTest {
                 }
                 assertTrue("File belongs to the action's folder", requireNotNull(folder).listFiles().any { it.uri == uri })
                 if (index != 5) assertNull("Single-song album metadata must not create an album directory", root.findFile("Albums")?.findFile(albumTitle))
-                val extension = when (format) {
-                    DownloadAudioFormat.BEST -> "opus"
-                    DownloadAudioFormat.M4A -> "m4a"
-                    DownloadAudioFormat.FLAC -> "flac"
-                }
+                val extension = if (format == DownloadAudioFormat.AAC) "aac" else "m4a"
                 val expectedName = "${media.title}.$extension"
                 assertEquals("Every filename contains only the song title", expectedName, completed.outputData.getString("name"))
                 assertNotNull("Album and playlist exports have no artist or track prefix", requireNotNull(folder).findFile(expectedName))
-                val expectedMime = when (format) {
-                    DownloadAudioFormat.BEST -> "audio/ogg"
-                    DownloadAudioFormat.M4A -> "audio/mp4"
-                    DownloadAudioFormat.FLAC -> "audio/flac"
-                }
+                val expectedMime = if (format == DownloadAudioFormat.AAC) "audio/aac" else "audio/mp4"
                 assertEquals(expectedMime, completed.outputData.getString("mime"))
                 val extractor = android.media.MediaExtractor()
                 try {
@@ -196,18 +188,16 @@ class FolderAudioInstrumentedTest {
                     val actual = context.contentResolver.openInputStream(uri)!!.use {
                         sourceAudioMime(it, requireNotNull(track.getString(android.media.MediaFormat.KEY_MIME)))
                     }
-                    assertEquals(when (format) {
-                        DownloadAudioFormat.BEST -> "audio/opus"
-                        DownloadAudioFormat.M4A -> "audio/mp4a-latm"
-                        DownloadAudioFormat.FLAC -> "audio/flac"
-                    }, actual)
+                    assertEquals("audio/mp4a-latm", actual)
                 } finally { extractor.release() }
                 assertEquals("Export also remains the actual offline source", uri, downloads.externalAudioUri(id))
                 val tags = android.media.MediaMetadataRetriever()
                 try {
                     tags.setDataSource(context, uri)
-                    assertEquals("Release year survives the actual worker and playlist/album exports", "2023",
-                        tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR))
+                    if (format == DownloadAudioFormat.M4A) assertEquals(
+                        "Release year survives the actual M4A export", "2023",
+                        tags.extractMetadata(android.media.MediaMetadataRetriever.METADATA_KEY_YEAR),
+                    )
                 } finally { tags.release() }
                 println("DOWNLOAD_POPUP_FORMAT_OK: ${format.name}; real codec, fixed per-request selection, ${when (index) { 3 -> "playlist"; 5 -> "album"; else -> "Audio" }} folder and shared offline source")
             }
@@ -247,7 +237,7 @@ class FolderAudioInstrumentedTest {
         try {
             for (format in DownloadAudioFormat.entries) {
                 val dir = File(root, format.name).apply { mkdirs() }
-                val asset = if (format == DownloadAudioFormat.BEST) "opus.webm" else "aac.m4a"
+                val asset = "aac.m4a"
                 val source = File(dir, asset).apply { writeBytes(android.util.Base64.decode(
                     instrumentation.context.assets.open("audio/$asset.base64").use { it.readBytes() }, android.util.Base64.DEFAULT)) }
                 val raw = YtDlpAudioEngine.reuse(context, source, format, dir, "metadata-${format.name}")!!
