@@ -63,7 +63,7 @@ object InnerTubeXPlayer {
         // Video uses its own muted ExoPlayer and can safely accept HLS.
         val stream = bundle().extractor.extract(
             videoId = videoId,
-            hints = ContentHints(wantVideo = true, maxVideoHeight = maxHeight.coerceIn(144, 2160))
+            hints = ContentHints(wantVideo = true, maxVideoHeight = maxHeight.coerceAtLeast(144))
                 .withStreamCapabilities(allowHls = true, allowSabr = false),
             audioQuality = InnerTubeXAudioQuality.AUTO,
             clientPlaybackNonce = generateClientPlaybackNonce(),
