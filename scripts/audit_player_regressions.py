@@ -123,7 +123,10 @@ assert "val portableChoices: List<DownloadAudioFormat> = listOf(M4A, AAC)" in do
 assert 'else -> M4A' in download_format
 assert '"bestaudio[ext=m4a]"' in download_format
 assert '.addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))' in download_engine
-assert 'request.addOption("--extract-audio").addOption("--audio-format", "aac")' in download_engine
+assert 'private fun remuxPortableAac(' in download_engine
+assert '"-c:a", "copy"' in download_engine
+assert '"-f", "adts"' in download_engine
+assert 'if (format == DownloadAudioFormat.AAC) remuxPortableAac(context, output, directory)' in download_engine
 assert 'audioQuality: AudioQuality = AudioQuality.HIGH' in internal_engine
 assert "AudioQuality.HIGH -> InnerTubeXAudioQuality.HIGH" in extractor
 assert "AudioQuality.HIGH" in service and "QUALITY CHANGED" in service
