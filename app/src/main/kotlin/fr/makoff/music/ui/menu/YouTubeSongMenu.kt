@@ -297,6 +297,13 @@ fun YouTubeSongMenu(
         ),
     ) {
         item {
+            if (download?.state !in setOf(
+                Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
+            )) {
+                Material3MenuGroup(items = listOf(folderAudioItem))
+            }
+        }
+        item {
             NewActionGrid(
                 actions = listOfNotNull(
                     run {
@@ -359,22 +366,6 @@ fun YouTubeSongMenu(
         item {
             Material3MenuGroup(
                 items = listOfNotNull(
-                    run {
-                        Material3MenuItemData(
-                            title = { Text(text = stringResource(R.string.start_radio)) },
-                            description = { Text(text = stringResource(R.string.start_radio_desc)) },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(R.drawable.radio),
-                                    contentDescription = null,
-                                )
-                            },
-                            onClick = {
-                                playerConnection.playQueue(YouTubeQueue.radio(song.toMediaMetadata()))
-                                onDismiss()
-                            }
-                        )
-                    },
                     run {
                         Material3MenuItemData(
                             title = { Text(text = stringResource(R.string.add_to_queue)) },
@@ -553,10 +544,8 @@ fun YouTubeSongMenu(
         item {
             Material3MenuGroup(
                 items = listOfNotNull(
-                        folderAudioItem.takeUnless { download?.state in setOf(
-                            Download.STATE_COMPLETED, Download.STATE_QUEUED, Download.STATE_DOWNLOADING,
-                        ) },
-                    when (download?.state) {
+
+when (download?.state) {
                         Download.STATE_COMPLETED -> {
                             Material3MenuItemData(
                                 title = {
