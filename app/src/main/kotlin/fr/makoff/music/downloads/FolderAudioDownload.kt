@@ -119,11 +119,11 @@ internal object YtDlpAudioEngine {
         verified = true
     }
 
-    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.BEST, progress: (Float) -> Unit): File =
+    suspend fun download(context: Context, url: String, directory: File, processId: String, cookie: String = "", lowQuality: Boolean = false, format: DownloadAudioFormat = DownloadAudioFormat.M4A, progress: (Float) -> Unit): File =
         runInterruptible(Dispatchers.IO) {
             try {
                 initialize(context)
-                if (format != DownloadAudioFormat.M4A) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
+                if (format == DownloadAudioFormat.AAC) com.yausername.ffmpeg.FFmpeg.getInstance().init(context.applicationContext)
             } catch (failure: LinkageError) {
                 throw IOException("Download engine initialization failed", failure)
             }
@@ -138,8 +138,11 @@ internal object YtDlpAudioEngine {
                 .addOption("--fixup", "never")
                 .addOption("-f", selectYtDlpAudioFormat(format, lowQuality, url.startsWith("file:")))
                 .addOption("-o", File(directory, "audio.%(ext)s").absolutePath)
-            if (format != DownloadAudioFormat.M4A) {
-                request.addOption("--extract-audio").addOption("--audio-format", if (format == DownloadAudioFormat.FLAC) "flac" else "best")
+            if (format == DownloadAudioFormat.AAC) {
+                // Extract the best available original AAC stream from MP4,
+                // then change only its container to ADTS .aac via ffmpeg.
+                // Never transcode from Opus (or invent extra bitrate).
+                request.addOption("--extract-audio").addOption("--audio-format", "aac")
             }
             // Only our staged private files use file URLs; public download entry points accept video IDs.
             if (url.startsWith("file:")) request.addOption("--enable-file-urls")
@@ -152,23 +155,23 @@ internal object YtDlpAudioEngine {
             val output = directory.listFiles().orEmpty().singleOrNull {
                 it.isFile && it.name.startsWith("audio.") && it.extension !in setOf("part", "ytdl", "temp") && it.length() > 0
             } ?: throw IOException("No completed audio file")
-            check(format != DownloadAudioFormat.FLAC || output.extension == "flac") { "FLAC conversion failed" }
-            check(format != DownloadAudioFormat.M4A || output.extension == "m4a") { "M4A unavailable" }
+            check(output.extension.lowercase() == if (format == DownloadAudioFormat.AAC) "aac" else "m4a") {
+                "Portable AAC audio unavailable"
+            }
             output
         }
 
     suspend fun reuse(context: Context, source: File?, format: DownloadAudioFormat, directory: File, processId: String): File? {
         source ?: return null
         return when {
-            format == DownloadAudioFormat.BEST && source.extension.lowercase() == "webm" ->
+            format == DownloadAudioFormat.AAC && source.extension.equals("aac", true) -> source
+            format != DownloadAudioFormat.AAC && source.extension.equals("m4a", true) -> source
+            format == DownloadAudioFormat.AAC && source.extension.equals("m4a", true) ->
                 download(context, source.toURI().toString(), File(directory, "remuxed"), processId,
-                    format = DownloadAudioFormat.BEST) { }
-            format == DownloadAudioFormat.BEST -> source
-            format == DownloadAudioFormat.M4A && source.extension == "m4a" -> source
-            format == DownloadAudioFormat.M4A -> { source.delete(); null }
-            source.extension == "flac" -> source
-            else -> download(context, source.toURI().toString(), File(directory, "converted"), processId,
-                format = DownloadAudioFormat.FLAC) { }
+                    format = DownloadAudioFormat.AAC) { }
+            // Offline ExoPlayer may have cached Opus/WebM. Do not copy it
+            // under a misleading AAC filename: resolve the original M4A.
+            else -> null
         }
     }
 }
@@ -191,6 +194,7 @@ internal fun audioFileName(title: String, extension: String): String {
 
 internal fun audioMime(extension: String): String = when (extension.lowercase()) {
     "m4a", "mp4" -> "audio/mp4"
+    "aac" -> "audio/aac"
     "webm" -> "audio/webm"
     "opus", "ogg" -> "audio/ogg"
     "mp3" -> "audio/mpeg"
