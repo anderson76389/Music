@@ -718,7 +718,6 @@ class SettingsNavigationTest {
                         Triple(R.string.google_cast, EnableGoogleCastKey, true),
                         Triple(R.string.persistent_queue, PersistentQueueKey, true),
                         Triple(R.string.auto_load_more, AutoLoadMoreKey, true),
-                        Triple(R.string.auto_radio_queue, AutoRadioQueueKey, true),
                         Triple(R.string.autoplay, AutoplayKey, true),
                         Triple(R.string.disable_load_more_when_repeat_all, DisableLoadMoreWhenRepeatAllKey, false),
                         Triple(R.string.enable_similar_content, SimilarContent, true),
@@ -742,7 +741,7 @@ class SettingsNavigationTest {
                     assertFalse("Download-format helper paragraph removed", device.hasObject(By.text(label(R.string.download_format_unified_help))))
                     open(R.string.download_format_unified)
                     findText(R.string.download_format_m4a)
-                    findText(R.string.download_format_aac)
+                    findText(R.string.download_format_opus)
                     assertFalse("Legacy FLAC must not be offered", visibleControls().any {
                         it.text == label(R.string.download_format_flac)
                     })
@@ -751,7 +750,7 @@ class SettingsNavigationTest {
                     })
                     device.pressBack()
                     device.waitForIdle()
-                    println("AUDIO_DOWNLOAD_FORMAT_OK: M4A/AAC-only chooser reachable in Audio")
+                    println("AUDIO_DOWNLOAD_FORMAT_OK: M4A/Opus-only chooser reachable in Audio")
                     listOf(R.string.player_audio_quality_section, R.string.player_transitions_section,
                         R.string.download_quality_settings,
                         R.string.listen_history, R.string.search_history).forEach { findText(it) }
