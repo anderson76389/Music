@@ -116,7 +116,7 @@ internal fun PlayerArtworkSwitcher(
         hasResolvedStream = clip != null && videoPlayer != null,
     )
     val showModeBar = PlayerVideoModePolicy.showSelector(
-        enabled = videoModeEnabled && !isCasting,
+        enabled = videoModeEnabled,
         expanded = isExpanded,
         hasPlayableClip = hasPlayableClip,
     )
@@ -156,6 +156,7 @@ internal fun PlayerArtworkSwitcher(
             songTitle = songTitle,
             showVideo = showVideo,
             headerMode = headerMode,
+            videoSelectable = hasPlayableClip && !isCasting,
             selectorTheme = selectorTheme,
             appDarkTheme = appDarkTheme,
             artworkThemeColor = artworkThemeColor,
@@ -210,6 +211,7 @@ private fun PlayerModeTopBar(
     songTitle: String?,
     showVideo: Boolean,
     headerMode: PlayerVideoModePolicy.HeaderMode,
+    videoSelectable: Boolean,
     selectorTheme: PlayerVideoThemeMode,
     appDarkTheme: Boolean,
     artworkThemeColor: Color,
@@ -230,7 +232,8 @@ private fun PlayerModeTopBar(
             PlayerVideoModePolicy.HeaderMode.SELECTOR -> PlayerModePills(
                 audioLabel = audioLabel,
                 videoLabel = videoLabel,
-                showVideo = showVideo,
+                showVideo = showVideo && videoSelectable,
+                videoEnabled = videoSelectable,
                 onAudioClick = onAudioClick,
                 onVideoClick = onVideoClick,
                 selectorTheme = selectorTheme,
@@ -300,6 +303,7 @@ internal fun PlayerModePills(
     artworkThemeColor: Color,
     customThemeColor: Color,
     modifier: Modifier = Modifier,
+    videoEnabled: Boolean = true,
 ) {
     val colors = MaterialTheme.colorScheme
     val glass = selectorTheme == PlayerVideoThemeMode.LIQUID_GLASS
@@ -371,7 +375,7 @@ internal fun PlayerModePills(
             horizontalArrangement = Arrangement.Center,
         ) {
             listOf(false to audioLabel, true to videoLabel).forEach { (video, label) ->
-                val selected = showVideo == video
+                val selected = showVideo == video && (!video || videoEnabled)
                 Box(
                     modifier = Modifier
                         .weight(1f)
@@ -392,6 +396,7 @@ internal fun PlayerModePills(
                         )
                         .selectable(
                             selected = selected,
+                            enabled = !video || videoEnabled,
                             role = Role.Tab,
                             onClick = if (video) onVideoClick else onAudioClick,
                         ),
@@ -402,7 +407,11 @@ internal fun PlayerModePills(
                             if (video) R.drawable.player_video_mode else R.drawable.player_audio_mode,
                         ),
                         contentDescription = label,
-                        tint = if (selected) selectedForeground else unselectedForeground,
+                        tint = when {
+                            video && !videoEnabled -> unselectedForeground.copy(alpha = 0.32f)
+                            selected -> selectedForeground
+                            else -> unselectedForeground
+                        },
                         modifier = Modifier.size(16.dp),
                     )
                 }
