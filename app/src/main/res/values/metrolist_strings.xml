@@ -948,4 +948,20 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
+    <string name="audio_sources_title">Audio sources</string>
+    <string name="audio_sources_order">Enabled add-ons are tried from top to bottom. Searching an add-on shares the song title and artist with its server.</string>
+    <string name="audio_sources_add">Add an add-on</string>
+    <string name="audio_sources_fallback">Fallback for online playback</string>
+    <string name="audio_sources_move_up">Move source up</string>
+    <string name="audio_sources_move_down">Move source down</string>
+    <string name="audio_sources_remove">Remove source</string>
+    <string name="audio_sources_url">Add-on HTTPS URL</string>
+    <string name="audio_sources_test">Test</string>
+    <string name="audio_sources_testing">Checking the add-on…</string>
+    <string name="audio_sources_ready">%1$s is ready to add</string>
+    <string name="audio_sources_duplicate">This add-on is already installed.</string>
+    <string name="audio_sources_invalid">Enter a valid URL for a compatible audio add-on.</string>
+    <string name="audio_sources_restricted">This add-on requires authorization Music cannot provide.</string>
+    <string name="audio_sources_unavailable">The add-on is currently unavailable.</string>
+    <string name="audio_sources_save_error">Could not save audio sources. Please try again.</string>
 </resources>

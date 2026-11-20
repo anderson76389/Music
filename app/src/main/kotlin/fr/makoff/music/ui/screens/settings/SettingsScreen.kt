@@ -95,6 +95,11 @@ fun SettingsScreen(
                     title = { Text(stringResource(R.string.content)) },
                     onClick = { navController.navigate("settings/content") }
                 ),
+                Material3SettingsItem(
+                    icon = painterResource(R.drawable.music_note),
+                    title = { Text(stringResource(R.string.audio_sources_title)) },
+                    onClick = { navController.navigate("settings/audio_sources") }
+                ),
 
             )
         )
