@@ -4151,7 +4151,8 @@ MusicWidgetReceiver.ACTION_PLAY_PAUSE -> {
             }
 
             MusicWidgetReceiver.ACTION_NEXT -> {
-                player.seekToNext()
+                if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+                else requestNextSongOnDemand()
                 updateWidgetUI(player.isPlaying)
             }
 
