@@ -332,7 +332,7 @@ private fun NewMiniPlayer(
                                     val adjustedDragAmount =
                                         if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
                                     val canSkipPrevious = playerConnection.player.previousMediaItemIndex != -1
-                                    val canSkipNext = playerConnection.player.nextMediaItemIndex != -1
+                                    val canSkipNext = playerConnection.canSkipNext.value
                                     val tryingToSwipeRight = adjustedDragAmount > 0
                                     val tryingToSwipeLeft = adjustedDragAmount < 0
                                     val allowLeft = tryingToSwipeLeft && canSkipNext
@@ -364,7 +364,7 @@ private fun NewMiniPlayer(
                                         if (currentOffset > 0 && canSkipPrevious) {
                                             playerConnection.player.seekToPreviousMediaItem()
                                         } else if (currentOffset <= 0 && canSkipNext) {
-                                            playerConnection.player.seekToNext()
+                                            playerConnection.seekToNext()
                                         }
                                     }
                                     coroutineScope.launch {
@@ -765,7 +765,7 @@ private fun LegacyMiniPlayer(
                                     val adjustedDragAmount =
                                         if (layoutDirection == LayoutDirection.Rtl) -dragAmount else dragAmount
                                     val canSkipPrevious = playerConnection.player.previousMediaItemIndex != -1
-                                    val canSkipNext = playerConnection.player.nextMediaItemIndex != -1
+                                    val canSkipNext = playerConnection.canSkipNext.value
                                     val tryingToSwipeRight = adjustedDragAmount > 0
                                     val tryingToSwipeLeft = adjustedDragAmount < 0
                                     val allowLeft = tryingToSwipeLeft && canSkipNext
@@ -797,7 +797,7 @@ private fun LegacyMiniPlayer(
                                         if (currentOffset > 0 && canSkipPrevious) {
                                             playerConnection.player.seekToPreviousMediaItem()
                                         } else if (currentOffset <= 0 && canSkipNext) {
-                                            playerConnection.player.seekToNext()
+                                            playerConnection.seekToNext()
                                         }
                                     }
                                     coroutineScope.launch { offsetXAnimatable.animateTo(0f, animationSpec) }

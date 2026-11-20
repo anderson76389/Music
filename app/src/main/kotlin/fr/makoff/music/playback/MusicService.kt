@@ -1667,6 +1667,59 @@ class MusicService :
         originalQueueSize = initialQueueSize
     }
 
+    // Load exactly one successor on explicit Suivant from a standalone song.
+    // Unlike the removed radio action, this never replaces the user's queue
+    // with a radio queue or enables continuous recommendation playback.
+    private var manualNextSongJob: Job? = null
+
+    fun requestNextSongOnDemand() {
+        if (taskCleared || !playerInitialized.value) return
+        val currentId = player.currentMediaItem?.mediaId
+            ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
+        if (manualNextSongJob?.isActive == true) return
+
+        manualNextSongJob = scope.launch(SilentHandler) {
+            try {
+                // Use already-known related songs first (also works offline).
+                // Only ask YouTube for a successor when the local catalogue
+                // cannot supply one; never create an automatic radio queue.
+                val cached = withContext(Dispatchers.IO) {
+                    database.relatedSongs(currentId).map { it.toMediaItem() }
+                }.filterExplicit(cachedHideExplicit)
+                    .filterVideoSongs(cachedHideVideoSongs)
+                val suggestions = if (cached.any { it.mediaId != currentId }) cached else {
+                    withContext(Dispatchers.IO) {
+                        val response = YouTube.next(WatchEndpoint(videoId = currentId)).getOrNull()
+                        response?.items.orEmpty().map { song -> song.toMediaItem() }
+                            .ifEmpty {
+                                response?.relatedEndpoint?.let { endpoint ->
+                                    YouTube.related(endpoint).getOrNull()?.songs
+                                        ?.map { song -> song.toMediaItem() }
+                                }.orEmpty()
+                            }
+                    }.filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                }
+
+                // Ignore stale HTTP results if a different song/queue started.
+                if (player.currentMediaItem?.mediaId != currentId) return@launch
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                } else {
+                    val next = suggestions.firstOrNull { it.mediaId != currentId } ?: return@launch
+                    player.addMediaItem(next)
+                    player.seekToNextMediaItem()
+                }
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
+                player.playWhenReady = true
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).w(error, "Could not load a next track on demand")
+            }
+        }
+    }
+
     fun startRadioSeamlessly() {
         if (!playerInitialized.value) {
             Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
@@ -4098,7 +4151,8 @@ MusicWidgetReceiver.ACTION_PLAY_PAUSE -> {
             }
 
             MusicWidgetReceiver.ACTION_NEXT -> {
-                player.seekToNext()
+                if (player.hasNextMediaItem()) player.seekToNextMediaItem()
+                else requestNextSongOnDemand()
                 updateWidgetUI(player.isPlaying)
             }
 

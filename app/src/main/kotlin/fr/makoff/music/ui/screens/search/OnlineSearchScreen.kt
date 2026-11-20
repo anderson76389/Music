@@ -516,8 +516,12 @@ fun OnlineSearchScreen(
                                         } else {
                                             playerConnection.playQueue(
                                                 ListQueue(
-                                                    title = item.title,
-                                                    items = listOf(item.toMediaItem())
+                                                    title = query,
+                                                    items = viewState.items.filterIsInstance<SongItem>()
+                                                        .map { song -> song.toMediaItem() }
+                                                        .ifEmpty { listOf(item.toMediaItem()) },
+                                                    startIndex = viewState.items.filterIsInstance<SongItem>()
+                                                        .indexOfFirst { song -> song.id == item.id }.coerceAtLeast(0),
                                                 )
                                             )
                                             onDismiss()

@@ -377,7 +377,13 @@ class PlayerConnection(
                 castHandler.skipToNext()
                 return
             }
-            player.seekToNext()
+            if (!player.hasNextMediaItem()) {
+                // A standalone title no longer starts an implicit radio queue.
+                // Suivant still requests one successor without entering radio mode.
+                service.requestNextSongOnDemand()
+                return
+            }
+            player.seekToNextMediaItem()
             if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) {
                 player.prepare()
             }
@@ -478,9 +484,11 @@ class PlayerConnection(
             canSkipPrevious.value = player.isCommandAvailable(COMMAND_SEEK_IN_CURRENT_MEDIA_ITEM) ||
                 !window.isLive ||
                 player.isCommandAvailable(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
-            canSkipNext.value = window.isLive &&
-                window.isDynamic ||
-                player.isCommandAvailable(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)
+            canSkipNext.value = (window.isLive && window.isDynamic) ||
+                NextTrackPolicy.canAdvance(
+                    player.hasNextMediaItem() && player.isCommandAvailable(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM),
+                    player.currentMediaItem?.mediaId,
+                )
         } else {
             canSkipPrevious.value = false
             canSkipNext.value = false
