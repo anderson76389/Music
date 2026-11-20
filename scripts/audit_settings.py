@@ -127,3 +127,10 @@ selector = (k/'ui/component/SongDropdownSelect.kt').read_text()
 assert 'onClick = { /* no-op */ }' not in selector
 assert 'Text(\n                        text = stringResource(R.string.song_dropdown_more_results, remainingCount)' in selector
 print('PASS: menu actions dispatch directly; compact labels, drag handles and integrated update shortcuts guarded')
+
+# SoundProof must have a single user-facing toggle in Lecteur, not a duplicate in Contenu.
+assert (k/'ui/screens/settings/PlayerSettings.kt').read_text().count(
+    "title = { Text(stringResource(R.string.soundproof_skip_ai_title)) }"
+) == 1
+assert "R.string.soundproof_skip_ai_title" not in (k/'ui/screens/settings/ContentSettings.kt').read_text()
+print("PASS: SoundProof has exactly one switch in Lecteur")
