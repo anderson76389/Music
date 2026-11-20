@@ -1710,7 +1710,7 @@ class MusicService :
                     player.addMediaItem(next)
                     player.seekToNextMediaItem()
                 }
-                if (player.playbackState == STATE_IDLE || player.playbackState == STATE_ENDED) player.prepare()
+                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
                 player.playWhenReady = true
             } catch (cancelled: CancellationException) {
                 throw cancelled
