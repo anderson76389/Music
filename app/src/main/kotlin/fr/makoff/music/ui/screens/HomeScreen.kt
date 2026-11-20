@@ -896,7 +896,10 @@ fun HomeScreen(
                                         playerConnection.playQueue(
                                             ListQueue(
                                                 title = item.title,
-                                                items = listOf(item.toMediaItem())
+                                                items = allYtItems.filterIsInstance<SongItem>()
+                                                    .ifEmpty { listOf(item) }.map { song -> song.toMediaItem() },
+                                                startIndex = allYtItems.filterIsInstance<SongItem>()
+                                                    .indexOfFirst { song -> song.id == item.id }.coerceAtLeast(0),
                                             )
                                         )
                                     }
