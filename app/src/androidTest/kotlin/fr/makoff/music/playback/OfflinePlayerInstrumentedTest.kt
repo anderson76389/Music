@@ -394,6 +394,26 @@ class OfflinePlayerInstrumentedTest {
             main { controller.pause() }
             println("PLAYER_TRANSPORT_OK: seek, restart, UI next and previous")
 
+            // Regression: selecting a single song from Home/Search used to
+            // disable Suivant after the radio UI was removed. The explicit
+            // click must navigate using the cached related track, even with
+            // the emulator completely offline and no radio queue.
+            main { active.playQueue(ListQueue("Single-song search", listOf(tracks[0].toMediaItem())), playWhenReady = false) }
+            await("Single-song queue was not prepared") {
+                main { active.player.mediaItemCount == 1 && active.player.currentMediaItem?.mediaId == tracks[0].id }
+            }
+            await("Suivant must be available for a standalone YouTube song") { controller.canSkipNext.value }
+            clickDescription(R.string.next)
+            await("Single-song Suivant must load a real next track without network", 15000) {
+                main { active.player.currentMediaItem?.mediaId == tracks[1].id && active.player.mediaItemCount == 2 }
+            }
+            assertTrue("Single-song next must keep ordinary queue playback", main { active.player.currentMediaItemIndex == 1 })
+            main { active.playQueue(ListQueue("Validation locale", tracks.take(2).map { it.toMediaItem() }), playWhenReady = false) }
+            await("Original two-track queue was not restored") {
+                main { active.player.mediaItemCount == 2 && active.player.currentMediaItemIndex == 0 }
+            }
+            println("PLAYER_SINGLE_NEXT_OK: offline one-song Suivant advances to cached related track without radio")
+
             main { controller.playNext(tracks[2].toMediaItem()); controller.addToQueue(tracks[3].toMediaItem()) }
             await("Queue insert/append failed") { main { active.player.mediaItemCount == 4 } }
             assertEquals(tracks[2].id, main { active.player.getMediaItemAt(1).mediaId })
