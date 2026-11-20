@@ -173,3 +173,34 @@ release_workflow = (root / ".github/workflows/music-release.yml").read_text()
 assert "scripts/release_notes.py" in release_workflow
 assert "cat CHANGEMENTS-VERSION.txt >> notes.txt" not in release_workflow
 print("PASS: persistent Son/Vidéo tabs, original M4A/Opus exports and release-scoped notes")
+
+# A standalone Home/Search song must not leave the Next button inert.
+connection = (src / "playback/PlayerConnection.kt").read_text()
+next_policy = (src / "playback/NextTrackPolicy.kt").read_text()
+mini = (src / "ui/player/MiniPlayer.kt").read_text()
+home = (src / "ui/screens/HomeScreen.kt").read_text()
+search = (src / "ui/screens/search/OnlineSearchScreen.kt").read_text()
+assert "service.requestNextSongOnDemand()" in connection
+assert "NextTrackPolicy.canAdvance(" in connection
+assert "fun canRequestNextSong(" in next_policy
+assert "fun requestNextSongOnDemand()" in service
+assert "database.relatedSongs(currentId)" in service
+assert "YouTube.next(WatchEndpoint(videoId = currentId))" in service
+assert "playerConnection.seekToNext()" in mini
+assert "startIndex = allLocalItems.filterIsInstance<Song>()" in home
+assert "startIndex = allYtItems.filterIsInstance<SongItem>()" in home
+assert "startIndex = viewState.items.filterIsInstance<SongItem>()" in search
+print("PASS: Next follows real list queues or loads one successor explicitly without radio")
+
+# Verify selection is about *actual* native streams, not a renamed file.
+selector = (root / "vendor/innertubex/src/commonMain/kotlin/fr/makoff/music/innertubex/extraction/FormatSelectors.kt").read_text()
+engine = (src / "downloads/FolderAudioDownload.kt").read_text()
+download_util = (src / "playback/DownloadUtil.kt").read_text()
+assert "AudioQuality.HIGH -> {" in selector
+assert "validFormats.maxWithOrNull(highAudioFormatComparator)" in selector
+assert "validFormats.filter { it.mimeType.contains(\"audio/mp4\") }.maxByOrNull(::audioFormatScore)" in selector
+assert '"bestaudio[ext=m4a]"' in download_format
+assert '"bestaudio[acodec=opus]"' in download_format
+assert '"-c:a", "copy"' in engine
+assert "audioQuality = AudioQuality.HIGH" in download_util
+print("PASS: best available original audio bitrate per chosen codec, no lossy export reencoding")
