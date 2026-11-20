@@ -1680,12 +1680,26 @@ class MusicService :
 
         manualNextSongJob = scope.launch(SilentHandler) {
             try {
-                val suggestions = withContext(Dispatchers.IO) {
-                    YouTube.next(WatchEndpoint(videoId = currentId))
-                        .getOrNull()?.items.orEmpty()
-                        .map(SongItem::toMediaItem)
+                // Use already-known related songs first (also works offline).
+                // Only ask YouTube for a successor when the local catalogue
+                // cannot supply one; never create an automatic radio queue.
+                val cached = withContext(Dispatchers.IO) {
+                    database.relatedSongs(currentId).map { it.toMediaItem() }
                 }.filterExplicit(cachedHideExplicit)
                     .filterVideoSongs(cachedHideVideoSongs)
+                val suggestions = if (cached.any { it.mediaId != currentId }) cached else {
+                    withContext(Dispatchers.IO) {
+                        val response = YouTube.next(WatchEndpoint(videoId = currentId)).getOrNull()
+                        response?.items.orEmpty().map { song -> song.toMediaItem() }
+                            .ifEmpty {
+                                response?.relatedEndpoint?.let { endpoint ->
+                                    YouTube.related(endpoint).getOrNull()?.songs
+                                        ?.map { song -> song.toMediaItem() }
+                                }.orEmpty()
+                            }
+                    }.filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                }
 
                 // Ignore stale HTTP results if a different song/queue started.
                 if (player.currentMediaItem?.mediaId != currentId) return@launch
