@@ -64,7 +64,6 @@ import fr.makoff.music.constants.ContentLanguageKey
 import fr.makoff.music.constants.CountryCodeToName
 import fr.makoff.music.constants.HideExplicitKey
 import fr.makoff.music.constants.HideVideoSongsKey
-import fr.makoff.music.constants.SoundProofSkipAiKey
 import fr.makoff.music.constants.HideYoutubeShortsKey
 import fr.makoff.music.constants.LanguageCodeToName
 import fr.makoff.music.constants.ProxyEnabledKey
@@ -110,9 +109,6 @@ fun ContentSettings(
     val (contentCountry, onContentCountryChange) = rememberPreference(key = ContentCountryKey, defaultValue = "system")
     val (hideExplicit, onHideExplicitChange) = rememberPreference(key = HideExplicitKey, defaultValue = false)
     val (hideVideoSongs, onHideVideoSongsChange) = rememberPreference(key = HideVideoSongsKey, defaultValue = false)
-    val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(
-        key = SoundProofSkipAiKey, defaultValue = false,
-    )
     val (hideYoutubeShorts, onHideYoutubeShortsChange) = rememberPreference(key = HideYoutubeShortsKey, defaultValue = false)
     val (showArtistDescription, onShowArtistDescriptionChange) = rememberPreference(key = ShowArtistDescriptionKey, defaultValue = true)
     val (showArtistSubscriberCount, onShowArtistSubscriberCountChange) = rememberPreference(key = ShowArtistSubscriberCountKey, defaultValue = true)
@@ -560,18 +556,6 @@ fun ContentSettings(
                         )
                     },
                     onClick = { onHideExplicitChange(!hideExplicit) }
-                ),
-                Material3SettingsItem(
-                    icon = painterResource(R.drawable.person),
-                    title = { Text(stringResource(R.string.soundproof_skip_ai_title)) },
-                    description = { Text(stringResource(R.string.soundproof_skip_ai_description)) },
-                    trailingContent = {
-                        Switch(
-                            checked = soundProofSkipAi,
-                            onCheckedChange = onSoundProofSkipAiChange,
-                        )
-                    },
-                    onClick = { onSoundProofSkipAiChange(!soundProofSkipAi) },
                 ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.slow_motion_video),
