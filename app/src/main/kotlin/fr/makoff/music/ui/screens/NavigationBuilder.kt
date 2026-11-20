@@ -44,6 +44,7 @@ import fr.makoff.music.ui.screens.search.OnlineSearchResult
 import fr.makoff.music.ui.screens.search.SearchScreen
 import fr.makoff.music.ui.screens.settings.AndroidAutoSettings
 import fr.makoff.music.ui.screens.settings.AppearanceSettings
+import fr.makoff.music.ui.screens.settings.AudioSourcesSettings
 import fr.makoff.music.ui.screens.settings.BackupAndRestore
 import fr.makoff.music.ui.screens.settings.ContentSettings
 import fr.makoff.music.ui.screens.settings.DarkMode
@@ -354,6 +355,10 @@ fun NavGraphBuilder.navigationBuilder(
 
     composable("settings/audio") {
         PlayerSettings(navController, PlayerSettingsTab.AUDIO)
+    }
+
+    composable("settings/audio_sources") {
+        AudioSourcesSettings(navController)
     }
 
     composable("settings/downloads") {

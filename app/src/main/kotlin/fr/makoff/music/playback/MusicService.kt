@@ -23,6 +23,8 @@ import android.media.AudioDeviceCallback
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
+import fr.makoff.music.playback.addons.AudioAddon
+import fr.makoff.music.playback.addons.AudioAddons
 import fr.makoff.music.playback.audio.VolumeNormalizationAudioProcessor
 import fr.makoff.music.utils.safeDataStoreEdit
 import android.net.ConnectivityManager
@@ -33,6 +35,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
 import android.os.SystemClock
+import android.util.LruCache
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.datastore.preferences.core.Preferences
@@ -167,6 +170,7 @@ import fr.makoff.music.extensions.toEnum
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.extensions.toPersistQueue
 import fr.makoff.music.extensions.toQueue
+import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.models.PersistPlayerState
 import fr.makoff.music.models.PersistQueue
 import fr.makoff.music.models.toMediaMetadata
@@ -280,7 +284,8 @@ class MusicService :
     private val secondaryPlayerListener =
         object : Player.Listener {
             override fun onPlayerError(error: PlaybackException) {
-                Timber.tag(TAG).e(error, "Secondary player error")
+                val addonFailed = secondaryPlayer?.currentMediaItem?.mediaId?.let(::markAddonFailed) == true
+                if (!addonFailed) Timber.tag(TAG).e(error, "Secondary player error")
                 secondaryPlayer?.let { failedPlayer ->
                     failedPlayer.removeListener(this)
                     failedPlayer.stop()
@@ -450,6 +455,15 @@ class MusicService :
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     private val songUrlCache = StreamUrlCache()
+    private val activeAddonStreams = LruCache<String, AudioAddons.Stream>(32)
+    private val addonFailures = LruCache<String, Long>(32)
+    @Volatile private var audioAddons: List<AudioAddon> = emptyList()
+
+    private fun markAddonFailed(mediaId: String): Boolean {
+        if (activeAddonStreams.remove(mediaId) == null) return false
+        addonFailures.put(mediaId, SystemClock.elapsedRealtime() + 60_000)
+        return true
+    }
 
     // Tracks mediaIds for which a recoverSong() coroutine is currently in flight.
     //
@@ -574,6 +588,7 @@ class MusicService :
 
     override fun onCreate() {
         super.onCreate()
+        scope.launch { AudioAddons.sources(this@MusicService).collect { audioAddons = it } }
         isRunning = true
         shutdownDeferred = kotlinx.coroutines.CompletableDeferred<Unit>()
 
@@ -1461,6 +1476,13 @@ class MusicService :
         )
     }
 
+    private suspend fun findPlaybackMetadata(mediaId: String): MediaMetadata? =
+        withContext(Dispatchers.Main) {
+            player.findNextMediaItemById(mediaId)?.metadata
+                ?: secondaryPlayer?.findNextMediaItemById(mediaId)?.metadata
+                ?: fadingPlayer?.findNextMediaItemById(mediaId)?.metadata
+        }
+
     /**
      * Registers / refreshes song metadata (title, duration, isVideo, related songs)
      * for [mediaId]. Pure metadata bookkeeping only — does NOT touch [dateDownload].
@@ -1476,12 +1498,7 @@ class MusicService :
         playbackData: InnerTubeXPlayer.PlaybackData? = null,
     ) {
         val song = database.song(mediaId).first()
-        val mediaMetadata =
-            withContext(Dispatchers.Main) {
-                player.findNextMediaItemById(mediaId)?.metadata
-                    ?: secondaryPlayer?.findNextMediaItemById(mediaId)?.metadata
-                    ?: fadingPlayer?.findNextMediaItemById(mediaId)?.metadata
-            }
+        val mediaMetadata = findPlaybackMetadata(mediaId)
 
         if (mediaMetadata == null && song == null) return
 
@@ -2881,6 +2898,10 @@ class MusicService :
         }
 
         val mediaId = player.currentMediaItem?.mediaId
+        if (mediaId != null && markAddonFailed(mediaId)) {
+            rebuildOfflineSource()
+            return
+        }
         val failedStreamClient = mediaId?.let(songUrlCache::clientName)
         Timber
             .tag(TAG)
@@ -3405,13 +3426,20 @@ class MusicService :
     ): DataSource.Factory {
         val cachedFactory = createCacheDataSource()
         val streamingFactory = createCacheDataSource(includeDownloads = false)
+        val addonFactory by lazy { OkHttpDataSource.Factory(AudioAddons.mediaClient) }
         return DataSource.Factory {
             // A progressive extractor cannot switch containers or byte offsets between opens.
             var bound = false
             var document: android.net.Uri? = null
             var useDownloadCache = false
-            val upstream = fr.makoff.music.downloads.LocalAudioDataSource(this,
-                DataSource.Factory { (if (useDownloadCache) cachedFactory else streamingFactory).createDataSource() })
+            var addonStream: AudioAddons.Stream? = null
+            val upstream = fr.makoff.music.downloads.LocalAudioDataSource(this, DataSource.Factory {
+                when {
+                    addonStream != null -> addonFactory
+                    useDownloadCache -> cachedFactory
+                    else -> streamingFactory
+                }.createDataSource()
+            })
             ResolvingDataSource(upstream) { dataSpec ->
             val mediaId = dataSpec.key ?: error("No media id")
             if (!bound) {
@@ -3420,7 +3448,29 @@ class MusicService :
                 val cachedLength = ContentMetadata.getContentLength(downloadCache.getContentMetadata(mediaId))
                 useDownloadCache = downloadState == androidx.media3.exoplayer.offline.Download.STATE_COMPLETED ||
                     (downloadState == null && cachedLength > 0L && downloadCache.isCached(mediaId, 0, cachedLength))
+                val sources = audioAddons
+                val canTryAddons = document == null && !useDownloadCache &&
+                    sources.any(AudioAddon::enabled) && isNetworkConnected.value &&
+                    (addonFailures.get(mediaId) ?: 0L) <= SystemClock.elapsedRealtime()
+                if (canTryAddons) {
+                    addonStream = runBlocking(Dispatchers.IO) {
+                        findPlaybackMetadata(mediaId)?.let { AudioAddons.resolve(sources, it) }
+                    }
+                }
+                val selected = addonStream
+                if (selected != null) {
+                    activeAddonStreams.put(mediaId, selected)
+                    recoverSongDeduped(mediaId)
+                } else {
+                    activeAddonStreams.remove(mediaId)
+                }
                 bound = true
+            }
+            addonStream?.let { stream ->
+                applyAudioNormalizationBeforePlayback(processor = normalizationProcessor, playerProvider = playerProvider,
+                    mediaId = mediaId, loudnessDb = null, perceptualLoudnessDb = null, preserveCachedIfMissing = false)
+                currentStreamClient.value = stream.name
+                return@ResolvingDataSource dataSpec.withUri(stream.url.toUri())
             }
             document?.let { uri ->
                 applyAudioNormalizationBeforePlayback(processor = normalizationProcessor, playerProvider = playerProvider,
@@ -3622,7 +3672,8 @@ class MusicService :
         DefaultMediaSourceFactory(
             createDataSourceFactory(normalizationProcessor, playerProvider),
             ExtractorsFactory {
-                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor(), Mp4Extractor(), androidx.media3.extractor.flac.FlacExtractor(), androidx.media3.extractor.ogg.OggExtractor())
+                arrayOf(MatroskaExtractor(), FragmentedMp4Extractor(), Mp4Extractor(), androidx.media3.extractor.flac.FlacExtractor(), androidx.media3.extractor.ogg.OggExtractor(), androidx.media3.extractor.mp3.Mp3Extractor(),
+                    androidx.media3.extractor.wav.WavExtractor(), androidx.media3.extractor.ts.AdtsExtractor())
             },
         )
 
