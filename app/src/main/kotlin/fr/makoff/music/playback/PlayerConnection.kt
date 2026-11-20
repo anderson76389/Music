@@ -485,8 +485,10 @@ class PlayerConnection(
                 !window.isLive ||
                 player.isCommandAvailable(COMMAND_SEEK_TO_PREVIOUS_MEDIA_ITEM)
             canSkipNext.value = (window.isLive && window.isDynamic) ||
-                (player.hasNextMediaItem() && player.isCommandAvailable(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM)) ||
-                NextTrackPolicy.canRequestNextSong(player.currentMediaItem?.mediaId)
+                NextTrackPolicy.canAdvance(
+                    player.hasNextMediaItem() && player.isCommandAvailable(COMMAND_SEEK_TO_NEXT_MEDIA_ITEM),
+                    player.currentMediaItem?.mediaId,
+                )
         } else {
             canSkipPrevious.value = false
             canSkipNext.value = false
