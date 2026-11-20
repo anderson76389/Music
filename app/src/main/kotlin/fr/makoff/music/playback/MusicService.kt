@@ -1667,6 +1667,45 @@ class MusicService :
         originalQueueSize = initialQueueSize
     }
 
+    // Load exactly one successor on explicit Suivant from a standalone song.
+    // Unlike the removed radio action, this never replaces the user's queue
+    // with a radio queue or enables continuous recommendation playback.
+    private var manualNextSongJob: Job? = null
+
+    fun requestNextSongOnDemand() {
+        if (taskCleared || !playerInitialized.value) return
+        val currentId = player.currentMediaItem?.mediaId
+            ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
+        if (manualNextSongJob?.isActive == true) return
+
+        manualNextSongJob = scope.launch(SilentHandler) {
+            try {
+                val suggestions = withContext(Dispatchers.IO) {
+                    YouTube.next(WatchEndpoint(videoId = currentId))
+                        .getOrNull()?.items.orEmpty()
+                        .map(SongItem::toMediaItem)
+                }.filterExplicit(cachedHideExplicit)
+                    .filterVideoSongs(cachedHideVideoSongs)
+
+                // Ignore stale HTTP results if a different song/queue started.
+                if (player.currentMediaItem?.mediaId != currentId) return@launch
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                } else {
+                    val next = suggestions.firstOrNull { it.mediaId != currentId } ?: return@launch
+                    player.addMediaItem(next)
+                    player.seekToNextMediaItem()
+                }
+                if (player.playbackState == STATE_IDLE || player.playbackState == STATE_ENDED) player.prepare()
+                player.playWhenReady = true
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).w(error, "Could not load a next track on demand")
+            }
+        }
+    }
+
     fun startRadioSeamlessly() {
         if (!playerInitialized.value) {
             Timber.tag(TAG).w("startRadioSeamlessly called before player initialization")
