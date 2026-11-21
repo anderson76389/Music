@@ -286,9 +286,10 @@ class OfflinePlayerInstrumentedTest {
             assertNotNull("Mini-player control", miniPlayer)
             delay(1200)
             device.executeShellCommand("screencap -p /data/local/tmp/glass-mini-player.png")
-            miniPlayer!!.click()
+            val title = requireNotNull(device.wait(Until.findObject(By.text(tracks.first().title)), 10000))
+            title.click()
             await("Expanded player is visible", 10000) {
-                freshControlBounds(context.getString(R.string.next)) != null
+                freshControlBounds(context.getString(R.string.player_cover_toggle)) != null
             }
             instrumentation.waitForIdleSync()
             delay(1200)
