@@ -97,7 +97,7 @@ fun AudioSourcesSettings(navController: NavController) {
                         SourceAction(R.drawable.arrow_downward, R.string.audio_sources_move_down, index < sources.lastIndex) {
                             update { it.move(source, 1) }
                         }
-                        SourceAction(R.drawable.delete, R.string.audio_sources_remove) {
+                        if (source.manifest != AudioAddons.AUDIUS) SourceAction(R.drawable.delete, R.string.audio_sources_remove) {
                             update { current -> current.filterNot { it.manifest == source.manifest } }
                         }
                     }

@@ -166,8 +166,10 @@ internal fun PlayerArtworkSwitcher(
                 onShowVideoChange(false)
             },
             onVideoClick = {
-                if (videoPlayer != null && showModeBar) {
+                if (hasPlayableClip && !isCasting) {
                     onShowVideoChange(true)
+                } else {
+                    android.widget.Toast.makeText(context, unavailable, android.widget.Toast.LENGTH_SHORT).show()
                 }
             },
             onCollapse = onCollapse,
@@ -396,7 +398,6 @@ internal fun PlayerModePills(
                         )
                         .selectable(
                             selected = selected,
-                            enabled = !video || videoEnabled,
                             role = Role.Tab,
                             onClick = if (video) onVideoClick else onAudioClick,
                         ),

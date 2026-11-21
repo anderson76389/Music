@@ -37,7 +37,9 @@ internal data class AudioAddon(
 )
 
 internal object AudioAddons {
-    const val MAX_SOURCES = 12
+    const val AUDIUS = "https://api.audius.co/v1/tracks"
+    private val audius = AudioAddon(AUDIUS, "Audius", "", enabled = false)
+    const val MAX_SOURCES = 13
     private const val MAX_JSON_BYTES = 256 * 1024L
     private val sourcesKey = stringPreferencesKey("sources")
     private var store: DataStore<Preferences>? = null
@@ -47,8 +49,12 @@ internal object AudioAddons {
         produceFile = { File(context.applicationContext.noBackupFilesDir, "audio-addons.preferences_pb") },
     ).also { store = it }
 
-    private fun decode(serialized: String?): List<AudioAddon> =
-        serialized?.let { runCatching { Json.decodeFromString<List<AudioAddon>>(it) }.getOrNull() }.orEmpty()
+    internal fun decode(serialized: String?): List<AudioAddon> {
+        val stored = serialized?.let {
+            runCatching { Json.decodeFromString<List<AudioAddon>>(it) }.getOrNull()
+        }.orEmpty()
+        return if (stored.any { it.manifest == AUDIUS }) stored else stored + audius
+    }
 
     fun sources(context: Context) = store(context).data
         .map { decode(it[sourcesKey]) }
@@ -137,8 +143,12 @@ internal object AudioAddons {
         for (source in sources) {
             if (!source.enabled) continue
             if (System.nanoTime() >= deadline) break
-            val manifest = manifestUrl(source.manifest) ?: continue
             try {
+                if (source.manifest == AUDIUS) {
+                    audiusStream(metadata, artist, deadline)?.let { return Stream(it, audius.name) }
+                    continue
+                }
+                val manifest = manifestUrl(source.manifest) ?: continue
                 val search = get(searchUrl(manifest, "${metadata.title} $artist", source.quality), deadline)
                 val match = matchingTrack(search?.get("tracks") as? JsonArray ?: continue, metadata) ?: continue
                 val url = endpoint(manifest, "stream").addPathSegment(match.text("id"))
@@ -160,6 +170,20 @@ internal object AudioAddons {
             }
         }
         return null
+    }
+
+    private fun audiusStream(song: MediaMetadata, artist: String, deadline: Long): String? {
+        val base = requireNotNull(httpsUrl(AUDIUS)).newBuilder().addQueryParameter("app_name", "MakoffMusic")
+        val search = base.build().newBuilder().addPathSegment("search")
+            .addQueryParameter("query", "${song.title} $artist").addQueryParameter("limit", "6").build()
+        val results = get(search, deadline)?.get("data") as? JsonArray ?: return null
+        val tracks = results.filterIsInstance<JsonObject>().mapNotNull { row ->
+            val user = row["user"] as? JsonObject ?: return@mapNotNull null
+            if (row.text("is_stream_gated") == "true" || row.text("is_streamable") == "false") return@mapNotNull null
+            JsonObject(row + ("artist" to JsonPrimitive(user.text("name"))))
+        }
+        val track = matchingTrack(JsonArray(tracks), song) ?: return null
+        return base.addPathSegment(track.text("id")).addPathSegment("stream").build().toString()
     }
 
     private fun searchUrl(manifest: HttpUrl, query: String, quality: String) =

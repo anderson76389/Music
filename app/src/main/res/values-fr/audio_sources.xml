@@ -1,0 +1,18 @@
+<resources>
+    <string name="audio_sources_title">Sources audio</string>
+    <string name="audio_sources_order">Les extensions activées sont consultées dans cet ordre. Chaque recherche transmet le titre et le nom de l’artiste à la source.</string>
+    <string name="audio_sources_add">Ajouter une extension</string>
+    <string name="audio_sources_fallback">Source de secours pour la lecture en ligne</string>
+    <string name="audio_sources_move_up">Monter la source</string>
+    <string name="audio_sources_move_down">Descendre la source</string>
+    <string name="audio_sources_remove">Supprimer la source</string>
+    <string name="audio_sources_url">Adresse HTTPS de l’extension</string>
+    <string name="audio_sources_test">Tester</string>
+    <string name="audio_sources_testing">Vérification de l’extension…</string>
+    <string name="audio_sources_ready">%1$s est prête à être ajoutée.</string>
+    <string name="audio_sources_duplicate">Cette extension est déjà installée.</string>
+    <string name="audio_sources_invalid">Saisis l’adresse HTTPS d’une extension audio compatible.</string>
+    <string name="audio_sources_restricted">Cette extension exige une autorisation que Music ne peut pas fournir.</string>
+    <string name="audio_sources_unavailable">Cette extension est temporairement indisponible.</string>
+    <string name="audio_sources_save_error">Impossible d’enregistrer les sources audio. Réessaie.</string>
+</resources>
