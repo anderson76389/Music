@@ -927,65 +927,40 @@ fun BottomSheetPlayer(
                             animationSpec = tween(260),
                             label = "gradientBottom",
                         )
-                        val colors = listOf(gradientTop, gradientMiddle, gradientBottom)
-                            if (colors.isNotEmpty()) {
-                                val gradientColorStops =
-                                    if (colors.size >= 3) {
-                                        arrayOf(
-                                            0.0f to colors[0],
-                                            0.5f to colors[1],
-                                            1.0f to colors[2],
-                                        )
-                                    } else {
-                                        arrayOf(
-                                            0.0f to colors[0],
-                                            0.6f to colors[0].copy(alpha = 0.7f),
-                                            1.0f to Color.Black,
-                                        )
+                        val thumbnailUrl = mediaMetadata?.thumbnailUrl
+                        val showArtworkBackdrop = state.isExpanded && !thumbnailUrl.isNullOrBlank()
+                        Box(Modifier.fillMaxSize().alpha(backgroundAlpha)) {
+                            Box(
+                                Modifier.fillMaxSize().background(
+                                    Brush.verticalGradient(listOf(gradientTop, gradientMiddle, gradientBottom)),
+                                ),
+                            )
+                            if (showArtworkBackdrop) {
+                                key(mediaMetadata?.id) {
+                                    val request = remember(context, thumbnailUrl) {
+                                        ImageRequest.Builder(context)
+                                            .data(thumbnailUrl)
+                                            .size(160, 160)
+                                            .build()
                                     }
-                                // Apple Music-inspired artwork ambience: a low
-                                // resolution, softly blurred copy of THIS song's
-                                // cover sits behind the existing palette gradient.
-                                // Keep the dark color overlay so player controls
-                                // retain enough contrast in all supported themes.
-                                Box(Modifier.fillMaxSize().alpha(backgroundAlpha)) {
-                                    if (state.isExpanded && !mediaMetadata?.thumbnailUrl.isNullOrBlank()) {
-                                        key(mediaMetadata?.id) {
-                                            AsyncImage(
-                                                model = ImageRequest.Builder(context)
-                                                    .data(mediaMetadata?.thumbnailUrl)
-                                                    .size(120, 120)
-                                                    .allowHardware(false)
-                                                    .build(),
-                                                contentDescription = null,
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier
-                                                    .fillMaxSize()
-                                                    .blur(artworkBlurRadius)
-                                                    .alpha(0.56f),
-                                            )
-                                        }
-                                    }
-                                    Box(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .background(Brush.verticalGradient(colorStops = gradientColorStops))
-                                            .alpha(if (glassMode) 0.83f else 0.78f),
-                                    )
-                                    Box(
-                                        Modifier
-                                            .fillMaxSize()
-                                            .background(
-                                                Brush.verticalGradient(
-                                                    listOf(
-                                                        Color.Black.copy(alpha = 0.12f),
-                                                        Color.Black.copy(alpha = 0.28f),
-                                                    ),
-                                                ),
-                                            ),
+                                    AsyncImage(
+                                        model = request,
+                                        contentDescription = null,
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize().blur(artworkBlurRadius).alpha(0.48f),
                                     )
                                 }
                             }
+                            Box(
+                                Modifier.fillMaxSize().background(
+                                    Brush.verticalGradient(
+                                        0f to Color.Transparent,
+                                        0.43f to gradientMiddle.copy(alpha = 0.48f),
+                                        1f to gradientBottom.copy(alpha = 0.94f),
+                                    ),
+                                ),
+                            )
+                        }
                     }
 
                     else -> {

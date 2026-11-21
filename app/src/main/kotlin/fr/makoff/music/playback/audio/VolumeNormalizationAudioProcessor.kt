@@ -7,7 +7,9 @@ import androidx.media3.common.util.UnstableApi
 import timber.log.Timber
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
+import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.withSign
 
 @UnstableApi
 class VolumeNormalizationAudioProcessor : BaseAudioProcessor() {
@@ -58,26 +60,22 @@ class VolumeNormalizationAudioProcessor : BaseAudioProcessor() {
 
         val gain = currentGain
         val applyGain = enabled && gain.targetGainMb != 0
-        val sampleCount = inputBuffer.remaining() / bytesPerSample
-        val output = replaceOutputBuffer(sampleCount * bytesPerSample)
+        val output = replaceOutputBuffer(inputBuffer.remaining())
+        if (!applyGain) {
+            output.put(inputBuffer)
+            output.flip()
+            return
+        }
 
         inputBuffer.order(ByteOrder.LITTLE_ENDIAN)
         output.order(ByteOrder.LITTLE_ENDIAN)
+        val sampleCount = inputBuffer.remaining() / bytesPerSample
 
         when (encoding) {
             C.ENCODING_PCM_16BIT ->
                 repeat(sampleCount) {
-                    val sample = inputBuffer.getShort()
-                    output.putShort(
-                        if (applyGain) {
-                            (sample * gain.linearGain)
-                                .coerceIn(-32768.0, 32767.0)
-                                .toInt()
-                                .toShort()
-                        } else {
-                            sample
-                        },
-                    )
+                    val sample = normalizedSample(inputBuffer.getShort().toDouble(), gain.linearGain, 32768.0)
+                    output.putShort(sample.toInt().coerceIn(-32768, 32767).toShort())
                 }
 
             C.ENCODING_PCM_24BIT ->
@@ -86,14 +84,8 @@ class VolumeNormalizationAudioProcessor : BaseAudioProcessor() {
                     val b1 = inputBuffer.get().toInt() and 0xFF
                     val b2 = inputBuffer.get().toInt()
                     val sample = (b2 shl 16) or (b1 shl 8) or b0
-                    val processed =
-                        if (applyGain) {
-                            (sample * gain.linearGain)
-                                .coerceIn(-8388608.0, 8388607.0)
-                                .toInt()
-                        } else {
-                            sample
-                        }
+                    val processed = normalizedSample(sample.toDouble(), gain.linearGain, 8388608.0)
+                        .toInt().coerceIn(-8388608, 8388607)
                     output.put((processed and 0xFF).toByte())
                     output.put(((processed shr 8) and 0xFF).toByte())
                     output.put(((processed shr 16) and 0xFF).toByte())
@@ -101,29 +93,14 @@ class VolumeNormalizationAudioProcessor : BaseAudioProcessor() {
 
             C.ENCODING_PCM_32BIT ->
                 repeat(sampleCount) {
-                    val sample = inputBuffer.getInt()
-                    output.putInt(
-                        if (applyGain) {
-                            (sample * gain.linearGain)
-                                .coerceIn(-2147483648.0, 2147483647.0)
-                                .toLong()
-                                .toInt()
-                        } else {
-                            sample
-                        },
-                    )
+                    val sample = normalizedSample(inputBuffer.getInt().toDouble(), gain.linearGain, 2147483648.0)
+                    output.putInt(sample.toLong().coerceIn(-2147483648L, 2147483647L).toInt())
                 }
 
             C.ENCODING_PCM_FLOAT ->
                 repeat(sampleCount) {
-                    val sample = inputBuffer.getFloat()
-                    output.putFloat(
-                        if (applyGain) {
-                            (sample * gain.linearGain.toFloat()).coerceIn(-1.0f, 1.0f)
-                        } else {
-                            sample
-                        },
-                    )
+                    val sample = normalizedSample(inputBuffer.getFloat().toDouble(), gain.linearGain, 1.0)
+                    output.putFloat(sample.toFloat().coerceIn(-1f, 1f))
                 }
         }
 
@@ -138,4 +115,16 @@ class VolumeNormalizationAudioProcessor : BaseAudioProcessor() {
     private companion object {
         const val TAG = "VolumeNormalizationProcessor"
     }
+}
+
+
+// The positive-gain knee keeps the slope continuous at the threshold and leaves headroom at full scale.
+internal fun normalizedSample(sample: Double, gain: Double, fullScale: Double): Double {
+    val amplified = sample * gain
+    if (gain <= 1.0) return amplified
+    val knee = fullScale * 0.89
+    val excess = abs(amplified) - knee
+    if (excess <= 0.0) return amplified
+    val headroom = fullScale * 0.109
+    return (knee + headroom * excess / (headroom + excess)).withSign(amplified)
 }

@@ -11,6 +11,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
@@ -50,6 +51,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
@@ -87,6 +89,7 @@ import fr.makoff.music.constants.SeekExtraSeconds
 import fr.makoff.music.constants.SwipeThumbnailKey
 import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.ui.component.CastButton
+import fr.makoff.music.ui.utils.resize
 import fr.makoff.music.utils.rememberEnumPreference
 import fr.makoff.music.utils.rememberPreference
 import kotlinx.coroutines.delay
@@ -594,10 +597,16 @@ private fun ThumbnailItem(
             },
         contentAlignment = Alignment.Center
     ) {
+        val coverShape = RoundedCornerShape(dimensions.cornerRadius)
         Box(
             modifier = Modifier
                 .size(dimensions.thumbnailSize)
-                .clip(RoundedCornerShape(dimensions.cornerRadius))
+                .clip(coverShape)
+                .border(
+                    1.dp,
+                    Brush.linearGradient(listOf(Color.White.copy(alpha = 0.26f), Color.Transparent, Color.Black.copy(alpha = 0.22f))),
+                    coverShape,
+                )
                 .then(if (item.mediaId == currentMediaId) Modifier.semantics {
                     contentDescription = coverToggleLabel
                     onClick {
@@ -674,16 +683,29 @@ private fun ThumbnailImage(
                 // Use offscreen compositing for hardware acceleration during animations
                 compositingStrategy = CompositingStrategy.Offscreen
             }
-            .background(if (LocalLiquidGlassEnabled.current) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
     ) {
+        Icon(
+            painter = painterResource(R.drawable.music_note),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.55f),
+            modifier = Modifier.size(56.dp),
+        )
         key(artworkUri) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(artworkUri)
+            val context = LocalContext.current
+            var displayedUrl by remember { mutableStateOf(artworkUri?.resize(width = 1440)) }
+            val request = remember(context, displayedUrl) {
+                ImageRequest.Builder(context)
+                    .data(displayedUrl)
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .networkCachePolicy(CachePolicy.ENABLED)
-                    .build(),
+                    .build()
+            }
+            AsyncImage(
+                model = request,
+                onError = { if (displayedUrl != artworkUri) displayedUrl = artworkUri },
                 contentDescription = null,
                 contentScale = if (cropArtwork) ContentScale.Crop else ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),

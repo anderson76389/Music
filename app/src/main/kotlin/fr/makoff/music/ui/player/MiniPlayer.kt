@@ -9,6 +9,7 @@ package fr.makoff.music.ui.player
 
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
 import fr.makoff.music.ui.theme.liquidGlass
+import android.animation.ValueAnimator
 import android.content.res.Configuration
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
@@ -60,6 +61,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -71,6 +73,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
@@ -85,6 +88,9 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
 import fr.makoff.music.LocalDatabase
@@ -97,7 +103,6 @@ import fr.makoff.music.constants.MiniPlayerHeight
 import fr.makoff.music.constants.PureBlackMiniPlayerKey
 import fr.makoff.music.constants.SwipeSensitivityKey
 import fr.makoff.music.constants.SwipeThumbnailKey
-import fr.makoff.music.constants.ThumbnailCornerRadius
 import fr.makoff.music.constants.UseNewMiniPlayerDesignKey
 import fr.makoff.music.models.MediaMetadata
 import fr.makoff.music.playback.CastConnectionHandler
@@ -107,6 +112,7 @@ import fr.makoff.music.ui.utils.resize
 import fr.makoff.music.utils.joinToArtistString
 import fr.makoff.music.utils.rememberEnumPreference
 import fr.makoff.music.utils.rememberPreference
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.absoluteValue
 import kotlin.math.roundToInt
@@ -579,18 +585,11 @@ private fun NewMiniPlayerPlayButton(
                     },
         ) {
             mediaMetadata?.let { metadata ->
-                val thumbnailUrl =
-                    remember(metadata.thumbnailUrl) {
-                        metadata.thumbnailUrl?.resize(120, 120)
-                    }
-                key(metadata.id) {
-                    AsyncImage(
-                        model = thumbnailUrl,
-                        contentDescription = null,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier.fillMaxSize().clip(CircleShape),
-                    )
-                }
+                RotatingMiniArtwork(
+                    metadata = metadata,
+                    playing = effectiveIsPlaying && playbackState != Player.STATE_ENDED,
+                    contentScale = ContentScale.Crop,
+                )
             }
 
             // Overlay for paused state or muted (guest)
@@ -702,6 +701,10 @@ private fun LegacyMiniPlayer(
             }
         }
     val isCasting by castHandler?.isCasting?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    val isPlaying by playerConnection.isPlaying.collectAsStateWithLifecycle()
+    val castIsPlaying by castHandler?.castIsPlaying?.collectAsStateWithLifecycle() ?: remember { mutableStateOf(false) }
+    val artworkPlaying = if (isCasting) castIsPlaying else isPlaying
+
 
     val swipeSensitivity by rememberPreference(SwipeSensitivityKey, 0.73f)
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
@@ -836,6 +839,7 @@ private fun LegacyMiniPlayer(
                     LegacyMiniMediaInfo(
                         mediaMetadata = it,
                         pureBlack = pureBlack,
+                        artworkPlaying = artworkPlaying,
                         modifier = Modifier.padding(horizontal = 6.dp),
                     )
                 }
@@ -924,6 +928,7 @@ private fun LegacyPlayPauseButton(
 private fun LegacyMiniMediaInfo(
     mediaMetadata: MediaMetadata,
     pureBlack: Boolean,
+    artworkPlaying: Boolean,
     modifier: Modifier = Modifier,
 ) {
     val error by LocalPlayerConnection.current?.error?.collectAsState() ?: remember { mutableStateOf(null) }
@@ -938,30 +943,13 @@ private fun LegacyMiniMediaInfo(
                 Modifier
                     .padding(6.dp)
                     .size(48.dp)
-                    .clip(RoundedCornerShape(ThumbnailCornerRadius)),
+                    .clip(CircleShape),
         ) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxSize()
-                        .background(MaterialTheme.colorScheme.surfaceVariant),
+            RotatingMiniArtwork(
+                metadata = mediaMetadata,
+                playing = artworkPlaying,
+                contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
             )
-
-            val thumbnailUrl =
-                remember(mediaMetadata.thumbnailUrl) {
-                    mediaMetadata.thumbnailUrl?.resize(144, 144)
-                }
-            key(mediaMetadata.id) {
-                AsyncImage(
-                    model = thumbnailUrl,
-                    contentDescription = null,
-                    contentScale = if (cropAlbumArt) ContentScale.Crop else ContentScale.Fit,
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .clip(RoundedCornerShape(ThumbnailCornerRadius)),
-                )
-            }
 
             androidx.compose.animation.AnimatedVisibility(visible = error != null, enter = fadeIn(), exit = fadeOut()) {
                 Box(
@@ -969,7 +957,7 @@ private fun LegacyMiniMediaInfo(
                         .fillMaxSize()
                         .background(
                             color = if (pureBlack) Color.Black else Color.Black.copy(alpha = 0.6f),
-                            shape = RoundedCornerShape(ThumbnailCornerRadius),
+                            shape = CircleShape,
                         ),
                 ) {
                     Icon(
@@ -1079,5 +1067,54 @@ private fun FavoriteButton(
             tint = if (isLiked) errorColor else onSurfaceColor.copy(alpha = 0.7f),
             modifier = Modifier.size(20.dp),
         )
+    }
+}
+
+
+@Composable
+private fun RotatingMiniArtwork(
+    metadata: MediaMetadata,
+    playing: Boolean,
+    contentScale: ContentScale,
+) {
+    val url = remember(metadata.thumbnailUrl) { metadata.thumbnailUrl?.resize(width = 192) }
+    val angle = remember(metadata.id) { mutableFloatStateOf(0f) }
+    var artworkLoaded by remember(metadata.id, url) { mutableStateOf(false) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(angle, playing, artworkLoaded, lifecycle) {
+        if (!playing || !artworkLoaded) return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            if (!ValueAnimator.areAnimatorsEnabled()) return@repeatOnLifecycle
+            var lastFrame = withFrameNanos { it }
+            while (isActive) {
+                val frame = withFrameNanos { it }
+                val elapsedMs = (frame - lastFrame) / 1_000_000f
+                angle.floatValue = (angle.floatValue + elapsedMs * 360f / 12_000f) % 360f
+                lastFrame = frame
+            }
+        }
+    }
+
+    Box(
+        modifier = Modifier.fillMaxSize().clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(
+            painter = painterResource(R.drawable.music_note),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp),
+        )
+        key(metadata.id, url) {
+            AsyncImage(
+                model = url,
+                onSuccess = { artworkLoaded = true },
+                onError = { artworkLoaded = false },
+                contentDescription = null,
+                contentScale = contentScale,
+                modifier = Modifier.fillMaxSize().graphicsLayer { rotationZ = angle.floatValue },
+            )
+        }
     }
 }
