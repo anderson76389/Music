@@ -75,7 +75,6 @@ import fr.makoff.music.constants.ShowCachedPlaylistKey
 import fr.makoff.music.constants.ShowDownloadedPlaylistKey
 import fr.makoff.music.constants.ShowLikedPlaylistKey
 import fr.makoff.music.constants.ShowTopPlaylistKey
-import fr.makoff.music.constants.ShowUploadedPlaylistKey
 import fr.makoff.music.constants.YtmSyncKey
 import fr.makoff.music.db.entities.Album
 import fr.makoff.music.db.entities.Artist
@@ -208,29 +207,16 @@ fun LibraryMixScreen(
             songThumbnails = emptyList(),
         )
 
-    val uploadedPlaylist =
-        Playlist(
-            playlist =
-                PlaylistEntity(
-                    id = UUID.randomUUID().toString(),
-                    name = stringResource(R.string.uploaded_playlist),
-                ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
 
     val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
     val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
     val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
     val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
-    val (showUploaded) = rememberPreference(ShowUploadedPlaylistKey, true)
     
     val showLikedPlaylist = showLiked && matchesNormalizedQuery(normalizedQuery, likedPlaylist.playlist.name)
     val showDownloadedPlaylist =
         showDownloaded && matchesNormalizedQuery(normalizedQuery, downloadPlaylist.playlist.name)
     val showTopPlaylists = showTop && matchesNormalizedQuery(normalizedQuery, topPlaylist.playlist.name)
-    val showUploadedPlaylists =
-        showUploaded && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
     val showCachedPlaylists = showCached && matchesNormalizedQuery(normalizedQuery, cachedPlaylist.playlist.name)
 
 
@@ -545,23 +531,6 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showUploadedPlaylists) {
-                        item(
-                            key = "uploadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistListItem(
-                                playlist = uploadedPlaylist,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
-                                        }.animateItem(),
-                            )
-                        }
-                    }
 
                     items(
                         items = filteredItems,
@@ -764,7 +733,6 @@ fun LibraryMixScreen(
                         !showDownloadedPlaylist &&
                         !showCachedPlaylists &&
                         !showTopPlaylists &&
-                        !showUploadedPlaylists &&
                         searchQuery.isNotBlank()
                     ) {
                         item(key = "empty_search_result") {
@@ -885,24 +853,6 @@ fun LibraryMixScreen(
                         }
                     }
 
-                    if (showUploadedPlaylists) {
-                        item(
-                            key = "uploadedPlaylist",
-                            contentType = { CONTENT_TYPE_PLAYLIST },
-                        ) {
-                            PlaylistGridItem(
-                                playlist = uploadedPlaylist,
-                                fillMaxWidth = true,
-                                autoPlaylist = true,
-                                modifier =
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .clickable {
-                                            navController.navigate("auto_playlist/uploaded")
-                                        }.animateItem(),
-                            )
-                        }
-                    }
 
                     items(
                         items = filteredItems,
@@ -1040,7 +990,6 @@ fun LibraryMixScreen(
                         !showDownloadedPlaylist &&
                         !showCachedPlaylists &&
                         !showTopPlaylists &&
-                        !showUploadedPlaylists &&
                         searchQuery.isNotBlank()
                     ) {
                         item(
