@@ -5,10 +5,6 @@
 
 package fr.makoff.music.ui.screens.library
 
-import android.net.Uri
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -35,16 +31,12 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -60,7 +52,6 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import fr.makoff.music.innertube.YouTube
 import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
@@ -73,13 +64,11 @@ import fr.makoff.music.constants.SongSortDescendingKey
 import fr.makoff.music.constants.SongSortType
 import fr.makoff.music.constants.SongSortTypeKey
 import fr.makoff.music.constants.YtmSyncKey
-import fr.makoff.music.extensions.fileNameAndSize
 import fr.makoff.music.extensions.matchesNormalizedQuery
 import fr.makoff.music.extensions.normalizeForSearch
 import fr.makoff.music.extensions.toMediaItem
 import fr.makoff.music.playback.queues.ListQueue
 import fr.makoff.music.ui.component.ChipsRow
-import fr.makoff.music.ui.component.DefaultDialog
 import fr.makoff.music.ui.component.HideOnScrollFAB
 import fr.makoff.music.ui.component.LibrarySearchEmptyPlaceholder
 import fr.makoff.music.ui.component.LibrarySearchHeader
@@ -92,10 +81,6 @@ import fr.makoff.music.utils.rememberEnumPreference
 import fr.makoff.music.utils.rememberPreference
 import fr.makoff.music.viewmodels.LibrarySongsViewModel
 import timber.log.Timber
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalFoundationApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -104,7 +89,6 @@ fun LibrarySongsScreen(
     onDeselect: () -> Unit,
     viewModel: LibrarySongsViewModel = hiltViewModel(),
 ) {
-    val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val menuState = LocalMenuState.current
     val uploadUnsupportedFormatStr = stringResource(R.string.upload_unsupported_format)
@@ -134,116 +118,16 @@ fun LibrarySongsScreen(
     val normalizedQuery = remember(debouncedSearchQuery) { debouncedSearchQuery.normalizeForSearch() }
 
     var filter by rememberEnumPreference(SongFilterKey, SongFilter.LIKED)
+    // A previous version may have saved the removed UPLOADED tab.
+    LaunchedEffect(filter) {
+        if (filter == SongFilter.UPLOADED) filter = SongFilter.LIBRARY
+    }
 
-    // Upload state
-    var showUploadDialog by remember { mutableStateOf(false) }
-    var uploadProgress by remember { mutableFloatStateOf(0f) }
-    var currentUploadIndex by remember { mutableIntStateOf(0) }
-    var totalUploads by remember { mutableIntStateOf(0) }
-    var currentFileName by remember { mutableStateOf("") }
-    var isUploading by remember { mutableStateOf(false) }
-    var uploadJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
-
-    val filePickerLauncher =
-        rememberLauncherForActivityResult(
-            contract = ActivityResultContracts.OpenMultipleDocuments(),
-        ) { uris: List<Uri> ->
-            if (uris.isNotEmpty()) {
-                uris.forEach { uri ->
-                    try {
-                        val takeFlags = android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
-                        context.contentResolver.takePersistableUriPermission(uri, takeFlags)
-                    } catch (e: SecurityException) {
-                        Timber.w(e, "Could not take persistable permission")
-                    }
-                }
-                uploadJob =
-                    scope.launch {
-                        isUploading = true
-                        showUploadDialog = true
-                        totalUploads = uris.size
-                        var successCount = 0
-
-                        uris.forEachIndexed { index, uri ->
-                            currentUploadIndex = index + 1
-                            uploadProgress = 0f
-
-                            try {
-                                val (fileName, contentLength) =
-                                    withContext(Dispatchers.IO) {
-                                        context.contentResolver.fileNameAndSize(uri)
-                                    }
-                                currentFileName = fileName
-
-                                if (fileName.substringAfterLast('.', "").lowercase() !in YouTube.SUPPORTED_UPLOAD_TYPES) {
-                                    Toast.makeText(context, uploadUnsupportedFormatStr, Toast.LENGTH_SHORT).show()
-                                    return@forEachIndexed
-                                }
-                                if (contentLength >= YouTube.MAX_UPLOAD_SIZE) {
-                                    Toast.makeText(context, uploadFileTooLargeStr, Toast.LENGTH_SHORT).show()
-                                    return@forEachIndexed
-                                }
-                                if (contentLength <= 0) {
-                                    Toast.makeText(context, uploadFailedStr, Toast.LENGTH_SHORT).show()
-                                    return@forEachIndexed
-                                }
-
-                                val result =
-                                    YouTube.uploadSong(
-                                        filename = fileName,
-                                        contentLength = contentLength,
-                                        content = { checkNotNull(context.contentResolver.openInputStream(uri)) },
-                                        onProgress = { progress -> uploadProgress = progress },
-                                    )
-
-                                if (result.getOrThrow()) successCount++
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                Toast
-                                    .makeText(
-                                        context,
-                                        uploadFailedStr + ": ${e.message}",
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                            }
-                        }
-
-                        isUploading = false
-
-                        if (successCount > 0) {
-                            // Show completion briefly
-                            uploadProgress = 1f
-                            currentFileName = uploadCompleteStr
-                            kotlinx.coroutines.delay(1000)
-
-                            // Show toast on main thread
-                            withContext(Dispatchers.Main) {
-                                Toast
-                                    .makeText(
-                                        context,
-                                        uploadCompleteStr,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                            }
-
-                            showUploadDialog = false
-
-                            // Refresh uploaded songs
-                            viewModel.syncUploadedSongs()
-                        } else {
-                            showUploadDialog = false
-                        }
-                    }
-            }
-        }
-
-    LaunchedEffect(Unit) {
+    LaunchedEffect(ytmSync, filter) {
         if (ytmSync) {
             when (filter) {
                 SongFilter.LIKED -> viewModel.syncLikedSongs()
                 SongFilter.LIBRARY -> viewModel.syncLibrarySongs()
-                SongFilter.UPLOADED -> viewModel.syncUploadedSongs()
                 else -> return@LaunchedEffect
             }
         }
@@ -271,55 +155,6 @@ fun LibrarySongsScreen(
             val artistNames = song.artists.map { it.name }.toTypedArray()
             matchesNormalizedQuery(normalizedQuery, song.song.title, song.album?.title, *artistNames)
         }
-
-    // Upload progress dialog
-    if (showUploadDialog) {
-        DefaultDialog(
-            onDismiss = {
-                if (isUploading) {
-                    uploadJob?.cancel()
-                    isUploading = false
-                }
-                showUploadDialog = false
-            },
-            icon = {
-                Icon(
-                    painter = painterResource(R.drawable.upload),
-                    contentDescription = null,
-                )
-            },
-            title = { Text(stringResource(R.string.uploading)) },
-            buttons = {
-                TextButton(
-                    onClick = {
-                        if (isUploading) {
-                            uploadJob?.cancel()
-                            isUploading = false
-                        }
-                        showUploadDialog = false
-                    },
-                ) {
-                    Text(stringResource(R.string.cancel))
-                }
-            },
-        ) {
-            Text(
-                text = stringResource(R.string.upload_progress, currentUploadIndex, totalUploads),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = currentFileName,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            LinearProgressIndicator(
-                progress = { uploadProgress },
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
 
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -352,7 +187,6 @@ fun LibrarySongsScreen(
                             listOf(
                                 SongFilter.LIKED to stringResource(R.string.filter_liked),
                                 SongFilter.LIBRARY to stringResource(R.string.filter_library),
-                                SongFilter.UPLOADED to stringResource(R.string.filter_uploaded),
                                 SongFilter.DOWNLOADED to stringResource(R.string.filter_downloaded),
                             ),
                         currentValue = filter,
@@ -477,31 +311,18 @@ fun LibrarySongsScreen(
             }
         }
 
-        // Show upload FAB when on UPLOADED filter, shuffle FAB otherwise
+        // Shuffle only; audio uploads are no longer part of the Library UI.
         HideOnScrollFAB(
-            visible = if (filter == SongFilter.UPLOADED) true else filteredSongs.isNotEmpty(),
+            visible = filteredSongs.isNotEmpty(),
             lazyListState = lazyListState,
-            icon = if (filter == SongFilter.UPLOADED) R.drawable.upload else R.drawable.shuffle,
+            icon = R.drawable.shuffle,
             onClick = {
-                if (filter == SongFilter.UPLOADED) {
-                    filePickerLauncher.launch(
-                        arrayOf(
-                            "audio/mpeg",
-                            "audio/mp4",
-                            "audio/x-m4a",
-                            "audio/flac",
-                            "audio/ogg",
-                            "audio/x-ms-wma",
-                        ),
-                    )
-                } else {
-                    playerConnection.playQueue(
-                        ListQueue(
-                            title = queueAllSongsStr,
-                            items = filteredSongs.shuffled().map { it.toMediaItem() },
-                        ),
-                    )
-                }
+                playerConnection.playQueue(
+                    ListQueue(
+                        title = queueAllSongsStr,
+                        items = filteredSongs.shuffled().map { it.toMediaItem() },
+                    ),
+                )
             },
         )
     }
