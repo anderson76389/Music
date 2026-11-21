@@ -967,4 +967,5 @@
     <string name="immersive_artwork">Pochette immersive en portrait</string>
     <string name="settings_player_and_sound">Apparence, lecteur et son</string>
     <string name="settings_catalog_sources">Catalogue et sources</string>
+    <string name="soundproof_settings_section">Filtrage des artistes IA</string>
 </resources>
