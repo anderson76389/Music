@@ -147,6 +147,7 @@ assert 'filePickerLauncher.launch(' not in song_screen
 assert 'R.drawable.upload else R.drawable.shuffle' not in song_screen
 assert 'uploadedPlaylist' not in mix_screen
 assert 'uploadedPlaylist' not in playlist_screen
+assert 'R.string.show_uploaded_playlist' not in (k/'ui/screens/settings/AppearanceSettings.kt').read_text()
 assert 'auto_playlist/uploaded' not in mix_screen
 assert 'auto_playlist/uploaded' not in playlist_screen
 print('PASS: Library upload actions hidden, previous filters migrated without deleting saved music')
