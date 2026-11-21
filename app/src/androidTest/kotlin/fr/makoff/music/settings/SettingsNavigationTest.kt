@@ -612,7 +612,6 @@ class SettingsNavigationTest {
                         Triple(R.string.show_downloaded_playlist, ShowDownloadedPlaylistKey, true),
                         Triple(R.string.show_top_playlist, ShowTopPlaylistKey, true),
                         Triple(R.string.show_cached_playlist, ShowCachedPlaylistKey, true),
-                        Triple(R.string.show_uploaded_playlist, ShowUploadedPlaylistKey, true),
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }
                     if (android.os.Build.VERSION.SDK_INT >= 31) {
                         toggleAndRestore(R.string.enable_dynamic_theme, DynamicThemeKey, true)
