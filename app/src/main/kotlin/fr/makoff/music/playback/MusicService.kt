@@ -4736,5 +4736,5 @@ internal fun normalizationGainMb(
     val measuredLufs = perceptualLoudnessDb ?: loudnessDb?.let { it + LoudnessLevel.AGGRESSIVE.targetLufs }
     return measuredLufs
         ?.let { (-(it - targetLufs) * 100.0).toInt() }
-        ?.coerceIn(-1500, 300)
+        ?.coerceIn(-1500, 600)
 }

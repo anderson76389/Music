@@ -50,6 +50,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.graphics.BlendMode
+import fr.makoff.music.constants.ImmersiveArtworkKey
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -225,6 +228,7 @@ fun Thumbnail(
     val swipeThumbnailPref by rememberPreference(SwipeThumbnailKey, true)
     val swipeThumbnail = swipeThumbnailPref
     val hidePlayerThumbnail by rememberPreference(HidePlayerThumbnailKey, false)
+    val immersiveArtwork by rememberPreference(ImmersiveArtworkKey, true)
     val cropAlbumArt by rememberPreference(CropAlbumArtKey, false)
     val selectedPlayerBackground by rememberEnumPreference(
         key = PlayerBackgroundStyleKey,
@@ -274,8 +278,8 @@ fun Thumbnail(
     }
 
     // Current item tracking - derived state for efficiency
-    val currentItem by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemIndex } }
-    val itemScrollOffset by remember { derivedStateOf { thumbnailLazyGridState.firstVisibleItemScrollOffset } }
+    val currentItem by remember(thumbnailLazyGridState) { derivedStateOf { thumbnailLazyGridState.firstVisibleItemIndex } }
+    val itemScrollOffset by remember(thumbnailLazyGridState) { derivedStateOf { thumbnailLazyGridState.firstVisibleItemScrollOffset } }
 
     // Handle swipe to change song
     LaunchedEffect(itemScrollOffset) {
@@ -427,6 +431,7 @@ fun Thumbnail(
                                 item = item,
                                 dimensions = dimensions,
                                 hidePlayerThumbnail = hidePlayerThumbnail,
+                                immersive = immersiveArtwork && !isLandscape && !hidePlayerThumbnail,
                                 cropAlbumArt = cropAlbumArt,
                                 textBackgroundColor = textBackgroundColor,
                                 layoutDirection = layoutDirection,
@@ -522,6 +527,7 @@ private fun ThumbnailItem(
     item: MediaItem,
     dimensions: ThumbnailDimensions,
     hidePlayerThumbnail: Boolean,
+    immersive: Boolean,
     cropAlbumArt: Boolean,
     textBackgroundColor: Color,
     layoutDirection: LayoutDirection,
@@ -552,7 +558,7 @@ private fun ThumbnailItem(
                         .fillMaxSize()
                 }
             )
-            .padding(horizontal = PlayerHorizontalPadding)
+            .padding(horizontal = if (immersive) 0.dp else PlayerHorizontalPadding)
             .then(
                 if (unfoldedCanvas) Modifier
                 else Modifier.graphicsLayer {
@@ -599,14 +605,14 @@ private fun ThumbnailItem(
     ) {
         val coverShape = RoundedCornerShape(dimensions.cornerRadius)
         Box(
-            modifier = Modifier
+            modifier = (if (immersive) Modifier.fillMaxSize() else Modifier
                 .size(dimensions.thumbnailSize)
                 .clip(coverShape)
                 .border(
                     1.dp,
                     Brush.linearGradient(listOf(Color.White.copy(alpha = 0.26f), Color.Transparent, Color.Black.copy(alpha = 0.22f))),
                     coverShape,
-                )
+                ))
                 .then(if (item.mediaId == currentMediaId) Modifier.semantics {
                     contentDescription = coverToggleLabel
                     onClick {
@@ -627,7 +633,18 @@ private fun ThumbnailItem(
                 ThumbnailImage(
                     mediaId = item.mediaId,
                     artworkUri = artworkUriToUse,
-                    cropArtwork = cropAlbumArt || LocalLiquidGlassEnabled.current
+                    cropArtwork = immersive || cropAlbumArt || LocalLiquidGlassEnabled.current,
+                    modifier = if (immersive) Modifier
+                        .graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
+                        .drawWithCache {
+                            val mask = Brush.verticalGradient(
+                                0f to Color.Black, 0.64f to Color.Black, 1f to Color.Transparent,
+                            )
+                            onDrawWithContent {
+                                drawContent()
+                                drawRect(mask, blendMode = BlendMode.DstIn)
+                            }
+                        } else Modifier,
                 )
             }
 
