@@ -369,6 +369,13 @@ fun PlayerSettings(
                         description = { Text(videoThemeLabel(playerVideoThemeMode)) },
                         onClick = { navController.navigate("settings/player/video_theme") },
                     ),
+                ),
+            )
+            Spacer(modifier = Modifier.height(27.dp))
+            // Keep AI-artist filtering separate from video appearance controls.
+            Material3SettingsGroup(
+                title = stringResource(R.string.soundproof_settings_section),
+                items = listOf(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.person),
                         title = { Text(stringResource(R.string.soundproof_skip_ai_title)) },
@@ -430,6 +437,7 @@ fun PlayerSettings(
                     )
                 ),
             )
+
             Spacer(modifier = Modifier.height(27.dp))
         Material3SettingsGroup(
             title = stringResource(R.string.player_devices_section),
