@@ -20,7 +20,7 @@ class NormalizationGainTest {
 
     @Test
     fun `gain is clamped to processor limits`() {
-        assertEquals(300, normalizationGainMb(-30.0, null, -14f))
+        assertEquals(600, normalizationGainMb(-30.0, null, -14f))
         assertEquals(-1500, normalizationGainMb(null, 10.0, -14f))
     }
 
@@ -30,11 +30,11 @@ class NormalizationGainTest {
     }
 
     @Test
-    fun `default attenuates a loud recording by three fewer decibels`() {
+    fun `default raises a recording just below its target`() {
         val balanced = normalizationGainMb(null, -8.0, LoudnessLevel.BALANCED.targetLufs)
         val defaultGain = normalizationGainMb(null, -8.0, LoudnessLevel.DEFAULT.targetLufs)
         assertEquals(-600, balanced)
-        assertEquals(-300, defaultGain)
+        assertEquals(100, defaultGain)
     }
 
     @Test

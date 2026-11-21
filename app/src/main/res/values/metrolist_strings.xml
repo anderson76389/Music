@@ -964,4 +964,7 @@
     <string name="audio_sources_restricted">This add-on requires authorization Music cannot provide.</string>
     <string name="audio_sources_unavailable">The add-on is currently unavailable.</string>
     <string name="audio_sources_save_error">Could not save audio sources. Please try again.</string>
+    <string name="immersive_artwork">Pochette immersive en portrait</string>
+    <string name="settings_player_and_sound">Apparence, lecteur et son</string>
+    <string name="settings_catalog_sources">Catalogue et sources</string>
 </resources>

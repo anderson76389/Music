@@ -64,7 +64,7 @@ fun SettingsScreen(
 
         // User Interface Section
         Material3SettingsGroup(
-            title = stringResource(R.string.settings_section_ui),
+            title = stringResource(R.string.settings_player_and_sound),
             items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.palette),
@@ -75,21 +75,20 @@ fun SettingsScreen(
                     icon = painterResource(R.drawable.play),
                     title = { Text(stringResource(R.string.settings_player_entry)) },
                     onClick = { navController.navigate("settings/player") }
-                )
-            )
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Audio is directly above Content; player controls stay with Appearance above.
-        Material3SettingsGroup(
-            title = stringResource(R.string.settings_audio_content_section),
-            items = listOf(
+                ),
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.graphic_eq),
                     title = { Text(stringResource(R.string.settings_audio_entry)) },
                     onClick = { navController.navigate("settings/audio") }
                 ),
+            )
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Material3SettingsGroup(
+            title = stringResource(R.string.settings_catalog_sources),
+            items = listOf(
                 Material3SettingsItem(
                     icon = painterResource(R.drawable.language),
                     title = { Text(stringResource(R.string.content)) },

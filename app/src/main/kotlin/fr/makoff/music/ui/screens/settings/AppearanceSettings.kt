@@ -68,6 +68,7 @@ import fr.makoff.music.constants.EnableLandscapeScalingKey
 import fr.makoff.music.constants.ForceBottomNavBarKey
 import fr.makoff.music.constants.GridItemSize
 import fr.makoff.music.constants.GridItemsSizeKey
+import fr.makoff.music.constants.ImmersiveArtworkKey
 import fr.makoff.music.constants.HidePlayerThumbnailKey
 import fr.makoff.music.constants.HideStatusBarOnFullscreenKey
 import fr.makoff.music.constants.LibraryFilter
@@ -171,6 +172,7 @@ fun AppearanceSettings(
     // Check if user has selected a custom color (not the default/dynamic color)
     val isUsingCustomColor = selectedThemeColorInt != DefaultThemeColor.toArgb()
 
+    val (immersiveArtwork, setImmersiveArtwork) = rememberPreference(ImmersiveArtworkKey, true)
     val (useNewPlayerDesign, onUseNewPlayerDesignChange) =
         rememberPreference(
             UseNewPlayerDesignKey,
@@ -1036,6 +1038,14 @@ fun AppearanceSettings(
         Material3SettingsGroup(
             title = stringResource(R.string.appearance_player_section),
             items = buildList {
+                add(
+                    Material3SettingsItem(
+                        icon = painterResource(R.drawable.gradient),
+                        title = { Text(stringResource(R.string.immersive_artwork)) },
+                        trailingContent = { Switch(checked = immersiveArtwork, onCheckedChange = setImmersiveArtwork) },
+                        onClick = { setImmersiveArtwork(!immersiveArtwork) },
+                    ),
+                )
                 add(
                     Material3SettingsItem(
                         icon = painterResource(R.drawable.palette),
