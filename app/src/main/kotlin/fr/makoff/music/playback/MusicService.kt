@@ -404,7 +404,7 @@ class MusicService :
     private var normalizationEnabledCached: Boolean = false
 
     @Volatile
-    private var loudnessLevelCached: LoudnessLevel = LoudnessLevel.BALANCED
+    private var loudnessLevelCached: LoudnessLevel = LoudnessLevel.DEFAULT
 
     private var cachedNormalizationMediaId: String? = null
     private var cachedNormalizationGainMb: Int? = null
@@ -920,7 +920,7 @@ class MusicService :
                 .map { it[AudioNormalizationKey] ?: true }
                 .distinctUntilChanged(),
             dataStore.data
-                .map { prefs -> prefs[LoudnessLevelKey].toEnum(LoudnessLevel.BALANCED) }
+                .map { prefs -> prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT) }
                 .distinctUntilChanged(),
         ) { format, normalizeAudio, loudnessLevel ->
             Triple(format, normalizeAudio, loudnessLevel)
@@ -2125,7 +2125,7 @@ class MusicService :
     private fun seedLoudnessCacheFromPrefs() {
         val prefs = startupPrefs!!
         normalizationEnabledCached = prefs[AudioNormalizationKey] ?: true
-        loudnessLevelCached = prefs[LoudnessLevelKey].toEnum(LoudnessLevel.BALANCED)
+        loudnessLevelCached = prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT)
 
         Timber.tag(TAG).d(
             "Seeded loudness cache: normalization=$normalizationEnabledCached, level=$loudnessLevelCached"

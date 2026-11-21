@@ -89,7 +89,7 @@ fun ShowMediaInfo(videoId: String) {
 
     val loudnessLevel by rememberEnumPreference(
         LoudnessLevelKey,
-        defaultValue = LoudnessLevel.BALANCED
+        defaultValue = LoudnessLevel.DEFAULT
     )
 
     val targetLufs: Float = loudnessLevel.targetLufs

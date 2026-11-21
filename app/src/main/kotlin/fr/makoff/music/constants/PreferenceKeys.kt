@@ -144,7 +144,11 @@ enum class LoudnessLevel(
     AGGRESSIVE(-7f),
     LOUD(-11f),
     BALANCED(-14f),
-    QUIET(-19f),
+    QUIET(-19f);
+
+    companion object {
+        val DEFAULT = LOUD
+    }
 }
 
 val AutoLoadMoreKey = booleanPreferencesKey("autoLoadMore")

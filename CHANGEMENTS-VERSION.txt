@@ -1,2 +1,3 @@
-- **Sources audio personnalisées** dans Paramètres. Ajoutez une URL HTTPS, testez sa compatibilité, activez ou désactivez vos add-ons et choisissez leur ordre de priorité.
-- **Lecture audio** via les add-ons compatibles qui proposent un flux direct, par exemple en FLAC. Music revient automatiquement à YouTube Music en cas d’échec. Les téléchargements existants restent prioritaires.
+- **Pochette animée dans le mini-lecteur.** Elle tourne pendant la lecture et s’arrête à la pause.
+- **Pochettes retravaillées.** Image principale plus nette lorsque la source le permet, bordure légère et fond dégradé plus fidèle aux couleurs du morceau.
+- **Volume audio plus fort par défaut.** La normalisation cible −11 LUFS au lieu de −14 LUFS pour le profil par défaut. Le gain positif limite progressivement les crêtes.
