@@ -1,3 +1,4 @@
-- **Pochette animée dans le mini-lecteur.** Elle tourne pendant la lecture et s’arrête à la pause.
-- **Pochettes retravaillées.** Image principale plus nette lorsque la source le permet, bordure légère et fond dégradé plus fidèle aux couleurs du morceau.
-- **Volume audio plus fort par défaut.** La normalisation cible −11 LUFS au lieu de −14 LUFS pour le profil par défaut. Le gain positif limite progressivement les crêtes.
+- Le mini-lecteur affiche Précédent, Lecture/Pause et Suivant.
+- Une pression sur Vidéo affiche « Vidéo non disponible » lorsque le clip ne peut pas être lu.
+- Le lecteur réutilise la miniature en mémoire pendant le chargement de la grande pochette.
+- Les sources audio sont traduites en français. Audius est disponible dès l’installation et peut être activée ou désactivée.

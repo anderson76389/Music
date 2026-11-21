@@ -93,8 +93,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.media3.common.Player
 import coil3.compose.AsyncImage
-import fr.makoff.music.LocalDatabase
-import fr.makoff.music.LocalNavController
 import fr.makoff.music.LocalPlayerConnection
 import fr.makoff.music.R
 import fr.makoff.music.constants.CropAlbumArtKey
@@ -480,25 +478,7 @@ private fun NewMiniPlayer(
                     Spacer(modifier = Modifier.width(12.dp))
                 }
 
-// Artist icon opens the artist page (following artists is managed there).
-                mediaMetadata?.artists?.firstOrNull()?.id?.takeIf { it.isNotBlank() }?.let { artistId ->
-                    ArtistProfileButton(
-                        artistId = artistId,
-                        outlineColor = outlineColor,
-                        onSurfaceColor = onSurfaceColor,
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-// Favorite button - isolated composable
-                mediaMetadata?.let { FavoriteButton(
-                    songId = it.id,
-                    errorColor = errorColor,
-                    outlineColor = outlineColor,
-                    onSurfaceColor = onSurfaceColor,
-                )
-                }
+                MiniTransportControls(playbackState, isCasting, castHandler, playerConnection, canSkipPrevious, canSkipNext)
             }
         }
     }
@@ -845,19 +825,7 @@ private fun LegacyMiniPlayer(
                 }
             }
 
-            LegacyPlayPauseButton(
-                playbackState = playbackState,
-                isCasting = isCasting,
-                castHandler = castHandler,
-                playerConnection = playerConnection,
-            )
-
-            IconButton(
-                enabled = canSkipNext,
-                onClick = ({ playerConnection.seekToNext() }),
-            ) {
-                Icon(painter = painterResource(R.drawable.skip_next), contentDescription = null)
-            }
+            MiniTransportControls(playbackState, isCasting, castHandler, playerConnection, canSkipPrevious, canSkipNext)
         }
 
         // Swipe indicator
@@ -886,16 +854,20 @@ private fun LegacyMiniPlayer(
 }
 
 @Composable
-private fun LegacyPlayPauseButton(
+private fun MiniTransportControls(
     playbackState: Int,
     isCasting: Boolean,
     castHandler: CastConnectionHandler?,
     playerConnection: PlayerConnection,
+    canSkipPrevious: Boolean,
+    canSkipNext: Boolean,
 ) {
     val isPlaying by playerConnection.isPlaying.collectAsState()
     val castIsPlaying by castHandler?.castIsPlaying?.collectAsState() ?: remember { mutableStateOf(false) }
     val effectiveIsPlaying = if (isCasting) castIsPlaying else isPlaying
-    val isMuted by playerConnection.isMuted.collectAsStateWithLifecycle()
+    IconButton(enabled = canSkipPrevious, onClick = { playerConnection.player.seekToPreviousMediaItem() }) {
+        Icon(painterResource(R.drawable.skip_previous), stringResource(R.string.previous))
+    }
 
     IconButton(
         onClick = {
@@ -919,8 +891,11 @@ private fun LegacyPlayPauseButton(
                         else -> R.drawable.play
                     },
                 ),
-            contentDescription = null,
+            contentDescription = stringResource(if (effectiveIsPlaying) R.string.pause else R.string.play),
         )
+    }
+    IconButton(enabled = canSkipNext, onClick = { playerConnection.seekToNext() }) {
+        Icon(painterResource(R.drawable.skip_next), stringResource(R.string.next))
     }
 }
 
@@ -1004,80 +979,13 @@ private fun LegacyMiniMediaInfo(
 // ============================================================================
 
 @Composable
-private fun ArtistProfileButton(
-    artistId: String,
-    outlineColor: Color,
-    onSurfaceColor: Color,
-) {
-    val navController = LocalNavController.current
-    val openProfile = stringResource(R.string.mini_player_open_artist)
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .size(40.dp)
-            .clip(CircleShape)
-            .border(1.dp, outlineColor.copy(alpha = 0.3f), CircleShape)
-            .clickable(onClickLabel = openProfile) {
-                navController.navigate("artist/$artistId") {
-                    launchSingleTop = true
-                }
-            },
-    ) {
-        Icon(
-            painter = painterResource(R.drawable.person),
-            contentDescription = openProfile,
-            tint = onSurfaceColor.copy(alpha = 0.85f),
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-@Composable
-private fun FavoriteButton(
-    songId: String,
-    errorColor: Color,
-    outlineColor: Color,
-    onSurfaceColor: Color,
-) {
-    val database = LocalDatabase.current
-    val playerConnection = LocalPlayerConnection.current ?: return
-    val librarySong by database.song(songId).collectAsStateWithLifecycle(initialValue = null)
-    // For episodes, show saved state (inLibrary); for songs, show liked state
-    val isEpisode = librarySong?.song?.isEpisode == true
-    val isLiked = if (isEpisode) librarySong?.song?.inLibrary != null else librarySong?.song?.liked == true
-
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier =
-            Modifier
-                .size(40.dp)
-                .clip(CircleShape)
-                .border(
-                    width = 1.dp,
-                    color = if (isLiked) errorColor.copy(alpha = 0.5f) else outlineColor.copy(alpha = 0.3f),
-                    shape = CircleShape,
-                ).background(
-                    color = if (isLiked) errorColor.copy(alpha = 0.1f) else Color.Transparent,
-                    shape = CircleShape,
-                ).clickable { playerConnection.service.toggleLike() },
-    ) {
-        Icon(
-            painter = painterResource(if (isLiked) R.drawable.favorite else R.drawable.favorite_border),
-            contentDescription = null,
-            tint = if (isLiked) errorColor else onSurfaceColor.copy(alpha = 0.7f),
-            modifier = Modifier.size(20.dp),
-        )
-    }
-}
-
-
-@Composable
 private fun RotatingMiniArtwork(
     metadata: MediaMetadata,
     playing: Boolean,
     contentScale: ContentScale,
 ) {
     val url = remember(metadata.thumbnailUrl) { metadata.thumbnailUrl?.resize(width = 192) }
+    val context = LocalContext.current
     val angle = remember(metadata.id) { mutableFloatStateOf(0f) }
     var artworkLoaded by remember(metadata.id, url) { mutableStateOf(false) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -1108,7 +1016,10 @@ private fun RotatingMiniArtwork(
         )
         key(metadata.id, url) {
             AsyncImage(
-                model = url,
+                model = remember(url, metadata.id, context) {
+                    ImageRequest.Builder(context).data(url)
+                        .memoryCacheKey("mini-art:${metadata.id}:${metadata.thumbnailUrl}").build()
+                },
                 onSuccess = { artworkLoaded = true },
                 onError = { artworkLoaded = false },
                 contentDescription = null,

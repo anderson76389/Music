@@ -625,6 +625,7 @@ private fun ThumbnailItem(
                 }
 
                 ThumbnailImage(
+                    mediaId = item.mediaId,
                     artworkUri = artworkUriToUse,
                     cropArtwork = cropAlbumArt || LocalLiquidGlassEnabled.current
                 )
@@ -672,6 +673,7 @@ private fun HiddenThumbnailPlaceholder(
  */
 @Composable
 private fun ThumbnailImage(
+    mediaId: String,
     artworkUri: String?,
     cropArtwork: Boolean,
     modifier: Modifier = Modifier
@@ -694,10 +696,11 @@ private fun ThumbnailImage(
         )
         key(artworkUri) {
             val context = LocalContext.current
-            var displayedUrl by remember { mutableStateOf(artworkUri?.resize(width = 1440)) }
-            val request = remember(context, displayedUrl) {
+            var displayedUrl by remember { mutableStateOf(artworkUri?.resize(width = 1080, height = 1080)) }
+            val request = remember(context, displayedUrl, mediaId, artworkUri) {
                 ImageRequest.Builder(context)
                     .data(displayedUrl)
+                    .placeholderMemoryCacheKey("mini-art:${mediaId}:${artworkUri}")
                     .memoryCachePolicy(CachePolicy.ENABLED)
                     .diskCachePolicy(CachePolicy.ENABLED)
                     .networkCachePolicy(CachePolicy.ENABLED)

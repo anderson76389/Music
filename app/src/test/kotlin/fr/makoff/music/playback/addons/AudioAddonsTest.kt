@@ -10,6 +10,17 @@ import org.junit.Test
 
 class AudioAddonsTest {
     @Test
+    fun builtInSourceIsOptionalAndExistingPrioritySurvivesUpgrade() {
+        val preset = AudioAddons.decode(null).single()
+        assertEquals(AudioAddons.AUDIUS, preset.manifest)
+        assertEquals(false, preset.enabled)
+        val custom = AudioAddon("https://example.test/manifest.json", "Local", "LOSSLESS")
+        assertEquals(listOf(custom, preset), AudioAddons.decode(Json.encodeToString(listOf(custom))))
+        val reordered = listOf(preset.copy(enabled = true), custom)
+        assertEquals(reordered, AudioAddons.decode(Json.encodeToString(reordered)))
+    }
+
+    @Test
     fun manifestKeepsPersonalPathAndQuery() {
         assertEquals(
             "https://example.test/personal/manifest.json?key=value",
