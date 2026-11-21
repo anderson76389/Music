@@ -96,7 +96,7 @@ assert 'title = "Wrapped"' not in content_source
 print('PASS: Content section order and translated headings')
 
 for screen, headings in {
-    'PlayerSettings.kt': ['settings_player_entry', 'player_devices_section', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section'],
+    'PlayerSettings.kt': ['settings_player_entry', 'soundproof_settings_section', 'player_devices_section', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section'],
     'AppearanceSettings.kt': ['theme', 'appearance_display_section', 'appearance_navigation_section', 'appearance_player_section', 'mini_player', 'appearance_gestures_section', 'auto_playlists'],
 }.items():
     source = (k/'ui/screens/settings'/screen).read_text()
@@ -134,3 +134,29 @@ assert (k/'ui/screens/settings/PlayerSettings.kt').read_text().count(
 ) == 1
 assert "R.string.soundproof_skip_ai_title" not in (k/'ui/screens/settings/ContentSettings.kt').read_text()
 print("PASS: SoundProof has exactly one switch in Lecteur")
+
+# Uploaded music remains on the account, but no upload controls or virtual
+# "Téléversés" cards should appear in Bibliothèque after migration.
+library = k/'ui/screens/library'
+song_screen = (library/'LibrarySongsScreen.kt').read_text()
+mix_screen = (library/'LibraryMixScreen.kt').read_text()
+playlist_screen = (library/'LibraryPlaylistsScreen.kt').read_text()
+assert 'SongFilter.UPLOADED to stringResource' not in song_screen
+assert 'if (filter == SongFilter.UPLOADED) filter = SongFilter.LIBRARY' in song_screen
+assert 'filePickerLauncher.launch(' not in song_screen
+assert 'R.drawable.upload else R.drawable.shuffle' not in song_screen
+assert 'uploadedPlaylist' not in mix_screen
+assert 'uploadedPlaylist' not in playlist_screen
+assert 'auto_playlist/uploaded' not in mix_screen
+assert 'auto_playlist/uploaded' not in playlist_screen
+print('PASS: Library upload actions hidden, previous filters migrated without deleting saved music')
+
+# Settings navigation must be idempotent; source controls must never hide
+# beneath an overlaid TopAppBar.
+settings = (k/'ui/screens/settings/SettingsScreen.kt').read_text()
+source_screen = (k/'ui/screens/settings/AudioSourcesSettings.kt').read_text()
+assert 'launchSingleTop = true' in settings
+assert 'Scaffold(' in source_screen
+assert 'Modifier.padding(innerPadding)' in source_screen
+assert 'R.string.audio_sources_manifest_hint' in source_screen
+print('PASS: settings tap navigation guarded and source controls clear of toolbar')
