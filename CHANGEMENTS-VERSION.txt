@@ -1,4 +1,4 @@
-- Le mini-lecteur affiche Précédent, Lecture/Pause et Suivant.
-- Une pression sur Vidéo affiche « Vidéo non disponible » lorsque le clip ne peut pas être lu.
-- Le lecteur réutilise la miniature en mémoire pendant le chargement de la grande pochette.
-- Les sources audio sont traduites en français. Audius est disponible dès l’installation et peut être activée ou désactivée.
+- En portrait, la pochette occupe toute la largeur et se fond dans le lecteur. Le format carré reste disponible dans Apparence.
+- La normalisation utilise un niveau par défaut plus fort et peut relever les titres faibles de 6 dB.
+- Les réglages du lecteur et du son sont regroupés, et les extensions se trouvent avec le catalogue.
+- Correction du suivi du balayage des pochettes après un changement de morceau.

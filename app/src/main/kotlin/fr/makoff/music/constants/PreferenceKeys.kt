@@ -74,6 +74,7 @@ val PlayerVideoThemeModeKey = stringPreferencesKey("playerVideoThemeMode")
 val PlayerVideoCustomColorKey = intPreferencesKey("playerVideoCustomColor")
 enum class PlayerVideoThemeMode { DISABLED, AUTO, COVER, CUSTOM, LIGHT, DARK, OLED, LIQUID_GLASS }
 val UseNewMiniPlayerDesignKey = booleanPreferencesKey("useNewMiniPlayerDesign")
+val ImmersiveArtworkKey = booleanPreferencesKey("immersiveArtwork")
 val HidePlayerThumbnailKey = booleanPreferencesKey("hidePlayerThumbnail")
 val CropAlbumArtKey = booleanPreferencesKey("cropAlbumArt")
 val SeekExtraSeconds = booleanPreferencesKey("seekExtraSeconds")
@@ -147,7 +148,7 @@ enum class LoudnessLevel(
     QUIET(-19f);
 
     companion object {
-        val DEFAULT = LOUD
+        val DEFAULT = AGGRESSIVE
     }
 }
 
