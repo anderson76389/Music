@@ -14,6 +14,7 @@ import fr.makoff.music.playback.SoundProofRepository
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -28,6 +29,7 @@ import fr.makoff.music.ui.component.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -304,8 +306,34 @@ fun PlayerSettings(
         )
     }
 
+    // Give the header its own hit-test region: it must not cover the first settings rows.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+    TopAppBar(
+        title = {
+            Text(stringResource(
+                if (section == PlayerSettingsTab.PLAYER) R.string.settings_player_entry
+                else R.string.settings_audio_entry
+            ))
+        },
+        navigationIcon = {
+            IconButton(
+                onClick = navController::navigateUp,
+                onLongClick = navController::backToMain
+            ) {
+                Icon(
+                    painterResource(R.drawable.arrow_back),
+                    contentDescription = null
+                )
+            }
+        }
+    )
+        },
+    ) { innerPadding ->
     Column(
         Modifier
+            .padding(innerPadding)
             .windowInsetsPadding(
                 LocalPlayerAwareWindowInsets.current.only(
                     WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom
@@ -314,14 +342,6 @@ fun PlayerSettings(
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
     ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top
-                )
-            )
-        )
-
         if (section == PlayerSettingsTab.PLAYER) {
             Material3SettingsGroup(
                 title = stringResource(R.string.settings_player_entry),
@@ -1157,23 +1177,6 @@ fun PlayerSettings(
         Spacer(modifier = Modifier.height(16.dp))
     }
 
-    TopAppBar(
-        title = {
-            Text(stringResource(
-                if (section == PlayerSettingsTab.PLAYER) R.string.settings_player_entry
-                else R.string.settings_audio_entry
-            ))
-        },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null
-                )
-            }
-        }
-    )
+    }
+
 }
