@@ -1757,6 +1757,9 @@ class MusicService :
 
     private fun scheduleAutoplayRecommendations() {
         if (!cachedAutoplay || !playerInitialized.value || currentQueue.hasNextPage()) return
+        // Resolve the CURRENT song first. Extra network requests must not
+        // compete with its initial buffering or delay the first audible frame.
+        if (player.playbackState != Player.STATE_READY) return
         if (player.mediaItemCount <= 0 || player.currentMediaItemIndex == C.INDEX_UNSET) return
         val remaining = player.mediaItemCount - player.currentMediaItemIndex - 1
         if (remaining > 3 || player.repeatMode == REPEAT_MODE_ONE) return
@@ -1807,7 +1810,9 @@ class MusicService :
      * An expired URL, quality change, or replaced queue cannot reuse it.
      */
     private fun prefetchNextAudioStream() {
-        if (!playerInitialized.value || !player.playWhenReady || !isNetworkConnected.value) return
+        if (!playerInitialized.value || !player.playWhenReady || !isNetworkConnected.value ||
+            player.playbackState != Player.STATE_READY
+        ) return
         val nextIndex = player.nextMediaItemIndex
         if (nextIndex == C.INDEX_UNSET || nextIndex >= player.mediaItemCount) return
         val nextId = player.getMediaItemAt(nextIndex).mediaId
