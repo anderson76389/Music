@@ -639,6 +639,14 @@ class MusicService :
                     settings[RawYouTubeAudioMigrationKey] = true
                 }
                 eqProfileRepository.setActiveProfile(null)
+                // Enabled third-party source add-ons can supply lower-quality
+                // audio and add up to three seconds to every track change.
+                // Preserve all custom manifests, but make original YouTube
+                // Music the source again until the user explicitly opts in.
+                if (!AudioAddons.update(this@MusicService) { sources ->
+                        sources.map { it.copy(enabled = false) }
+                    }
+                ) Timber.tag(TAG).w("Could not reset custom audio sources")
                 prefs = dataStore.data.first()
             }
             prefs
