@@ -27,6 +27,7 @@ for key, value in (
 ):
     assert f"settings[{key}] = {value}" in service, key
 assert "eqProfileRepository.setActiveProfile(null)" in service
+assert "playerVolume.value = playerState.volume" not in service, "Legacy player state must not restore stale app volume"
 assert "prefs[AudioNormalizationKey] ?: false" in service
 assert "it[AudioNormalizationKey] ?: false" in service
 assert "AudioNormalizationKey,\n        defaultValue = false" in settings
