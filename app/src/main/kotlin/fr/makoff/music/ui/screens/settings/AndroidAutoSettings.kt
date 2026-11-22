@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -27,6 +30,7 @@ import androidx.compose.material3.Slider
 import fr.makoff.music.ui.component.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -151,9 +155,30 @@ fun AndroidAutoSettings(
         }
     }
 
+    // Reserve space for the app bar rather than drawing it over the settings.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+        TopAppBar(
+            title = { Text(stringResource(R.string.android_auto)) },
+            navigationIcon = {
+                IconButton(
+                    onClick = navController::navigateUp,
+                    onLongClick = navController::backToMain,
+                ) {
+                    Icon(
+                        painterResource(R.drawable.arrow_back),
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+        },
+    ) { innerPadding ->
     Column(
         modifier = Modifier
-            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current)
+            .padding(innerPadding)
+            .windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp)
     ) {
@@ -367,18 +392,5 @@ fun AndroidAutoSettings(
         Spacer(Modifier.height(27.dp))
     }
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.android_auto)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+    }
 }
