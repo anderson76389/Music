@@ -187,7 +187,7 @@ assert "fun requestNextSongOnDemand()" in service
 assert "database.relatedSongs(currentId)" in service
 assert "PlaybackRecommendations.fetch(currentId)" in service
 assert "scheduleAutoplayRecommendations()" in service
-assert "player.addMediaItems(fresh)" in service
+assert "player.addMediaItems(autoplayNext)" in service
 assert "playerConnection.seekToNext()" in mini
 assert "startIndex = allLocalItems.filterIsInstance<Song>()" in home
 assert "startIndex = allYtItems.filterIsInstance<SongItem>()" in home
