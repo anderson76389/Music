@@ -1754,7 +1754,11 @@ class MusicService :
         recommendationsJob?.cancel()
         recommendationsJob = scope.launch(SilentHandler) {
             try {
-                val recommendations = PlaybackRecommendations.fetch(seedId)
+                val online = PlaybackRecommendations.fetch(seedId)
+                val offlineFallback = if (online.isEmpty()) withContext(Dispatchers.IO) {
+                    database.relatedSongs(seedId).map { it.toMediaItem() }
+                } else emptyList()
+                val recommendations = (online + offlineFallback)
                     .filterExplicit(cachedHideExplicit)
                     .filterVideoSongs(cachedHideVideoSongs)
                 if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation ||
