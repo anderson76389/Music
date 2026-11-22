@@ -23,6 +23,18 @@ class PlaybackRecommendationsTest {
         )
     }
 
+    @Test fun suggestionsAreSplitBetweenAutoplayAndVisibleSimilarSection() {
+        val singles = listOf(item("TRACK000001"))
+        val (singleQueued, singleSimilar) = PlaybackRecommendations.splitSuggestions(singles)
+        assertEquals(1, singleQueued.size)
+        assertEquals(0, singleSimilar.size)
+        val many = (1..7).map { item("MUSIC%06d".format(it)) }
+        val (queued, visible) = PlaybackRecommendations.splitSuggestions(many)
+        assertEquals(2, queued.size)
+        assertEquals(5, visible.size)
+        assertEquals(emptySet<String>(), queued.map { it.mediaId }.toSet().intersect(visible.map { it.mediaId }.toSet()))
+    }
+
     @Test fun noSuggestionsDoesNotReplaceTheCurrentQueue() {
         assertEquals(emptyList<MediaItem>(), PlaybackRecommendations.distinctCandidates("CURRENT1234", emptyList()))
     }
