@@ -967,4 +967,6 @@
     <string name="immersive_artwork">Pochette immersive en portrait</string>
     <string name="settings_player_and_sound">Apparence, lecteur et son</string>
     <string name="settings_catalog_sources">Catalogue et sources</string>
+    <string name="soundproof_settings_section">Filtrage des artistes IA</string>
+    <string name="audio_sources_manifest_hint">Ajoutez une source compatible avec l’URL HTTPS de son manifest.json. Les extensions privées ou nécessitant un compte ne sont pas fournies automatiquement.</string>
 </resources>

@@ -1,4 +1,5 @@
-- En portrait, la pochette occupe toute la largeur et se fond dans le lecteur. Le format carré reste disponible dans Apparence.
-- La normalisation utilise un niveau par défaut plus fort et peut relever les titres faibles de 6 dB.
-- Les réglages du lecteur et du son sont regroupés, et les extensions se trouvent avec le catalogue.
-- Correction du suivi du balayage des pochettes après un changement de morceau.
+- Bibliothèque : retrait de l’action Téléverser et du raccourci Téléversés des listes, sans suppression des titres déjà enregistrés.
+- Filtres : une ancienne préférence Téléversés revient automatiquement à Bibliothèque pour éviter une vue vide.
+- Lecteur : options vidéo et protection contre les artistes IA rangées dans deux groupes distincts, avec un seul interrupteur SoundProof.
+- Paramètres : navigation protégée contre les appuis répétés, barre d’outils des sources audio séparée des éléments interactifs.
+- Extensions audio : ajout d’une explication sur l’URL de manifeste HTTPS nécessaire et les sources privées soumises à autorisation.

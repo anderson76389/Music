@@ -72,7 +72,6 @@ import fr.makoff.music.constants.ShowCachedPlaylistKey
 import fr.makoff.music.constants.ShowDownloadedPlaylistKey
 import fr.makoff.music.constants.ShowLikedPlaylistKey
 import fr.makoff.music.constants.ShowTopPlaylistKey
-import fr.makoff.music.constants.ShowUploadedPlaylistKey
 import fr.makoff.music.constants.YtmSyncKey
 import fr.makoff.music.db.entities.Playlist
 import fr.makoff.music.db.entities.PlaylistEntity
@@ -176,16 +175,6 @@ fun LibraryPlaylistsScreen(
         )
 
 
-    val uploadedPlaylist =
-        Playlist(
-            playlist = PlaylistEntity(
-                id = UUID.randomUUID().toString(),
-                name = stringResource(R.string.uploaded_playlist)
-            ),
-            songCount = 0,
-            songThumbnails = emptyList(),
-        )
-
     val cachedPlaylist =
         Playlist(
             playlist = PlaylistEntity(
@@ -199,15 +188,12 @@ fun LibraryPlaylistsScreen(
     val (showLiked) = rememberPreference(ShowLikedPlaylistKey, true)
     val (showDownloaded) = rememberPreference(ShowDownloadedPlaylistKey, true)
     val (showTop) = rememberPreference(ShowTopPlaylistKey, true)
-    val (showUploaded) = rememberPreference(ShowUploadedPlaylistKey, true)
     val (showCached) = rememberPreference(ShowCachedPlaylistKey, true)
     val showLikedPlaylist = showLiked && matchesNormalizedQuery(normalizedQuery, likedPlaylist.playlist.name)
     val showDownloadedPlaylist =
         showDownloaded && matchesNormalizedQuery(normalizedQuery, downloadPlaylist.playlist.name)
     val showCachedPlaylists = showCached && matchesNormalizedQuery(normalizedQuery, cachedPlaylist.playlist.name)
     val showTopPlaylists = showTop && matchesNormalizedQuery(normalizedQuery, topPlaylist.playlist.name)
-    val showUploadedPlaylists =
-        showUploaded && matchesNormalizedQuery(normalizedQuery, uploadedPlaylist.playlist.name)
 
     val visibleResults = remember(
         filteredPlaylists,
@@ -215,7 +201,6 @@ fun LibraryPlaylistsScreen(
         showDownloadedPlaylist,
         showCachedPlaylists,
         showTopPlaylists,
-        showUploadedPlaylists,
         topSize,
     ) {
         buildList {
@@ -256,16 +241,6 @@ fun LibraryPlaylistsScreen(
                         playlist = topPlaylist,
                         autoPlaylist = true,
                         route = "top_playlist/$topSize",
-                    ),
-                )
-            }
-            if (showUploadedPlaylists) {
-                add(
-                    VisiblePlaylistItem(
-                        key = "uploadedPlaylist",
-                        playlist = uploadedPlaylist,
-                        autoPlaylist = true,
-                        route = "auto_playlist/uploaded",
                     ),
                 )
             }

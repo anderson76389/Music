@@ -84,7 +84,6 @@ import fr.makoff.music.constants.ShowCachedPlaylistKey
 import fr.makoff.music.constants.ShowDownloadedPlaylistKey
 import fr.makoff.music.constants.ShowLikedPlaylistKey
 import fr.makoff.music.constants.ShowTopPlaylistKey
-import fr.makoff.music.constants.ShowUploadedPlaylistKey
 import fr.makoff.music.constants.SliderStyle
 import fr.makoff.music.constants.SliderStyleKey
 import fr.makoff.music.constants.SlimNavBarKey
@@ -306,12 +305,6 @@ fun AppearanceSettings(
             ShowCachedPlaylistKey,
             defaultValue = true,
         )
-    val (showUploadedPlaylist, onShowUploadedPlaylistChange) =
-        rememberPreference(
-            ShowUploadedPlaylistKey,
-            defaultValue = true,
-        )
-
     val availableBackgroundStyles =
         PlayerBackgroundStyle.entries.filter {
             it != PlayerBackgroundStyle.BLUR || Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -1449,29 +1442,7 @@ fun AppearanceSettings(
                         onClick = { onShowCachedPlaylistChange(!showCachedPlaylist) },
                     ),
                 )
-                add(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.backup),
-                        title = { Text(stringResource(R.string.show_uploaded_playlist)) },
-                        trailingContent = {
-                            Switch(
-                                checked = showUploadedPlaylist,
-                                onCheckedChange = onShowUploadedPlaylistChange,
-                                thumbContent = {
-                                    Icon(
-                                        painter =
-                                            painterResource(
-                                                id = if (showUploadedPlaylist) R.drawable.check else R.drawable.close,
-                                            ),
-                                        contentDescription = null,
-                                        modifier = Modifier.size(SwitchDefaults.IconSize),
-                                    )
-                                },
-                            )
-                        },
-                        onClick = { onShowUploadedPlaylistChange(!showUploadedPlaylist) },
-                    ),
-                )
+
             },
         )
         Spacer(modifier = Modifier.height(16.dp))

@@ -3,6 +3,9 @@ package fr.makoff.music.ui.screens.settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -17,6 +20,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -74,10 +78,28 @@ fun AudioSourcesSettings(navController: NavController) {
         )
     }
 
-    LazyColumn(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current)) {
+    // Keep the toolbar and scrollable controls in separate layout regions:
+    // without a Scaffold the header can intercept taps on source settings.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+    TopAppBar(
+        title = { Text(stringResource(R.string.audio_sources_title)) },
+        navigationIcon = {
+            SourceAction(R.drawable.arrow_back, R.string.back) { navController.navigateUp() }
+        },
+    )
+        },
+    ) { innerPadding ->
+    LazyColumn(
+        Modifier.padding(innerPadding).windowInsetsPadding(
+            LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
+        ),
+    ) {
         item {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.audio_sources_order))
+                Text(stringResource(R.string.audio_sources_manifest_hint), style = MaterialTheme.typography.bodySmall)
                 Button(onClick = { adding = true }, enabled = sources.size < AudioAddons.MAX_SOURCES) {
                     Text(stringResource(R.string.audio_sources_add))
                 }
@@ -122,13 +144,8 @@ fun AudioSourcesSettings(navController: NavController) {
             )
         }
     }
+    }
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.audio_sources_title)) },
-        navigationIcon = {
-            SourceAction(R.drawable.arrow_back, R.string.back) { navController.navigateUp() }
-        },
-    )
 }
 
 @Composable
