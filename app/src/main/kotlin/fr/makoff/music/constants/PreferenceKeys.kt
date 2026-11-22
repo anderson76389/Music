@@ -117,6 +117,8 @@ val InternalDownloadFormatKey = stringPreferencesKey("internalDownloadFormat")
 val ExternalDownloadFormatKey = stringPreferencesKey("externalDownloadFormat")
 
 val AudioQualityKey = stringPreferencesKey("audioQuality")
+/** One-time migration: use original high-quality YouTube audio without DSP or old attenuation. */
+val RawYouTubeAudioMigrationKey = booleanPreferencesKey("rawYouTubeAudioMigration20261122")
 
 enum class AudioQuality {
     AUTO,
