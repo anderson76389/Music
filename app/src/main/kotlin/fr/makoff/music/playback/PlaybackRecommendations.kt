@@ -34,6 +34,15 @@ internal object PlaybackRecommendations {
         distinctCandidates(seedId, fromNext + related + radio + radioRelated)
     }
 
+    /** Keep at least one track ready to play and expose the others as Similar. */
+    fun splitSuggestions(suggestions: List<MediaItem>): Pair<List<MediaItem>, List<MediaItem>> {
+        val queuedCount = when {
+            suggestions.size <= 1 -> suggestions.size
+            else -> minOf(2, suggestions.size - 1)
+        }
+        return suggestions.take(queuedCount) to suggestions.drop(queuedCount)
+    }
+
     fun distinctCandidates(seedId: String, suggestions: List<MediaItem>, existing: Set<String> = emptySet()): List<MediaItem> {
         val seen = existing.toMutableSet().apply { add(seedId) }
         return suggestions.filter { candidate ->
