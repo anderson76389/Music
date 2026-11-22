@@ -39,10 +39,12 @@ base_strings = root / "app/src/main/res/values/metrolist_strings.xml"
 fr_strings = root / "app/src/main/res/values-fr/metrolist_strings.xml"
 base = {s.get("name"): s.text for s in ET.parse(base_strings).getroot() if s.tag == "string"}
 fr = {s.get("name"): s.text for s in ET.parse(fr_strings).getroot() if s.tag == "string"}
+fr_addons = {s.get("name"): s.text for s in ET.parse(root / "app/src/main/res/values-fr/audio_sources.xml").getroot() if s.tag == "string"}
+assert not (set(fr) & set(fr_addons)), "Duplicated French string resource keys"
 assert base["advanced_desc"] == "Tempo and pitch"
 assert fr["advanced_desc"] == "Tempo et tonalité"
 for key in ("audio_sources_title", "audio_sources_url", "audio_sources_manifest_hint"):
-    assert key in fr, key
+    assert key in fr or key in fr_addons, key
 assert "Apple Music" in (root / "README.md").read_text()
 assert 'rootProject.name = "AppleMusic"' in (root / "settings.gradle.kts").read_text()
 gradle = (root / "app/build.gradle.kts").read_text()
