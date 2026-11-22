@@ -15,6 +15,13 @@ for name in ("AppearanceSettings", "ContentSettings", "StorageSettings"):
     assert "WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom" in source, name
     assert source.index("TopAppBar(") < source.index("Column(\n        Modifier\n            .padding(innerPadding)"), name
 
+for name in ("AndroidAutoSettings", "UpdaterSettings", "BackupAndRestore", "DownloadsSettings"):
+    source = (kotlin / "ui/screens/settings" / (name + ".kt")).read_text()
+    assert source.count("Scaffold(") == 1, name
+    assert source.count("TopAppBar(") == 1, name
+    assert ".padding(innerPadding)" in source, name
+    assert "WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom" in source, name
+
 player = (kotlin / "ui/player/Player.kt").read_text()
 assert player.count(".weight(sideButtonWeight)") == 2
 assert "backButtonWeight" not in player
