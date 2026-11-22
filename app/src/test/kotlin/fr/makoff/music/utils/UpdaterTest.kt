@@ -45,6 +45,39 @@ class UpdaterTest {
         assertEquals(renamed, Updater.selectUpdateAsset(parsed, "arm64-v8a", "gms")?.downloadUrl)
     }
 
+    @Test fun renamedRepositoryApiIsUsedWhenOldPathIsGone() = runBlocking {
+        val requests = mutableListOf<String>()
+        val httpClient = HttpClient(MockEngine { request ->
+            requests.add(request.url.toString())
+            when {
+                request.url.encodedPath.endsWith("/releases/latest") &&
+                    request.url.encodedPath.contains("/Apple-Music/") ->
+                    respond("""{
+                      "tag_name":"v13.7.0.136","published_at":"2026-11-22T00:00:00Z","body":"Correctifs",
+                      "assets":[
+                        {"name":"Apple.Music.apk",
+                         "browser_download_url":"https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/Apple.Music.apk",
+                         "size":120},
+                        {"name":"BUILD.txt",
+                         "browser_download_url":"https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/BUILD.txt",
+                         "size":90}
+                      ]}""", HttpStatusCode.OK)
+                request.url.encodedPath.endsWith("/releases/latest") ->
+                    respond("not found", HttpStatusCode.NotFound)
+                else -> respond("MUSIC_VERSION_CODE=100136\n", HttpStatusCode.OK)
+            }
+        })
+        try {
+            val release = Updater.fetchLatestRelease(httpClient)
+            assertEquals("v13.7.0.136", release.tagName)
+            assertEquals(100136L, release.versionCode)
+            assertEquals(1, release.assets.size)
+            assertEquals("Apple.Music.apk", release.assets.single().name)
+            assertTrue(requests.any { it.contains("/anderson76389/Music/releases/latest") })
+            assertTrue(requests.any { it.contains("/anderson76389/Apple-Music/releases/latest") })
+        } finally { httpClient.close() }
+    }
+
     @Test fun githubNormalizesSpacesToDotsAndLegacyClientsStillFindAnApk() {
         // GitHub Releases publishes "Apple Music.apk" as "Apple.Music.apk".
         // The historical filename is also published so apps before this fix
