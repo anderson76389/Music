@@ -181,7 +181,7 @@
     <string name="refetch_desc">Actualiser les métadonnées depuis YouTube Music</string>
     <string name="share_desc">Partager un lien vers cet élément</string>
     <string name="delete_desc">Supprimer définitivement cet élément</string>
-    <string name="advanced_desc">Régler le tempo et la hauteur tonale du morceau</string>
+    <string name="advanced_desc">Tempo et tonalité</string>
     <string name="equalizer_desc">Ouvrez l\'égaliseur audio</string>
     <string name="mini_player">Mini-lecteur</string>
     <string name="cache_size_warning_title">Attendez !</string>
@@ -729,4 +729,5 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
+    <string name="audio_sources_manifest_hint">Ajoutez l\'URL HTTPS du fichier manifest.json d\'une extension compatible. Certaines nécessitent un compte.</string>
 </resources>

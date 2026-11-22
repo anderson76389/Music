@@ -19,15 +19,20 @@ import fr.makoff.music.ui.utils.backToMain
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DownloadsSettings(navController: NavController) {
-    Column(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+        TopAppBar(title = { Text(stringResource(R.string.download_settings)) }, navigationIcon = {
+            IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
+                Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
+            }
+        })
+        },
+    ) { innerPadding ->
+    Column(Modifier.padding(innerPadding).windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(
         WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)).verticalScroll(rememberScrollState())
         .padding(horizontal = 16.dp)) {
-        Spacer(Modifier.windowInsetsPadding(LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Top)))
         FolderAudioHistory()
     }
-    TopAppBar(title = { Text(stringResource(R.string.download_settings)) }, navigationIcon = {
-        IconButton(onClick = navController::navigateUp, onLongClick = navController::backToMain) {
-            Icon(painterResource(R.drawable.arrow_back), contentDescription = null)
-        }
-    })
+    }
 }

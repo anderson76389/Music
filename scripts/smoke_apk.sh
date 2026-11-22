@@ -29,10 +29,13 @@ for variant in foss gms; do
   fi
   adb shell am start -W -n "$package/fr.makoff.music.MainActivity" | tee "smoke-results/$variant-launch.txt"
   sleep 15
-  adb logcat -d > "smoke-results/$variant-logcat.txt"
-  adb shell dumpsys activity activities > "smoke-results/$variant-activities.txt"
-  adb exec-out screencap -p > "smoke-results/$variant.png"
-  adb shell pidof "$package"
+  # API 35 emulators sometimes drop ADB after the app has launched; retry
+  # transport-only observations, then still require an active process and
+  # foreground activity. A persistent disconnect must fail this smoke test.
+  adb_retry logcat -d > "smoke-results/$variant-logcat.txt"
+  adb_retry shell dumpsys activity activities > "smoke-results/$variant-activities.txt"
+  adb_retry exec-out screencap -p > "smoke-results/$variant.png"
+  adb_retry shell pidof "$package"
   python3 scripts/check_resumed_activity.py "$package" "smoke-results/$variant-activities.txt"
   if grep -Fq "Process: $package," "smoke-results/$variant-logcat.txt"; then
     echo "Échec : plantage du processus détecté ($variant)."

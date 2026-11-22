@@ -10,6 +10,7 @@ import io.ktor.client.plugins.HttpTimeout
 import kotlinx.coroutines.CancellationException
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
+import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -45,6 +46,21 @@ object Updater {
     
     private const val CHECK_INTERVAL_MILLIS = 5 * 60 * 1000L // Automatic checks also run when returning to the app.
     internal const val GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"
+    internal const val RENAMED_GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Apple-Music"
+
+    private suspend fun fetchRepositoryApi(httpClient: HttpClient, endpoint: String): HttpResponse {
+        // GitHub normally redirects the former repo URL, but a direct fallback
+        // also covers API clients or proxies that do not preserve redirects.
+        try {
+            val old = httpClient.get("$GITHUB_API_BASE/$endpoint")
+            if (old.status.value != 404 && old.status.value !in 300..399) return old
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) {
+            // Try the renamed repository endpoint after old-path failures.
+        }
+        return httpClient.get("$RENAMED_GITHUB_API_BASE/$endpoint")
+    }
 
     /**
      * Compares two version strings.
@@ -83,11 +99,32 @@ object Updater {
         return architecture to variant
     }
 
-    internal fun isOwnApkUrl(url: String): Boolean = runCatching {
+    // Keep the existing repository URL while accepting assets from the renamed
+    // GitHub repository. Ship this before changing the repository name: old
+    // installed versions must be able to upgrade to a rename-aware APK.
+    private val trustedReleasePaths = listOf(
+        "/anderson76389/Music/releases/download/",
+        "/anderson76389/Apple-Music/releases/download/",
+    )
+
+    private fun isOwnReleaseAssetUrl(url: String, validFile: (String) -> Boolean): Boolean = runCatching {
         val uri = java.net.URI(url)
-        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
-            uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith(".apk")
+        val rawPath = uri.rawPath.orEmpty()
+        val prefix = trustedReleasePaths.firstOrNull { rawPath.startsWith(it) }
+            ?: return@runCatching false
+        val relative = rawPath.removePrefix(prefix)
+        val tag = relative.substringBefore('/', missingDelimiterValue = "")
+        val filename = relative.substringAfter('/', missingDelimiterValue = "")
+        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null &&
+            uri.port == -1 && uri.rawQuery == null && uri.rawFragment == null &&
+            tag.isNotBlank() && filename.isNotBlank() && '/' !in filename && validFile(filename)
     }.getOrDefault(false)
+
+    internal fun isOwnApkUrl(url: String): Boolean =
+        isOwnReleaseAssetUrl(url) { it.endsWith(".apk") }
+
+    internal fun isOwnBuildInfoUrl(url: String): Boolean =
+        isOwnReleaseAssetUrl(url) { it == "BUILD.txt" }
 
     /**
      * Parse release assets from GitHub API response
@@ -157,7 +194,7 @@ object Updater {
         }
 
     internal suspend fun fetchLatestRelease(httpClient: HttpClient): ReleaseInfo {
-        val response = httpClient.get("$GITHUB_API_BASE/releases/latest")
+        val response = fetchRepositoryApi(httpClient, "releases/latest")
         check(response.status.value in 200..299) { "GitHub HTTP ${response.status.value}" }
         val json = JSONObject(response.bodyAsText())
         val rawAssets = json.getJSONArray("assets")
@@ -166,9 +203,7 @@ object Updater {
             val asset = rawAssets.getJSONObject(index)
             if (asset.optString("name") != "BUILD.txt") continue
             val url = asset.getString("browser_download_url")
-            val uri = java.net.URI(url)
-            check(uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
-                uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith("/BUILD.txt"))
+            check(isOwnBuildInfoUrl(url)) { "GitHub BUILD.txt URL non reconnue" }
             val metadata = httpClient.get(url)
             check(metadata.status.value in 200..299) { "GitHub HTTP ${metadata.status.value}" }
             versionCode = parsePublishedVersionCode(metadata.bodyAsText())
@@ -217,7 +252,7 @@ object Updater {
     internal suspend fun fetchReleaseHistory(httpClient: HttpClient): List<ReleaseInfo> {
         val releases = mutableListOf<ReleaseInfo>()
         for (page in 1..10) {
-            val response = httpClient.get("$GITHUB_API_BASE/releases?page=$page&per_page=30")
+            val response = fetchRepositoryApi(httpClient, "releases?page=$page&per_page=30")
             check(response.status.value in 200..299) { "GitHub HTTP ${response.status.value}" }
             val json = JSONArray(response.bodyAsText())
             for (i in 0 until json.length()) {

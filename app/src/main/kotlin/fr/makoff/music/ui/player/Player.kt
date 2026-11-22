@@ -1362,12 +1362,13 @@ fun BottomSheetPlayer(
                                 label = "playPauseWeight",
                             )
 
-                            val backButtonWeight by animateFloatAsState(
+                            // Symmetric side widths keep Play/Pause precisely centered when pressed.
+                            val sideButtonWeight by animateFloatAsState(
                                 targetValue =
-                                    if (isBackPressed) {
-                                        0.65f
-                                    } else if (isPlayPausePressed) {
+                                    if (isPlayPausePressed) {
                                         0.35f
+                                    } else if (isBackPressed || isNextPressed) {
+                                        0.55f
                                     } else {
                                         0.45f
                                     },
@@ -1376,24 +1377,7 @@ fun BottomSheetPlayer(
                                         dampingRatio = 0.6f,
                                         stiffness = 500f,
                                     ),
-                                label = "backButtonWeight",
-                            )
-
-                            val nextButtonWeight by animateFloatAsState(
-                                targetValue =
-                                    if (isNextPressed) {
-                                        0.65f
-                                    } else if (isPlayPausePressed) {
-                                        0.35f
-                                    } else {
-                                        0.45f
-                                    },
-                                animationSpec =
-                                    spring(
-                                        dampingRatio = 0.6f,
-                                        stiffness = 500f,
-                                    ),
-                                label = "nextButtonWeight",
+                                label = "sideButtonWeight",
                             )
 
                             FilledIconButton(
@@ -1409,7 +1393,7 @@ fun BottomSheetPlayer(
                                 modifier =
                                     Modifier
                                         .height(76.dp)
-                                        .weight(backButtonWeight),
+                                        .weight(sideButtonWeight),
                             ) {
                                 Icon(
                                     painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_previous else R.drawable.skip_previous),
@@ -1492,7 +1476,7 @@ fun BottomSheetPlayer(
                                 modifier =
                                     Modifier
                                         .height(76.dp)
-                                        .weight(nextButtonWeight),
+                                        .weight(sideButtonWeight),
                             ) {
                                 Icon(
                                     painter = painterResource(if (LocalLiquidGlassEnabled.current) R.drawable.glass_next else R.drawable.skip_next),

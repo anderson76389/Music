@@ -1,4 +1,4 @@
-name: Music Android
+name: Apple Music Android
 on:
   workflow_dispatch:
   push:
@@ -28,6 +28,7 @@ jobs:
         run: |
           python3 scripts/audit_independence.py
           python3 scripts/audit_settings.py
+          python3 scripts/audit_layout_brand.py
           python3 scripts/test_release_version.py
           python3 scripts/test_compact_apks.py
           python3 scripts/audit_player_regressions.py

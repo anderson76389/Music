@@ -21,7 +21,7 @@ dependencyResolutionManagement {
 }
 
 // F-Droid doesn't support foojay-resolver plugin
-rootProject.name = "MakoffMusic"
+rootProject.name = "AppleMusic"
 include(":app")
 include(":innertube")
 

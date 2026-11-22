@@ -7,6 +7,7 @@ package fr.makoff.music.ui.screens.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import fr.makoff.music.ui.component.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -97,9 +99,30 @@ fun UpdaterScreen(
         }
     }
 
+    // Reserve space for the app bar rather than drawing it over the settings.
+    Scaffold(
+        contentWindowInsets = WindowInsets(0, 0, 0, 0),
+        topBar = {
+        TopAppBar(
+            title = { Text(stringResource(R.string.updater)) },
+            navigationIcon = {
+                IconButton(
+                    onClick = navController::navigateUp,
+                    onLongClick = navController::backToMain,
+                ) {
+                    Icon(
+                        painter = painterResource(R.drawable.arrow_back),
+                        contentDescription = null,
+                    )
+                }
+            },
+        )
+        },
+    ) { innerPadding ->
     Column(
         modifier =
             Modifier
+                .padding(innerPadding)
                 .fillMaxWidth()
                 .windowInsetsPadding(
                     LocalPlayerAwareWindowInsets.current.only(
@@ -109,13 +132,6 @@ fun UpdaterScreen(
                 .padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Spacer(
-            Modifier.windowInsetsPadding(
-                LocalPlayerAwareWindowInsets.current.only(
-                    WindowInsetsSides.Top,
-                ),
-            ),
-        )
 
         Spacer(Modifier.height(4.dp))
 
@@ -255,18 +271,5 @@ fun UpdaterScreen(
         Spacer(Modifier.height(32.dp))
     }
 
-    TopAppBar(
-        title = { Text(stringResource(R.string.updater)) },
-        navigationIcon = {
-            IconButton(
-                onClick = navController::navigateUp,
-                onLongClick = navController::backToMain,
-            ) {
-                Icon(
-                    painter = painterResource(R.drawable.arrow_back),
-                    contentDescription = null,
-                )
-            }
-        },
-    )
+    }
 }

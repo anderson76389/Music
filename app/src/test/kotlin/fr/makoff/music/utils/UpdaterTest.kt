@@ -23,6 +23,61 @@ class UpdaterTest {
     }
 
 
+    @Test fun githubRepositoryRenameKeepsTrustedReleasesWorking() {
+        val old = "https://github.com/anderson76389/Music/releases/download/v13.7.0.135/Apple.Music.apk"
+        val renamed = "https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/Apple.Music-arm64-v8a.apk"
+        val metadata = "https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/BUILD.txt"
+        assertTrue(Updater.isOwnApkUrl(old))
+        assertTrue(Updater.isOwnApkUrl(renamed))
+        assertTrue(Updater.isOwnBuildInfoUrl(metadata))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/anderson76389/Apple-Music-evil/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com.evil.test/anderson76389/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/other/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/subfolder/Apple.Music.apk"))
+        assertFalse(Updater.isOwnBuildInfoUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/other.txt"))
+        assertFalse(Updater.isOwnBuildInfoUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/BUILD.txt?x=1"))
+        val parsed = Updater.parseAssets(JSONArray("""[
+          {"name":"Apple.Music-arm64-v8a.apk","browser_download_url":"$renamed","size":1000},
+          {"name":"Apple.Music.apk","browser_download_url":"https://example.com/foreign.apk","size":999}
+        ]"""))
+        assertEquals(1, parsed.size)
+        assertEquals(renamed, Updater.selectUpdateAsset(parsed, "arm64-v8a", "gms")?.downloadUrl)
+    }
+
+    @Test fun renamedRepositoryApiIsUsedWhenOldPathIsGone() = runBlocking {
+        val requests = mutableListOf<String>()
+        val httpClient = HttpClient(MockEngine { request ->
+            requests.add(request.url.toString())
+            when {
+                request.url.encodedPath.endsWith("/releases/latest") &&
+                    request.url.encodedPath.contains("/Apple-Music/") ->
+                    respond("""{
+                      "tag_name":"v13.7.0.136","published_at":"2026-11-22T00:00:00Z","body":"Correctifs",
+                      "assets":[
+                        {"name":"Apple.Music.apk",
+                         "browser_download_url":"https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/Apple.Music.apk",
+                         "size":120},
+                        {"name":"BUILD.txt",
+                         "browser_download_url":"https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/BUILD.txt",
+                         "size":90}
+                      ]}""", HttpStatusCode.OK)
+                request.url.encodedPath.endsWith("/releases/latest") ->
+                    respond("not found", HttpStatusCode.NotFound)
+                else -> respond("MUSIC_VERSION_CODE=100136\n", HttpStatusCode.OK)
+            }
+        })
+        try {
+            val release = Updater.fetchLatestRelease(httpClient)
+            assertEquals("v13.7.0.136", release.tagName)
+            assertEquals(100136L, release.versionCode)
+            assertEquals(1, release.assets.size)
+            assertEquals("Apple.Music.apk", release.assets.single().name)
+            assertTrue(requests.any { it.contains("/anderson76389/Music/releases/latest") })
+            assertTrue(requests.any { it.contains("/anderson76389/Apple-Music/releases/latest") })
+        } finally { httpClient.close() }
+    }
+
     @Test fun githubNormalizesSpacesToDotsAndLegacyClientsStillFindAnApk() {
         // GitHub Releases publishes "Apple Music.apk" as "Apple.Music.apk".
         // The historical filename is also published so apps before this fix
