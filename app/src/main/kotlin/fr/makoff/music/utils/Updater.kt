@@ -83,11 +83,32 @@ object Updater {
         return architecture to variant
     }
 
-    internal fun isOwnApkUrl(url: String): Boolean = runCatching {
+    // Keep the existing repository URL while accepting assets from the renamed
+    // GitHub repository. Ship this before changing the repository name: old
+    // installed versions must be able to upgrade to a rename-aware APK.
+    private val trustedReleasePaths = listOf(
+        "/anderson76389/Music/releases/download/",
+        "/anderson76389/Apple-Music/releases/download/",
+    )
+
+    private fun isOwnReleaseAssetUrl(url: String, validFile: (String) -> Boolean): Boolean = runCatching {
         val uri = java.net.URI(url)
-        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
-            uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith(".apk")
+        val rawPath = uri.rawPath.orEmpty()
+        val prefix = trustedReleasePaths.firstOrNull { rawPath.startsWith(it) }
+            ?: return@runCatching false
+        val relative = rawPath.removePrefix(prefix)
+        val tag = relative.substringBefore('/', missingDelimiterValue = "")
+        val filename = relative.substringAfter('/', missingDelimiterValue = "")
+        uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null &&
+            uri.port == -1 && uri.rawQuery == null && uri.rawFragment == null &&
+            tag.isNotBlank() && filename.isNotBlank() && '/' !in filename && validFile(filename)
     }.getOrDefault(false)
+
+    internal fun isOwnApkUrl(url: String): Boolean =
+        isOwnReleaseAssetUrl(url) { it.endsWith(".apk") }
+
+    internal fun isOwnBuildInfoUrl(url: String): Boolean =
+        isOwnReleaseAssetUrl(url) { it == "BUILD.txt" }
 
     /**
      * Parse release assets from GitHub API response
@@ -166,9 +187,7 @@ object Updater {
             val asset = rawAssets.getJSONObject(index)
             if (asset.optString("name") != "BUILD.txt") continue
             val url = asset.getString("browser_download_url")
-            val uri = java.net.URI(url)
-            check(uri.scheme == "https" && uri.host == "github.com" && uri.userInfo == null && uri.port == -1 &&
-                uri.rawPath.startsWith("/anderson76389/Music/releases/download/") && uri.rawPath.endsWith("/BUILD.txt"))
+            check(isOwnBuildInfoUrl(url)) { "GitHub BUILD.txt URL non reconnue" }
             val metadata = httpClient.get(url)
             check(metadata.status.value in 200..299) { "GitHub HTTP ${metadata.status.value}" }
             versionCode = parsePublishedVersionCode(metadata.bodyAsText())
