@@ -132,6 +132,8 @@ updater = (k / "utils/Updater.kt").read_text()
 assert 'GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Music"' in updater
 assert '/anderson76389/Music/releases/download/' in updater
 assert '/anderson76389/Apple-Music/releases/download/' in updater
+assert 'RENAMED_GITHUB_API_BASE = "https://api.github.com/repos/anderson76389/Apple-Music"' in updater
+assert 'fetchRepositoryApi(httpClient, "releases/latest")' in updater
 assert 'isOwnBuildInfoUrl(url)' in updater
 assert "isOwnApkUrl(downloadUrl)" in updater
 assert "isOwnApkUrl(url)" in (k / "utils/UpdateNotifications.kt").read_text()
