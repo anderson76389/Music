@@ -2580,6 +2580,10 @@ class MusicService :
 
 
         setupAudioNormalization()
+        // Fill recommendations before reaching the end of a standalone track;
+        // the current audio must continue without waiting for this request.
+        scheduleAutoplayRecommendations()
+        prefetchNextAudioStream()
 
         checkSoundProofForCurrent(mediaItem)
 
@@ -2653,11 +2657,15 @@ class MusicService :
                 return
             }
 
-            if (player.playWhenReady && cachedAutoplay && player.hasNextMediaItem()) {
-                player.seekToNextMediaItem()
-                player.prepare()
-                if (castConnectionHandler?.isCasting?.value != true) {
-                    player.play()
+            if (player.playWhenReady && cachedAutoplay) {
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    if (castConnectionHandler?.isCasting?.value != true) player.play()
+                } else if (castConnectionHandler?.isCasting?.value != true) {
+                    // If YouTube's recommendation response arrives a little
+                    // after the last track ended, keep autoplay continuous.
+                    requestNextSongOnDemand()
                 }
             }
         }
@@ -2678,6 +2686,8 @@ class MusicService :
                 Timber.tag(TAG).d("Playback successful for $mediaId, reset retry count")
             }
             scheduleCrossfade()
+            scheduleAutoplayRecommendations()
+            prefetchNextAudioStream()
         }
 
     }
@@ -2712,6 +2722,7 @@ class MusicService :
 
         if (playWhenReady) {
             applyCachedAudioNormalizationNow()
+            prefetchNextAudioStream()
         }
 
         updateInitialBufferRecovery(player.playbackState)
