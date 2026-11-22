@@ -419,7 +419,7 @@
     <string name="refetch_desc">Refresh metadata from YouTube Music</string>
     <string name="share_desc">Share a link to this item</string>
     <string name="delete_desc">Permanently remove this item</string>
-    <string name="advanced_desc">Adjust the song\'s tempo and pitch</string>
+    <string name="advanced_desc">Tempo and pitch</string>
     <string name="equalizer_desc">Open the audio equalizer</string>
     <string name="mini_player">Mini-player</string>
     <string name="mini_player_background_style">Mini-player background style</string>
