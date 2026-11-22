@@ -1122,10 +1122,11 @@ class MusicService :
                 }.onSuccess { playerState ->
                     scope.launch {
                         delay(1000) // Wait for queue to be loaded
-                        // Don't restore repeat/shuffle from playerState as they are already set from DataStore (source of truth)
-                        // player.repeatMode = playerState.repeatMode
-                        // player.shuffleModeEnabled = playerState.shuffleModeEnabled
-                        playerVolume.value = playerState.volume
+                        // DataStore is also the source of truth for volume.
+                        // Restoring an older playerState.volume used to undo the
+                        // new full-volume setting one second after startup.
+                        // Keep the saved listening position, not a stale gain.
+                        // Repeat and shuffle already follow DataStore.
 
                         if (playerState.currentMediaItemIndex < player.mediaItemCount) {
                             player.seekTo(playerState.currentMediaItemIndex, playerState.currentPosition)
