@@ -185,12 +185,14 @@ assert "NextTrackPolicy.canAdvance(" in connection
 assert "fun canRequestNextSong(" in next_policy
 assert "fun requestNextSongOnDemand()" in service
 assert "database.relatedSongs(currentId)" in service
-assert "YouTube.next(WatchEndpoint(videoId = currentId))" in service
+assert "PlaybackRecommendations.fetch(currentId)" in service
+assert "scheduleAutoplayRecommendations()" in service
+assert "player.addMediaItems(fresh)" in service
 assert "playerConnection.seekToNext()" in mini
 assert "startIndex = allLocalItems.filterIsInstance<Song>()" in home
 assert "startIndex = allYtItems.filterIsInstance<SongItem>()" in home
 assert "startIndex = viewState.items.filterIsInstance<SongItem>()" in search
-print("PASS: Next follows real list queues or loads one successor explicitly without radio")
+print("PASS: Next follows real queues and preloads continuous YouTube Music suggestions")
 
 # Verify selection is about *actual* native streams, not a renamed file.
 selector = (root / "vendor/innertubex/src/commonMain/kotlin/fr/makoff/music/innertubex/extraction/FormatSelectors.kt").read_text()
