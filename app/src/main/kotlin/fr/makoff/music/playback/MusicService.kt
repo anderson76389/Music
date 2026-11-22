@@ -1645,6 +1645,15 @@ class MusicService :
             return
         }
 
+        // A delayed YouTube response from the previous song must not mutate
+        // the newly selected queue or cause a late jump back to the old title.
+        queueGeneration++
+        recommendationsJob?.cancel()
+        recommendationsJob = null
+        nextStreamPrefetchJob?.cancel()
+        nextStreamPrefetchJob = null
+        pendingPrefetchId = null
+        lastRecommendationSeed = null
         currentQueue = queue
         queueTitle = null
         val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
@@ -1665,6 +1674,7 @@ class MusicService :
                         .filterExplicit(dataStore.get(HideExplicitKey, false))
                         .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
                 }
+            if (currentQueue !== queue) return@launch
             if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
             if (initialStatus.title != null) {
                 queueTitle = initialStatus.title
@@ -1703,59 +1713,145 @@ class MusicService :
                 val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
                 applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
             }
+            scheduleAutoplayRecommendations()
+            prefetchNextAudioStream()
         }
     }
 
     fun adoptQueue(queue: Queue, title: String? = null, initialQueueSize: Int = 0) {
+        queueGeneration++
+        recommendationsJob?.cancel()
+        nextStreamPrefetchJob?.cancel()
+        pendingPrefetchId = null
+        lastRecommendationSeed = null
         currentQueue = queue
         queueTitle = title
         originalQueueSize = initialQueueSize
     }
 
-    // Load exactly one successor on explicit Suivant from a standalone song.
-    // Unlike the removed radio action, this never replaces the user's queue
-    // with a radio queue or enables continuous recommendation playback.
+    // YouTube Music-style autoplay: recommendations are fetched in the
+    // background while the current song is already playing.
+    private var queueGeneration = 0L
+    private var recommendationsJob: Job? = null
+    private var lastRecommendationSeed: String? = null
     private var manualNextSongJob: Job? = null
+    private var nextStreamPrefetchJob: Job? = null
+    private var pendingPrefetchId: String? = null
+
+    private fun scheduleAutoplayRecommendations() {
+        if (!cachedAutoplay || !playerInitialized.value || currentQueue.hasNextPage()) return
+        if (player.mediaItemCount <= 0 || player.currentMediaItemIndex == C.INDEX_UNSET) return
+        val remaining = player.mediaItemCount - player.currentMediaItemIndex - 1
+        if (remaining > 3 || player.repeatMode == REPEAT_MODE_ONE) return
+        val seedId = player.currentMediaItem?.mediaId
+            ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
+        if (lastRecommendationSeed == seedId && recommendationsJob?.isActive == true) return
+        if (lastRecommendationSeed == seedId && recommendationsJob?.isCompleted == true) return
+        lastRecommendationSeed = seedId
+        val generation = queueGeneration
+        val queueAtRequest = currentQueue
+        recommendationsJob?.cancel()
+        recommendationsJob = scope.launch(SilentHandler) {
+            try {
+                val recommendations = PlaybackRecommendations.fetch(seedId)
+                    .filterExplicit(cachedHideExplicit)
+                    .filterVideoSongs(cachedHideVideoSongs)
+                if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation) return@launch
+                if (recommendations.isNotEmpty()) {
+                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val fresh = PlaybackRecommendations.distinctCandidates(seedId, recommendations, existing)
+                    if (fresh.isNotEmpty()) {
+                        player.addMediaItems(fresh)
+                        prefetchNextAudioStream()
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).w(error, "YouTube Music autoplay suggestions unavailable")
+            }
+        }
+    }
+
+    /**
+     * Resolve only the NEXT stream URL (no extra audio download) ahead of time
+     * to avoid a full YouTube player-response round trip when skipping songs.
+     * An expired URL, quality change, or replaced queue cannot reuse it.
+     */
+    private fun prefetchNextAudioStream() {
+        if (!playerInitialized.value || !player.playWhenReady || !isNetworkConnected.value) return
+        val nextIndex = player.nextMediaItemIndex
+        if (nextIndex == C.INDEX_UNSET || nextIndex >= player.mediaItemCount) return
+        val nextId = player.getMediaItemAt(nextIndex).mediaId
+        if (!NextTrackPolicy.canRequestNextSong(nextId) || songUrlCache[nextId] != null) return
+        if (pendingPrefetchId == nextId && nextStreamPrefetchJob?.isActive == true) return
+        nextStreamPrefetchJob?.cancel()
+        pendingPrefetchId = nextId
+        val generation = queueGeneration
+        val quality = audioQuality
+        val cacheGeneration = songUrlCache.generation(nextId)
+        nextStreamPrefetchJob = scope.launch(Dispatchers.IO + SilentHandler) {
+            try {
+                val song = database.songEntity(nextId)
+                val stream = InnerTubeXPlayer.playerResponseForPlayback(
+                    nextId,
+                    audioQuality = quality,
+                    connectivityManager = connectivityManager,
+                    contentHints = ContentHints(
+                        isExplicit = song?.explicit,
+                        isUploaded = song?.isUploaded,
+                    ),
+                ).getOrNull() ?: return@launch
+                withContext(Dispatchers.Main) {
+                    if (!isActive || queueGeneration != generation || quality != audioQuality) return@withContext
+                    // Do not write signed, time-limited URLs for a discarded queue.
+                    if ((0 until player.mediaItemCount).none { player.getMediaItemAt(it).mediaId == nextId }) return@withContext
+                    songUrlCache.put(
+                        mediaId = nextId,
+                        url = stream.streamUrl,
+                        requestHeaders = stream.streamHeaders,
+                        clientName = stream.streamClient,
+                        expiresInSeconds = stream.streamExpiresInSeconds,
+                        requireBoundedRange = stream.requireBoundedRange,
+                        rangeChunkSizeBytes = stream.rangeChunkSizeBytes,
+                        useRangeChunks = stream.useRangeChunks,
+                        expectedGeneration = cacheGeneration,
+                    )
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).d(error, "Non-blocking next-song stream prefetch unavailable")
+            }
+        }
+    }
 
     fun requestNextSongOnDemand() {
         if (taskCleared || !playerInitialized.value) return
         val currentId = player.currentMediaItem?.mediaId
             ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
         if (manualNextSongJob?.isActive == true) return
-
         manualNextSongJob = scope.launch(SilentHandler) {
             try {
-                // Use already-known related songs first (also works offline).
-                // Only ask YouTube for a successor when the local catalogue
-                // cannot supply one; never create an automatic radio queue.
-                val cached = withContext(Dispatchers.IO) {
-                    database.relatedSongs(currentId).map { it.toMediaItem() }
-                }.filterExplicit(cachedHideExplicit)
-                    .filterVideoSongs(cachedHideVideoSongs)
-                val suggestions = if (cached.any { it.mediaId != currentId }) cached else {
-                    withContext(Dispatchers.IO) {
-                        val response = YouTube.next(WatchEndpoint(videoId = currentId)).getOrNull()
-                        response?.items.orEmpty().map { song -> song.toMediaItem() }
-                            .ifEmpty {
-                                response?.relatedEndpoint?.let { endpoint ->
-                                    YouTube.related(endpoint).getOrNull()?.songs
-                                        ?.map { song -> song.toMediaItem() }
-                                }.orEmpty()
-                            }
-                    }.filterExplicit(cachedHideExplicit)
-                        .filterVideoSongs(cachedHideVideoSongs)
-                }
-
-                // Ignore stale HTTP results if a different song/queue started.
+                // A background recommendation request may already be finishing.
+                recommendationsJob?.takeIf { it.isActive }?.join()
                 if (player.currentMediaItem?.mediaId != currentId) return@launch
-                if (player.hasNextMediaItem()) {
-                    player.seekToNextMediaItem()
-                } else {
-                    val next = suggestions.firstOrNull { it.mediaId != currentId } ?: return@launch
-                    player.addMediaItem(next)
-                    player.seekToNextMediaItem()
+                if (!player.hasNextMediaItem()) {
+                    val online = PlaybackRecommendations.fetch(currentId)
+                    val localFallback = if (online.isEmpty()) withContext(Dispatchers.IO) {
+                        database.relatedSongs(currentId).map { it.toMediaItem() }
+                    } else emptyList()
+                    val candidates = (online + localFallback)
+                        .filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                    if (player.currentMediaItem?.mediaId != currentId) return@launch
+                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val next = PlaybackRecommendations.distinctCandidates(currentId, candidates, existing)
+                    if (next.isNotEmpty()) player.addMediaItems(next)
                 }
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
+                if (!player.hasNextMediaItem()) return@launch
+                player.seekToNextMediaItem()
+                if (player.playbackState == STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
                 player.playWhenReady = true
             } catch (cancelled: CancellationException) {
                 throw cancelled
