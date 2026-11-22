@@ -729,21 +729,5 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
-    <string name="audio_sources_title">Sources audio</string>
-    <string name="audio_sources_order">Les extensions activées sont testées dans l\'ordre. La recherche transmet le titre et l\'artiste au fournisseur.</string>
-    <string name="audio_sources_add">Ajouter une extension</string>
-    <string name="audio_sources_fallback">Source de secours pour la lecture en ligne</string>
-    <string name="audio_sources_move_up">Monter</string>
-    <string name="audio_sources_move_down">Descendre</string>
-    <string name="audio_sources_remove">Supprimer</string>
-    <string name="audio_sources_url">URL HTTPS du manifeste</string>
-    <string name="audio_sources_test">Tester</string>
-    <string name="audio_sources_testing">Vérification…</string>
-    <string name="audio_sources_ready">%1$s est prête à être ajoutée</string>
-    <string name="audio_sources_duplicate">Cette extension est déjà installée.</string>
-    <string name="audio_sources_invalid">Entrez une URL HTTPS compatible.</string>
-    <string name="audio_sources_restricted">Cette extension nécessite une autorisation.</string>
-    <string name="audio_sources_unavailable">Extension indisponible.</string>
-    <string name="audio_sources_save_error">Impossible d\'enregistrer les extensions.</string>
     <string name="audio_sources_manifest_hint">Ajoutez l\'URL HTTPS du fichier manifest.json d\'une extension compatible. Certaines nécessitent un compte.</string>
 </resources>
