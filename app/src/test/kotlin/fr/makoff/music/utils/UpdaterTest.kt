@@ -23,6 +23,28 @@ class UpdaterTest {
     }
 
 
+    @Test fun githubRepositoryRenameKeepsTrustedReleasesWorking() {
+        val old = "https://github.com/anderson76389/Music/releases/download/v13.7.0.135/Apple.Music.apk"
+        val renamed = "https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/Apple.Music-arm64-v8a.apk"
+        val metadata = "https://github.com/anderson76389/Apple-Music/releases/download/v13.7.0.136/BUILD.txt"
+        assertTrue(Updater.isOwnApkUrl(old))
+        assertTrue(Updater.isOwnApkUrl(renamed))
+        assertTrue(Updater.isOwnBuildInfoUrl(metadata))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/anderson76389/Apple-Music-evil/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com.evil.test/anderson76389/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("http://github.com/anderson76389/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/other/Apple-Music/releases/download/v1/Apple.Music.apk"))
+        assertFalse(Updater.isOwnApkUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/subfolder/Apple.Music.apk"))
+        assertFalse(Updater.isOwnBuildInfoUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/other.txt"))
+        assertFalse(Updater.isOwnBuildInfoUrl("https://github.com/anderson76389/Apple-Music/releases/download/v1/BUILD.txt?x=1"))
+        val parsed = Updater.parseAssets(JSONArray("""[
+          {"name":"Apple.Music-arm64-v8a.apk","browser_download_url":"$renamed","size":1000},
+          {"name":"Apple.Music.apk","browser_download_url":"https://example.com/foreign.apk","size":999}
+        ]"""))
+        assertEquals(1, parsed.size)
+        assertEquals(renamed, Updater.selectUpdateAsset(parsed, "arm64-v8a", "gms")?.downloadUrl)
+    }
+
     @Test fun githubNormalizesSpacesToDotsAndLegacyClientsStillFindAnApk() {
         // GitHub Releases publishes "Apple Music.apk" as "Apple.Music.apk".
         // The historical filename is also published so apps before this fix
