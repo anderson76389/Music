@@ -160,6 +160,8 @@ Installez **`Apple.Music.apk`** directement : GitHub remplace les espaces du nom
 Chaque modification du code sur `main` lance les contrôles. Après leur réussite, une seconde étape construit et vérifie les APK signés, puis publie **une APK universelle `Apple.Music.apk` (et une copie `Metrolist.apk` pour la compatibilité avec les anciennes versions)** dans Releases. Les numéros de version augmentent automatiquement. Les deux variantes sont compilées en interne pour les essais de compatibilité.
 
 > [!IMPORTANT]
+> **Avant de renommer le dépôt GitHub en `Apple-Music` :** installez d’abord une version intégrant la compatibilité des URLs des deux dépôts. Les anciennes APK pourraient refuser les liens de téléchargement générés après le renommage.
+
 > **Passage des anciennes préversions à la version signée :** la version publique utilise `fr.makoff.music`, tandis que les anciens tests utilisent `fr.makoff.music.debug`. Les deux peuvent coexister. Sauvegardez vos données dans l’ancienne application, restaurez-les et vérifiez-les dans la nouvelle avant toute suppression. Les publications signées suivantes conservent la même clé.
 
 <div align="center">
