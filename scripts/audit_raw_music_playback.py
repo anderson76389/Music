@@ -39,7 +39,8 @@ print("PASS: raw PCM, max native volume, no previous DSP, highest available stre
 assert "scheduleAutoplayRecommendations()" in service
 assert "PlaybackRecommendations.fetch(seedId)" in service
 assert "PlaybackRecommendations.fetch(currentId)" in service
-assert "player.addMediaItems(fresh)" in service
+assert "player.addMediaItems(autoplayNext)" in service
+assert "automixItems.value = if (cachedSimilarContent) suggested.take(30)" in service
 assert "player.currentMediaItem?.mediaId != seedId" in service
 assert "queueGeneration != generation" in service
 assert "if (currentQueue !== queue) return@launch" in service
