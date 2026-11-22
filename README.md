@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="fastlane/metadata/android/en-US/images/icon.png" alt="Icône de l’application Metrolist" width="200" />
+<img src="fastlane/metadata/android/en-US/images/icon.png" alt="Icône historique du projet" width="200" />
 
-# Metrolist
+# Apple Music
 
 ### Client YouTube Music pour Android
 
@@ -19,7 +19,7 @@
 </div>
 
 > [!NOTE]
-> **Version personnelle maintenue par anderson76389.** Les sources, les publications et le journal des modifications sont gérés dans ce dépôt. Le nom et le logo Metrolist sont conservés.
+> **Application non officielle maintenue par anderson76389**, dérivée du projet libre Metrolist (GPL-3.0). Sans affiliation avec Apple ou Google. Les sources, la signature et les publications sont gérées dans ce dépôt.
 
 > [!IMPORTANT]
 > **Vérifications réelles — [v13.7.0.11](https://github.com/anderson76389/Music/releases/tag/v13.7.0.11), 22 octobre 2026 :** compilation et démarrage des APK signés, sept tests de fichiers, conversion et lecture FLAC en mode avion, six catégories de paramètres, 26 interrupteurs, qualités de lecture et sélecteurs de format interne/externe validés. Le fichier externe reste partagé avec Metrolist sans seconde copie privée. L’essai YouTube anonyme est refusé par l’anti-robot ; l’accès avec votre compte n’est pas certifié par ces tests. [Résultats et limites](VERIFICATION-FONCTIONS.txt).
@@ -215,7 +215,7 @@ L’audit ne détecte aucun point d’accès applicatif amont actif connu dans l
 
 <h1><a id="traductions"></a>Traductions</h1>
 
-<h3>Metrolist propose plusieurs langues, dont le français.</h3>
+<h3>Apple Music propose plusieurs langues, dont le français.</h3>
 
 Les ressources de traduction sont conservées dans les [sources de l’application](app/src/main/res). Pour signaler une formulation incorrecte, [ouvrez un ticket](https://github.com/anderson76389/Music/issues) en précisant l’écran concerné et le texte proposé.
 
@@ -229,7 +229,7 @@ Les ressources de traduction sont conservées dans les [sources de l’applicati
 
 <h1><a id="soutenir"></a>Soutenir le projet</h1>
 
-<h3>Metrolist est libre et open source. Vous pouvez soutenir cette version en signalant les problèmes et en partageant vos retours.</h3>
+<h3>Cette application dérivée de Metrolist est libre et open source. Signalez les problèmes et partagez vos retours.</h3>
 
 [Signaler un problème](https://github.com/anderson76389/Music/issues) · [Consulter les sources](https://github.com/anderson76389/Music) · [Voir les publications](https://github.com/anderson76389/Music/releases)
 
@@ -292,6 +292,6 @@ Les marques et les droits de propriété intellectuelle mentionnés appartiennen
 
 ### Télécharger dans un dossier
 
-Le bouton de téléchargement habituel conserve les titres dans le stockage privé de Metrolist pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Enregistrer un fichier audio (yt-dlp)**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
+Le bouton de téléchargement habituel conserve les titres dans le stockage de l’application pour la lecture hors connexion. Pour obtenir aussi des fichiers accessibles aux autres applications, ouvrez le menu du morceau et choisissez **Enregistrer un fichier audio (yt-dlp)**. Dans le menu d’un album ou d’une playlist, choisissez **Télécharger la collection dans un dossier**. Android vous demande un dossier de destination.
 
-Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Le fichier exporté sert aussi à la lecture hors connexion dans Metrolist, sans seconde copie privée. Un téléchargement interne déjà terminé est réutilisé pour l’export, puis remplacé par une référence au fichier externe. Retirer le téléchargement dans Metrolist conserve votre fichier personnel ; le déplacer ou supprimer peut rendre le titre indisponible hors connexion. Le format dépend du choix dans Paramètres → Stockage : original, M4A natif ou conversion FLAC. Un fichier existant est réutilisé si son format convient ; une conversion FLAC peut être effectuée localement, sans second transfert. Pour rechercher une meilleure source que celle déjà téléchargée, retirez ce téléchargement puis relancez-le. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.
+Les collections sont rangées dans `Albums/Nom [identifiant]/` ou `Playlists/Nom [identifiant]/`, avec des noms de pistes numérotés. Le fichier exporté sert aussi à la lecture hors connexion dans Apple Music, sans seconde copie privée. Un téléchargement interne déjà terminé est réutilisé pour l’export, puis remplacé par une référence au fichier externe. Retirer le téléchargement dans l’application conserve votre fichier personnel ; le déplacer ou supprimer peut rendre le titre indisponible hors connexion. Les exports audio proposent les meilleurs flux natifs disponibles en M4A (AAC) ou Opus, sans prétendre créer une qualité supérieure à la source. Pour rechercher une meilleure source que celle déjà téléchargée, retirez ce téléchargement puis relancez-le. L’accès aux titres reste soumis à leur disponibilité et à la réponse de YouTube.
