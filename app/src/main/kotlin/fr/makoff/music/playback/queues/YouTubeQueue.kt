@@ -21,19 +21,13 @@ class YouTubeQueue(
     private var retryCount = 0
     private val maxRetries = 3
 
-    private class EmptyRadioQueueException : IllegalStateException()
-
     override suspend fun getInitialStatus(): Queue.Status {
         return withContext(IO) {
             var lastException: Throwable? = null
 
-            if (endpoint.videoId != null && endpoint.playlistId == null) {
-                endpoint = WatchEndpoint(
-                    videoId = endpoint.videoId,
-                    playlistId = "RDAMVM${endpoint.videoId}"
-                )
-            }
-
+            // Start with YouTube Music's normal /next response for this
+            // video. Forcing RDAMVM up front adds an unnecessary extra
+            // request and may produce a one-song/empty recommendation queue.
             val isRadioRequest =
                 endpoint.playlistId?.startsWith("RDAMVM") == true ||
                 (endpoint.videoId != null && endpoint.playlistId == null)
@@ -46,14 +40,19 @@ class YouTubeQueue(
                     val relEndpoint = nextResult.relatedEndpoint
                     
                     if (isRadioRequest && continuation == null && items.size <= 1) {
-                        if (endpoint.playlistId?.startsWith("RDAMVM") == true) {
-                            throw EmptyRadioQueueException()
-                        } else if (relEndpoint != null) {
-                            val relatedPage = YouTube.related(relEndpoint).getOrNull()
-                            if (relatedPage != null && relatedPage.songs.isNotEmpty()) {
-                                val relatedSongs = relatedPage.songs.filter { it.id != endpoint.videoId }
-                                items = items + relatedSongs
-                            }
+                        // The normal response can contain only the current
+                        // video. Fetch the suggested tracks via its related
+                        // endpoint before deciding the queue is empty.
+                        val relatedSongs = relEndpoint?.let { related ->
+                            YouTube.related(related).getOrNull()?.songs.orEmpty()
+                        }.orEmpty().filter { it.id != endpoint.videoId }
+                        if (relatedSongs.isNotEmpty()) {
+                            items = (items + relatedSongs).distinctBy { it.id }
+                        } else if (endpoint.playlistId?.startsWith("RDAMVM") == true && endpoint.videoId != null) {
+                            // Retry the original video only once, not several
+                            // times with the same one-song radio response.
+                            endpoint = WatchEndpoint(videoId = endpoint.videoId)
+                            continue
                         }
                     }
 
@@ -67,14 +66,7 @@ class YouTubeQueue(
                     )
                 } catch (e: Exception) {
                     lastException = e
-                    if (
-                        e is EmptyRadioQueueException &&
-                        endpoint.playlistId?.startsWith("RDAMVM") == true &&
-                        endpoint.videoId != null
-                    ) {
-                        endpoint = WatchEndpoint(videoId = endpoint.videoId)
-                        // It will loop again and try with just videoId
-                    }
+
                 }
             }
             throw lastException ?: Exception("Failed to get initial status")

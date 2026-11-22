@@ -39,6 +39,7 @@ import android.util.LruCache
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -107,6 +108,8 @@ import fr.makoff.music.constants.AddToPlaylistPosition
 import fr.makoff.music.constants.AddToPlaylistPositionKey
 import fr.makoff.music.constants.AndroidAutoTargetPlaylistKey
 import fr.makoff.music.constants.AudioNormalizationKey
+import fr.makoff.music.constants.RawYouTubeAudioMigrationKey
+import fr.makoff.music.constants.VarispeedKey
 import fr.makoff.music.constants.AudioOffload
 import fr.makoff.music.constants.AudioQualityKey
 import fr.makoff.music.constants.AudioTrackPlaybackParamsKey
@@ -452,6 +455,7 @@ class MusicService :
     private var cachedShufflePlaylistFirst = false
     @Volatile
     private var cachedAutoLoadMore = true
+    @Volatile private var cachedSimilarContent = true
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     private val songUrlCache = StreamUrlCache()
@@ -614,7 +618,40 @@ class MusicService :
         // Read ALL startup preferences in one shot so that subsequent code
         // never calls dataStore.get() (which does runBlocking internally).
         // This consolidates ~15 main-thread-blocking DataStore reads into 1.
-        startupPrefs = runBlocking(Dispatchers.IO) { dataStore.data.first() }
+        // One-time reset of previously stored DSP/volume settings. Keep the
+        // user's downloads, playlists and EQ profiles; only deactivate the
+        // active EQ for the requested unprocessed YouTube Music sound.
+        // After migration, users can explicitly opt into an effect again.
+        startupPrefs = runBlocking(Dispatchers.IO) {
+            var prefs = dataStore.data.first()
+            if (prefs[RawYouTubeAudioMigrationKey] != true) {
+                dataStore.edit { settings ->
+                    settings[AudioQualityKey] = fr.makoff.music.constants.AudioQuality.HIGH.name
+                    settings[AudioNormalizationKey] = false
+                    settings[SkipSilenceKey] = false
+                    settings[SkipSilenceInstantKey] = false
+                    settings[CrossfadeEnabledKey] = false
+                    settings[VarispeedKey] = false
+                    settings[AudioOffload] = false
+                    settings[PlayerVolumeKey] = 1f
+                    settings[AutoplayKey] = true
+                    settings[AutoLoadMoreKey] = true
+                    settings[SimilarContent] = true
+                    settings[RawYouTubeAudioMigrationKey] = true
+                }
+                eqProfileRepository.setActiveProfile(null)
+                // Enabled third-party source add-ons can supply lower-quality
+                // audio and add up to three seconds to every track change.
+                // Preserve all custom manifests, but make original YouTube
+                // Music the source again until the user explicitly opts in.
+                if (!AudioAddons.update(this@MusicService) { sources ->
+                        sources.map { it.copy(enabled = false) }
+                    }
+                ) Timber.tag(TAG).w("Could not reset custom audio sources")
+                prefs = dataStore.data.first()
+            }
+            prefs
+        }
 
         // 3. Connect the processor to the service
         // handled in createExoPlayer
@@ -917,7 +954,7 @@ class MusicService :
         combine(
             currentFormat,
             dataStore.data
-                .map { it[AudioNormalizationKey] ?: true }
+                .map { it[AudioNormalizationKey] ?: false }
                 .distinctUntilChanged(),
             dataStore.data
                 .map { prefs -> prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT) }
@@ -1030,6 +1067,12 @@ class MusicService :
         scope.launch {
             dataStore.data.map { it[AutoLoadMoreKey] ?: true }.distinctUntilChanged().collect { cachedAutoLoadMore = it }
         }
+        scope.launch {
+            dataStore.data.map { it[SimilarContent] ?: true }.distinctUntilChanged().collect {
+                cachedSimilarContent = it
+                if (!it) automixItems.value = emptyList()
+            }
+        }
         if (startupPrefs!![PersistentQueueKey] ?: true) {
             val queueFile = filesDir.resolve(PERSISTENT_QUEUE_FILE)
             if (queueFile.exists()) {
@@ -1094,10 +1137,11 @@ class MusicService :
                 }.onSuccess { playerState ->
                     scope.launch {
                         delay(1000) // Wait for queue to be loaded
-                        // Don't restore repeat/shuffle from playerState as they are already set from DataStore (source of truth)
-                        // player.repeatMode = playerState.repeatMode
-                        // player.shuffleModeEnabled = playerState.shuffleModeEnabled
-                        playerVolume.value = playerState.volume
+                        // DataStore is also the source of truth for volume.
+                        // Restoring an older playerState.volume used to undo the
+                        // new full-volume setting one second after startup.
+                        // Keep the saved listening position, not a stale gain.
+                        // Repeat and shuffle already follow DataStore.
 
                         if (playerState.currentMediaItemIndex < player.mediaItemCount) {
                             player.seekTo(playerState.currentMediaItemIndex, playerState.currentPosition)
@@ -1617,6 +1661,16 @@ class MusicService :
             return
         }
 
+        // A delayed YouTube response from the previous song must not mutate
+        // the newly selected queue or cause a late jump back to the old title.
+        queueGeneration++
+        recommendationsJob?.cancel()
+        recommendationsJob = null
+        nextStreamPrefetchJob?.cancel()
+        nextStreamPrefetchJob = null
+        pendingPrefetchId = null
+        lastRecommendationSeed = null
+        if (!restoringQueue) automixItems.value = emptyList()
         currentQueue = queue
         queueTitle = null
         val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
@@ -1637,6 +1691,7 @@ class MusicService :
                         .filterExplicit(dataStore.get(HideExplicitKey, false))
                         .filterVideoSongs(dataStore.get(HideVideoSongsKey, false))
                 }
+            if (currentQueue !== queue) return@launch
             if (queue.preloadItem != null && player.playbackState == STATE_IDLE) return@launch
             if (initialStatus.title != null) {
                 queueTitle = initialStatus.title
@@ -1675,59 +1730,176 @@ class MusicService :
                 val shufflePlaylistFirst = dataStore.get(ShufflePlaylistFirstKey, false)
                 applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, shufflePlaylistFirst)
             }
+            scheduleAutoplayRecommendations()
+            prefetchNextAudioStream()
         }
     }
 
     fun adoptQueue(queue: Queue, title: String? = null, initialQueueSize: Int = 0) {
+        queueGeneration++
+        recommendationsJob?.cancel()
+        nextStreamPrefetchJob?.cancel()
+        pendingPrefetchId = null
+        lastRecommendationSeed = null
         currentQueue = queue
         queueTitle = title
         originalQueueSize = initialQueueSize
     }
 
-    // Load exactly one successor on explicit Suivant from a standalone song.
-    // Unlike the removed radio action, this never replaces the user's queue
-    // with a radio queue or enables continuous recommendation playback.
+    // YouTube Music-style autoplay: recommendations are fetched in the
+    // background while the current song is already playing.
+    private var queueGeneration = 0L
+    private var recommendationsJob: Job? = null
+    private var lastRecommendationSeed: String? = null
     private var manualNextSongJob: Job? = null
+    private var nextStreamPrefetchJob: Job? = null
+    private var pendingPrefetchId: String? = null
+
+    private fun scheduleAutoplayRecommendations() {
+        if (!cachedAutoplay || !playerInitialized.value || currentQueue.hasNextPage()) return
+        // Resolve the CURRENT song first. Extra network requests must not
+        // compete with its initial buffering or delay the first audible frame.
+        if (player.playbackState != Player.STATE_READY) return
+        if (player.mediaItemCount <= 0 || player.currentMediaItemIndex == C.INDEX_UNSET) return
+        val remaining = player.mediaItemCount - player.currentMediaItemIndex - 1
+        if (remaining > 3 || player.repeatMode == REPEAT_MODE_ONE) return
+        val seedId = player.currentMediaItem?.mediaId
+            ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
+        if (lastRecommendationSeed == seedId && recommendationsJob?.isActive == true) return
+        if (lastRecommendationSeed == seedId && recommendationsJob?.isCompleted == true) return
+        lastRecommendationSeed = seedId
+        val generation = queueGeneration
+        val queueAtRequest = currentQueue
+        recommendationsJob?.cancel()
+        recommendationsJob = scope.launch(SilentHandler) {
+            try {
+                val online = PlaybackRecommendations.fetch(seedId)
+                val offlineFallback = if (online.isEmpty()) withContext(Dispatchers.IO) {
+                    database.relatedSongs(seedId).map { it.toMediaItem() }
+                } else emptyList()
+                val recommendations = (online + offlineFallback)
+                    .filterExplicit(cachedHideExplicit)
+                    .filterVideoSongs(cachedHideVideoSongs)
+                if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation ||
+                    player.currentMediaItem?.mediaId != seedId
+                ) return@launch
+                if (recommendations.isNotEmpty()) {
+                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val fresh = PlaybackRecommendations.distinctCandidates(seedId, recommendations, existing)
+                    if (fresh.isNotEmpty()) {
+                        val (autoplayNext, suggested) = PlaybackRecommendations.splitSuggestions(fresh)
+                        player.addMediaItems(autoplayNext)
+                        // The Queue screen's "Similar content" section is
+                        // backed by automixItems, not the player playlist.
+                        // Populate both without duplicating queued tracks.
+                        automixItems.value = if (cachedSimilarContent) suggested.take(30) else emptyList()
+                        prefetchNextAudioStream()
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).w(error, "YouTube Music autoplay suggestions unavailable")
+            }
+        }
+    }
+
+    /**
+     * Resolve only the NEXT stream URL (no extra audio download) ahead of time
+     * to avoid a full YouTube player-response round trip when skipping songs.
+     * An expired URL, quality change, or replaced queue cannot reuse it.
+     */
+    private fun prefetchNextAudioStream() {
+        if (!playerInitialized.value || !player.playWhenReady || !isNetworkConnected.value ||
+            player.playbackState != Player.STATE_READY
+        ) return
+        val nextIndex = player.nextMediaItemIndex
+        if (nextIndex == C.INDEX_UNSET || nextIndex >= player.mediaItemCount) return
+        val nextId = player.getMediaItemAt(nextIndex).mediaId
+        if (!NextTrackPolicy.canRequestNextSong(nextId) || songUrlCache[nextId] != null) return
+        if (pendingPrefetchId == nextId && nextStreamPrefetchJob?.isActive == true) return
+        nextStreamPrefetchJob?.cancel()
+        pendingPrefetchId = nextId
+        val generation = queueGeneration
+        val quality = audioQuality
+        val cacheGeneration = songUrlCache.generation(nextId)
+        nextStreamPrefetchJob = scope.launch(Dispatchers.IO + SilentHandler) {
+            try {
+                val song = database.songEntity(nextId)
+                val stream = InnerTubeXPlayer.playerResponseForPlayback(
+                    nextId,
+                    audioQuality = quality,
+                    connectivityManager = connectivityManager,
+                    contentHints = ContentHints(
+                        isExplicit = song?.explicit,
+                        isUploaded = song?.isUploaded,
+                    ),
+                ).getOrNull() ?: return@launch
+                withContext(Dispatchers.Main) {
+                    if (!isActive || queueGeneration != generation || quality != audioQuality) return@withContext
+                    // Do not write signed, time-limited URLs for a discarded queue.
+                    if ((0 until player.mediaItemCount).none { player.getMediaItemAt(it).mediaId == nextId }) return@withContext
+                    val cached = songUrlCache.put(
+                        mediaId = nextId,
+                        url = stream.streamUrl,
+                        requestHeaders = stream.streamHeaders,
+                        clientName = stream.streamClient,
+                        expiresInSeconds = stream.streamExpiresInSeconds,
+                        requireBoundedRange = stream.requireBoundedRange,
+                        rangeChunkSizeBytes = stream.rangeChunkSizeBytes,
+                        useRangeChunks = stream.useRangeChunks,
+                        expectedGeneration = cacheGeneration,
+                    )
+                    if (cached) {
+                        // Prefetched songs must retain the same authenticated
+                        // history-tracking metadata as normally fetched songs.
+                        stream.playbackTracking?.let { tracking ->
+                            if (tracking.videostatsPlaybackUrl?.baseUrl != null ||
+                                tracking.videostatsWatchtimeUrl?.baseUrl != null
+                            ) {
+                                historyTrackingCache[cacheKey(nextId)] = YouTubeListeningHistoryReporter.Tracking(
+                                    playbackUrl = tracking.videostatsPlaybackUrl?.baseUrl,
+                                    watchtimeUrl = tracking.videostatsWatchtimeUrl?.baseUrl,
+                                    format = stream.format.itag,
+                                )
+                            }
+                        }
+                    }
+                }
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Exception) {
+                Timber.tag(TAG).d(error, "Non-blocking next-song stream prefetch unavailable")
+            }
+        }
+    }
 
     fun requestNextSongOnDemand() {
         if (taskCleared || !playerInitialized.value) return
         val currentId = player.currentMediaItem?.mediaId
             ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
         if (manualNextSongJob?.isActive == true) return
-
         manualNextSongJob = scope.launch(SilentHandler) {
             try {
-                // Use already-known related songs first (also works offline).
-                // Only ask YouTube for a successor when the local catalogue
-                // cannot supply one; never create an automatic radio queue.
-                val cached = withContext(Dispatchers.IO) {
-                    database.relatedSongs(currentId).map { it.toMediaItem() }
-                }.filterExplicit(cachedHideExplicit)
-                    .filterVideoSongs(cachedHideVideoSongs)
-                val suggestions = if (cached.any { it.mediaId != currentId }) cached else {
-                    withContext(Dispatchers.IO) {
-                        val response = YouTube.next(WatchEndpoint(videoId = currentId)).getOrNull()
-                        response?.items.orEmpty().map { song -> song.toMediaItem() }
-                            .ifEmpty {
-                                response?.relatedEndpoint?.let { endpoint ->
-                                    YouTube.related(endpoint).getOrNull()?.songs
-                                        ?.map { song -> song.toMediaItem() }
-                                }.orEmpty()
-                            }
-                    }.filterExplicit(cachedHideExplicit)
-                        .filterVideoSongs(cachedHideVideoSongs)
-                }
-
-                // Ignore stale HTTP results if a different song/queue started.
+                // A background recommendation request may already be finishing.
+                recommendationsJob?.takeIf { it.isActive }?.join()
                 if (player.currentMediaItem?.mediaId != currentId) return@launch
-                if (player.hasNextMediaItem()) {
-                    player.seekToNextMediaItem()
-                } else {
-                    val next = suggestions.firstOrNull { it.mediaId != currentId } ?: return@launch
-                    player.addMediaItem(next)
-                    player.seekToNextMediaItem()
+                if (!player.hasNextMediaItem()) {
+                    val online = PlaybackRecommendations.fetch(currentId)
+                    val localFallback = if (online.isEmpty()) withContext(Dispatchers.IO) {
+                        database.relatedSongs(currentId).map { it.toMediaItem() }
+                    } else emptyList()
+                    val candidates = (online + localFallback)
+                        .filterExplicit(cachedHideExplicit)
+                        .filterVideoSongs(cachedHideVideoSongs)
+                    if (player.currentMediaItem?.mediaId != currentId) return@launch
+                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val next = PlaybackRecommendations.distinctCandidates(currentId, candidates, existing)
+                    if (next.isNotEmpty()) player.addMediaItems(next)
                 }
-                if (player.playbackState == Player.STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
+                if (!player.hasNextMediaItem()) return@launch
+                player.seekToNextMediaItem()
+                if (player.playbackState == STATE_IDLE || player.playbackState == Player.STATE_ENDED) player.prepare()
                 player.playWhenReady = true
             } catch (cancelled: CancellationException) {
                 throw cancelled
@@ -2124,7 +2296,7 @@ class MusicService :
 
     private fun seedLoudnessCacheFromPrefs() {
         val prefs = startupPrefs!!
-        normalizationEnabledCached = prefs[AudioNormalizationKey] ?: true
+        normalizationEnabledCached = prefs[AudioNormalizationKey] ?: false
         loudnessLevelCached = prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT)
 
         Timber.tag(TAG).d(
@@ -2456,6 +2628,10 @@ class MusicService :
 
 
         setupAudioNormalization()
+        // Fill recommendations before reaching the end of a standalone track;
+        // the current audio must continue without waiting for this request.
+        scheduleAutoplayRecommendations()
+        prefetchNextAudioStream()
 
         checkSoundProofForCurrent(mediaItem)
 
@@ -2529,11 +2705,15 @@ class MusicService :
                 return
             }
 
-            if (player.playWhenReady && cachedAutoplay && player.hasNextMediaItem()) {
-                player.seekToNextMediaItem()
-                player.prepare()
-                if (castConnectionHandler?.isCasting?.value != true) {
-                    player.play()
+            if (player.playWhenReady && cachedAutoplay) {
+                if (player.hasNextMediaItem()) {
+                    player.seekToNextMediaItem()
+                    player.prepare()
+                    if (castConnectionHandler?.isCasting?.value != true) player.play()
+                } else if (castConnectionHandler?.isCasting?.value != true) {
+                    // If YouTube's recommendation response arrives a little
+                    // after the last track ended, keep autoplay continuous.
+                    requestNextSongOnDemand()
                 }
             }
         }
@@ -2554,6 +2734,8 @@ class MusicService :
                 Timber.tag(TAG).d("Playback successful for $mediaId, reset retry count")
             }
             scheduleCrossfade()
+            scheduleAutoplayRecommendations()
+            prefetchNextAudioStream()
         }
 
     }
@@ -2588,6 +2770,7 @@ class MusicService :
 
         if (playWhenReady) {
             applyCachedAudioNormalizationNow()
+            prefetchNextAudioStream()
         }
 
         updateInitialBufferRecovery(player.playbackState)

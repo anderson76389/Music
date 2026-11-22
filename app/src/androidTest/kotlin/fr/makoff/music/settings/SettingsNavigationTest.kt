@@ -784,7 +784,7 @@ class SettingsNavigationTest {
                         Triple(R.string.audio_track_playback_params, AudioTrackPlaybackParamsKey, true),
                         Triple(R.string.auto_download_on_like, AutoDownloadOnLikeKey, false),
                         Triple(R.string.skip_silence, SkipSilenceKey, false),
-                        Triple(R.string.audio_normalization, AudioNormalizationKey, true),
+                        Triple(R.string.audio_normalization, AudioNormalizationKey, false),
                         Triple(R.string.seek_seconds_addup, SeekExtraSeconds, false),
 
                     ).forEach { (id, key, default) -> toggleAndRestore(id, key, default) }

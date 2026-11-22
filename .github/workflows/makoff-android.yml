@@ -32,6 +32,7 @@ jobs:
           python3 scripts/test_release_version.py
           python3 scripts/test_compact_apks.py
           python3 scripts/audit_player_regressions.py
+          python3 scripts/audit_raw_music_playback.py
           python3 scripts/audit_sync_durability.py
       - name: Create test signing key
         run: |
