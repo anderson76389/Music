@@ -31,6 +31,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -100,7 +101,11 @@ fun AudioSourcesSettings(navController: NavController) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(stringResource(R.string.audio_sources_order))
                 Text(stringResource(R.string.audio_sources_manifest_hint), style = MaterialTheme.typography.bodySmall)
-                Button(onClick = { adding = true }, enabled = sources.size < AudioAddons.MAX_SOURCES) {
+                Button(
+                    onClick = { adding = true },
+                    enabled = sources.size < AudioAddons.MAX_SOURCES,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                ) {
                     Text(stringResource(R.string.audio_sources_add))
                 }
                 if (savingError) {
