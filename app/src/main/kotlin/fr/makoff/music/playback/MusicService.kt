@@ -1756,7 +1756,9 @@ class MusicService :
                 val recommendations = PlaybackRecommendations.fetch(seedId)
                     .filterExplicit(cachedHideExplicit)
                     .filterVideoSongs(cachedHideVideoSongs)
-                if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation) return@launch
+                if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation ||
+                    player.currentMediaItem?.mediaId != seedId
+                ) return@launch
                 if (recommendations.isNotEmpty()) {
                     val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
                     val fresh = PlaybackRecommendations.distinctCandidates(seedId, recommendations, existing)
@@ -1806,7 +1808,7 @@ class MusicService :
                     if (!isActive || queueGeneration != generation || quality != audioQuality) return@withContext
                     // Do not write signed, time-limited URLs for a discarded queue.
                     if ((0 until player.mediaItemCount).none { player.getMediaItemAt(it).mediaId == nextId }) return@withContext
-                    songUrlCache.put(
+                    val cached = songUrlCache.put(
                         mediaId = nextId,
                         url = stream.streamUrl,
                         requestHeaders = stream.streamHeaders,
@@ -1817,6 +1819,21 @@ class MusicService :
                         useRangeChunks = stream.useRangeChunks,
                         expectedGeneration = cacheGeneration,
                     )
+                    if (cached) {
+                        // Prefetched songs must retain the same authenticated
+                        // history-tracking metadata as normally fetched songs.
+                        stream.playbackTracking?.let { tracking ->
+                            if (tracking.videostatsPlaybackUrl?.baseUrl != null ||
+                                tracking.videostatsWatchtimeUrl?.baseUrl != null
+                            ) {
+                                historyTrackingCache[cacheKey(nextId)] = YouTubeListeningHistoryReporter.Tracking(
+                                    playbackUrl = tracking.videostatsPlaybackUrl?.baseUrl,
+                                    watchtimeUrl = tracking.videostatsWatchtimeUrl?.baseUrl,
+                                    format = stream.format.itag,
+                                )
+                            }
+                        }
+                    }
                 }
             } catch (cancelled: CancellationException) {
                 throw cancelled
