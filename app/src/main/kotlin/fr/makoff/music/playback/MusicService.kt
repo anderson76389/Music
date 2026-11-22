@@ -39,6 +39,7 @@ import android.util.LruCache
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
 import androidx.core.app.ServiceCompat
 import androidx.core.content.getSystemService
 import androidx.core.net.toUri
@@ -107,6 +108,8 @@ import fr.makoff.music.constants.AddToPlaylistPosition
 import fr.makoff.music.constants.AddToPlaylistPositionKey
 import fr.makoff.music.constants.AndroidAutoTargetPlaylistKey
 import fr.makoff.music.constants.AudioNormalizationKey
+import fr.makoff.music.constants.RawYouTubeAudioMigrationKey
+import fr.makoff.music.constants.VarispeedKey
 import fr.makoff.music.constants.AudioOffload
 import fr.makoff.music.constants.AudioQualityKey
 import fr.makoff.music.constants.AudioTrackPlaybackParamsKey
@@ -614,7 +617,32 @@ class MusicService :
         // Read ALL startup preferences in one shot so that subsequent code
         // never calls dataStore.get() (which does runBlocking internally).
         // This consolidates ~15 main-thread-blocking DataStore reads into 1.
-        startupPrefs = runBlocking(Dispatchers.IO) { dataStore.data.first() }
+        // One-time reset of previously stored DSP/volume settings. Keep the
+        // user's downloads, playlists and EQ profiles; only deactivate the
+        // active EQ for the requested unprocessed YouTube Music sound.
+        // After migration, users can explicitly opt into an effect again.
+        startupPrefs = runBlocking(Dispatchers.IO) {
+            var prefs = dataStore.data.first()
+            if (prefs[RawYouTubeAudioMigrationKey] != true) {
+                dataStore.edit { settings ->
+                    settings[AudioQualityKey] = fr.makoff.music.constants.AudioQuality.HIGH.name
+                    settings[AudioNormalizationKey] = false
+                    settings[SkipSilenceKey] = false
+                    settings[SkipSilenceInstantKey] = false
+                    settings[CrossfadeEnabledKey] = false
+                    settings[VarispeedKey] = false
+                    settings[AudioOffload] = false
+                    settings[PlayerVolumeKey] = 1f
+                    settings[AutoplayKey] = true
+                    settings[AutoLoadMoreKey] = true
+                    settings[SimilarContent] = true
+                    settings[RawYouTubeAudioMigrationKey] = true
+                }
+                eqProfileRepository.setActiveProfile(null)
+                prefs = dataStore.data.first()
+            }
+            prefs
+        }
 
         // 3. Connect the processor to the service
         // handled in createExoPlayer
@@ -917,7 +945,7 @@ class MusicService :
         combine(
             currentFormat,
             dataStore.data
-                .map { it[AudioNormalizationKey] ?: true }
+                .map { it[AudioNormalizationKey] ?: false }
                 .distinctUntilChanged(),
             dataStore.data
                 .map { prefs -> prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT) }
@@ -2124,7 +2152,7 @@ class MusicService :
 
     private fun seedLoudnessCacheFromPrefs() {
         val prefs = startupPrefs!!
-        normalizationEnabledCached = prefs[AudioNormalizationKey] ?: true
+        normalizationEnabledCached = prefs[AudioNormalizationKey] ?: false
         loudnessLevelCached = prefs[LoudnessLevelKey].toEnum(LoudnessLevel.DEFAULT)
 
         Timber.tag(TAG).d(
