@@ -455,6 +455,7 @@ class MusicService :
     private var cachedShufflePlaylistFirst = false
     @Volatile
     private var cachedAutoLoadMore = true
+    @Volatile private var cachedSimilarContent = true
 
     // URL cache for stream URLs - class-level so it can be invalidated on errors
     private val songUrlCache = StreamUrlCache()
@@ -1066,6 +1067,12 @@ class MusicService :
         scope.launch {
             dataStore.data.map { it[AutoLoadMoreKey] ?: true }.distinctUntilChanged().collect { cachedAutoLoadMore = it }
         }
+        scope.launch {
+            dataStore.data.map { it[SimilarContent] ?: true }.distinctUntilChanged().collect {
+                cachedSimilarContent = it
+                if (!it) automixItems.value = emptyList()
+            }
+        }
         if (startupPrefs!![PersistentQueueKey] ?: true) {
             val queueFile = filesDir.resolve(PERSISTENT_QUEUE_FILE)
             if (queueFile.exists()) {
@@ -1663,6 +1670,7 @@ class MusicService :
         nextStreamPrefetchJob = null
         pendingPrefetchId = null
         lastRecommendationSeed = null
+        if (!restoringQueue) automixItems.value = emptyList()
         currentQueue = queue
         queueTitle = null
         val persistShuffleAcrossQueues = dataStore.get(PersistentShuffleAcrossQueuesKey, false)
@@ -1776,7 +1784,12 @@ class MusicService :
                     val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
                     val fresh = PlaybackRecommendations.distinctCandidates(seedId, recommendations, existing)
                     if (fresh.isNotEmpty()) {
-                        player.addMediaItems(fresh)
+                        val (autoplayNext, suggested) = PlaybackRecommendations.splitSuggestions(fresh)
+                        player.addMediaItems(autoplayNext)
+                        // The Queue screen's "Similar content" section is
+                        // backed by automixItems, not the player playlist.
+                        // Populate both without duplicating queued tracks.
+                        automixItems.value = if (cachedSimilarContent) suggested.take(30) else emptyList()
                         prefetchNextAudioStream()
                     }
                 }
