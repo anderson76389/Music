@@ -22,11 +22,16 @@ internal object PlaybackRecommendations {
                 YouTube.related(endpoint).getOrNull()?.songs.orEmpty().map { it.toMediaItem() }
             }.orEmpty()
         } else emptyList()
-        val radio = if (fromNext.size + related.size <= 1) {
-            YouTube.next(WatchEndpoint(videoId = seedId, playlistId = "RDAMVM$seedId"))
-                .getOrNull()?.items.orEmpty().map { it.toMediaItem() }
+        val radioResponse = if (fromNext.size + related.size <= 1) {
+            YouTube.next(WatchEndpoint(videoId = seedId, playlistId = "RDAMVM$seedId")).getOrNull()
+        } else null
+        val radio = radioResponse?.items.orEmpty().map { it.toMediaItem() }
+        val radioRelated = if (fromNext.size + related.size + radio.size <= 1) {
+            radioResponse?.relatedEndpoint?.let { endpoint ->
+                YouTube.related(endpoint).getOrNull()?.songs.orEmpty().map { it.toMediaItem() }
+            }.orEmpty()
         } else emptyList()
-        distinctCandidates(seedId, fromNext + related + radio)
+        distinctCandidates(seedId, fromNext + related + radio + radioRelated)
     }
 
     fun distinctCandidates(seedId: String, suggestions: List<MediaItem>, existing: Set<String> = emptySet()): List<MediaItem> {
