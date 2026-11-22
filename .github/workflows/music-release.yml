@@ -1,7 +1,7 @@
 name: Publier les APK stables signés
 on:
   workflow_run:
-    workflows: ["Music Android"]
+    workflows: ["Apple Music Android"]
     types: [completed]
     branches: [main]
   workflow_dispatch:
