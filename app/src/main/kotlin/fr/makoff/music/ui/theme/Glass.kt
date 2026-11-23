@@ -86,8 +86,11 @@ fun Modifier.liquidGlass(
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
             Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = if (dark) 0.28f else 0.6f)))
     }
-    val glass = shadow(8.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.12f),
-        spotColor = Color.Black.copy(alpha = 0.16f))
+    // Borderless chrome keeps refraction and frost, but must not retain
+    // the dark outer shadow that looked like a grey ring while scrolling.
+    val glass = (if (showBorder) shadow(8.dp, shape, clip = false,
+        ambientColor = Color.Black.copy(alpha = 0.12f),
+        spotColor = Color.Black.copy(alpha = 0.16f)) else this)
         .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
     val panel = glass.background(if (readable) surface.copy(alpha = 0.96f) else legibilityTint)
     return if (showBorder) panel.border(0.8.dp, rim, shape) else panel
