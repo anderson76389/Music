@@ -82,7 +82,7 @@ fun AppNavigationRail(
     val viewConfiguration = LocalViewConfiguration.current
 
     NavigationRail(
-        modifier = modifier.liquidGlass(RoundedCornerShape(28.dp)),
+        modifier = modifier.liquidGlass(RoundedCornerShape(28.dp), showBorder = false),
         containerColor = if (LocalLiquidGlassEnabled.current) Color.Transparent else containerColor
     ) {
         Spacer(modifier = Modifier.weight(1f))
@@ -262,7 +262,7 @@ fun AppNavigationBar(
         Row(modifier = modifier.fillMaxWidth()
             .windowInsetsPadding(WindowInsets.navigationBars.only(WindowInsetsSides.Bottom))
             .padding(horizontal = 12.dp, vertical = 8.dp)
-            .liquidGlass(RoundedCornerShape(32.dp), chrome = true).selectableGroup(), content = items)
+            .liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false).selectableGroup(), content = items)
     } else {
         NavigationBar(modifier = modifier, containerColor = containerColor, contentColor = contentColor, content = items)
     }
