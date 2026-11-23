@@ -59,7 +59,8 @@ fun Modifier.liquidGlass(
             Brush.linearGradient(listOf(Color.White.copy(alpha = 0.42f), Color.White.copy(alpha = 0.06f), Color.Black.copy(alpha = 0.08f)))
         }
         val card = if (surface.luminance() < 0.5f) Color(0xFF242426) else Color.White
-        return clip(shape).background(card.copy(alpha = 0.96f)).border(0.5.dp, highlight, shape)
+        val panel = clip(shape).background(card.copy(alpha = 0.96f))
+        return if (showBorder) panel.border(0.5.dp, highlight, shape) else panel
     }
     val state = LocalChromeGlass.current ?: return background(surface, shape)
     val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
@@ -85,8 +86,11 @@ fun Modifier.liquidGlass(
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
             Color.White.copy(alpha = 0.08f), Color.White.copy(alpha = if (dark) 0.28f else 0.6f)))
     }
-    val glass = shadow(8.dp, shape, clip = false, ambientColor = Color.Black.copy(alpha = 0.12f),
-        spotColor = Color.Black.copy(alpha = 0.16f))
+    // Borderless chrome keeps refraction and frost, but must not retain
+    // the dark outer shadow that looked like a grey ring while scrolling.
+    val glass = (if (showBorder) shadow(8.dp, shape, clip = false,
+        ambientColor = Color.Black.copy(alpha = 0.12f),
+        spotColor = Color.Black.copy(alpha = 0.16f)) else this)
         .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
     val panel = glass.background(if (readable) surface.copy(alpha = 0.96f) else legibilityTint)
     return if (showBorder) panel.border(0.8.dp, rim, shape) else panel

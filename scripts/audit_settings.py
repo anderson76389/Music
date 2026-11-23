@@ -96,7 +96,7 @@ assert 'title = "Wrapped"' not in content_source
 print('PASS: Content section order and translated headings')
 
 for screen, headings in {
-    'PlayerSettings.kt': ['settings_player_entry', 'soundproof_settings_section', 'player_devices_section', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section'],
+    'PlayerSettings.kt': ['settings_player_entry', 'player_devices_section', 'player_audio_quality_section', 'player_transitions_section', 'player_queue_section', 'player_shuffle_section', 'player_behavior_section'],
     'AppearanceSettings.kt': ['theme', 'appearance_display_section', 'appearance_navigation_section', 'appearance_player_section', 'mini_player', 'appearance_gestures_section', 'auto_playlists'],
 }.items():
     source = (k/'ui/screens/settings'/screen).read_text()
@@ -128,12 +128,16 @@ assert 'onClick = { /* no-op */ }' not in selector
 assert 'Text(\n                        text = stringResource(R.string.song_dropdown_more_results, remainingCount)' in selector
 print('PASS: menu actions dispatch directly; compact labels, drag handles and integrated update shortcuts guarded')
 
-# SoundProof must have a single user-facing toggle in Lecteur, not a duplicate in Contenu.
-assert (k/'ui/screens/settings/PlayerSettings.kt').read_text().count(
-    "title = { Text(stringResource(R.string.soundproof_skip_ai_title)) }"
-) == 1
+# One user-facing SoundProof toggle, now in Addons, not in Lecteur/Contenu.
+addon_settings = (k/'ui/screens/settings/AudioSourcesSettings.kt').read_text()
+assert addon_settings.count("R.string.soundproof_skip_ai_title") >= 1
+assert addon_settings.count("onCheckedChange = onSoundProofSkipAiChange") == 1
+assert "SoundProofRefreshGenerationKey" in addon_settings
+assert "soundProofRepository.refreshNow()" in addon_settings
+assert "SoundProofSkipAiKey" not in (k/'ui/screens/settings/PlayerSettings.kt').read_text()
 assert "R.string.soundproof_skip_ai_title" not in (k/'ui/screens/settings/ContentSettings.kt').read_text()
-print("PASS: SoundProof has exactly one switch in Lecteur")
+assert 'openSection("settings/audio_sources")' in (k/'ui/screens/settings/SettingsScreen.kt').read_text()
+print("PASS: SoundProof has one working switch, refresh and source in Addons")
 
 # Uploaded music remains on the account, but no upload controls or virtual
 # "Téléversés" cards should appear in Bibliothèque after migration.

@@ -578,6 +578,7 @@ class SettingsNavigationTest {
             R.string.appearance to R.string.theme,
             R.string.settings_player_entry to R.string.player_video_mode_setting,
             R.string.settings_audio_entry to R.string.audio_quality,
+            R.string.audio_sources_title to R.string.soundproof_skip_ai_title,
             R.string.content to R.string.content_language,
             R.string.storage to R.string.downloaded_songs,
             R.string.download_settings to R.string.folder_audio_recent,
@@ -735,6 +736,17 @@ class SettingsNavigationTest {
                         }
                     }
                     println("PLAYER_SECTIONS_OK: video mode, queue, shuffle, behavior and devices")
+                }
+                R.string.audio_sources_title -> {
+                    // The real Addons screen owns the single SoundProof setting;
+                    // exercise the Compose switch and verify DataStore persistence.
+                    toggleAndRestore(R.string.soundproof_skip_ai_title, SoundProofSkipAiKey, false,
+                        clicker = { open(it, switchOnly = true) })
+                    findText(R.string.soundproof_refresh_title)
+                    findText(R.string.soundproof_source_title)
+                    findText(R.string.audio_sources_list_title)
+                    findText(R.string.audio_sources_add)
+                    println("SOUNDPROOF_ADDONS_OK: Addons route, toggle, refresh, source and audio providers")
                 }
                 R.string.settings_audio_entry -> {
                     assertFalse("Download-format helper paragraph removed", device.hasObject(By.text(label(R.string.download_format_unified_help))))

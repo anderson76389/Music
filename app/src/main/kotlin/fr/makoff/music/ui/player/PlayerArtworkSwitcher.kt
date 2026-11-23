@@ -383,14 +383,17 @@ internal fun PlayerModePills(
                         .weight(1f)
                         .height(28.dp)
                         .then(
-                            if (glass && selected) {
-                                // Refract the artwork below the active tab, too:
-                                // no permanently painted, opaque white highlight.
-                                Modifier.liquidGlass(
-                                    shape = RoundedCornerShape(16.dp),
-                                    chrome = true,
-                                    showBorder = true,
-                                )
+                            if (glass) {
+                                // One Liquid Glass surface for the WHOLE selector.
+                                // A second hazeGlass on the selected half creates an
+                                // unwanted grey vertical seam during refraction.
+                                Modifier.clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        if (selected) {
+                                            if (dark) Color.White.copy(alpha = 0.14f)
+                                            else Color.Black.copy(alpha = 0.09f)
+                                        } else Color.Transparent
+                                    )
                             } else {
                                 Modifier.clip(RoundedCornerShape(19.dp))
                                     .background(if (selected) animatedSelectedColor else Color.Transparent)

@@ -46,6 +46,13 @@ import fr.makoff.music.LocalPlayerAwareWindowInsets
 import fr.makoff.music.R
 import fr.makoff.music.playback.addons.AudioAddon
 import fr.makoff.music.playback.addons.AudioAddons
+import fr.makoff.music.playback.SoundProofRepository
+import fr.makoff.music.constants.SoundProofSkipAiKey
+import fr.makoff.music.constants.SoundProofRefreshGenerationKey
+import fr.makoff.music.utils.rememberPreference
+import fr.makoff.music.utils.safeDataStoreEdit
+import android.content.Intent
+import android.net.Uri
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -56,6 +63,28 @@ fun AudioSourcesSettings(navController: NavController) {
     val sources by remember(context) { AudioAddons.sources(context) }.collectAsStateWithLifecycle(emptyList())
     var adding by remember { mutableStateOf(false) }
     var savingError by remember { mutableStateOf(false) }
+    // This is the single SoundProof switch in the app. MusicService observes
+    // this preference and the refresh generation and applies it to playback.
+    val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(SoundProofSkipAiKey, false)
+    val soundProofRepository = remember(context) { SoundProofRepository(context) }
+    var refreshingSoundProof by remember { mutableStateOf(false) }
+    var refreshedSoundProof by remember { mutableStateOf<Boolean?>(null) }
+    fun refreshSoundProof() {
+        if (refreshingSoundProof || !soundProofSkipAi) return
+        refreshingSoundProof = true
+        scope.launch {
+            val refreshed = runCatching { soundProofRepository.refreshNow() }.getOrDefault(false)
+            refreshedSoundProof = if (refreshed) {
+                context.safeDataStoreEdit { preferences ->
+                    val last = preferences[SoundProofRefreshGenerationKey] ?: 0L
+                    preferences[SoundProofRefreshGenerationKey] =
+                        maxOf(System.currentTimeMillis(), last + 1L)
+                }
+            } else false
+            refreshingSoundProof = false
+        }
+    }
+
 
     fun update(transform: (List<AudioAddon>) -> List<AudioAddon>) {
         scope.launch { savingError = !AudioAddons.update(context, transform) }
@@ -97,9 +126,77 @@ fun AudioSourcesSettings(navController: NavController) {
             LocalPlayerAwareWindowInsets.current.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Bottom)
         ),
     ) {
+        // SoundProof is a playback filtering addon, not an audio stream provider.
+        item(key = "soundproof_title") {
+            Text(
+                stringResource(R.string.soundproof_settings_section),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 16.dp, bottom = 8.dp),
+            )
+        }
+        item(key = "soundproof_toggle") {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.soundproof_skip_ai_title)) },
+                supportingContent = { Text(stringResource(R.string.soundproof_skip_ai_description)) },
+                leadingContent = { Icon(painterResource(R.drawable.person), contentDescription = null) },
+                trailingContent = {
+                    Switch(
+                        checked = soundProofSkipAi,
+                        onCheckedChange = onSoundProofSkipAiChange,
+                        modifier = Modifier.semantics {
+                            contentDescription = context.getString(R.string.soundproof_skip_ai_title)
+                        },
+                    )
+                },
+            )
+        }
+        item(key = "soundproof_refresh") {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.soundproof_refresh_title)) },
+                supportingContent = {
+                    Text(when {
+                        refreshingSoundProof -> stringResource(R.string.soundproof_refresh_running)
+                        refreshedSoundProof == true -> stringResource(R.string.soundproof_refresh_success)
+                        refreshedSoundProof == false -> stringResource(R.string.soundproof_refresh_error)
+                        else -> stringResource(R.string.soundproof_refresh_description)
+                    })
+                },
+                leadingContent = { Icon(painterResource(R.drawable.sync), contentDescription = null) },
+                trailingContent = {
+                    SourceAction(
+                        R.drawable.refresh,
+                        R.string.soundproof_refresh_title,
+                        enabled = soundProofSkipAi && !refreshingSoundProof,
+                    ) { refreshSoundProof() }
+                },
+            )
+        }
+        item(key = "soundproof_source") {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.soundproof_source_title)) },
+                supportingContent = { Text(stringResource(R.string.soundproof_source_description)) },
+                leadingContent = { Icon(painterResource(R.drawable.info), contentDescription = null) },
+                trailingContent = {
+                    SourceAction(R.drawable.link, R.string.soundproof_source_title) {
+                        runCatching {
+                            context.startActivity(Intent(Intent.ACTION_VIEW,
+                                Uri.parse("https://github.com/NuclearBlox/SoundProof-Dumps"))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        }
+                    }
+                },
+            )
+        }
+        item(key = "audio_addons_title") {
+            Text(
+                stringResource(R.string.audio_sources_list_title),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(start = 16.dp, top = 20.dp),
+            )
+        }
         item {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.audio_sources_order))
+                Text(stringResource(R.string.audio_sources_order), style = MaterialTheme.typography.bodySmall)
                 Text(stringResource(R.string.audio_sources_manifest_hint), style = MaterialTheme.typography.bodySmall)
                 Button(
                     onClick = { adding = true },

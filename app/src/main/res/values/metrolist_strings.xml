@@ -948,7 +948,8 @@
     <string name="soundproof_source_title">Consulter les votes SoundProof</string>
     <string name="soundproof_source_description">Ouvrir la source communautaire.</string>
     <string name="player_video_theme_custom">Personnalisé</string>
-    <string name="audio_sources_title">Audio sources</string>
+    <string name="audio_sources_title">Addons</string>
+    <string name="audio_sources_list_title">Audio sources</string>
     <string name="audio_sources_order">Enabled add-ons are tried from top to bottom. Searching an add-on shares the song title and artist with its server.</string>
     <string name="audio_sources_add">Add an add-on</string>
     <string name="audio_sources_fallback">Fallback for online playback</string>
