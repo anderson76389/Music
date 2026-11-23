@@ -839,6 +839,31 @@ class FolderAudioInstrumentedTest {
         }
     }
 
+    @Test(timeout = 90000) fun ytDlpOriginalOpusIsRemuxedWithoutChangingEncodedSamples() = runBlocking {
+        val work = File(context.cacheDir, "yt-dlp-opus-\${UUID.randomUUID()}").apply { mkdirs() }
+        try {
+            val source = File(work, "youtube-original.webm").apply {
+                writeBytes(android.util.Base64.decode(
+                    instrumentation.context.assets.open("audio/opus.webm.base64").use { it.readBytes() },
+                    android.util.Base64.DEFAULT,
+                ))
+            }
+            // A local fixture exercises the exact bundled yt-dlp binary
+            // without a live YouTube response or account restrictions.
+            val output = YtDlpAudioEngine.download(
+                context,
+                source.toURI().toString(),
+                File(work, "opus-export"),
+                "opus-\${UUID.randomUUID()}",
+                format = DownloadAudioFormat.OPUS,
+            ) { }
+            assertEquals("opus", output.extension)
+            assertArrayEquals("yt-dlp and stream-copy remux must preserve every encoded Opus sample",
+                audioPackets(source), audioPackets(output))
+            println("YT_DLP_NATIVE_OPUS_OK: original WebM/Opus packets preserved inside Ogg/Opus")
+        } finally { work.deleteRecursively() }
+    }
+
     @Test(timeout = 90000) fun m4aAacKeepsItsRealCodecAndExactBytesAfterExport() = runBlocking {
         for ((asset, mime) in listOf("aac.m4a" to "audio/mp4a-latm")) {
             val audio = android.util.Base64.decode(
