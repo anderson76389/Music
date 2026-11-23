@@ -74,6 +74,7 @@ jobs:
           python3 scripts/audit_independence.py
           python3 scripts/audit_player_regressions.py
           python3 scripts/audit_glass_queue_download.py
+          python3 scripts/audit_glass_soundproof.py
           python3 scripts/audit_raw_music_playback.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
