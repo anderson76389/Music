@@ -41,8 +41,8 @@ for wiring in (
     "playerConnection.service.addToQueueAutomix(",
 ):
     assert wiring in queue, f"Queue interaction lost: {wiring}"
-assert "playerConnection.seekToNext()" in player
-assert "playerConnection.seekToPrevious()" in player
+assert "playerConnection::seekToNext" in player
+assert "playerConnection::seekToPrevious" in player
 assert "OfflinePlayerInstrumentedTest" in smoke and "PlayerVideoSwitchInstrumentedTest" in smoke
 assert "SettingsNavigationTest" in smoke and "FolderAudioInstrumentedTest" in smoke
 print("PASS: playable queue/player actions connected; emulator UI tests run main controls and settings")
