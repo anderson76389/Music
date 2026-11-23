@@ -840,7 +840,7 @@ class FolderAudioInstrumentedTest {
     }
 
     @Test(timeout = 90000) fun ytDlpOriginalOpusIsRemuxedWithoutChangingEncodedSamples() = runBlocking {
-        val work = File(context.cacheDir, "yt-dlp-opus-\${UUID.randomUUID()}").apply { mkdirs() }
+        val work = File(context.cacheDir, "yt-dlp-opus-${UUID.randomUUID()}").apply { mkdirs() }
         try {
             val source = File(work, "youtube-original.webm").apply {
                 writeBytes(android.util.Base64.decode(
@@ -854,7 +854,7 @@ class FolderAudioInstrumentedTest {
                 context,
                 source.toURI().toString(),
                 File(work, "opus-export"),
-                "opus-\${UUID.randomUUID()}",
+                "opus-${UUID.randomUUID()}",
                 format = DownloadAudioFormat.OPUS,
             ) { }
             assertEquals("opus", output.extension)
