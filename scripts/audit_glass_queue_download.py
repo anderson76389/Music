@@ -29,6 +29,7 @@ assert "background.copy(alpha = 0.97f)" in queue
 assert "lazyListState.scrollToItem(currentWindowIndex + headerItems)" in queue
 assert "val glassQueueSurface by animateColorAsState(" in player
 assert "val glassQueueAccent by animateColorAsState(" in player
+assert player.index("val glassQueueAccent by animateColorAsState(") < player.index("CompositionLocalProvider(\n        LocalMenuState provides playerMenuState"), "Queue/menu palette must be in the outer player scope"
 print("PASS: Liquid Glass slightly less transparent; cover-aware player and up-next surfaces, accents and correct scroll offset")
 
 # The main visible queue actions must have real callbacks, not inert or test-only placeholders.
