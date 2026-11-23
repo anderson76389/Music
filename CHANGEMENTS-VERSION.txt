@@ -1,5 +1,5 @@
-- Liquid Glass : fonds légèrement moins transparents, flou et reflets conservés pour une meilleure lisibilité.
-- Pochette : les couleurs du morceau en cours suivent désormais le lecteur jusque dans toute la liste « Morceaux suivants ».
-- Liste de lecture : correction du défilement vers le titre en cours, avec les boutons de lecture et de file d'attente conservés.
-- Téléchargements : contrôle des flux M4A et Opus natifs via yt-dlp, avec copie des paquets audio sans réencodage et pochettes intégrées.
-- Fiabilité : nouveaux tests de couleurs, commandes du lecteur, export Opus et vérifications Android.
+- Liquid Glass Son/Vidéo : suppression du trait central en ne conservant qu'une seule surface de verre, avec sélection toujours visible et fonctionnelle.
+- Navigation : suppression du fin contour gris pendant le défilement, tout en conservant le flou, la réfraction et les animations.
+- Pochette : stabilisation des couleurs du lecteur lorsqu'on ouvre et ferme plusieurs fois la même musique.
+- SoundProof : déplacé de Lecteur vers Addons, sans doublon ; interrupteur, actualisation des votes et lien vers la source conservés.
+- Vérifications : tests des boutons Son/Vidéo, navigation, SoundProof et réglage persistant sur Android.
