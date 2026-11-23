@@ -5,12 +5,6 @@
 
 package fr.makoff.music.ui.screens.settings
 
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
-import fr.makoff.music.playback.SoundProofRepository
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsetsSides
@@ -70,9 +64,6 @@ import fr.makoff.music.constants.PlayerVideoQuality
 import fr.makoff.music.constants.PlayerVideoQualityKey
 import fr.makoff.music.constants.PlayerVideoThemeMode
 import fr.makoff.music.constants.PlayerVideoThemeModeKey
-import fr.makoff.music.constants.SoundProofSkipAiKey
-import fr.makoff.music.constants.SoundProofRefreshGenerationKey
-import fr.makoff.music.utils.safeDataStoreEdit
 import fr.makoff.music.constants.PersistentShuffleAcrossQueuesKey
 import fr.makoff.music.constants.PreventDuplicateTracksInQueueKey
 import fr.makoff.music.constants.RememberShuffleAndRepeatKey
@@ -112,15 +103,6 @@ fun PlayerSettings(
     val (playerVideoQuality, onPlayerVideoQualityChange) = rememberEnumPreference(
         PlayerVideoQualityKey, defaultValue = PlayerVideoQuality.BEST,
     )
-    // Both settings screens use the same stored SoundProof toggle.
-    val (soundProofSkipAi, onSoundProofSkipAiChange) = rememberPreference(
-        SoundProofSkipAiKey, defaultValue = false,
-    )
-    val context = LocalContext.current
-    val soundProofRepository = remember(context) { SoundProofRepository(context) }
-    val refreshScope = rememberCoroutineScope()
-    var refreshingSoundProof by remember { mutableStateOf(false) }
-    var refreshedSoundProof by remember { mutableStateOf<Boolean?>(null) }
     val (audioQuality, onAudioQualityChange) = rememberEnumPreference(
         AudioQualityKey,
         defaultValue = AudioQuality.HIGH
@@ -392,72 +374,7 @@ fun PlayerSettings(
                 ),
             )
             Spacer(modifier = Modifier.height(27.dp))
-            // Keep AI-artist filtering separate from video appearance controls.
-            Material3SettingsGroup(
-                title = stringResource(R.string.soundproof_settings_section),
-                items = listOf(
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.person),
-                        title = { Text(stringResource(R.string.soundproof_skip_ai_title)) },
-                        description = { Text(stringResource(R.string.soundproof_skip_ai_description)) },
-                        trailingContent = {
-                            Switch(
-                                checked = soundProofSkipAi,
-                                onCheckedChange = onSoundProofSkipAiChange,
-                            )
-                        },
-                        onClick = { onSoundProofSkipAiChange(!soundProofSkipAi) },
-                    ),
-                    // These are real SoundProof actions, not decorative switches.
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.sync),
-                        title = { Text(stringResource(R.string.soundproof_refresh_title)) },
-                        description = {
-                            Text(
-                                when {
-                                    refreshingSoundProof -> stringResource(R.string.soundproof_refresh_running)
-                                    refreshedSoundProof == true -> stringResource(R.string.soundproof_refresh_success)
-                                    refreshedSoundProof == false -> stringResource(R.string.soundproof_refresh_error)
-                                    else -> stringResource(R.string.soundproof_refresh_description)
-                                }
-                            )
-                        },
-                        enabled = soundProofSkipAi && !refreshingSoundProof,
-                        onClick = {
-                            if (!refreshingSoundProof) {
-                                refreshingSoundProof = true
-                                refreshScope.launch {
-                                    val refreshed = runCatching { soundProofRepository.refreshNow() }.getOrDefault(false)
-                                    // Settings and MusicService are separate repository
-                                    // instances. Signal the service to reload this *new*
-                                    // local file and recheck the song already playing.
-                                    refreshedSoundProof = if (refreshed) {
-                                        context.safeDataStoreEdit { preferences ->
-                                            val last = preferences[SoundProofRefreshGenerationKey] ?: 0L
-                                            preferences[SoundProofRefreshGenerationKey] =
-                                                maxOf(System.currentTimeMillis(), last + 1L)
-                                        }
-                                    } else false
-                                    refreshingSoundProof = false
-                                }
-                            }
-                        },
-                    ),
-                    Material3SettingsItem(
-                        icon = painterResource(R.drawable.info),
-                        title = { Text(stringResource(R.string.soundproof_source_title)) },
-                        description = { Text(stringResource(R.string.soundproof_source_description)) },
-                        onClick = {
-                            runCatching {
-                                context.startActivity(
-                                    Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/NuclearBlox/SoundProof-Dumps"))
-                                )
-                            }
-                        },
-                    )
-                ),
-            )
-
+            // SoundProof lives in Addons with its one global opt-in switch.
             Spacer(modifier = Modifier.height(27.dp))
         Material3SettingsGroup(
             title = stringResource(R.string.player_devices_section),
