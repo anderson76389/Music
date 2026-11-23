@@ -1889,7 +1889,7 @@ fun BottomSheetPlayer(
     if (glassMode) {
         fr.makoff.music.ui.theme.MusicTheme(
             darkTheme = true,
-            themeColor = MaterialTheme.colorScheme.primary,
+            themeColor = glassQueueAccent,
             content = menuContent,
         )
     } else {
