@@ -26,6 +26,10 @@ class GlassArtworkColorsTest {
         for (surface in listOf(blueSurface, redSurface)) {
             assertTrue("White queue text meets contrast", 1.05f / (surface.luminance() + 0.05f) >= 4.5f)
         }
+        for (accent in listOf(blueAccent, redAccent,
+            PlayerColorExtractor.glassQueueAccent(listOf(Color(0xFFFFFF00)), Color.Black))) {
+            assertTrue("White icons on cover-accent buttons meet contrast", 1.05f / (accent.luminance() + 0.05f) >= 4.5f)
+        }
         assertEquals(
             Color(0xFF242426).let { base ->
                 Color(base.red * 0.64f, base.green * 0.64f, base.blue * 0.64f)
