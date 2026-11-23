@@ -177,7 +177,7 @@ fun AudioSourcesSettings(navController: NavController) {
                 supportingContent = { Text(stringResource(R.string.soundproof_source_description)) },
                 leadingContent = { Icon(painterResource(R.drawable.info), contentDescription = null) },
                 trailingContent = {
-                    SourceAction(R.drawable.open_in_new, R.string.soundproof_source_title) {
+                    SourceAction(R.drawable.link, R.string.soundproof_source_title) {
                         runCatching {
                             context.startActivity(Intent(Intent.ACTION_VIEW,
                                 Uri.parse("https://github.com/NuclearBlox/SoundProof-Dumps"))
@@ -189,13 +189,14 @@ fun AudioSourcesSettings(navController: NavController) {
         }
         item(key = "audio_addons_title") {
             Text(
-                stringResource(R.string.audio_sources_order),
+                stringResource(R.string.audio_sources_list_title),
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier.padding(start = 16.dp, top = 20.dp),
             )
         }
         item {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(stringResource(R.string.audio_sources_order), style = MaterialTheme.typography.bodySmall)
                 Text(stringResource(R.string.audio_sources_manifest_hint), style = MaterialTheme.typography.bodySmall)
                 Button(
                     onClick = { adding = true },
