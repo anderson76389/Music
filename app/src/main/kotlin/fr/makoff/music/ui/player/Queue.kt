@@ -487,7 +487,7 @@ fun Queue(
 
         LaunchedEffect(mutableQueueWindows, currentWindowIndex) {
             if (currentWindowIndex != -1) {
-                lazyListState.scrollToItem(currentWindowIndex)
+                lazyListState.scrollToItem(currentWindowIndex + headerItems)
             }
         }
 
@@ -969,7 +969,8 @@ fun Queue(
                     coroutineScope
                         .launch {
                             lazyListState.animateScrollToItem(
-                                if (playerConnection.player.shuffleModeEnabled) playerConnection.player.currentMediaItemIndex else 0,
+                                (if (playerConnection.player.shuffleModeEnabled)
+                                    playerConnection.player.currentMediaItemIndex + headerItems else headerItems).coerceAtLeast(0),
                             )
                         }.invokeOnCompletion {
                             playerConnection.player.shuffleModeEnabled =
