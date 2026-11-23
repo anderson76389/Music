@@ -73,6 +73,7 @@ jobs:
           keytool -genkeypair -keystore "$HOME/.android/debug.keystore" -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 3650 -dname "CN=Music Test,O=MAKOFF,C=FR"
           python3 scripts/audit_independence.py
           python3 scripts/audit_player_regressions.py
+          python3 scripts/audit_glass_queue_download.py
           python3 scripts/audit_raw_music_playback.py
           chmod +x gradlew
           ./gradlew :app:testFossDebugUnitTest :app:assembleFossRelease :app:assembleGmsRelease
