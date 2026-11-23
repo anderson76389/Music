@@ -787,7 +787,11 @@ fun Queue(
                         interactionSource = remember { MutableInteractionSource() },
                     ) { }
                     .background(
-                        if (pureBlack) {
+                        if (LocalLiquidGlassEnabled.current) {
+                            // The sheet chrome should match its artwork-backed
+                            // list, not the unrelated app accent or wallpaper.
+                            background.copy(alpha = 0.97f)
+                        } else if (pureBlack) {
                             Color.Black
                         } else {
                             MaterialTheme.colorScheme
@@ -933,7 +937,11 @@ fun Queue(
             modifier =
                 Modifier
                     .background(
-                        if (pureBlack) {
+                        if (LocalLiquidGlassEnabled.current) {
+                            // The sheet chrome should match its artwork-backed
+                            // list, not the unrelated app accent or wallpaper.
+                            background.copy(alpha = 0.97f)
+                        } else if (pureBlack) {
                             Color.Black
                         } else {
                             MaterialTheme.colorScheme
