@@ -946,7 +946,10 @@ fun BottomSheetPlayer(
                             label = "gradientBottom",
                         )
                         val thumbnailUrl = mediaMetadata?.thumbnailUrl
-                        val showArtworkBackdrop = state.isExpanded && !thumbnailUrl.isNullOrBlank()
+                        // Glass colors must be deterministic for this cover, independent
+                        // of repeated expand/collapse taps. The artwork itself
+                        // stays visible in the center of the expanded player.
+                        val showArtworkBackdrop = !glassMode && state.isExpanded && !thumbnailUrl.isNullOrBlank()
                         Box(Modifier.fillMaxSize().alpha(backgroundAlpha)) {
                             Box(
                                 Modifier.fillMaxSize().background(
