@@ -1830,6 +1830,23 @@ fun BottomSheetPlayer(
             }
         }
 
+        val glassQueueSurface by animateColorAsState(
+            targetValue = PlayerColorExtractor.glassQueueSurface(
+                visibleGradientColors,
+                Color(0xFF242426),
+            ),
+            animationSpec = tween(260),
+            label = "glassQueueArtworkSurface",
+        )
+        val glassQueueAccent by animateColorAsState(
+            targetValue = PlayerColorExtractor.glassQueueAccent(
+                visibleGradientColors,
+                MaterialTheme.colorScheme.primary,
+            ),
+            animationSpec = tween(260),
+            label = "glassQueueArtworkAccent",
+        )
+
         AnimatedVisibility(
             visible = !isFullScreen && !fullscreenLandscapeVideo,
             enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
@@ -1840,7 +1857,9 @@ fun BottomSheetPlayer(
                 state = queueSheetState,
                 playerBottomSheetState = state,
                 background =
-                    if (useBlackBackground) {
+                    if (glassMode) {
+                        glassQueueSurface
+                    } else if (useBlackBackground) {
                         Color.Black
                     } else {
                         MaterialTheme.colorScheme.surfaceContainer
@@ -1849,13 +1868,15 @@ fun BottomSheetPlayer(
                 TextBackgroundColor = TextBackgroundColor,
                 textButtonColor = textButtonColor,
                 iconButtonColor = iconButtonColor,
-                pureBlack = pureBlack,
+                pureBlack = if (glassMode) false else pureBlack,
 
                 playerBackground = playerBackground,
             )
             }
             if (LocalLiquidGlassEnabled.current) {
-                fr.makoff.music.ui.theme.MusicTheme(darkTheme = true, themeColor = MaterialTheme.colorScheme.primary, content = queueContent)
+                // Follow the playing artwork in both the player and the entire
+                // "Morceaux suivants" sheet without changing the app-wide theme.
+                fr.makoff.music.ui.theme.MusicTheme(darkTheme = true, themeColor = glassQueueAccent, content = queueContent)
             } else queueContent()
         }
     }
