@@ -68,7 +68,7 @@ fun Modifier.liquidGlass(
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
-            tint(surface.copy(alpha = if (dark) 0.48f else 0.42f))
+            tint(surface.copy(alpha = if (dark) 0.58f else 0.52f))
             optics(blurRadius = 22.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
                 refractionHeightFraction = 0.28f, depth = 0.45f)
             specularIntensity(if (!showBorder) 0f else if (dark) 0.52f else 0.72f)
@@ -78,7 +78,8 @@ fun Modifier.liquidGlass(
             chromaticAberrationStrength(0.025f)
         }
     }
-    val legibilityTint = surface.copy(alpha = if (dark) 0.08f else 0.10f)
+    // A modestly stronger frosted tint keeps controls readable over saturated album artwork.
+    val legibilityTint = surface.copy(alpha = if (dark) 0.16f else 0.18f)
     if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).background(legibilityTint)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
