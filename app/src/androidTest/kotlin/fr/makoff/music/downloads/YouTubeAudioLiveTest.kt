@@ -15,7 +15,7 @@ class YouTubeAudioLiveTest {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val directory = File(context.cacheDir, "live-audio-${UUID.randomUUID()}")
         try {
-            for (format in listOf(DownloadAudioFormat.BEST, DownloadAudioFormat.M4A)) {
+            for (format in listOf(DownloadAudioFormat.M4A, DownloadAudioFormat.OPUS)) {
             val file = try {
                 PlaybackAudioEngine.download(context, "jNQXAC9IVRw", File(directory, format.name),
                     "live-${UUID.randomUUID()}", "", format) { }
@@ -36,6 +36,7 @@ class YouTubeAudioLiveTest {
             assertTrue(file.length() > 1000)
             assertTrue(file.extension in setOf("m4a", "webm", "opus", "ogg", "mp4"))
             if (format == DownloadAudioFormat.M4A) assertTrue(file.extension == "m4a")
+            if (format == DownloadAudioFormat.OPUS) assertTrue(file.extension == "opus")
             val extractor = android.media.MediaExtractor()
             val codec: String
             val sourceBitrate: Int
@@ -49,6 +50,7 @@ class YouTubeAudioLiveTest {
                     track.getInteger(android.media.MediaFormat.KEY_BIT_RATE) else -1
             } finally { extractor.release() }
             if (format == DownloadAudioFormat.M4A) assertTrue(codec == "audio/mp4a-latm")
+            if (format == DownloadAudioFormat.OPUS) assertTrue(codec == "audio/opus")
             println("YOUTUBE_DOWNLOAD_OK: format=$format; native=${file.parentFile?.name == "resolved"}; bytes=${file.length()}; codec=$codec; reported_bitrate=$sourceBitrate")
             }
         } finally { directory.deleteRecursively() }
