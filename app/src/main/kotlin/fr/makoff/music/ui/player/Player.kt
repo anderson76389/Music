@@ -847,6 +847,24 @@ fun BottomSheetPlayer(
         }
 
     val backgroundAlpha = state.progress.coerceIn(0f, 1f)
+    // Artwork-derived colors belong to the entire player scope, so both the
+    // queue and the overflow menu see the SAME active-song palette.
+    val glassQueueSurface by animateColorAsState(
+        targetValue = PlayerColorExtractor.glassQueueSurface(
+            visibleGradientColors,
+            Color(0xFF242426),
+        ),
+        animationSpec = tween(260),
+        label = "glassQueueArtworkSurface",
+    )
+    val glassQueueAccent by animateColorAsState(
+        targetValue = PlayerColorExtractor.glassQueueAccent(
+            visibleGradientColors,
+            MaterialTheme.colorScheme.primary,
+        ),
+        animationSpec = tween(260),
+        label = "glassQueueArtworkAccent",
+    )
 
     CompositionLocalProvider(
         LocalMenuState provides playerMenuState,
@@ -1829,23 +1847,6 @@ fun BottomSheetPlayer(
                 }
             }
         }
-
-        val glassQueueSurface by animateColorAsState(
-            targetValue = PlayerColorExtractor.glassQueueSurface(
-                visibleGradientColors,
-                Color(0xFF242426),
-            ),
-            animationSpec = tween(260),
-            label = "glassQueueArtworkSurface",
-        )
-        val glassQueueAccent by animateColorAsState(
-            targetValue = PlayerColorExtractor.glassQueueAccent(
-                visibleGradientColors,
-                MaterialTheme.colorScheme.primary,
-            ),
-            animationSpec = tween(260),
-            label = "glassQueueArtworkAccent",
-        )
 
         AnimatedVisibility(
             visible = !isFullScreen && !fullscreenLandscapeVideo,
