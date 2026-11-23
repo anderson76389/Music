@@ -1,5 +1,5 @@
-- Audio YouTube Music : lecture en qualité élevée sans normalisation, égaliseur actif, fondu ou saut des silences après la mise à jour.
-- Volume : retour à 100 % du volume interne, sans amplification artificielle susceptible de faire grésiller le signal.
-- Recommandations : les morceaux suivants se chargent automatiquement pendant la lecture et n'attendent plus le bouton Suivant.
-- Passage au morceau suivant : préchargement du prochain flux pour réduire le délai, sans téléchargement supplémentaire du fichier entier.
-- Fiabilité : protection contre les réponses YouTube retardées et les doublons dans la file d'attente.
+- Liquid Glass : fonds légèrement moins transparents, flou et reflets conservés pour une meilleure lisibilité.
+- Pochette : les couleurs du morceau en cours suivent désormais le lecteur jusque dans toute la liste « Morceaux suivants ».
+- Liste de lecture : correction du défilement vers le titre en cours, avec les boutons de lecture et de file d'attente conservés.
+- Téléchargements : contrôle des flux M4A et Opus natifs via yt-dlp, avec copie des paquets audio sans réencodage et pochettes intégrées.
+- Fiabilité : nouveaux tests de couleurs, commandes du lecteur, export Opus et vérifications Android.

@@ -487,7 +487,7 @@ fun Queue(
 
         LaunchedEffect(mutableQueueWindows, currentWindowIndex) {
             if (currentWindowIndex != -1) {
-                lazyListState.scrollToItem(currentWindowIndex)
+                lazyListState.scrollToItem(currentWindowIndex + headerItems)
             }
         }
 
@@ -787,7 +787,11 @@ fun Queue(
                         interactionSource = remember { MutableInteractionSource() },
                     ) { }
                     .background(
-                        if (pureBlack) {
+                        if (LocalLiquidGlassEnabled.current) {
+                            // The sheet chrome should match its artwork-backed
+                            // list, not the unrelated app accent or wallpaper.
+                            background.copy(alpha = 0.97f)
+                        } else if (pureBlack) {
                             Color.Black
                         } else {
                             MaterialTheme.colorScheme
@@ -933,7 +937,11 @@ fun Queue(
             modifier =
                 Modifier
                     .background(
-                        if (pureBlack) {
+                        if (LocalLiquidGlassEnabled.current) {
+                            // The sheet chrome should match its artwork-backed
+                            // list, not the unrelated app accent or wallpaper.
+                            background.copy(alpha = 0.97f)
+                        } else if (pureBlack) {
                             Color.Black
                         } else {
                             MaterialTheme.colorScheme
@@ -961,7 +969,8 @@ fun Queue(
                     coroutineScope
                         .launch {
                             lazyListState.animateScrollToItem(
-                                if (playerConnection.player.shuffleModeEnabled) playerConnection.player.currentMediaItemIndex else 0,
+                                (if (playerConnection.player.shuffleModeEnabled)
+                                    playerConnection.player.currentMediaItemIndex + headerItems else headerItems).coerceAtLeast(0),
                             )
                         }.invokeOnCompletion {
                             playerConnection.player.shuffleModeEnabled =

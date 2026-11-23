@@ -10,6 +10,34 @@ import androidx.compose.ui.graphics.luminance
 import androidx.palette.graphics.Palette
 
 object PlayerColorExtractor {
+    /** The up-next sheet keeps the current cover hue, with a dark, legible surface. */
+    fun glassQueueSurface(artworkColors: List<Color>, fallback: Color): Color {
+        val source = artworkColors.getOrNull(1) ?: artworkColors.firstOrNull() ?: fallback
+        return Color(
+            red = (source.red * 0.64f).coerceIn(0f, 1f),
+            green = (source.green * 0.64f).coerceIn(0f, 1f),
+            blue = (source.blue * 0.64f).coerceIn(0f, 1f),
+        )
+    }
+
+    /** Lift the cover hue for visible interactive accents on the dark queue sheet. */
+    fun glassQueueAccent(artworkColors: List<Color>, fallback: Color): Color {
+        val source = artworkColors.firstOrNull() ?: fallback
+        var accent = Color(
+            red = (source.red * 0.68f + 0.28f).coerceIn(0f, 1f),
+            green = (source.green * 0.68f + 0.28f).coerceIn(0f, 1f),
+            blue = (source.blue * 0.68f + 0.28f).coerceIn(0f, 1f),
+        )
+        // The dark sheet uses white icon/text on highlighted controls.
+        // Never brighten a yellow/white cover so far that those controls
+        // lose the minimum 4.5:1 foreground contrast.
+        while (accent.luminance() > 0.18f) {
+            accent = accent.copy(red = accent.red * 0.92f,
+                green = accent.green * 0.92f, blue = accent.blue * 0.92f)
+        }
+        return accent
+    }
+
     fun extractGradientColors(
         palette: Palette,
         fallbackColor: Int,
