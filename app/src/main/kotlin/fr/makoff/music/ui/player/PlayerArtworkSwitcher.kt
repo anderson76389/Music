@@ -344,10 +344,11 @@ internal fun PlayerModePills(
             if (dark) Color.White else Color(0xFF131313)
         PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
         PlayerVideoThemeMode.LIGHT -> Color.White
-        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White else Color(0xFF17191D)
+        PlayerVideoThemeMode.LIQUID_GLASS -> colors.primary
     }
     val unselectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.AUTO -> colors.onSurfaceVariant
+        PlayerVideoThemeMode.LIQUID_GLASS -> colors.onSurfaceVariant
         else -> if (dark) Color.White.copy(alpha = 0.86f) else Color.Black.copy(alpha = 0.78f)
     }
     val outlineColor = when (selectorTheme) {
@@ -369,7 +370,7 @@ internal fun PlayerModePills(
         Row(
             modifier = modifier
                 .then(
-                    if (glass) Modifier.liquidGlass(shape = shape, chrome = true)
+                    if (glass) Modifier.liquidGlass(shape = shape, chrome = true, showBorder = false)
                     else Modifier.clip(shape).background(animatedBarColor).border(0.75.dp, outlineColor, shape)
                 )
                 .padding(1.5.dp),
@@ -384,16 +385,9 @@ internal fun PlayerModePills(
                         .height(28.dp)
                         .then(
                             if (glass) {
-                                // One Liquid Glass surface for the WHOLE selector.
-                                // A second hazeGlass on the selected half creates an
-                                // unwanted grey vertical seam during refraction.
+                                // One glass surface; icon tint alone marks the selection.
+                                // No nested surface or grey selection capsule.
                                 Modifier.clip(RoundedCornerShape(16.dp))
-                                    .background(
-                                        if (selected) {
-                                            if (dark) Color.White.copy(alpha = 0.14f)
-                                            else Color.Black.copy(alpha = 0.09f)
-                                        } else Color.Transparent
-                                    )
                             } else {
                                 Modifier.clip(RoundedCornerShape(19.dp))
                                     .background(if (selected) animatedSelectedColor else Color.Transparent)

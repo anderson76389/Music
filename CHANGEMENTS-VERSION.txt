@@ -1,5 +1,4 @@
-- Liquid Glass Son/Vidéo : suppression du trait central en ne conservant qu'une seule surface de verre, avec sélection toujours visible et fonctionnelle.
-- Navigation : suppression du fin contour gris pendant le défilement, tout en conservant le flou, la réfraction et les animations.
-- Pochette : stabilisation des couleurs du lecteur lorsqu'on ouvre et ferme plusieurs fois la même musique.
-- SoundProof : déplacé de Lecteur vers Addons, sans doublon ; interrupteur, actualisation des votes et lien vers la source conservés.
-- Vérifications : tests des boutons Son/Vidéo, navigation, SoundProof et réglage persistant sur Android.
+- Liquid Glass : navigation, mini-lecteur et Son/Vidéo plus givrés, moins transparents, sans capsule grise ni bordure épaisse ; flou et réfraction conservés.
+- Accès rapide : jusqu’à 54 éléments, sans morceau masqué par le bouton aléatoire.
+- Sélections rapides : jusqu’à 48 morceaux ; favoris oubliés jusqu’à 40.
+- Continuer à écouter : jusqu’à 36 morceaux, 8 albums et 8 artistes selon l’historique, avec davantage de recommandations similaires.

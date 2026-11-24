@@ -16,8 +16,13 @@ repository = (app / "playback/SoundProofRepository.kt").read_text()
 tests = (root / "app/src/androidTest/kotlin/fr/makoff/music/settings/SettingsNavigationTest.kt").read_text()
 
 assert switcher.count("Modifier.liquidGlass(") == 1, "Son/Vidéo must be a single glass layer"
-assert "unwanted grey vertical seam" in switcher
-assert "if (selected) {" in switcher and "Color.White.copy(alpha = 0.14f)" in switcher
+assert "chrome = true, showBorder = false" in switcher
+assert "No nested surface or grey selection capsule" in switcher
+assert "PlayerVideoThemeMode.LIQUID_GLASS -> colors.primary" in switcher
+assert "glassTabSelection" not in nav
+mini = (app / "ui/player/MiniPlayer.kt").read_text()
+assert ".liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)" in mini
+assert "refractionDisplacement = if (flat) 0.dp else if (showBorder) 12.dp else 6.dp" in glass
 assert "onClick = if (video) onVideoClick else onAudioClick" in switcher
 assert ".liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)" in nav
 assert ".liquidGlass(RoundedCornerShape(28.dp), showBorder = false)" in nav
@@ -47,3 +52,21 @@ assert "SoundProofPolicy.isAnyArtistReportedAi(credits, known)" in repository
 assert "toggleAndRestore(R.string.soundproof_skip_ai_title, SoundProofSkipAiKey, false," in tests
 assert "SOUNDPROOF_ADDONS_OK" in tests
 print("PASS: SoundProof is a real opt-in addon with persisted switch, on-device votes and manual refresh")
+
+# Expanded Home retains lazy lists and every real item across the dice slot.
+home_model = (app / "viewmodels/HomeViewModel.kt").read_text()
+home_screen = (app / "ui/screens/HomeScreen.kt").read_text()
+assert ".take(54)" in home_model and ".take(48)" in home_model
+assert "limit = 50, offset = 0" in home_model and ".shuffled().take(36)" in home_model
+assert "(items.size + itemsPerPage) / itemsPerPage" in home_screen
+assert "if (page == 0) 0 else page * itemsPerPage - 1" in home_screen
+assert "if (page == 0) itemsPerPage - 1 else itemsPerPage" in home_screen
+for capacity in (6, 8, 9, 10, 12):
+    for size in range(1, 55):
+        seen = []
+        for page in range((size + capacity) // capacity):
+            start = 0 if page == 0 else page * capacity - 1
+            count = capacity - 1 if page == 0 else capacity
+            seen.extend(range(start, min(size, start + count)))
+        assert seen == list(range(size)), (size, capacity, seen)
+print("PASS: expanded Home caps and all speed-dial titles survive pagination")

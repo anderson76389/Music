@@ -84,9 +84,9 @@ internal fun buildSpeedDialItems(
     quickPicks: List<YTItem>,
     home: List<YTItem>,
 ): List<YTItem> =
-    (pinned + keepListening + quickPicks + home)
+    (pinned + keepListening.take(12) + quickPicks + keepListening.drop(12) + home)
         .distinctBy { it.id }
-        .take(27)
+        .take(54)
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -324,7 +324,7 @@ class HomeViewModel @Inject constructor(
         when (quickPicksEnum.first()) {
             QuickPicks.QUICK_PICKS -> {
                 val relatedSongs = database.quickPicks().first().filterVideoSongs(hideVideoSongs)
-                val forgotten = database.forgottenFavorites().first().filterVideoSongs(hideVideoSongs).take(8)
+                val forgotten = database.forgottenFavorites().first().filterVideoSongs(hideVideoSongs).take(20)
 
                 // Get similar songs from YouTube based on recent listening
                 val recentSong = database.latestEvent().first()?.song
@@ -335,7 +335,7 @@ class HomeViewModel @Inject constructor(
                     if (endpoint != null) {
                         YouTube.related(endpoint).onSuccess { page ->
                             // Convert YouTube songs to local Song format if they exist in database
-                            page.songs.take(10).forEach { ytSong ->
+                            page.songs.take(24).forEach { ytSong ->
                                 database.song(ytSong.id).first()?.let { localSong ->
                                     if (!hideVideoSongs || !localSong.song.isVideo) {
                                         ytSimilarSongs.add(localSong)
@@ -350,14 +350,14 @@ class HomeViewModel @Inject constructor(
                 val combined = (relatedSongs + forgotten + ytSimilarSongs)
                     .distinctBy { it.id }
                     .shuffled()
-                    .take(20)
+                    .take(48)
 
-                quickPicks.value = combined.ifEmpty { relatedSongs.shuffled().take(20) }
+                quickPicks.value = combined.ifEmpty { relatedSongs.shuffled().take(48) }
             }
             QuickPicks.LAST_LISTEN -> {
                 val song = database.latestEvent().first()?.song
                 if (song != null && database.hasRelatedSongs(song.id)) {
-                    quickPicks.value = database.getRelatedSongs(song.id).first().filterVideoSongs(hideVideoSongs).shuffled().take(20)
+                    quickPicks.value = database.getRelatedSongs(song.id).first().filterVideoSongs(hideVideoSongs).shuffled().take(48)
                 }
             }
         }
@@ -452,17 +452,17 @@ class HomeViewModel @Inject constructor(
 
             launch(Dispatchers.IO) {
                 forgottenFavorites.value = database.forgottenFavorites().first()
-                    .filterVideoSongs(hideVideoSongs).shuffled().take(20)
+                    .filterVideoSongs(hideVideoSongs).shuffled().take(40)
             }
 
             launch(Dispatchers.IO) {
-                val songs = database.mostPlayedSongs(fromTimeStamp = fromTimeStamp, limit = 15, offset = 5, toTimeStamp = LocalDateTime.now()).first()
-                    .filterVideoSongs(hideVideoSongs).shuffled().take(10)
-                val albums = database.mostPlayedAlbums(fromTimeStamp, limit = 8, offset = 2).first()
-                    .filter { it.album.thumbnailUrl != null }.shuffled().take(5)
-                val artists = database.mostPlayedArtists(fromTimeStamp).first()
-                    .filter { it.artist.isYouTubeArtist && it.artist.thumbnailUrl != null }.shuffled().take(5)
-                keepListening.value = (songs + albums + artists).shuffled()
+                val songs = database.mostPlayedSongs(fromTimeStamp = fromTimeStamp, limit = 50, offset = 0, toTimeStamp = LocalDateTime.now()).first()
+                    .filterVideoSongs(hideVideoSongs).shuffled().take(36)
+                val albums = database.mostPlayedAlbums(fromTimeStamp, limit = 12, offset = 0).first()
+                    .filter { it.album.thumbnailUrl != null }.shuffled().take(8)
+                val artists = database.mostPlayedArtists(fromTimeStamp, limit = 12).first()
+                    .filter { it.artist.isYouTubeArtist && it.artist.thumbnailUrl != null }.shuffled().take(8)
+                keepListening.value = (songs + albums + artists).distinctBy { it.id }.shuffled()
             }
 
             launch(Dispatchers.IO) {
@@ -519,7 +519,7 @@ class HomeViewModel @Inject constructor(
                             .distinctBy { item -> item.id }
                             .filterExplicit(hideExplicit)
                             .filterVideoSongs(hideVideoSongs)
-                            .shuffled().take(12)
+                            .shuffled().take(24)
                             .ifEmpty { return@mapNotNull null }
                     )
                 }
@@ -533,7 +533,7 @@ class HomeViewModel @Inject constructor(
                     val page = YouTube.related(endpoint).getOrNull() ?: return@mapNotNull null
                     SimilarRecommendation(
                         title = song,
-                        items = (page.songs.shuffled().take(10) +
+                        items = (page.songs.shuffled().take(24) +
                                 page.albums.shuffled().take(5) +
                                 page.artists.shuffled().take(3) +
                                 page.playlists.shuffled().take(3))
@@ -564,7 +564,7 @@ class HomeViewModel @Inject constructor(
                             .distinctBy { it.id }
                             .filterExplicit(hideExplicit)
                             .filterVideoSongs(hideVideoSongs)
-                            .shuffled().take(10)
+                            .shuffled().take(20)
                             .ifEmpty { return@mapNotNull null }
                     )
                 }

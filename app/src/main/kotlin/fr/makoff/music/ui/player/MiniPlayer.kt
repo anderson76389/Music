@@ -390,7 +390,7 @@ private fun NewMiniPlayer(
                     .height(64.dp)
                     .offset { IntOffset(offsetXAnimatable.value.roundToInt(), 0) }
                     .then(if (!LocalLiquidGlassEnabled.current) Modifier.clip(RoundedCornerShape(32.dp)).background(backgroundColor).border(1.dp, outlineColor.copy(alpha = 0.3f), RoundedCornerShape(32.dp)) else Modifier)
-                    .liquidGlass(RoundedCornerShape(32.dp), chrome = true)
+                    .liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)
                     .clickable(
                         interactionSource = interactionSource,
                         indication = LocalIndication.current,
@@ -729,7 +729,7 @@ private fun LegacyMiniPlayer(
                 .windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Horizontal))
                 .clip(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp))
                 .then(if (!LocalLiquidGlassEnabled.current) Modifier.background(if (pureBlack && isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.surfaceContainer) else Modifier)
-                .liquidGlass(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), chrome = true).clickable(
+                .liquidGlass(RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp), chrome = true, showBorder = false).clickable(
                     interactionSource = interactionSource,
                     indication = LocalIndication.current,
                     onClick = onClick

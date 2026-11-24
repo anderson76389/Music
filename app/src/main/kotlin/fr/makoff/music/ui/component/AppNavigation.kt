@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.selection.selectableGroup
@@ -209,13 +208,10 @@ fun AppNavigationBar(
                 val pressed by interactionSource.collectIsPressedAsState()
                 val scale by animateFloatAsState(if (pressed) 0.95f else 1f,
                     spring(dampingRatio = 0.85f, stiffness = 600f), label = "glassTabPress")
-                val selection by animateColorAsState(
-                    if (isSelected) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.1f) else Color.Transparent,
-                    label = "glassTabSelection")
                 Column(
                     modifier = Modifier.weight(1f).fillMaxHeight().padding(3.dp)
                         .graphicsLayer { scaleX = scale; scaleY = scale }
-                        .clip(RoundedCornerShape(28.dp)).background(selection)
+                        .clip(RoundedCornerShape(28.dp))
                         .semantics { selected = isSelected; role = Role.Tab }
                         .clickable(interactionSource = interactionSource, indication = null) {
                             if (!isSearchItem && !isHomeHoldItem) onItemClick(screen, currentIsSelected)
