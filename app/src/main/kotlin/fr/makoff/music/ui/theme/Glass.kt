@@ -69,9 +69,11 @@ fun Modifier.liquidGlass(
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(surface)
-            tint(surface.copy(alpha = if (dark) 0.58f else 0.52f))
-            optics(blurRadius = 22.dp, refractionStrength = if (flat) 0f else 0.65f, refractionDisplacement = if (flat) 0.dp else 12.dp,
-                refractionHeightFraction = 0.28f, depth = 0.45f)
+            tint(surface.copy(alpha = if (dark) 0.72f else 0.74f))
+            optics(blurRadius = 22.dp, refractionStrength = if (flat) 0f else if (showBorder) 0.65f else 0.42f,
+                refractionDisplacement = if (flat) 0.dp else if (showBorder) 12.dp else 6.dp,
+                refractionHeightFraction = if (showBorder) 0.28f else 0.16f,
+                depth = if (showBorder) 0.45f else 0.25f)
             specularIntensity(if (!showBorder) 0f else if (dark) 0.52f else 0.72f)
             edgeSoftness(1.dp)
             whitePoint(if (dark) -0.18f else 0.12f)
@@ -79,8 +81,9 @@ fun Modifier.liquidGlass(
             chromaticAberrationStrength(0.025f)
         }
     }
-    // A modestly stronger frosted tint keeps controls readable over saturated album artwork.
-    val legibilityTint = surface.copy(alpha = if (dark) 0.16f else 0.18f)
+    // Keep the moving blurred backdrop visible, but frost it enough to read
+    // the controls even over bright album covers.
+    val legibilityTint = surface.copy(alpha = if (dark) 0.30f else 0.36f)
     if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).background(legibilityTint)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),

@@ -1424,7 +1424,8 @@ fun HomeScreen(
                                     val itemsPerPage = columns * rows
                                     val itemWidth = availableWidth / columns
 
-                                    val pagerState = rememberPagerState(pageCount = { (items.size + itemsPerPage - 1) / itemsPerPage })
+                                    // Reserve one slot for the random button without discarding a title.
+                                    val pagerState = rememberPagerState(pageCount = { (items.size + itemsPerPage) / itemsPerPage })
 
                                     Column(
                                         modifier =
@@ -1440,8 +1441,9 @@ fun HomeScreen(
                                                     .fillMaxWidth()
                                                     .height(itemWidth * rows),
                                         ) { page ->
-                                            val pageStartIndex = page * itemsPerPage
-                                            val pageItems = items.drop(pageStartIndex).take(itemsPerPage)
+                                            val pageStartIndex = if (page == 0) 0 else page * itemsPerPage - 1
+                                            val pageCapacity = if (page == 0) itemsPerPage - 1 else itemsPerPage
+                                            val pageItems = items.drop(pageStartIndex).take(pageCapacity)
 
                                             Column(modifier = Modifier.fillMaxSize()) {
                                                 for (row in 0 until rows) {

@@ -21,6 +21,19 @@ class HomeSpeedDialTest {
         assertEquals(listOf(pinned, home), result)
     }
 
+    @Test
+    fun `expanded speed dial retains up to 54 unique items and mixes sources`() {
+        val pinned = song("pinned")
+        val recent = (1..36).map { song("recent$it") }
+        val quick = (1..48).map { song("quick$it") }
+        val result = buildSpeedDialItems(listOf(pinned), recent, quick, quick)
+        assertEquals(54, result.size)
+        assertEquals(pinned, result.first())
+        assertEquals(54, result.distinctBy { it.id }.size)
+        assertEquals(12, result.count { it.id.startsWith("recent") })
+        assertEquals(41, result.count { it.id.startsWith("quick") })
+    }
+
     private fun song(id: String) =
         SongItem(
             id = id,
