@@ -1,4 +1,3 @@
-- Liquid Glass : navigation, mini-lecteur et Son/Vidéo plus givrés, moins transparents, sans capsule grise ni bordure épaisse ; flou et réfraction conservés.
-- Accès rapide : jusqu’à 54 éléments, sans morceau masqué par le bouton aléatoire.
-- Sélections rapides : jusqu’à 48 morceaux ; favoris oubliés jusqu’à 40.
-- Continuer à écouter : jusqu’à 36 morceaux, 8 albums et 8 artistes selon l’historique, avec davantage de recommandations similaires.
+- Liquid Glass : verre dépoli à la couleur du fond réellement affiché, sans teinte violette imposée ; flou renforcé, lisibilité conservée.
+- Mini-lecteur, navigation et Son/Vidéo : reflet extérieur clair et fin, réfraction plus douce, aucune capsule grise intérieure.
+- Son/Vidéo : couleur du fond du lecteur et contraste des icônes adaptés en portrait et paysage.

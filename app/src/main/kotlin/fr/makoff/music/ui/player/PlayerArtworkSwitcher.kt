@@ -40,6 +40,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.CompositionLocalProvider
 import fr.makoff.music.ui.theme.LocalLiquidGlassEnabled
+import fr.makoff.music.ui.theme.LocalGlassBackdropTint
 import fr.makoff.music.ui.theme.liquidGlass
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -315,7 +316,8 @@ internal fun PlayerModePills(
         PlayerVideoThemeMode.DARK, PlayerVideoThemeMode.OLED -> true
         PlayerVideoThemeMode.LIGHT -> false
         PlayerVideoThemeMode.COVER, PlayerVideoThemeMode.CUSTOM -> coverDark
-        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED, PlayerVideoThemeMode.LIQUID_GLASS -> appDarkTheme
+        PlayerVideoThemeMode.LIQUID_GLASS -> LocalGlassBackdropTint.current?.let { it.luminance() < 0.5f } ?: appDarkTheme
+        PlayerVideoThemeMode.AUTO, PlayerVideoThemeMode.DISABLED -> appDarkTheme
     }
     val shape = RoundedCornerShape(18.dp)
     // COVER samples this track's artwork even when the player background is
@@ -344,11 +346,11 @@ internal fun PlayerModePills(
             if (dark) Color.White else Color(0xFF131313)
         PlayerVideoThemeMode.DARK -> Color(0xFF1B1B1D)
         PlayerVideoThemeMode.LIGHT -> Color.White
-        PlayerVideoThemeMode.LIQUID_GLASS -> colors.primary
+        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White else Color(0xFF17191D)
     }
     val unselectedForeground = when (selectorTheme) {
         PlayerVideoThemeMode.AUTO -> colors.onSurfaceVariant
-        PlayerVideoThemeMode.LIQUID_GLASS -> colors.onSurfaceVariant
+        PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White.copy(alpha = 0.55f) else Color(0xFF17191D).copy(alpha = 0.55f)
         else -> if (dark) Color.White.copy(alpha = 0.86f) else Color.Black.copy(alpha = 0.78f)
     }
     val outlineColor = when (selectorTheme) {

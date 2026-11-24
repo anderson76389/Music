@@ -79,6 +79,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import fr.makoff.music.ui.component.BottomSheetMenu
 import fr.makoff.music.ui.component.MenuState
 import fr.makoff.music.ui.theme.LocalChromeGlass
+import fr.makoff.music.ui.theme.LocalGlassBackdropTint
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import androidx.compose.runtime.DisposableEffect
@@ -1723,7 +1724,14 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                        CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
+                        CompositionLocalProvider(
+                            LocalChromeGlass provides playerGlass,
+                            LocalGlassBackdropTint provides when (playerBackground) {
+                                PlayerBackgroundStyle.GRADIENT -> visibleGradientColors.firstOrNull() ?: defaultGradientColors.first()
+                                PlayerBackgroundStyle.DEFAULT -> bottomSheetBackgroundColor
+                                else -> null // Real blurred artwork is captured by Haze.
+                            },
+                        ) {
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 videoModeEnabled = playerVideoModeEnabled,
@@ -1804,7 +1812,14 @@ fun BottomSheetPlayer(
                         val sliderPositionProvider = remember { { currentSliderPosition } }
                         val isExpandedProvider = remember(state) { { state.isExpanded } }
 
-                        CompositionLocalProvider(LocalChromeGlass provides playerGlass) {
+                        CompositionLocalProvider(
+                            LocalChromeGlass provides playerGlass,
+                            LocalGlassBackdropTint provides when (playerBackground) {
+                                PlayerBackgroundStyle.GRADIENT -> visibleGradientColors.firstOrNull() ?: defaultGradientColors.first()
+                                PlayerBackgroundStyle.DEFAULT -> bottomSheetBackgroundColor
+                                else -> null // Real blurred artwork is captured by Haze.
+                            },
+                        ) {
                             PlayerArtworkSwitcher(
                                 videoId = mediaMetadata?.id,
                                 videoModeEnabled = playerVideoModeEnabled,
