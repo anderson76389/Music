@@ -183,8 +183,9 @@ search = (src / "ui/screens/search/OnlineSearchScreen.kt").read_text()
 assert "service.requestNextSongOnDemand()" in connection
 assert "NextTrackPolicy.canAdvance(" in connection
 assert "fun canRequestNextSong(" in next_policy
-assert "fun requestNextSongOnDemand()" in service
-assert "database.relatedSongs(currentId)" in service
+assert "fun requestNextSongOnDemand(automatic: Boolean = false)" in service
+assert "database.relatedSongs(seedId)" in service
+assert "recommendationCandidates(currentId, online)" in service
 assert "PlaybackRecommendations.fetch(currentId)" in service
 assert "scheduleAutoplayRecommendations()" in service
 assert "player.addMediaItems(autoplayNext)" in service

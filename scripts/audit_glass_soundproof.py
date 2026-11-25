@@ -22,7 +22,7 @@ assert "PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White else Color(0x
 assert "LocalGlassBackdropTint.current?.let" in switcher
 assert player.count("LocalGlassBackdropTint provides when (playerBackground)") == 2
 assert "val backdropTint = LocalGlassBackdropTint.current ?: surface" in glass
-assert "panel.border(0.6.dp, softRim, shape)" in glass
+assert "panel.border(0.8.dp, softRim, shape)" in glass
 assert "glassTabSelection" not in nav
 mini = (app / "ui/player/MiniPlayer.kt").read_text()
 assert ".liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)" in mini
