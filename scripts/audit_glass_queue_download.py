@@ -17,10 +17,10 @@ tests = (root / "app/src/androidTest/kotlin/fr/makoff/music/downloads/FolderAudi
 live = (root / "app/src/androidTest/kotlin/fr/makoff/music/downloads/YouTubeAudioLiveTest.kt").read_text()
 smoke = (root / "scripts/smoke_apk.sh").read_text()
 
-assert "if (dark) 0.58f else 0.60f" in glass, "Glass opacity must remain a touch stronger"
-assert "if (dark) 0.22f else 0.26f" in glass, "Readability tint must be opaque enough"
+assert "if (dark) 0.42f else 0.44f" in glass, "Glass opacity must remain a touch stronger"
+assert "if (dark) 0.45f else 0.48f" in glass, "Readability tint must be opaque enough"
 assert "refractionStrength = if (flat) 0f else if (showBorder) 0.65f else 0.30f" in glass, "Liquid Glass optics must remain"
-assert "blurRadius = 32.dp" in glass
+assert "blurRadius = 48.dp" in glass
 assert "tint(backdropTint.copy(alpha =" in glass
 assert "val legibilityTint = backdropTint.copy(alpha =" in glass
 assert "glassQueueSurface(" in colors and "glassQueueAccent(" in colors

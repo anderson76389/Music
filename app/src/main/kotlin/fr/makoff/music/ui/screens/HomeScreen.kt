@@ -1556,7 +1556,7 @@ fun HomeScreen(
                                                                                                     playerConnection.playQueue(
                                                                                                         ListQueue(
                                                                                                             title = item.title,
-                                                                                                            items = listOf(item.toMediaItem())
+                                                                                                            items = (listOf(item) + speedDialItems.filterIsInstance<SongItem>().filter { it.id != item.id }).distinctBy { it.id }.map { it.toMediaItem() }
                                                                                                         )
                                                                                                     )
                                                                                                 }
@@ -1786,7 +1786,7 @@ fun HomeScreen(
                                                                         playerConnection.playQueue(
                                                                             ListQueue(
                                                                                 title = song.title,
-                                                                                items = listOf(song.toMediaItem())
+                                                                                items = (listOf(song) + quickPicks.filter { it.id != song.id }).distinctBy { it.id }.map { it.toMediaItem() }
                                                                             )
                                                                         )
                                                                     }
@@ -1899,7 +1899,7 @@ fun HomeScreen(
                                                             playerConnection.playQueue(
                                                                 ListQueue(
                                                                     title = song.title,
-                                                                    items = listOf(song.toMediaItem())
+                                                                    items = (listOf(song) + discoverList.mapNotNull { it.recommendation as? SongItem }.filter { it.id != song.id }).distinctBy { it.id }.map { it.toMediaItem() }
                                                                 )
                                                             )
                                                         }
@@ -2095,7 +2095,7 @@ fun HomeScreen(
                                                                         playerConnection.playQueue(
                                                                             ListQueue(
                                                                                 title = song.title,
-                                                                                items = listOf(song.toMediaItem())
+                                                                                items = (listOf(song) + forgottenFavorites.filter { it.id != song.id }).distinctBy { it.id }.map { it.toMediaItem() }
                                                                             )
                                                                         )
                                                                     }
@@ -2314,7 +2314,7 @@ fun HomeScreen(
                                                                         playerConnection.playQueue(
                                                                             ListQueue(
                                                                                 title = song.title,
-                                                                                items = listOf(song.toMediaItem())
+                                                                                items = (listOf(song) + sectionSongs.filter { it.id != song.id }).distinctBy { it.id }.map { it.toMediaItem() }
                                                                             )
                                                                         )
                                                                     }

@@ -51,3 +51,15 @@ assert "YouTube.related(endpoint)" in recommendations
 assert 'playlistId = "RDAMVM$seedId"' in recommendations
 assert "private class EmptyRadioQueueException" not in queue
 print("PASS: non-blocking autoplay suggestions, queue-race guard, and next song prefetch")
+
+assert "else -> minOf(12, suggestions.size - 1)" in recommendations
+assert "distinctCandidates(seedId, fromNext + related).size < 6" in recommendations
+assert "recommendationCandidates(seedId, online)" in service
+assert "database.mostPlayedSongs(" in service
+assert "manualNextSongJob?.cancel()" in service
+assert "if (!stillCurrent()" in service
+assert "requestNextSongOnDemand(automatic = true)" in service
+home = (src / "ui/screens/HomeScreen.kt").read_text()
+for section in ("speedDialItems.filterIsInstance<SongItem>()", "quickPicks", "forgottenFavorites", "sectionSongs"):
+    assert f"+ {section}.filter" in home
+print("PASS: actual Home queues, bounded recommendations, history fallback and safe automatic advance")

@@ -30,9 +30,17 @@ class PlaybackRecommendationsTest {
         assertEquals(0, singleSimilar.size)
         val many = (1..7).map { item("MUSIC%06d".format(it)) }
         val (queued, visible) = PlaybackRecommendations.splitSuggestions(many)
-        assertEquals(2, queued.size)
-        assertEquals(5, visible.size)
+        assertEquals(6, queued.size)
+        assertEquals(1, visible.size)
         assertEquals(emptySet<String>(), queued.map { it.mediaId }.toSet().intersect(visible.map { it.mediaId }.toSet()))
+    }
+
+    @Test fun largerRecommendationPoolKeepsTwelveReadyWithoutDuplicates() {
+        val many = (1..30).map { item("MUSIC%06d".format(it)) }
+        val (queued, visible) = PlaybackRecommendations.splitSuggestions(many)
+        assertEquals(12, queued.size)
+        assertEquals(18, visible.size)
+        assertEquals(many, queued + visible)
     }
 
     @Test fun noSuggestionsDoesNotReplaceTheCurrentQueue() {

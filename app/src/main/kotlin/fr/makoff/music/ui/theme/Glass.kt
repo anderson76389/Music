@@ -73,11 +73,11 @@ fun Modifier.liquidGlass(
             shape(shape)
             backgroundColor(backdropTint)
             // Keep color from the captured background rather than a fixed grey/purple wash.
-            tint(backdropTint.copy(alpha = if (dark) 0.58f else 0.60f))
-            optics(blurRadius = 32.dp, refractionStrength = if (flat) 0f else if (showBorder) 0.65f else 0.30f,
+            tint(backdropTint.copy(alpha = if (dark) 0.42f else 0.44f))
+            optics(blurRadius = 48.dp, refractionStrength = if (flat) 0f else if (showBorder) 0.65f else 0.30f,
                 refractionDisplacement = if (flat) 0.dp else if (showBorder) 12.dp else 4.dp,
                 refractionHeightFraction = if (showBorder) 0.28f else 0.12f,
-                depth = if (showBorder) 0.45f else 0.25f)
+                depth = if (showBorder) 0.45f else 0.40f)
             specularIntensity(if (!showBorder) 0f else if (dark) 0.52f else 0.72f)
             edgeSoftness(1.dp)
             whitePoint(if (dark) -0.04f else 0.06f)
@@ -87,7 +87,7 @@ fun Modifier.liquidGlass(
     }
     // Keep the moving blurred backdrop visible, but frost it enough to read
     // the controls even over bright album covers.
-    val legibilityTint = backdropTint.copy(alpha = if (dark) 0.22f else 0.26f)
+    val legibilityTint = backdropTint.copy(alpha = if (dark) 0.45f else 0.48f)
     if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).background(legibilityTint)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
@@ -106,5 +106,5 @@ fun Modifier.liquidGlass(
         spotColor = Color.Black.copy(alpha = 0.16f)) else this)
         .clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style)
     val panel = glass.background(if (readable) backdropTint.copy(alpha = 0.96f) else legibilityTint)
-    return if (showBorder) panel.border(0.8.dp, rim, shape) else panel.border(0.6.dp, softRim, shape)
+    return if (showBorder) panel.border(0.8.dp, rim, shape) else panel.border(0.8.dp, softRim, shape)
 }
