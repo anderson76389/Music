@@ -1687,6 +1687,7 @@ class MusicService :
         nextStreamPrefetchJob = null
         pendingPrefetchId = null
         lastRecommendationSeed = null
+        initialRecommendationsAdded = false
         if (!restoringQueue) automixItems.value = emptyList()
         currentQueue = queue
         queueTitle = null
@@ -1763,6 +1764,7 @@ class MusicService :
         nextStreamPrefetchJob?.cancel()
         pendingPrefetchId = null
         lastRecommendationSeed = null
+        initialRecommendationsAdded = false
         currentQueue = queue
         queueTitle = title
         originalQueueSize = initialQueueSize
@@ -1775,6 +1777,7 @@ class MusicService :
     private var refillWatchJob: Job? = null
     private var lastRecommendationSeed: String? = null
     private var lastRecommendationAttemptMs = 0L
+    private var initialRecommendationsAdded = false
     private var manualNextSongJob: Job? = null
     private var nextStreamPrefetchJob: Job? = null
     private var pendingPrefetchId: String? = null
@@ -1831,7 +1834,9 @@ class MusicService :
         // Do not compete with initial audio buffering or another refill.
         if (player.playbackState != Player.STATE_READY || recommendationsJob?.isActive == true ||
             manualNextSongJob?.isActive == true) return
-        if (upcomingTrackCount() >= 12) return
+        val initialListRefill = currentQueue is ListQueue && !initialRecommendationsAdded
+        if (!initialListRefill && upcomingTrackCount() >= 12) return
+        if (cachedAutoLoadMore && currentQueue.hasNextPage() && upcomingTrackCount() > 0) return
         val seedId = player.currentMediaItem?.mediaId
             ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
         if (lastRecommendationSeed == seedId && recommendationsJob?.isActive == true) return
@@ -1861,6 +1866,7 @@ class MusicService :
                             PlaybackRecommendations.splitSuggestions(fresh)
                         } else fresh.take(12) to emptyList()
                         player.addMediaItems(autoplayNext)
+                        initialRecommendationsAdded = true
                         // The Queue screen's "Similar content" section is
                         // backed by automixItems, not the player playlist.
                         // Populate both without duplicating queued tracks.

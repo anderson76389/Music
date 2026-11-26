@@ -75,3 +75,6 @@ for capacity in (6, 8, 9, 10, 12):
             seen.extend(range(start, min(size, start + count)))
         assert seen == list(range(size)), (size, capacity, seen)
 print("PASS: expanded Home caps and all speed-dial titles survive pagination")
+
+assert "if (!showBorder) {" in glass and "return clip(shape).hazeBlur(" in glass
+assert glass.index("return clip(shape).hazeBlur(") < glass.index("GlassStyle.regular.then")

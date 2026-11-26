@@ -71,3 +71,6 @@ assert "YouTube.next(currentPage.endpoint, token)" in recommendations
 assert "YouTube.home().getOrNull()" in recommendations
 assert "playerConnection.service.addToQueueAutomix(automix[0], 0)" not in (src / "ui/player/Player.kt").read_text()
 print("PASS: service-owned refill and retry, actual shuffle order, continuation and personalized fallback")
+
+assert "initialListRefill = currentQueue is ListQueue && !initialRecommendationsAdded" in service
+assert "initialRecommendationsAdded = true" in service

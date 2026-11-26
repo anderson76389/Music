@@ -19,6 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.haze.ExperimentalHazeApi
 import dev.chrisbanes.haze.HazeInput
+import dev.chrisbanes.haze.blur.HazeBlurStyle
+import dev.chrisbanes.haze.blur.hazeBlur
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.glass.GlassStyle
 import dev.chrisbanes.haze.glass.hazeGlass
@@ -68,13 +70,28 @@ fun Modifier.liquidGlass(
     val state = LocalChromeGlass.current ?: return clip(shape).background(backdropTint)
     val dark = backdropTint.luminance() < 0.5f
     val flat = shape == RoundedCornerShape(0.dp)
+    // The borderless capsules use actual backdrop frost, without invoking the
+    // refraction shader at all. This avoids the grey optical edge even at
+    // zero refraction strength. No second layer or border can draw that ring.
+    if (!showBorder) {
+        val frost = remember(backdropTint) {
+            HazeBlurStyle {
+                blurRadius(56.dp)
+                noiseFactor(0f)
+                backgroundColor(backdropTint)
+                colorEffects(emptyList())
+            }
+        }
+        return clip(shape).hazeBlur(input = HazeInput.Sources(state), style = frost)
+            .background(backdropTint.copy(alpha = if (readable) 0.96f else 0.32f))
+    }
     val style = remember(shape, backdropTint, dark, flat, showBorder) {
         GlassStyle.regular.then {
             shape(shape)
             backgroundColor(backdropTint)
             // Keep color from the captured background rather than a fixed grey/purple wash.
-            tint(backdropTint.copy(alpha = if (showBorder) 0.42f else 0.20f))
-            optics(blurRadius = if (showBorder) 48.dp else 56.dp, refractionStrength = if (flat || !showBorder) 0f else 0.65f,
+            tint(backdropTint.copy(alpha = if (dark) 0.42f else 0.44f))
+            optics(blurRadius = 48.dp, refractionStrength = if (flat || !showBorder) 0f else 0.65f,
                 refractionDisplacement = if (flat || !showBorder) 0.dp else 12.dp,
                 refractionHeightFraction = if (showBorder && !flat) 0.28f else 0f,
                 depth = if (showBorder && !flat) 0.45f else 0f)
@@ -87,7 +104,7 @@ fun Modifier.liquidGlass(
     }
     // Keep the moving blurred backdrop visible, but frost it enough to read
     // the controls even over bright album covers.
-    val legibilityTint = backdropTint.copy(alpha = if (!showBorder) 0.24f else if (dark) 0.45f else 0.48f)
+    val legibilityTint = backdropTint.copy(alpha = if (dark) 0.45f else 0.48f)
     if (flat) return clip(shape).hazeGlass(input = HazeInput.Sources(state), style = style).background(legibilityTint)
     val rim = remember(dark) {
         Brush.linearGradient(listOf(Color.White.copy(alpha = if (dark) 0.45f else 0.85f),
