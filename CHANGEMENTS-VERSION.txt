@@ -1,3 +1,3 @@
-- Lecture continue : les titres lancés depuis les sélections de l’accueil démarrent avec une vraie file de lecture. Les recommandations sont préchargées en plus grand nombre, avec secours via les titres liés et l’historique si nécessaire.
-- Fiabilité : protection contre les réponses retardées, les doublons et les recommandations vides ; respect de la lecture automatique et des modes de répétition.
-- Liquid Glass : verre plus épais et fortement dépoli, couleur du fond conservée sans teinte fixe, reflet extérieur fin et sans capsule grise.
+- Lecture continue : la file se renouvelle automatiquement avant la fin des titres de l’accueil et des autres listes ; nouvelles pages YouTube Music, secours personnalisé et nouvelles tentatives si la réponse est vide.
+- Lecture continue : fonctionne même lecteur fermé, respecte pause, répétition et lecture aléatoire ; protection contre les doublons et les réponses d’une ancienne file.
+- Liquid Glass : suppression du trait et de la bande de réfraction périphériques du mini-lecteur, de la navigation et de Son/Vidéo ; verre fortement dépoli basé sur le fond réel, sans teinte fixe.

@@ -292,7 +292,6 @@ fun BottomSheetPlayer(
     val playbackState by playerConnection.playbackState.collectAsState()
     val mediaMetadata by playerConnection.mediaMetadata.collectAsState()
     val currentSong by playerConnection.currentSong.collectAsStateWithLifecycle(initialValue = null)
-    val automix by playerConnection.service.automixItems.collectAsStateWithLifecycle()
     val repeatMode by playerConnection.repeatMode.collectAsStateWithLifecycle()
     val shuffleEnabled by playerConnection.shuffleModeEnabled.collectAsStateWithLifecycle()
     val canSkipPrevious by playerConnection.canSkipPrevious.collectAsStateWithLifecycle()
@@ -563,10 +562,6 @@ fun BottomSheetPlayer(
     // track's palette while the newly selected cover is still loading.
     var gradientColorsOwner by remember { mutableStateOf<String?>(null) }
     val gradientColorsCache = remember { mutableMapOf<String, List<Color>>() }
-
-    if (!canSkipNext && automix.isNotEmpty()) {
-        playerConnection.service.addToQueueAutomix(automix[0], 0)
-    }
 
     val glassMode = LocalLiquidGlassEnabled.current
     val playerConfiguration = LocalConfiguration.current

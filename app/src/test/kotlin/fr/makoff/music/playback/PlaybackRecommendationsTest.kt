@@ -43,6 +43,23 @@ class PlaybackRecommendationsTest {
         assertEquals(many, queued + visible)
     }
 
+    @Test fun longSessionsNeverExcludeAllPreviouslyPlayedTitlesForever() {
+        val ids = (0..250).map { "track$it" }
+        val excluded = PlaybackRecommendations.excludedIds(ids, 200, false)
+        assertEquals(ids.drop(100).toSet(), excluded)
+        assertEquals(ids.toSet(), PlaybackRecommendations.excludedIds(ids, 200, true))
+        assertEquals(ids.toSet(), PlaybackRecommendations.excludedIds(ids, 5, false))
+    }
+
+    @Test fun repeatedRefillsExcludeCurrentAndUpcomingTracks() {
+        val seed = "CURRENT1234"
+        val first = (1..24).map { item("MUSIC%06d".format(it)) }
+        val queued = PlaybackRecommendations.splitSuggestions(first).first
+        val second = PlaybackRecommendations.distinctCandidates(seed, first, queued.map { it.mediaId }.toSet())
+        assertEquals(12, second.size)
+        assertEquals(emptySet<String>(), queued.map { it.mediaId }.toSet().intersect(second.map { it.mediaId }.toSet()))
+    }
+
     @Test fun noSuggestionsDoesNotReplaceTheCurrentQueue() {
         assertEquals(emptyList<MediaItem>(), PlaybackRecommendations.distinctCandidates("CURRENT1234", emptyList()))
     }

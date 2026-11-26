@@ -186,7 +186,7 @@ assert "fun canRequestNextSong(" in next_policy
 assert "fun requestNextSongOnDemand(automatic: Boolean = false)" in service
 assert "database.relatedSongs(seedId)" in service
 assert "recommendationCandidates(currentId, online)" in service
-assert "PlaybackRecommendations.fetch(currentId)" in service
+assert "PlaybackRecommendations.fetch(currentId, exclusions)" in service
 assert "scheduleAutoplayRecommendations()" in service
 assert "player.addMediaItems(autoplayNext)" in service
 assert "playerConnection.seekToNext()" in mini

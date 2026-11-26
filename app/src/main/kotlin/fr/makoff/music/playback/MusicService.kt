@@ -797,6 +797,12 @@ class MusicService :
                 if (isConnected && waitingForNetworkConnection.value) {
                     triggerRetry()
                 }
+                if (isConnected && playerInitialized.value) {
+                    scheduleAutoplayRecommendations()
+                    if (continuousPlaybackAllowed() && player.playbackState == Player.STATE_ENDED) {
+                        requestNextSongOnDemand(automatic = true)
+                    }
+                }
             }
         }
 
@@ -1050,7 +1056,14 @@ class MusicService :
             dataStore.data.map { it[PersistentQueueKey] ?: true }.distinctUntilChanged().collect { cachedPersistentQueue = it }
         }
         scope.launch {
-            dataStore.data.map { it[AutoplayKey] ?: true }.distinctUntilChanged().collect { cachedAutoplay = it }
+            dataStore.data.map { it[AutoplayKey] ?: true }.distinctUntilChanged().collect {
+                cachedAutoplay = it
+                if (it) scheduleAutoplayRecommendations()
+                else {
+                    refillWatchJob?.cancel()
+                    recommendationsJob?.cancel()
+                }
+            }
         }
         scope.launch {
             dataStore.data.map { it[DisableLoadMoreWhenRepeatAllKey] ?: false }.distinctUntilChanged().collect { cachedDisableLoadMoreWhenRepeatAll = it }
@@ -1666,6 +1679,8 @@ class MusicService :
         queueGeneration++
         recommendationsJob?.cancel()
         recommendationsJob = null
+        refillWatchJob?.cancel()
+        refillWatchJob = null
         manualNextSongJob?.cancel()
         manualNextSongJob = null
         nextStreamPrefetchJob?.cancel()
@@ -1741,6 +1756,8 @@ class MusicService :
         queueGeneration++
         recommendationsJob?.cancel()
         recommendationsJob = null
+        refillWatchJob?.cancel()
+        refillWatchJob = null
         manualNextSongJob?.cancel()
         manualNextSongJob = null
         nextStreamPrefetchJob?.cancel()
@@ -1755,24 +1772,66 @@ class MusicService :
     // background while the current song is already playing.
     private var queueGeneration = 0L
     private var recommendationsJob: Job? = null
+    private var refillWatchJob: Job? = null
     private var lastRecommendationSeed: String? = null
     private var lastRecommendationAttemptMs = 0L
     private var manualNextSongJob: Job? = null
     private var nextStreamPrefetchJob: Job? = null
     private var pendingPrefetchId: String? = null
 
+    private fun continuousPlaybackAllowed(): Boolean =
+        cachedAutoplay && playerInitialized.value && !taskCleared &&
+            player.playWhenReady && player.repeatMode == REPEAT_MODE_OFF &&
+            castConnectionHandler?.isCasting?.value != true &&
+            player.currentMediaItem?.metadata?.isEpisode != true &&
+            player.mediaItemCount > 0 && player.playbackState != STATE_IDLE
+
+    // Count the actual playback order, including shuffle, without wrapping.
+    private fun upcomingTrackCount(): Int {
+        val timeline = player.currentTimeline
+        var index = player.currentMediaItemIndex
+        if (timeline.isEmpty || index == C.INDEX_UNSET) return 0
+        var count = 0
+        while (count < 12) {
+            index = timeline.getNextWindowIndex(index, REPEAT_MODE_OFF, player.shuffleModeEnabled)
+            if (index == C.INDEX_UNSET) break
+            count++
+        }
+        return count
+    }
+
+    private fun recommendationExclusions(): Set<String> =
+        PlaybackRecommendations.excludedIds(
+            (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId },
+            player.currentMediaItemIndex, player.shuffleModeEnabled,
+        )
+
+    // Service-owned, not tied to opening the full player. Retry a sparse/empty
+    // response while listening and even after natural completion. Stop on
+    // pause, repeat, casting, a replaced queue, or service destruction.
+    private fun ensureRefillWatch() {
+        if (!continuousPlaybackAllowed() || refillWatchJob?.isActive == true) return
+        val generation = queueGeneration
+        refillWatchJob = scope.launch(SilentHandler) {
+            while (isActive && generation == queueGeneration && continuousPlaybackAllowed()) {
+                delay(10_000L)
+                if (generation != queueGeneration || !continuousPlaybackAllowed()) break
+                if (player.playbackState == Player.STATE_ENDED) {
+                    requestNextSongOnDemand(automatic = true)
+                } else {
+                    scheduleAutoplayRecommendations()
+                }
+            }
+        }
+    }
+
     private fun scheduleAutoplayRecommendations() {
-        if (!cachedAutoplay || !playerInitialized.value || taskCleared) return
-        if (castConnectionHandler?.isCasting?.value == true) return
-        // Resolve the CURRENT song first. Extra network requests must not
-        // compete with its initial buffering or delay the first audible frame.
-        if (player.playbackState != Player.STATE_READY) return
-        if (player.mediaItemCount <= 0 || player.currentMediaItemIndex == C.INDEX_UNSET) return
-        val remaining = player.mediaItemCount - player.currentMediaItemIndex - 1
-        if (remaining > 3 || player.repeatMode == REPEAT_MODE_ONE) return
-        // A continuation token must not starve a one-track queue; let the
-        // normal pagination own non-empty playlists, not exhausted ones.
-        if (cachedAutoLoadMore && currentQueue.hasNextPage() && remaining > 0) return
+        if (!continuousPlaybackAllowed()) return
+        ensureRefillWatch()
+        // Do not compete with initial audio buffering or another refill.
+        if (player.playbackState != Player.STATE_READY || recommendationsJob?.isActive == true ||
+            manualNextSongJob?.isActive == true) return
+        if (upcomingTrackCount() >= 12) return
         val seedId = player.currentMediaItem?.mediaId
             ?.takeIf(NextTrackPolicy::canRequestNextSong) ?: return
         if (lastRecommendationSeed == seedId && recommendationsJob?.isActive == true) return
@@ -1785,14 +1844,17 @@ class MusicService :
         recommendationsJob?.cancel()
         recommendationsJob = scope.launch(SilentHandler) {
             try {
-                val online = PlaybackRecommendations.fetch(seedId)
+                val exclusions = recommendationExclusions()
+                val online = if (isNetworkConnected.value) PlaybackRecommendations.fetch(seedId, exclusions) else emptyList()
+                if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation ||
+                    !continuousPlaybackAllowed()
+                ) return@launch
                 val recommendations = recommendationCandidates(seedId, online)
                 if (!isActive || currentQueue !== queueAtRequest || queueGeneration != generation ||
-                    player.currentMediaItem?.mediaId != seedId || !cachedAutoplay ||
-                    player.repeatMode == REPEAT_MODE_ONE || castConnectionHandler?.isCasting?.value == true
+                    !continuousPlaybackAllowed()
                 ) return@launch
                 if (recommendations.isNotEmpty()) {
-                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val existing = recommendationExclusions()
                     val fresh = PlaybackRecommendations.distinctCandidates(seedId, recommendations, existing)
                     if (fresh.isNotEmpty()) {
                         val (autoplayNext, suggested) = if (cachedSimilarContent) {
@@ -1818,17 +1880,17 @@ class MusicService :
     // Fall back to known related tracks and finally the user's listening history
     // (only online, since history alone does not guarantee cached audio).
     private suspend fun recommendationCandidates(seedId: String, online: List<MediaItem>): List<MediaItem> {
-        val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+        val existing = recommendationExclusions()
         fun filtered(items: List<MediaItem>) = PlaybackRecommendations.distinctCandidates(
             seedId, items.filterExplicit(cachedHideExplicit).filterVideoSongs(cachedHideVideoSongs), existing,
         )
         val primary = filtered(online + automixItems.value)
-        if (primary.size >= 6) return primary
+        if (primary.size >= 12) return primary
         val related = withContext(Dispatchers.IO) {
             database.relatedSongs(seedId).map { it.toMediaItem() }
         }
         val combined = filtered(primary + related)
-        if (combined.size >= 6 || !isNetworkConnected.value) return combined
+        if (combined.size >= 12 || !isNetworkConnected.value) return combined
         val history = withContext(Dispatchers.IO) {
             database.mostPlayedSongs(
                 fromTimeStamp = LocalDateTime.now().minusWeeks(8),
@@ -1917,18 +1979,21 @@ class MusicService :
         val queueAtRequest = currentQueue
         fun stillCurrent() = queueGeneration == generation && currentQueue === queueAtRequest &&
             player.currentMediaItem?.mediaId == currentId &&
-            (!automatic || (cachedAutoplay && player.playWhenReady && player.repeatMode == Player.REPEAT_MODE_OFF))
+            (!automatic || continuousPlaybackAllowed())
         manualNextSongJob = scope.launch(SilentHandler) {
             try {
                 // A background recommendation request may already be finishing.
                 recommendationsJob?.takeIf { it.isActive }?.join()
                 if (!stillCurrent()) return@launch
                 if (!player.hasNextMediaItem()) {
-                    val online = if (automixItems.value.isNotEmpty()) emptyList() else PlaybackRecommendations.fetch(currentId)
+                    val exclusions = recommendationExclusions()
+                    val ready = PlaybackRecommendations.distinctCandidates(currentId, automixItems.value, exclusions)
+                    val online = if (ready.size >= 12 || !isNetworkConnected.value) emptyList()
+                        else PlaybackRecommendations.fetch(currentId, exclusions)
                     if (!stillCurrent()) return@launch
                     val candidates = recommendationCandidates(currentId, online)
                     if (!stillCurrent()) return@launch
-                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    val existing = recommendationExclusions()
                     val next = PlaybackRecommendations.distinctCandidates(currentId, candidates, existing).take(12)
                     if (next.isNotEmpty()) {
                         player.addMediaItems(next)
@@ -2696,16 +2761,20 @@ class MusicService :
             currentQueue.hasNextPage() &&
             !(cachedDisableLoadMoreWhenRepeatAll && player.repeatMode == REPEAT_MODE_ALL)
         ) {
+            val queueAtRequest = currentQueue
+            val generation = queueGeneration
             scope.launch(SilentHandler) {
                 val mediaItems =
                     withContext(Dispatchers.IO) {
-                        currentQueue
+                        queueAtRequest
                             .nextPage()
                             .filterExplicit(cachedHideExplicit)
                             .filterVideoSongs(cachedHideVideoSongs)
                     }
+                if (generation != queueGeneration || currentQueue !== queueAtRequest) return@launch
                 if (player.playbackState != STATE_IDLE && mediaItems.isNotEmpty()) {
-                    player.addMediaItems(mediaItems)
+                    val existing = (0 until player.mediaItemCount).map { player.getMediaItemAt(it).mediaId }.toSet()
+                    player.addMediaItems(mediaItems.filterNot { it.mediaId in existing }.distinctBy { it.mediaId })
                     if (player.shuffleModeEnabled) {
                         applyShuffleOrder(player.currentMediaItemIndex, player.mediaItemCount, cachedShufflePlaylistFirst)
                     }
@@ -2752,6 +2821,7 @@ class MusicService :
                 } else if (castConnectionHandler?.isCasting?.value != true) {
                     // If YouTube's recommendation response arrives a little
                     // after the last track ended, keep autoplay continuous.
+                    ensureRefillWatch()
                     requestNextSongOnDemand(automatic = true)
                 }
             }
