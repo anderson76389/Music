@@ -37,11 +37,11 @@ assert "AudioQuality.HIGH" in (src / "utils/InnerTubeXPlayer.kt").read_text()
 print("PASS: raw PCM, max native volume, no previous DSP, highest available stream")
 
 assert "scheduleAutoplayRecommendations()" in service
-assert "PlaybackRecommendations.fetch(seedId)" in service
-assert "PlaybackRecommendations.fetch(currentId)" in service
+assert "PlaybackRecommendations.fetch(seedId, exclusions)" in service
+assert "PlaybackRecommendations.fetch(currentId, exclusions)" in service
 assert "player.addMediaItems(autoplayNext)" in service
 assert "automixItems.value = if (cachedSimilarContent) suggested.take(30)" in service
-assert "player.currentMediaItem?.mediaId != seedId" in service
+assert "generation == queueGeneration && continuousPlaybackAllowed()" in service
 assert "queueGeneration != generation" in service
 assert "if (currentQueue !== queue) return@launch" in service
 assert "prefetchNextAudioStream()" in service
@@ -53,7 +53,7 @@ assert "private class EmptyRadioQueueException" not in queue
 print("PASS: non-blocking autoplay suggestions, queue-race guard, and next song prefetch")
 
 assert "else -> minOf(12, suggestions.size - 1)" in recommendations
-assert "distinctCandidates(seedId, fromNext + related).size < 6" in recommendations
+assert "distinctCandidates(seedId, fromNext + related, existing).size < 12" in recommendations
 assert "recommendationCandidates(seedId, online)" in service
 assert "database.mostPlayedSongs(" in service
 assert "manualNextSongJob?.cancel()" in service
@@ -63,3 +63,14 @@ home = (src / "ui/screens/HomeScreen.kt").read_text()
 for section in ("speedDialItems.filterIsInstance<SongItem>()", "quickPicks", "forgottenFavorites", "sectionSongs"):
     assert f"+ {section}.filter" in home
 print("PASS: actual Home queues, bounded recommendations, history fallback and safe automatic advance")
+
+assert "upcomingTrackCount() >= 12" in service
+assert "timeline.getNextWindowIndex(index, REPEAT_MODE_OFF, player.shuffleModeEnabled)" in service
+assert "ensureRefillWatch()" in service and "delay(10_000L)" in service
+assert "YouTube.next(currentPage.endpoint, token)" in recommendations
+assert "YouTube.home().getOrNull()" in recommendations
+assert "playerConnection.service.addToQueueAutomix(automix[0], 0)" not in (src / "ui/player/Player.kt").read_text()
+print("PASS: service-owned refill and retry, actual shuffle order, continuation and personalized fallback")
+
+assert "initialListRefill = currentQueue is ListQueue && !initialRecommendationsAdded" in service
+assert "initialRecommendationsAdded = true" in service

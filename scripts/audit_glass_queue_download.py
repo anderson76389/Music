@@ -19,8 +19,8 @@ smoke = (root / "scripts/smoke_apk.sh").read_text()
 
 assert "if (dark) 0.42f else 0.44f" in glass, "Glass opacity must remain a touch stronger"
 assert "if (dark) 0.45f else 0.48f" in glass, "Readability tint must be opaque enough"
-assert "refractionStrength = if (flat) 0f else if (showBorder) 0.65f else 0.30f" in glass, "Liquid Glass optics must remain"
-assert "blurRadius = 48.dp" in glass
+assert "refractionStrength = if (flat || !showBorder) 0f else 0.65f" in glass, "Liquid Glass optics must remain"
+assert "blurRadius(56.dp)" in glass
 assert "tint(backdropTint.copy(alpha =" in glass
 assert "val legibilityTint = backdropTint.copy(alpha =" in glass
 assert "glassQueueSurface(" in colors and "glassQueueAccent(" in colors

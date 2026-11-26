@@ -22,11 +22,12 @@ assert "PlayerVideoThemeMode.LIQUID_GLASS -> if (dark) Color.White else Color(0x
 assert "LocalGlassBackdropTint.current?.let" in switcher
 assert player.count("LocalGlassBackdropTint provides when (playerBackground)") == 2
 assert "val backdropTint = LocalGlassBackdropTint.current ?: surface" in glass
-assert "panel.border(0.8.dp, softRim, shape)" in glass
+assert "softRim" not in glass
+assert "return if (showBorder) panel.border(0.8.dp, rim, shape) else panel" in glass
 assert "glassTabSelection" not in nav
 mini = (app / "ui/player/MiniPlayer.kt").read_text()
 assert ".liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)" in mini
-assert "refractionDisplacement = if (flat) 0.dp else if (showBorder) 12.dp else 4.dp" in glass
+assert "refractionDisplacement = if (flat || !showBorder) 0.dp else 12.dp" in glass
 assert "onClick = if (video) onVideoClick else onAudioClick" in switcher
 assert ".liquidGlass(RoundedCornerShape(32.dp), chrome = true, showBorder = false)" in nav
 assert ".liquidGlass(RoundedCornerShape(28.dp), showBorder = false)" in nav
@@ -74,3 +75,6 @@ for capacity in (6, 8, 9, 10, 12):
             seen.extend(range(start, min(size, start + count)))
         assert seen == list(range(size)), (size, capacity, seen)
 print("PASS: expanded Home caps and all speed-dial titles survive pagination")
+
+assert "if (!showBorder) {" in glass and "return clip(shape).hazeBlur(" in glass
+assert glass.index("return clip(shape).hazeBlur(") < glass.index("GlassStyle.regular.then")
