@@ -1,3 +1,2 @@
-- Lecture continue : la file se renouvelle automatiquement avant la fin des titres de l’accueil et des autres listes ; nouvelles pages YouTube Music, secours personnalisé et nouvelles tentatives si la réponse est vide.
-- Lecture continue : fonctionne même lecteur fermé, respecte pause, répétition et lecture aléatoire ; protection contre les doublons et les réponses d’une ancienne file.
-- Liquid Glass : suppression du trait et de la bande de réfraction périphériques du mini-lecteur, de la navigation et de Son/Vidéo ; verre fortement dépoli basé sur le fond réel, sans teinte fixe.
+- Playlists locales et en ligne : le titre de la barre tient sur une ligne et une longue description dépliée défile dans un espace limité.
+- Morceaux suivants : les titres et les artistes restent lisibles avec les pochettes blanches, noires et grises.

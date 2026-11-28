@@ -1890,7 +1890,17 @@ fun BottomSheetPlayer(
             if (LocalLiquidGlassEnabled.current) {
                 // Follow the playing artwork in both the player and the entire
                 // "Morceaux suivants" sheet without changing the app-wide theme.
-                fr.makoff.music.ui.theme.MusicTheme(darkTheme = true, themeColor = glassQueueAccent, content = queueContent)
+                fr.makoff.music.ui.theme.MusicTheme(darkTheme = true, themeColor = glassQueueAccent) {
+                    val queueColors = MaterialTheme.colorScheme.copy(
+                        secondary = Color(0xFFE4E4E7),
+                        onSurface = Color.White,
+                    )
+                    MaterialTheme(colorScheme = queueColors) {
+                        CompositionLocalProvider(androidx.compose.material3.LocalContentColor provides queueColors.onSurface) {
+                            queueContent()
+                        }
+                    }
+                }
             } else queueContent()
         }
     }

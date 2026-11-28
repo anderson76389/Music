@@ -763,7 +763,7 @@ fun LocalPlaylistScreen(
                                 .focusRequester(focusRequester),
                     )
                 } else if (showTopBarTitle) {
-                    Text(playlist?.playlist?.name.orEmpty())
+                    Text(playlist?.playlist?.name.orEmpty(), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             },
             navigationIcon = {
@@ -1310,6 +1310,7 @@ fun LocalPlaylistHeader(
                 text = description,
                 modifier = Modifier.padding(horizontal = 32.dp),
                 collapsedMaxLines = 3,
+                limitExpandedHeight = true,
             )
         }
 
