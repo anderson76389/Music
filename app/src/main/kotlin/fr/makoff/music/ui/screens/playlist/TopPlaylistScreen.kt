@@ -330,7 +330,7 @@ fun TopPlaylistScreen(
                                 } else {
                                     IconButton(
                                         onClick = {
-                                            menuState.show {
+                                            menuState.showExpanded {
                                                 SongMenu(
                                                     originalSong = song,
                                                     onDismiss = menuState::dismiss,
@@ -493,7 +493,7 @@ fun TopPlaylistScreen(
                     IconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
-                            menuState.show {
+                            menuState.showExpanded {
                                 SelectionSongMenu(
                                     songSelection = filteredSongs.filter { it.id in selection },
                                     onDismiss = menuState::dismiss,
@@ -659,7 +659,7 @@ private fun TopPlaylistHeader(
             // Menu Button - Smaller secondary button
             androidx.compose.material3.Surface(
                 onClick = {
-                    menuState.show {
+                    menuState.showExpanded {
                         TopPlaylistMenu(
                             downloadState = downloadState,
                             onQueue = {

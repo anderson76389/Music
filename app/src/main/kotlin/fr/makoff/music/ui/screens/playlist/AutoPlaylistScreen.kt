@@ -584,7 +584,7 @@ fun AutoPlaylistScreen(
                                 } else {
                                     IconButton(
                                         onClick = {
-                                            menuState.show {
+                                            menuState.showExpanded {
                                                 SongMenu(
                                                     originalSong = song,
                                                     onDismiss = menuState::dismiss,
@@ -807,7 +807,7 @@ fun AutoPlaylistScreen(
                     IconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
-                            menuState.show {
+                            menuState.showExpanded {
                                 SelectionSongMenu(
                                     songSelection = filteredSongs.filter { it.id in selection },
                                     onDismiss = menuState::dismiss,
@@ -979,7 +979,7 @@ private fun AutoPlaylistHeader(
             // Menu Button - Smaller secondary button
             Surface(
                 onClick = {
-                    menuState.show {
+                    menuState.showExpanded {
                         AutoPlaylistMenu(
                             downloadState = downloadState,
                             onQueue = {

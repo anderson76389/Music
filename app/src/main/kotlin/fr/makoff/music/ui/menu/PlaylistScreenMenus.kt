@@ -10,6 +10,8 @@ import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -243,7 +245,7 @@ fun LocalPlaylistMenu(
             )
         }
 
-    Material3MenuGroup(items = menuItems)
+    Material3MenuGroup(items = menuItems, modifier = Modifier.verticalScroll(rememberScrollState()))
 
     if (showExportDialog) {
         ExportDialog(
@@ -377,6 +379,7 @@ fun AutoPlaylistMenu(
         }
 
     Material3MenuGroup(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
         items =
             listOfNotNull(
                 run {
@@ -553,6 +556,7 @@ fun TopPlaylistMenu(
         }
 
     Material3MenuGroup(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
         items =
             listOfNotNull(
                 run {
@@ -713,6 +717,7 @@ fun CachePlaylistMenu(
         }
 
     Material3MenuGroup(
+        modifier = Modifier.verticalScroll(rememberScrollState()),
         items =
             listOfNotNull(
                 run {
