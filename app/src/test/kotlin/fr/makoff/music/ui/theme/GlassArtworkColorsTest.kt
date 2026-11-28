@@ -23,6 +23,10 @@ class GlassArtworkColorsTest {
         val redAccent = PlayerColorExtractor.glassQueueAccent(redArtwork, Color.White)
         assertNotEquals("Queue follows blue or red cover instead of a static panel", blueSurface, redSurface)
         assertNotEquals("Queue controls change accent with artwork", blueAccent, redAccent)
+        for (gray in listOf(Color.White, Color.Gray, Color.Black)) {
+            val surface = PlayerColorExtractor.glassQueueSurface(listOf(gray), Color.Black)
+            assertTrue((Color(0xFFE4E4E7).luminance() + 0.05f) / (surface.luminance() + 0.05f) >= 4.5f)
+        }
         for (surface in listOf(blueSurface, redSurface)) {
             assertTrue("White queue text meets contrast", 1.05f / (surface.luminance() + 0.05f) >= 4.5f)
         }

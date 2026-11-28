@@ -395,7 +395,7 @@ fun OnlinePlaylistScreen(
                                 .focusRequester(focusRequester),
                     )
                 } else if (lazyListState.firstVisibleItemIndex > 0) {
-                    Text(playlist?.title ?: "")
+                    Text(playlist?.title ?: "", maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             },
             navigationIcon = {
@@ -603,6 +603,7 @@ private fun OnlinePlaylistHeader(
                 text = description,
                 modifier = Modifier.padding(horizontal = 32.dp),
                 collapsedMaxLines = 3,
+                limitExpandedHeight = true,
             )
         }
 

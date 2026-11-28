@@ -6,6 +6,9 @@
 package fr.makoff.music.ui.component
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -40,9 +43,10 @@ fun ExpandableText(
     runs: List<LinkSegment>? = null,
     modifier: Modifier = Modifier,
     collapsedMaxLines: Int = 3,
+    limitExpandedHeight: Boolean = false,
 ) {
-    var isExpanded by rememberSaveable { mutableStateOf(false) }
-    var hasOverflow by rememberSaveable { mutableStateOf(false) }
+    var isExpanded by rememberSaveable(text, runs) { mutableStateOf(false) }
+    var hasOverflow by rememberSaveable(text, runs) { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val linkColor = MaterialTheme.colorScheme.primary
     val bodyColor = MaterialTheme.colorScheme.onSurfaceVariant
@@ -73,6 +77,9 @@ fun ExpandableText(
         @Suppress("DEPRECATION")
         ClickableText(
             text = annotatedText,
+            modifier = if (limitExpandedHeight && isExpanded) {
+                Modifier.heightIn(max = 120.dp).verticalScroll(rememberScrollState())
+            } else Modifier,
             style = MaterialTheme.typography.bodyMedium.copy(color = bodyColor),
             maxLines = if (isExpanded) Int.MAX_VALUE else collapsedMaxLines,
             overflow = TextOverflow.Ellipsis,

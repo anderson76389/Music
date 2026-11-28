@@ -13,10 +13,12 @@ object PlayerColorExtractor {
     /** The up-next sheet keeps the current cover hue, with a dark, legible surface. */
     fun glassQueueSurface(artworkColors: List<Color>, fallback: Color): Color {
         val source = artworkColors.getOrNull(1) ?: artworkColors.firstOrNull() ?: fallback
+        // Bound even a white cover so secondary text and the active row stay readable.
+        val scale = minOf(0.64f, 0.34f / maxOf(source.red, source.green, source.blue, 0.01f))
         return Color(
-            red = (source.red * 0.64f).coerceIn(0f, 1f),
-            green = (source.green * 0.64f).coerceIn(0f, 1f),
-            blue = (source.blue * 0.64f).coerceIn(0f, 1f),
+            red = (source.red * scale).coerceIn(0f, 1f),
+            green = (source.green * scale).coerceIn(0f, 1f),
+            blue = (source.blue * scale).coerceIn(0f, 1f),
         )
     }
 
