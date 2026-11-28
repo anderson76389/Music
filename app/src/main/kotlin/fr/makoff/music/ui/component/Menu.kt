@@ -31,10 +31,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun Material3MenuGroup(
-    items: List<Material3MenuItemData>
+    items: List<Material3MenuItemData>,
+    modifier: Modifier = Modifier,
 ) {
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         items.forEachIndexed { index, item ->

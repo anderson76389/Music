@@ -53,7 +53,16 @@ class MenuState(
     var isVisible by mutableStateOf(isVisible)
     var content by mutableStateOf(content)
 
+    var openExpanded by mutableStateOf(false)
+        private set
+
+    fun showExpanded(content: @Composable ColumnScope.() -> Unit) {
+        show(content)
+        openExpanded = true
+    }
+
     fun show(content: @Composable ColumnScope.() -> Unit) {
+        openExpanded = false
         isVisible = true
         this.content = content
     }
@@ -138,7 +147,14 @@ fun BottomSheetMenu(
     // next tap and close the newly reopened menu (observed in Android 11).
     // Every new open receives a fresh SheetState and freshly composed content.
     if (!state.isVisible) return
-    val sheetState = rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
+    val sheetState = if (state.openExpanded) {
+        rememberMaterialBottomSheetState(
+            initialValue = SheetValue.Hidden,
+            enabledValues = setOf(SheetValue.Hidden, SheetValue.Expanded),
+        )
+    } else {
+        rememberMaterialBottomSheetState(initialValue = SheetValue.Hidden)
+    }
 
     AnimatedBottomSheet(
         isVisible = state.isVisible,
@@ -165,7 +181,7 @@ fun BottomSheetMenu(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(max = screenHeight * 0.78f)
+                .then(if (state.openExpanded) Modifier else Modifier.heightIn(max = screenHeight * 0.78f))
                 .padding(horizontal = 20.dp)
         ) {
             state.content(this)

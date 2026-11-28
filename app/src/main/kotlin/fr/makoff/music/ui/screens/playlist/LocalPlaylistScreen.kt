@@ -625,7 +625,7 @@ fun LocalPlaylistScreen(
                                 } else {
                                     IconButton(
                                         onClick = {
-                                            menuState.show {
+                                            menuState.showExpanded {
                                                 SongMenu(
                                                     originalSong = song.song,
                                                     playlistSong = song,
@@ -813,7 +813,7 @@ fun LocalPlaylistScreen(
                     IconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
-                            menuState.show {
+                            menuState.showExpanded {
                                 SelectionSongMenu(
                                     songSelection =
                                         selection.mapNotNull { mapId ->
@@ -1381,7 +1381,7 @@ fun LocalPlaylistHeader(
             // Menu Button - Smaller secondary button
             Surface(
                 onClick = {
-                    menuState.show {
+                    menuState.showExpanded {
                         LocalPlaylistMenu(
                             playlist = playlist,
                             songs = songs,

@@ -328,7 +328,7 @@ fun OnlinePlaylistScreen(
                                     )
                                 } else {
                                     IconButton(onClick = {
-                                        menuState.show {
+                                        menuState.showExpanded {
                                             YouTubeSongMenu(songItem, menuState::dismiss, downloadInLiked = viewModel.isLikedPlaylist)
                                         }
                                     }) {
@@ -441,7 +441,7 @@ fun OnlinePlaylistScreen(
                     IconButton(
                         enabled = selection.isNotEmpty(),
                         onClick = {
-                            menuState.show {
+                            menuState.showExpanded {
                                 YouTubeSelectionSongMenu(
                                     songSelection =
                                         filteredSongs
@@ -716,7 +716,7 @@ private fun OnlinePlaylistHeader(
             // Menu Button - Smaller secondary button
             Surface(
                 onClick = {
-                    menuState.show {
+                    menuState.showExpanded {
                         YouTubePlaylistMenu(
                             playlist = playlist,
                             songs = songs,

@@ -367,7 +367,7 @@ fun AlbumScreen(
                         // Menu Button - Smaller secondary button
                         Surface(
                             onClick = {
-                                menuState.show {
+                                menuState.showExpanded {
                                     AlbumMenu(
                                         originalAlbum =
                                             Album(
@@ -425,7 +425,7 @@ fun AlbumScreen(
                             } else {
                                 IconButton(
                                     onClick = {
-                                        menuState.show {
+                                        menuState.showExpanded {
                                             SongMenu(
                                                 originalSong = song,
                                                 onDismiss = menuState::dismiss,
@@ -574,7 +574,7 @@ fun AlbumScreen(
                 IconButton(
                     enabled = selection.isNotEmpty(),
                     onClick = {
-                        menuState.show {
+                        menuState.showExpanded {
                             SelectionSongMenu(
                                 songSelection =
                                     selection.mapNotNull { songId ->

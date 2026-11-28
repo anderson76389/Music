@@ -275,7 +275,7 @@ fun CachePlaylistScreen(
                                 )
                             } else {
                                 IconButton(onClick = {
-                                    menuState.show {
+                                    menuState.showExpanded {
                                         SongMenu(
                                             originalSong = song,
                                             onDismiss = menuState::dismiss,
@@ -439,7 +439,7 @@ fun CachePlaylistScreen(
                         enabled = selection.isNotEmpty(),
                         onClick = {
                             val selectedSongs = filteredSongs.filter { it.id in selection }
-                            menuState.show {
+                            menuState.showExpanded {
                                 SelectionSongMenu(
                                     songSelection = selectedSongs,
                                     onDismiss = menuState::dismiss,
@@ -596,7 +596,7 @@ private fun CachePlaylistHeader(
             // Menu Button - Smaller secondary button
             Surface(
                 onClick = {
-                    menuState.show {
+                    menuState.showExpanded {
                         CachePlaylistMenu(
                             downloadState = Download.STATE_STOPPED,
                             onQueue = {
